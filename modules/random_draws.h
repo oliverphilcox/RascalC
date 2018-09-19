@@ -52,19 +52,27 @@ public:
 			int len = strlen(par->loadname);
 			if(len>4&&!strcmp(&par->loadname[len-4],".bin")){
 				// Read binary format that was written by writeDataBin
+                printf("\n# Loading pre-computed binary-format probability grid\n");
 				readDataBin(&x,&n,par->loadname);
 			}
 			else{
 				// Read ascii format possibly created externally
+                printf("\n# Loading pre-computed ascii-format probability grid\n");
 				readData(&x,&n,par->loadname);
 			}
-			if(n==0)
+			if(n==0){
+                printf("\n# Computing the probability grid\n");
 				integData(&x,&n,f_corr,nside,boxside,0);
+                printf("# Probability grid computation complete\n");
+            }
 		}
 		else
 			// If no correlation function is given to copy, do integration
-			if (xin==NULL||np==0)
-				integData(&x,&n,f_corr,nside,boxside,0); // could change to 1/r^2 here by using f instead of f_corr and 1 instead of 0
+			if (xin==NULL||np==0){
+				printf("\n# Computing the probability grid");
+                integData(&x,&n,f_corr,nside,boxside,0); // could change to 1/r^2 here by using f instead of f_corr and 1 instead of 0
+                printf("# Probability grid computation complete\n");
+            }
 			else
 				copyData(&x,&n,xin);
 
@@ -74,7 +82,7 @@ public:
 			if(len>4&&!strcmp(&par->savename[len-4],".bin"))
 				writeDataBin(&x,&n,par->savename);
 			else
-				fprintf(stderr,"Save file %s does not end on \".bin\". No output written.\n",par->savename);
+				fprintf(stderr,"Save file %s does not end in \".bin\". No output written.\n",par->savename);
 		}
 
 		// Set up actual sampler
@@ -207,7 +215,7 @@ public:
 
 			*x = (double *)malloc(sizeof(double)*(*np));
 
-			printf("\nSize: %ld\n",(*np));
+			printf("\nNumber of Boxes in Probability Grid: %ld\n",(*np));
 			fflush(NULL);
 
 //			TODO: assure it compiles without OPENMP defed
@@ -325,6 +333,7 @@ public:
 	        	fprintf(stderr,"# Error writing to file %s.\n", filename);
 	        	return;
 	        }
+	        printf("# Probability grid written to file %s.\n", filename);
 
 	        fclose(fp);
 
