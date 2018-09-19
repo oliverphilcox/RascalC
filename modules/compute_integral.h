@@ -440,7 +440,9 @@ void compute_integral(Grid *grid, Parameters *par) {
 		{
 		printf("# Used cells: %d/%d\n",sumct,n1);
 		printf("UCF: %g\n",(double)sumct/n1); // Used cell fraction, needed to normalize intermediate result
-		sumint.report_integrals();
+#if NOPRINT
+        sumint.report_integrals();
+#endif
 		}
 	}
 
@@ -505,8 +507,9 @@ void compute_integral(Grid *grid, Parameters *par) {
     printf("# In a periodic box we would expect %1.0f pairs, off by %f.\n", expected, cnt2/expected);
 
 //  Print the result
+#if NOPRINT
     sumint.report_integrals();
-
+#endif
     printf("\n# Time for initialization: %g s \n"
     		"# Time for main loop: %g s\n",initial.Elapsed(),TotalTime.Elapsed());
     fflush(NULL);
