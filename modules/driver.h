@@ -111,18 +111,22 @@ bool check_bounding_box(Particle *p, int np, Float boxsize, Float rmax, Float3& 
 #ifndef PERIODIC
     	fprintf(stderr,"#\n# WARNING: cubic input detected but you have not compiled with PERIODIC flag!\n#\n");
     	printf("#\n# WARNING: cubic input detected but you have not compiled with PERIODIC flag!\n#\n");
+        exit()
 #endif
 	if (biggest<0.99*boxsize)
 	    printf("#\n# WARNING: cubic input detected, but smaller than periodicity!\n#\n");
+        exit()
     } else {
         // Probably a non-periodic input
     	box=false;
 #ifdef PERIODIC
     	fprintf(stderr,"#\n# WARNING: non-cubic input detected but you have compiled with PERIODIC flag!\n#\n");
     	printf("#\n# WARNING: non-cubic input detected but you have compiled with PERIODIC flag!\n#\n");
+        exit()
 #endif
 	if (biggest+rmax > boxsize)
 	    printf("#\n# WARNING: non-cubic input detected, but could overlap periodically!\n#\n");
+        exit()
     }
     return box;
 }
