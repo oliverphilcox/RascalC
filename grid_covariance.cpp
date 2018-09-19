@@ -21,7 +21,7 @@
 #include "./cubature/cubature.h"
 #include <limits>
 
-#define OPENMP
+//#define OPENMP
 
 // For multi-threading:
 #ifdef OPENMP
@@ -30,7 +30,7 @@
 #include <sched.h>
 #endif
 
-#undef ALLOUT
+
 //#undef PERIODIC
 #define PAGE 4096     // To force some memory alignment.
 
