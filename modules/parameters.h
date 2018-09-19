@@ -26,13 +26,13 @@ public:
 	Float mumin = 0.0;
 
 	// The radius beyond which the correlation function is set to zero
-	Float xicutoff = 1000.0;
+	Float xicutoff = 400.0;
 
 	Float nofznorm=626798;//6684485//681013//672940//674847 629310
 
 	// The grid size, which should be tuned to match boxsize and rmax.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 47;
+	int nside = 67;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
@@ -49,10 +49,10 @@ public:
 
     // The number of radial bins
     // NB: This doesn't need to be equal to the number in the xi file
-	int nbin = 11;// QPM_Mash value//5;
+	int nbin = 5;// QPM_Mash value//5;
 
     // The number of mu bins
-	int mbin = 4;//QPM_mash value //3;
+	int mbin = 3;//QPM_mash value //3;
 
 	// The number of threads to run on
 	int nthread=10;
