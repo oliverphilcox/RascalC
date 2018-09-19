@@ -30,6 +30,9 @@
 #include <sched.h>
 #endif
 
+// In order to not print the output matrices
+#define NOPRINT
+
 
 //#undef PERIODIC
 #define PAGE 4096     // To force some memory alignment.
