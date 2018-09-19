@@ -1,4 +1,5 @@
 //grid class for grid_covariance.cpp file (modified from Alex Wiegand)
+#include "cell_utilities.h"
 
 #ifndef GRID_H
 #define GRID_H

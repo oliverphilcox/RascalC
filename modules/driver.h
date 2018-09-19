@@ -1,7 +1,10 @@
 // driver.h - this contains various c++ functions to create particles in random positions / read them in from file. Based on code by Alex Wiegand.
+#include "cell_utilities.h"
 
 #ifndef DRIVER_H
 #define DRIVER_H
+
+// ====================  The Driver ===========================
 
 Particle *make_particles(Float boxsize, int np) {
     // Make np random particles
@@ -78,8 +81,8 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
     return p;
 }
 
-bool check_bounding_box(Particle *p, int np, Float boxsize, Float rmax, Float3& pmin) {
-    // Check that the bounding box is reasonable and return minimal position
+bool compute_bounding_box(Particle *p, int np, Float &boxsize, Float rmax, Float3& pmin) {
+    // Compute the boxsize of the bounding box and determine whether we are periodic
     Float3 pmax;
     bool box=false;
     pmin.x = pmin.y = pmin.z = 1e30;
@@ -99,37 +102,32 @@ bool check_bounding_box(Particle *p, int np, Float boxsize, Float rmax, Float3& 
     Float         biggest = prange.x;
     biggest = fmax(biggest, prange.y);
     biggest = fmax(biggest, prange.z);
-    printf("# Biggest range is %6.2f\n", biggest);
-    if (biggest>boxsize*1.001)
-	printf("#\n# WARNING: particles will overlap on period wrapping!\n#\n");
-    if (biggest+rmax<boxsize*0.6)
-	printf("#\n# WARNING: box periodicity seems too generous, will hurt grid efficiency!\n#\n");
-
     if (prange.x>0.99*biggest && prange.y>0.99*biggest && prange.z>0.99*biggest) {
         // Probably using a cube of inputs, intended for a periodic box
     	box=true;
 #ifndef PERIODIC
     	fprintf(stderr,"#\n# WARNING: cubic input detected but you have not compiled with PERIODIC flag!\n#\n");
     	printf("#\n# WARNING: cubic input detected but you have not compiled with PERIODIC flag!\n#\n");
-        exit()
 #endif
-	if (biggest<0.99*boxsize)
-	    printf("#\n# WARNING: cubic input detected, but smaller than periodicity!\n#\n");
-        exit()
+        // Set boxsize to be the biggest dimension which allows for periodic overlap
+        boxsize = biggest;
+        printf("# Setting periodic box-size to %6.2f\n", boxsize);
     } else {
-        // Probably a non-periodic input
-    	box=false;
+        // Probably a non-periodic input (e.g. a real dataset)
+        box=false;
 #ifdef PERIODIC
     	fprintf(stderr,"#\n# WARNING: non-cubic input detected but you have compiled with PERIODIC flag!\n#\n");
     	printf("#\n# WARNING: non-cubic input detected but you have compiled with PERIODIC flag!\n#\n");
-        exit()
 #endif
-	if (biggest+rmax > boxsize)
-	    printf("#\n# WARNING: non-cubic input detected, but could overlap periodically!\n#\n");
-        exit()
-    }
+        // set boxsize to just enclose the biggest dimension plus r_max 
+        // NB: We natively wrap the grid (to allow for any position of the center of the grid)
+        // Must add rmax to biggest to ensure there is no periodic overlap in this case.
+        boxsize = 1.05*(biggest+rmax);
+        printf("# Setting non-periodic box-size to %6.2f\n", boxsize);
+	}
     return box;
 }
+
 
 void invert_weights(Particle *p, int np) {
     for (int j=0; j<np; j++) p[j].w *= -1.0;
