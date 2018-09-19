@@ -270,7 +270,37 @@ class Integrals {
 	    		}
 			}
 	    }
-
+        
+        void save_integrals() {
+        /* Print integral outputs to file. 
+         * In txt files {c2,c3,c4,RR}_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 and RR_a that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
+         */
+            // Create output files
+            char c2name[1000];
+            snprintf(c2name, sizeof c2name, "CovMatrices/c2_n%d_m%d.txt", nbin, mbin);
+            char c3name[1000];
+            snprintf(c3name, sizeof c3name, "CovMatrices/c3_n%d_m%d.txt", nbin, mbin);
+            char c4name[1000];
+            snprintf(c4name, sizeof c4name, "CovMatrices/c4_n%d_m%d.txt", nbin, mbin);
+            char RRname[1000];
+            snprintf(RRname, sizeof RRname, "CovMatrices/RR_n%d_m%d.txt", nbin, mbin);
+            FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
+            FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
+            FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
+            FILE * RRFile = fopen(RRname,"w"); // for RR part of integral
+            
+            for (int j=0;j<nbin*mbin;j++){
+                fprintf(C2File,"%le\n",c2[j]);
+                fprintf(RRFile,"%le\n",Ra[j]);
+            }
+            for(int i=0;i<nbin*mbin;i++){
+                for(int j=0;j<nbin*mbin;j++){
+                    fprintf(C3File,"%le\n",c3[i*nbin*mbin+j]);
+                    fprintf(C4File,"%le\n",c4[i*nbin*mbin+j]);
+                }
+            }
+            printf("Printed output to file in the CovMatrices/ directory");            
+        }
 	    void report_integrals() {
 	///*
 		for (int j=0; j<nbin*mbin; j++) {

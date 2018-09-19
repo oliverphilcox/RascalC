@@ -32,7 +32,7 @@ public:
 
 	// The grid size, which should be tuned to match boxsize and rmax.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 67;
+	int nside = 21;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
@@ -49,13 +49,13 @@ public:
 
     // The number of radial bins
     // NB: This doesn't need to be equal to the number in the xi file
-	int nbin = 5;// QPM_Mash value//5;
+	int nbin = 5;
 
     // The number of mu bins
-	int mbin = 3;//QPM_mash value //3;
+	int mbin = 3;
 
 	// The number of threads to run on
-	int nthread=10;
+	int nthread=4;
 
 	// The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;

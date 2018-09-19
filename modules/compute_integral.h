@@ -2,6 +2,8 @@
 #ifndef COMPUTE_INTEGRAL_H
 #define COMPUTE_INTEGRAL_H
 
+
+
 void compute_integral(Grid *grid, Parameters *par) {
 
 	/* -------------------------------------------------------- */
@@ -18,7 +20,9 @@ void compute_integral(Grid *grid, Parameters *par) {
 
 	// In the following define the number of cells selected at each stage
 	uint n1=grid->nf; // Currently use all grid cells as first grid cell once. Could use less than all filled cells here
+#if SECSAMP!=ALL
 	uint n2=100;      // Sets the number of cells used as secondary cells. Not effective if strategy is ALL
+#endif
 	uint n3=1;		  // Number of cells selected as third cell for each pair of primary and secondary cell
 	uint n4=1;		  // Number of cells selected as fourth cell for each triple
 					  // Setting those to 1 currently also avoids selecting a quad twice
@@ -33,13 +37,23 @@ void compute_integral(Grid *grid, Parameters *par) {
 // ---- ---- ---- ---- ---- ---- ---- ----
 
 	int maxsep = ceil(par->rmax/grid->cellsize);	// The maximal distance for the pairs is determined by the upper limit of the covariance matrix to be calculated
+#if THISAMP != SEL
 	int maxsep3=ceil(par->xicutoff/grid->cellsize);	// Not used for SEL. The maximal distance for the third cell is determined from the xicutoff
+#endif
+#if FOUSAMP !=SEL
 	int maxsep4=maxsep;								// Not used for SEL.
+#endif
 
+#if SECAMP == FLAT
 	int aneigh=(int)pow(2*maxsep+1,3);		// Number of all neighbour cells up to max radius
-	int aneigh3=(int)pow(2*maxsep3+1,3);
+#endif
+#if THISAMP == FLAT
+    int aneigh3=(int)pow(2*maxsep3+1,3);
+#endif
+#if FOUSAMP == FLAT
 	int aneigh4=(int)pow(2*maxsep4+1,3);
-
+#endif
+    
     uint64 cnt2=0,cnt3=0,cnt4=0;
     uint64 acc2=0,acc3=0,acc4=0;
 //    uint64 mean=(uint64)floor((double)grid->np/grid->nf);
@@ -178,7 +192,7 @@ void compute_integral(Grid *grid, Parameters *par) {
 #ifdef OPENMP
 #pragma omp	for schedule(dynamic)
 #endif
-   for (int n=0; n<n1; n++) {
+   for (uint n=0; n<n1; n++) {
 #ifdef OPENMP
 	// Manually pin threads to CPUs (necessary on Odyssey)
 //	if(CPU_COUNT(&mask[thread])!=0){
@@ -209,16 +223,17 @@ void compute_integral(Grid *grid, Parameters *par) {
 		}
 
 //		Determine second position
-		double p2;
+		double p2; 
 		integer3 delta;
 
 // ---- Depending on sampling mode select second cell ----
 #if SECSAMP == FLAT
-		int fin2 = fmin(aneigh,n2);
+        int fin2 = fmin(aneigh,n2);
 		kofnip(cellsel2,aneigh,fin2,locrng); 	// Draw second cell equiprobably from all neighbouring cells
 		p2=1./aneigh*fin2;						// fin2 points selected out of aneigh
         for (int ci=0;ci<fin2;ci++){
-    		delta=relid(cellsel2[ci],maxsep);
+            printf("");
+            delta=relid(cellsel2[ci],maxsep);
 #elif SECSAMP == ALL
 		for (delta.x = -maxsep; delta.x <= maxsep; delta.x++)	// Iterate through all other cells up to maxsep
 		for (delta.y = -maxsep; delta.y <= maxsep; delta.y++)
@@ -427,7 +442,7 @@ void compute_integral(Grid *grid, Parameters *par) {
     			"Estimated time left: %2.2d:%2.2d:%2.2d hms "
     			"i.e. %d s. Thread %d: %ld %e %e quads/sec.\n",
     			n, grid->nf,runtime,timeleft/3600,timeleft/60%60,
-				timeleft%60,timeleft,thread,cnt4,locacc4/runtime,cnt4/runtime);
+				timeleft%60,timeleft,thread,(long int) cnt4,locacc4/runtime,cnt4/runtime);
 
     	locacc2=tmplocacc2, locacc3=tmplocacc3, locacc4=tmplocacc4;
 
@@ -440,7 +455,7 @@ void compute_integral(Grid *grid, Parameters *par) {
 		{
 		printf("# Used cells: %d/%d\n",sumct,n1);
 		printf("UCF: %g\n",(double)sumct/n1); // Used cell fraction, needed to normalize intermediate result
-#if NOPRINT
+#ifndef NOPRINT
         sumint.report_integrals();
 #endif
 		}
@@ -507,9 +522,12 @@ void compute_integral(Grid *grid, Parameters *par) {
     printf("# In a periodic box we would expect %1.0f pairs, off by %f.\n", expected, cnt2/expected);
 
 //  Print the result
-#if NOPRINT
+#ifndef NOPRINT
     sumint.report_integrals();
 #endif
+    // Save the integrals to file
+    sumint.save_integrals();
+    
     printf("\n# Time for initialization: %g s \n"
     		"# Time for main loop: %g s\n",initial.Elapsed(),TotalTime.Elapsed());
     fflush(NULL);
