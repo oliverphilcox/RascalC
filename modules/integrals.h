@@ -9,13 +9,6 @@ class Integrals {
 //	RandomDraws *rd;
 	CorrelationFunction *cf;
 
-#ifdef ALLOUT
-	Float rij_magt;
-	Float rij_mut;
-	Float rjk_magt;
-	Float rjk_mut;
-#endif
-
 	private:
 	int nbin,mbin;
 	Float rmin,rmax,mumin,mumax,dr,dmu; // Ranges in r and mu
@@ -25,15 +18,6 @@ class Integrals {
 
 	uint64 *binct,*binct3,*binct4; // Arrays to accumulate the counts of the bins
 	bool box,rad; // Flags to decide whether we have a periodic box and if we have a radial correlation function only
-
-#ifdef ALLOUT
-	FILE**rij_magf;
-	FILE**rij_muf;
-	FILE**rik_magf;
-	FILE**rjk_magf;
-	FILE**rik_muf;
-	FILE**rjk_muf;
-#endif
 
 	double empty[8];   // Leftover from grid_multipoles. Probably no longer needed
 
@@ -93,33 +77,6 @@ class Integrals {
 
 			empty[0] = 0.0;   // To avoid a warning
 
-#ifdef ALLOUT
-			rij_magf=(FILE**)malloc(sizeof(FILE*)*nbin*mbin);
-
-	//		rij_muf=(FILE**)malloc(sizeof(FILE*)*nbin*mbin);
-	//		rik_magf=(FILE**)malloc(sizeof(FILE*)*nbin*mbin);
-	//		rjk_magf=(FILE**)malloc(sizeof(FILE*)*nbin*mbin);
-	//		rik_muf=(FILE**)malloc(sizeof(FILE*)*nbin*mbin);
-	//		rjk_muf=(FILE**)malloc(sizeof(FILE*)*nbin*mbin);
-
-			char buf[2000];
-
-			for (int j=0; j<nbin*mbin; j++) {
-
-				snprintf(buf, sizeof buf, "/mnt/store1/awiegand/CovarianceCalculation/Data/own_xiright_xisampling/own_10Mpc_all2pt_rij_mag-%d-%d.txt", j/mbin, j%mbin);
-				rij_magf[j]=fopen(buf,"w");
-	//			snprintf(buf, sizeof buf, "/mnt/store1/awiegand/CovarianceCalculation/Data/own_all2pt_rij_mu-%d-%d.txt", j/mbin, j%mbin);
-	//			rij_muf[j]=fopen(buf,"w");
-	//			snprintf(buf, sizeof buf, "/mnt/store1/awiegand/CovarianceCalculation/Data/own_all2pt_rik_mag-%d-%d.txt", j/mbin, j%mbin);
-	//			rik_magf[j]=fopen(buf,"w");
-	//			snprintf(buf, sizeof buf, "/mnt/store1/awiegand/CovarianceCalculation/Data/own_all2pt_rjk_mag-%d-%d.txt", j/mbin, j%mbin);
-	//			rjk_magf[j]=fopen(buf,"w");
-	//			snprintf(buf, sizeof buf, "/mnt/store1/awiegand/CovarianceCalculation/Data/own_all2pt_rik_mu-%d-%d.txt", j/mbin, j%mbin);
-	//			rik_muf[j]=fopen(buf,"w");
-	//			snprintf(buf, sizeof buf, "/mnt/store1/awiegand/CovarianceCalculation/Data/own_all2pt_rjk_mu-%d-%d.txt", j/mbin, j%mbin);
-	//			rjk_muf[j]=fopen(buf,"w");
-			}
-#endif
 
 		}
 
@@ -135,17 +92,6 @@ class Integrals {
 			free(binct3);
 			free(binct4);
 
-#ifdef ALLOUT
-			for (int j=0; j<nbin*mbin; j++) {
-				fclose(rij_magf[j]);
-//				fclose(rij_muf[j]);
-//				fclose(rik_magf[j]);
-//				fclose(rjk_magf[j]);
-//				fclose(rik_muf[j]);
-//				fclose(rjk_muf[j]);
-			}
-#endif
-//			rd.~RandomDraws();
 	    }
 
 	    void reset(){
@@ -201,10 +147,7 @@ class Integrals {
 	        }else{
 	        	bin=-1;
 	        }
-#ifdef ALLOUT
-	        rij_magt=rij_mag;
-	        rij_mut=rij_mu;
-#endif
+
 	    }
 
 	    inline void third(const int& bin, Float& xijk, const Particle& pi, const Particle& pj, const Particle& pk, Float p3) {
@@ -231,10 +174,7 @@ class Integrals {
 				binct3[bin*nbin*mbin+binik]++;
 			}
 
-#ifdef ALLOUT
-			rjk_magt=rjk_mag;
-	        rjk_mut=rjk_mu;
-#endif
+
 		}
 
 	    inline void fourth(const int& bin, Float& xijk, const Particle& pi, const Particle& pj, const Particle& pk, const Particle& pl, Float p4) {
@@ -260,10 +200,6 @@ class Integrals {
 	    		binct4[bin*nbin*mbin+binkl]++;
 	    	}
 
-#ifdef ALLOUT
-#pragma omp critical
-	    		fprintf(rij_magf[bin],"%d %e %e %e %e %e %e %e %e %e %e\n",binkl,rij_mut,rkl_mu,rjk_mut,ril_mu,rij_magt,rkl_mag,rjk_magt,ril_mag, pi.w*pj.w*pk.w*pl.w/p4 * xijk  * xiil, pi.w*pj.w*pk.w*pl.w/p4);
-#endif
 	    }
 
 	    void sum_ints(Integrals* ints) {

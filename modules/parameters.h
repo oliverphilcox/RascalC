@@ -11,7 +11,7 @@ public:
 	Float boxsize = 400;
 
 	// The particles will be read from the unit cube, but then scaled by boxsize.
-	Float rescale = 0.0;   // If left zero or negative, set rescale=boxsize
+	Float rescale = 0.000318*400.;   // If left zero or negative, set rescale=boxsize
 
 	// The maximum radius of the largest bin.
 	Float rmax = 200.0;
@@ -32,7 +32,7 @@ public:
 
 	// The grid size, which should be tuned to match boxsize and rmax.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 8;
+	int nside = 47;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
@@ -48,13 +48,14 @@ public:
 	uint64 nmax = 1000000000000;
 
     // The number of radial bins
-	int nbin = 25;
+    // NB: This doesn't need to be equal to the number in the xi file
+	int nbin = 11;// QPM_Mash value//5;
 
     // The number of mu bins
-	int mbin = 1;
+	int mbin = 4;//QPM_mash value //3;
 
 	// The number of threads to run on
-	int nthread=10;
+	int nthread=4;
 
 	// The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
@@ -69,11 +70,11 @@ public:
 
 	// The name of the input file
 	char *fname = NULL;
-	const char default_fname[500] = "sample.dat";
+	const char default_fname[500] = "../random_particles/test_particles_small.txt";
 
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "../grid_multipoles_own/PatchySkyCorrSingle361.xi";
+	const char default_corname[500] = "xi_functions/QPM_Mash.xi";
 	//"../grid_multipoles_own/PatchySkyCorrSingle361.xi"//PatchySkyCorrMean.xi//QPMCorrMean.xi//QPMExtrapolated.xi//"QPM_D_ngc_rsd_fix3.xi"
 
 	// Constructor
