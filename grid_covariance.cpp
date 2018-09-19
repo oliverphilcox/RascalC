@@ -21,6 +21,7 @@
 #include "./cubature/cubature.h"
 #include <limits>
 
+
 //#define OPENMP
 
 // For multi-threading:
@@ -60,6 +61,7 @@ class Particle {
   public:
     Float3 pos;
     Float w;  // The weight for each particle
+    Float JK; // The Jackknife region ID for each particle (stored as float for ease)
 };
 
 
@@ -195,15 +197,16 @@ int main(int argc, char *argv[]) {
 
 	Float3 shift;
     Particle *orig_p;
-    if (par.make_random) {
-	// If you want to just make random particles instead:
+    if (!par.make_random){
+        orig_p = read_particles(par.rescale, &par.np, par.fname, par.rstart, par.nmax);
+        assert(par.np>0);
+    } else {
+    // If you want to just make random particles instead:
 	assert(par.np>0);
 	assert(par.boxsize==par.rescale);    // Nonsense if not!
 	orig_p = make_particles(par.boxsize, par.np);
-    } else {
-	orig_p = read_particles(par.rescale, &par.np, par.fname, par.rstart, par.nmax);
-	assert(par.np>0);
     }
+    
     if (par.qinvert) invert_weights(orig_p, par.np);
     if (par.qbalance) balance_weights(orig_p, par.np);
 

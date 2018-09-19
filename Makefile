@@ -6,7 +6,8 @@
 
 CC = gcc
 CFLAGS = -O3 -Wall
-CXXFLAGS = -O3 -Wall -DOPENMP -DPERIODIC
+CXXFLAGS = -O3 -Wall -DOPENMP 
+#-DPERIODIC
 #CXXFLAGS = -Wall -DOPENMP -O3 -unroll-aggressive -opt-prefetch -ipo
 
 CXX = g++ -fopenmp -lgomp -std=c++0x -ffast-math

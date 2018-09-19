@@ -18,14 +18,14 @@ Particle *make_particles(Float boxsize, int np) {
 }
 
 Particle *read_particles(Float rescale, int *np, const char *filename, const int rstart, uint64 nmax) {
-    // This will read particles from a file, space-separated x,y,z,w
+    // This will read particles from a file, space-separated x,y,z,w,JK for weight w, jackknife region JK
     // Particle positions will be rescaled by the variable 'rescale'.
     // For example, if rescale==boxsize, then inputing the unit cube will cover the periodic volume
     char line[1000];
     int j=0,n=0;
     FILE *fp;
     int stat;
-    double tmp[6];
+    double tmp[5];
     fp = fopen(filename, "r");
     if (fp==NULL) {
         fprintf(stderr,"File %s not found\n", filename); abort();
@@ -44,9 +44,9 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
     while (fgets(line,1000,fp)!=NULL&&j<n) {
         if (line[0]=='#') continue;
         if (line[0]=='\n') continue;
-        stat=sscanf(line, "%lf %lf %lf %lf %lf %lf", tmp, tmp+1, tmp+2, tmp+3, tmp+4, tmp+5);
+        stat=sscanf(line, "%lf %lf %lf %lf %lf", tmp, tmp+1, tmp+2, tmp+3, tmp+4);// %lf %lf", tmp, tmp+1, tmp+2, tmp+3, tmp+4, tmp+5, tmp+6);
 
-        if (stat<3) {
+        if (stat<4) {
         	fprintf(stderr,"Particle %d has bad format\n", j); // Not enough coordinates
         	abort();
         }
@@ -55,19 +55,21 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
         p[j].pos.y = tmp[1]*rescale;
         p[j].pos.z = tmp[2]*rescale;
 
-        // If there are 4 or 6 entries per line get the weights from line 4 or 6
+        // NB: Only works for 5 entries per line now.
+        // If there are 5 or 7 entries per line get the weights from line 4 or 6
         // Otherwise fill the weights with 1 or -1 depending on the value of rstart
         // For grid_covariance rstart is typically not used
-        if(stat!=6&&stat!=4)
+        if(stat!=5)//7&&stat!=5)
 		   if(rstart>0&&j>=rstart)
 			   p[j].w = -1.;
 		   else
 			   p[j].w = 1.;
 		else{
 		   if(rstart>0&&j>=rstart)
-			   p[j].w = -tmp[stat-1];
+			   p[j].w = -tmp[stat-2]; //read in weights
 		   else
-			   p[j].w = tmp[stat-1];
+			   p[j].w = tmp[stat-2]; 
+        p[j].JK = tmp[stat-1]; // read in JK region
 		}
 		j++;
     }
