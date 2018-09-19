@@ -1,4 +1,7 @@
 // random draws class for grid_covariance.cpp (originally from Alex Wiegand)
+#include "correlation_function.h"
+#include "parameters.h"
+
 #ifndef RANDOM_DRAWS_H
 #define RANDOM_DRAWS_H
 

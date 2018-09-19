@@ -11,7 +11,7 @@ public:
 	Float boxsize = 400;
 
 	// The particles will be read from the unit cube, but then scaled by boxsize.
-	Float rescale = 0.000318*400.;   // If left zero or negative, set rescale=boxsize
+	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
 
 	// The maximum radius of the largest bin.
 	Float rmax = 200.0;
@@ -158,7 +158,7 @@ public:
 private:
 	void usage() {
 	    fprintf(stderr, "\nUsage for grid_covariance:\n");
-	    fprintf(stderr, "   -box <boxsize> : The periodic size of the computational domain.  Default 400.\n");
+	    fprintf(stderr, "   -box <boxsize> : If creating particles randomly, this is the periodic size of the computational domain.  Default 400. If reading from file, this is reset dynamically.\n");
 	    fprintf(stderr, "   -scale <rescale>: How much to dilate the input positions by.  Default 0.\n");
 	    fprintf(stderr, "             Zero or negative value causes =boxsize, rescaling unit cube to full periodicity\n");
 	    fprintf(stderr, "   -rmax <rmax>: The maximum radius of the largest pair bin.  Default 200.\n");

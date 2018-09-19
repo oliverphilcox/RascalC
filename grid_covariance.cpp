@@ -46,130 +46,18 @@ typedef double Float;
 typedef double3 Float3;
 
 
+// Define module files
 #include "modules/parameters.h"
-
-
-// We need a vector floor3 function
-Float3 floor3(float3 p) {
-    return Float3(floor(p.x), floor(p.y), floor(p.z));
-}
-
-// =================== Particles ====================
-// This is the info about each particle that we load in and store in the Grid.
-
-class Particle {
-  public:
-    Float3 pos;
-    Float w;  // The weight for each particle
-    Float JK; // The Jackknife region ID for each particle (stored as float for ease)
-};
-
-
-// ====================  The Cell and Grid classes ==================
-
-/* The Grid class holds a new copy of the particles.
-These are sorted into cells, and all positions are referenced to the
-cell center.  That way, we can handle periodic wrapping transparently,
-simply by the cell indexing.
-
-For simplicity, we opt to flatten the index of the cells into a 1-d number.
-For example, this makes multi-threading over cells simpler.
-*/
-
-class Cell {
-  public:
-    int start;	// The starting index of the particle list
-    int np;
-};
-
-
-// load modules
+#include "modules/cell_utilities.h"
 #include "modules/grid.h"
 #include "modules/correlation_function.h"
 #include "modules/random_draws.h"
+#include "modules/integrals.h"
+#include "modules/driver.h"
 
 // Very ugly way to get the correlation function into the integrator, but hey, it works
-
 CorrelationFunction * RandomDraws::corr;
 
-// ========================== Accumulate Integral ================
-
-#include "modules/integrals.h"
-
-/*--------------------------------------------------------------------*/
-
-void kofnip(int* cellsel, int n, int k, gsl_rng* rng) {
-
-	/* -------------------------------------------------------- */
-	/* selects k points of an ensemble of n points              */
-	/* -------------------------------------------------------- */
-
-	int tmp, r;
-
-	assert(k<=n);
-
-	for (int i=0;i<k;i++) {
-		r = i + (int) floor(gsl_rng_uniform(rng) * (n - i));
-		tmp = cellsel[i];
-		cellsel[i] = cellsel[r];
-		cellsel[r]=tmp;
-	}
-
-	return;
-
-};
-
-
-/*--------------------------------------------------------------------*/
-
-void kofn(int* cellsel, int n, int k,Integrals * integs, gsl_rng* rng) {
-
-	/* -------------------------------------------------------- */
-	/* selects k points of an ensemble of n points              */
-	/* -------------------------------------------------------- */
-
-	int* mapping;
-	int max_rand, ind, r;
-	int i;
-
-	assert(k<=n);
-
-	mapping = (int*)malloc(sizeof(int)*n);
-
-	for (i = 0; i < n; i++) {
-		mapping[i] = i;
-	}
-
-	max_rand = n - 1;
-
-
-	for (i=0;i<k;i++) {
-		r = (int) floor(gsl_rng_uniform(rng) * (max_rand + 1));
-		ind = mapping[r];
-
-		cellsel[i] = ind;
-
-		mapping[r] = mapping[max_rand];
-		max_rand = max_rand - 1;
-	}
-
-	free(mapping);
-
-	return;
-
-};
-
-integer3 relid(int cin, int maxsep){
-
-	integer3 res;
-	res.z = cin%(2*maxsep+1)-maxsep;
-	cin = cin/(2*maxsep+1);
-	res.y = cin%(2*maxsep+1)-maxsep;
-	res.x = cin/(2*maxsep+1)-maxsep;
-
-
-	return res;
-}
 
 STimer TotalTime;
 
@@ -183,9 +71,7 @@ STimer TotalTime;
 
 #include "modules/compute_integral.h"
 
-// ====================  The Driver ===========================
 
-#include "modules/driver.h"
 
 // ================================ main() =============================
 
@@ -200,17 +86,18 @@ int main(int argc, char *argv[]) {
     if (!par.make_random){
         orig_p = read_particles(par.rescale, &par.np, par.fname, par.rstart, par.nmax);
         assert(par.np>0);
+        par.perbox = compute_bounding_box(orig_p, par.np, par.boxsize, par.rmax, shift);
     } else {
     // If you want to just make random particles instead:
 	assert(par.np>0);
 	assert(par.boxsize==par.rescale);    // Nonsense if not!
 	orig_p = make_particles(par.boxsize, par.np);
+    // set as periodic if we make the random particles
+    par.perbox = true;
     }
     
     if (par.qinvert) invert_weights(orig_p, par.np);
     if (par.qbalance) balance_weights(orig_p, par.np);
-
-    par.perbox=check_bounding_box(orig_p, par.np, par.boxsize, par.rmax,shift);
 
     // Now ready to compute!
     // Sort the particles into the grid.

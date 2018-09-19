@@ -1,4 +1,7 @@
 // integrals class for grid_covariance.cpp (originally from Alex Wiegand)
+#include "parameters.h"
+#include "correlation_function.h"
+#include "cell_utilities.h"
 
 #ifndef INTEGRALS_H
 #define INTEGRALS_H
