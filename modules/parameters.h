@@ -55,7 +55,7 @@ public:
 	int mbin = 4;//QPM_mash value //3;
 
 	// The number of threads to run on
-	int nthread=4;
+	int nthread=10;
 
 	// The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
