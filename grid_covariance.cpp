@@ -80,8 +80,8 @@ STimer TotalTime;
 int main(int argc, char *argv[]) {
 
 	Parameters par=Parameters(argc,argv);
-
-	Float3 shift;
+    
+    Float3 shift;
     Particle *orig_p;
     if (!par.make_random){
         orig_p = read_particles(par.rescale, &par.np, par.fname, par.rstart, par.nmax);
@@ -105,9 +105,17 @@ int main(int argc, char *argv[]) {
 
     Float grid_density = (double)par.np/grid.nf;//pow(par.nside,3);
     printf("Average number of particles per grid cell = %6.2f\n", grid_density);
+    Float max_density = 16.0;
+    if (grid_density>max_density){
+        fprintf(stderr,"Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n",max_density);
+        exit(1);
+    }
     printf("Average number of particles per max_radius ball = %6.2f\n",
     		par.np*4.0*M_PI/3.0*pow(par.rmax/par.boxsize,3.0));
-    if (grid_density<1) printf("#\n# WARNING: grid appears inefficiently fine.\n#\n");
+    if (grid_density<1){
+        printf("#\n# WARNING: grid appears inefficiently fine.\n#\n");
+        exit(1);
+    }
 
 
 //   Count occupation of pos and neg cells

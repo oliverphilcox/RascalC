@@ -593,7 +593,7 @@ void compute_integral(Grid *grid, Parameters *par) {
     		(Float)cnt2/grid->np);
     float x = par->rmax/grid->boxsize;
     float expected = grid->np * (4*M_PI/3.0)*grid->np*x*x*x;
-    printf("# In a periodic box we would expect %1.0f pairs, off by %f.\n", expected, cnt2/expected);
+    printf("# In a periodic box we would expect %1.0f pairs, off by a factor %f.\n", expected, cnt2/expected);
 
 //  Print the result
 #ifndef NOPRINT

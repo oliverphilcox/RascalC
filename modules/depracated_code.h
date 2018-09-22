@@ -50,3 +50,91 @@ bool check_bounding_box(Particle *p, int np, Float boxsize, Float rmax, Float3& 
     }
     return box;
 }
+
+
+	    void report_integrals() {
+            // From the integrals class - now replaced with SAVE integral.
+	///*
+		for (int j=0; j<nbin*mbin; j++) {
+		    printf("C2 %2d %le +- %le   %le +- %le   %le +- %le\n",
+				j, Ra[j], Raerr[j], cx[j], cxerr[j], 2*c2[j], 2*c2err[j]);
+		}
+		printf("\n");
+
+
+		for(int i=0;i<nbin*mbin;i++){
+			printf("C3 %2d ",i);
+			for(int j=0;j<nbin*mbin;j++){
+				printf("%e ", 4*c3[i*nbin*mbin+j]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+
+		for(int i=0;i<nbin*mbin;i++){
+			printf("C4 %2d ",i);
+			for(int j=0;j<nbin*mbin;j++){
+				printf("%e ",2*c4[i*nbin*mbin+j]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+
+		for(int i=0;i<nbin*mbin;i++){
+			printf("E3 %2d ",i);
+			for(int j=0;j<nbin*mbin;j++){
+				printf("%e ",4*c3err[i*nbin*mbin+j]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+
+		for(int i=0;i<nbin*mbin;i++){
+			printf("E4 %2d ",i);
+			for(int j=0;j<nbin*mbin;j++){
+				printf("%e ",2*c4err[i*nbin*mbin+j]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+
+		for (int i=0; i<nbin; i++) {
+			printf("N2 %2d ",i);
+			for (int j=0; j<mbin; j++) {
+				printf("%lld ", binct[i*mbin+j]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+
+		for (int i=0; i<nbin*mbin; i++) {
+			printf("N3 %2d ",i);
+			for (int j=0; j<nbin*mbin; j++) {
+				printf("%lld ", binct3[i*nbin*mbin+j]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+
+		for (int i=0; i<nbin*mbin; i++) {
+			printf("N4 %2d ",i);
+			for (int j=0; j<nbin*mbin; j++) {
+				printf("%lld ", binct4[i*nbin*mbin+j]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+
+		fflush(NULL);
+
+	//*/
+	/*
+		printf("\n{");
+		printf("%.0f", xi0[0]);
+		for (int j=1; j<nbin; j++) {
+		    printf(",%.0f", xi0[j]);
+		}
+		printf("}\n");
+	*/
+
+	    }
