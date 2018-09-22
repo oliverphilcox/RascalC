@@ -6,7 +6,8 @@
 
 class Grid {
   public:
-    Float boxsize;   // Size of the periodic volume
+    Float boxsize;   // Size of the periodic volume - DEPRACATED
+    Float3 rect_boxsize; // 3D dimensions of the periodic volume
     int nside, ncells;       // Grid size (per linear and per volume)
     Cell *c;		// The list of cells
     Float cellsize;   // Size of one cell

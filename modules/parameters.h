@@ -9,7 +9,10 @@ public:
 	// Important variables to set!  Here are the defaults:
 	// The periodicity of the position-space cube.
 	Float boxsize = 400;
-
+    
+    // The periodicity of the position-space cuboid in 3D. 
+    Float3 rect_boxsize = {400,400,400};
+    
 	// The particles will be read from the unit cube, but then scaled by boxsize.
 	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
 
@@ -17,7 +20,7 @@ public:
 	Float rmax = 200.0;
 
 	// The minimum radius of the smallest bin.
-	Float rmin = 0.0;
+	Float rmin = 50.0;
 
 	// The maximum mu of the largest bin.
 	Float mumax = 1.0;
@@ -32,7 +35,7 @@ public:
 
 	// The grid size, which should be tuned to match boxsize and rmax.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 21;
+	int nside = 51;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
@@ -49,10 +52,10 @@ public:
 
     // The number of radial bins
     // NB: This doesn't need to be equal to the number in the xi file
-	int nbin = 5;
+	int nbin = 10;
 
     // The number of mu bins
-	int mbin = 3;
+	int mbin = 6;
 
 	// The number of threads to run on
 	int nthread=4;
@@ -83,8 +86,12 @@ public:
 	    if (argc==1) usage();
 	    int i=1;
 	    while (i<argc) {
-		     if (!strcmp(argv[i],"-boxsize")||!strcmp(argv[i],"-box")) boxsize = atof(argv[++i]);
-		else if (!strcmp(argv[i],"-rescale")||!strcmp(argv[i],"-scale")) rescale = atof(argv[++i]);
+		     if (!strcmp(argv[i],"-boxsize")||!strcmp(argv[i],"-box")){
+                 // set cubic boxsize by default
+                Float tmp_box=atof(argv[++i]);
+                rect_boxsize = {tmp_box,tmp_box,tmp_box};
+                }
+        else if (!strcmp(argv[i],"-rescale")||!strcmp(argv[i],"-scale")) rescale = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-rmax")||!strcmp(argv[i],"-max")) rmax = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-rmin")) rmin = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-mumax")) mumax = atof(argv[++i]);
@@ -120,6 +127,10 @@ public:
 		}
 		i++;
 	    }
+	    // compute smallest and largest boxsizes
+	    Float box_min = fmin(fmin(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
+	    Float box_max = fmax(fmax(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
+	    
 	    assert(i==argc);  // For example, we might have omitted the last argument, causing disaster.
 
 	    assert(nside%2!=0); // The probability integrator needs an odd grid size
@@ -127,10 +138,10 @@ public:
 	    assert(mumin>=0); // We take the absolte value of mu
 	    assert(mumax<=1); // mu > 1 makes no sense
 
-	    assert(boxsize>0.0);
+	    assert(box_min>0.0);
 	    assert(rmax>0.0);
 	    assert(nside>0);
-	    if (rescale<=0.0) rescale = boxsize;   // This would allow a unit cube to fill the periodic volume
+	    if (rescale<=0.0) rescale = box_max;   // This would allow a unit cube to fill the periodic volume
 	    if (fname==NULL) fname = (char *) default_fname;   // No name was given
 	    if (corname==NULL) { corname = (char *) default_corname; }//fprintf(stderr,"No correlation file."); return 1;}// No name was given
 
@@ -142,11 +153,11 @@ public:
 
 
 		// Output for posterity
-		printf("Box Size = %6.5e\n", boxsize);
+		printf("Box Size = {%6.5e,%6.5e,%6.5e}\n", rect_boxsize.x,rect_boxsize.y,rect_boxsize.z);
 		printf("Grid = %d\n", nside);
 		printf("Maximum Radius = %6.5e\n", rmax);
-		Float gridsize = rmax/(boxsize/nside);
-		printf("Radius in Grid Units = %6.5e\n", gridsize);
+		Float gridsize = rmax/(box_max/nside);
+		printf("Max Radius in Grid Units = %6.5e\n", gridsize);
 		if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
 		printf("Radial Bins = %d\n", nbin);
 		printf("Radial Binning = {%6.5f, %6.5f, %6.5f}\n",rmin,rmax,(rmax-rmin)/nbin);
@@ -158,7 +169,7 @@ public:
 private:
 	void usage() {
 	    fprintf(stderr, "\nUsage for grid_covariance:\n");
-	    fprintf(stderr, "   -box <boxsize> : If creating particles randomly, this is the periodic size of the computational domain.  Default 400. If reading from file, this is reset dynamically.\n");
+	    fprintf(stderr, "   -box <boxsize> : If creating particles randomly, this is the periodic size of the cubic computational domain.  Default 400. If reading from file, this is reset dynamically creating a cuboidal box.\n");
 	    fprintf(stderr, "   -scale <rescale>: How much to dilate the input positions by.  Default 0.\n");
 	    fprintf(stderr, "             Zero or negative value causes =boxsize, rescaling unit cube to full periodicity\n");
 	    fprintf(stderr, "   -rmax <rmax>: The maximum radius of the largest pair bin.  Default 200.\n");
