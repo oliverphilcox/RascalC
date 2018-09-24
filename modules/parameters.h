@@ -33,7 +33,8 @@ public:
 
 	Float nofznorm=626798;//6684485//681013//672940//674847 629310
 
-	// The grid size, which should be tuned to match boxsize and rmax.
+	// The grid size, which should be tuned to match boxsize and rmax. 
+	// This uses the maximum width of the cuboidal box.
 	// Don't forget to adjust this if changing boxsize!
 	int nside = 51;
 
@@ -174,8 +175,8 @@ private:
 	    fprintf(stderr, "             Zero or negative value causes =boxsize, rescaling unit cube to full periodicity\n");
 	    fprintf(stderr, "   -rmax <rmax>: The maximum radius of the largest pair bin.  Default 200.\n");
 	    fprintf(stderr, "   -xicut <xicutoff>: The radius beyond which xi is set to zero.  Default 1000.\n");
-	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 8.\n");
-	    fprintf(stderr, "             Recommend having several grid cells per rmax.\n");
+	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 50.\n");
+	    fprintf(stderr, "             Recommend having several grid cells per rmax. There are {nside} cells along the longest dimension of the periodic box.\n");
 	    fprintf(stderr, "   -in <file>: The input file (space-separated x,y,z,w).  Default sample.dat.\n");
 	    fprintf(stderr, "   -ran <np>: Ignore any file and use np random perioidic points instead.\n");
 	    fprintf(stderr, "   -norm <nofznorm>: Number of galaxies in the survey. Used to normalize n(z).\n");

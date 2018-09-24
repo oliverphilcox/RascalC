@@ -40,11 +40,11 @@ public:
 
 		//nside=par->nside;
 		//boxside=par->boxsize/nside;
-		boxside=par->boxsize/par->nside;
-//TODO: Fix nside calculation
-		nside=2*ceil(par->xicutoff/boxside)+1;
-
-
+        Float box_max = fmax(fmax(par->rect_boxsize.x,par->rect_boxsize.y),par->rect_boxsize.z);
+        boxside=box_max/par->nside;
+        //TODO: Fix nside calculation
+		nside=2*ceil(par->xicutoff/boxside)+1; // define grid of nside up to the maximum xi cut off scale (cubic grid)
+        
 //		celln=std::uniform_real_distribution<double>(0.,1.);
 
 		// If precalculated grid has been saved, load it
@@ -105,7 +105,7 @@ public:
 		nsidecube = 2 * maxsep + 1;
 		long nn=0;
 
-		integData(&xcube,&nn,f,nsidecube,boxside,1./2.);
+        integData(&xcube,&nn,f,nsidecube,boxside,1./2.);
 
 		// Set up actual sampler
 		cube = ransampl_alloc( nn );
@@ -147,7 +147,7 @@ public:
 
 		// Undo 1d back to 3-d indexing
 		integer3 cubifyindex(int nside,int n){
-
+            
 			assert(n>=0&&n<pow(nside,3));
 
 			// printf("Cell ID: %d ", n);

@@ -11,8 +11,10 @@ class Grid {
     int nside, ncells;       // Grid size (per linear and per volume)
     Cell *c;		// The list of cells
     Float cellsize;   // Size of one cell
+    Float max_boxsize; // largest dimension of the cuboid box
     Particle *p;	// Pointer to the list of particles
     int np;		// Number of particles
+    integer3 nside_cuboid; // number of cells along each dimension of cuboidal box
     int np_pos;		// Number of particles
     int *pid;		// The original ordering
     int *filled; //List of filled cells
@@ -23,8 +25,8 @@ class Grid {
     int test_cell(integer3 cell){
     	// returns -1 if cell is outside the grid or wraps around for the periodic grid
 #ifndef PERIODIC
-    	if(nside<cell.x||cell.x<0||nside<cell.y||cell.y<0||nside<cell.z||cell.z<0)
-    		return -1;
+    	if(nside_cuboid.x<cell.x||cell.x<0||nside_cuboid.y<cell.y||cell.y<0||nside_cuboid.z<cell.z||cell.z<0)
+            return -1;
     	else
 #endif
     		return wrap_cell(cell);
@@ -34,11 +36,11 @@ class Grid {
         // Return the 1-d cell number, after wrapping
 	// We apply a very large bias, so that we're
 	// guaranteed to wrap any reasonable input.
-	int cx = (cell.x+ncells)%nside;
-	int cy = (cell.y+ncells)%nside;
-	int cz = (cell.z+ncells)%nside;
+    int cx = (cell.x+ncells)%nside_cuboid.x;
+	int cy = (cell.y+ncells)%nside_cuboid.y;
+	int cz = (cell.z+ncells)%nside_cuboid.z;
 	// return (cx*nside+cy)*nside+cz;
-	int answer = (cx*nside+cy)*nside+cz;
+	int answer = (cx*nside_cuboid.y+cy)*nside_cuboid.z+cz;
 	assert(answer<ncells&&answer>=0);
 	/* printf("Cell: %d %d %d -> %d %d %d -> %d\n",
 	    cell.x, cell.y, cell.z, cx, cy, cz, answer); */
@@ -50,10 +52,10 @@ class Grid {
         assert(n>=0&&n<ncells);
 	// printf("Cell ID: %d ", n);
 	integer3 cid;
-	cid.z = n%nside;
-	n = n/nside;
-	cid.y = n%nside;
-	cid.x = n/nside;
+	cid.z = n%nside_cuboid.z;
+	n = n/nside_cuboid.z;
+	cid.y = n%nside_cuboid.y;
+	cid.x = n/nside_cuboid.y;
 	// printf("-> %d %d %d\n", cid.x, cid.y, cid.z);
 	return cid;
     }
@@ -84,41 +86,55 @@ class Grid {
 	return;
     }
 
-    Grid(Particle *input, int _np, Float _boxsize, int _nside, Float3 shift) {
+    Grid(Particle *input, int _np, Float3 _rect_boxsize, int _nside, Float3 shift) {
 	// The constructor: the input set of particles is copied into a
 	// new list, which is ordered by cell.
 	// After this, Grid is self-sufficient; one could discard *input
-    boxsize = _boxsize;
+    rect_boxsize = _rect_boxsize;
 	nside = _nside;
 	assert(nside<1025);   // Can't guarantee won't spill int32 if bigger
-	ncells = nside*nside*nside;
 	np = _np;
 	np_pos = 0;
-	assert(boxsize>0&&nside>0&&np>=0);
-	cellsize = boxsize/nside;
-
+    max_boxsize=fmax(rect_boxsize.x,fmax(rect_boxsize.y,rect_boxsize.z));
+	assert(max_boxsize>0&&nside>0&&np>=0);
+	cellsize = max_boxsize/nside;
+    nside_cuboid = integer3(ceil3(rect_boxsize/cellsize));
+    ncells = nside_cuboid.x*nside_cuboid.y*nside_cuboid.z;
+        
 	p = (Particle *)malloc(sizeof(Particle)*np);
 	pid = (int *)malloc(sizeof(int)*np);
 	c = (Cell *)malloc(sizeof(Cell)*ncells);
 
 	// Now we want to copy the particles, but do so into grid order.
-
-	// First, figure out the cell for each particle
+    // First, figure out the cell for each particle
 	// Shift them to the primary volume first
 	int *cell = (int *)malloc(sizeof(int)*np);
 	for (int j=0; j<np; j++) cell[j] = pos_to_cell(input[j].pos - shift);
 
+    /* testing
+    for (int j=0; j<10; j++){
+        Float3 tmp=input[j].pos-shift;
+        printf("position: %.2f %.2f %.2f\n",tmp.x,tmp.y,tmp.z);
+        printf("cell number: %d\n",cell[j]);
+        printf("cellsize: %.2f", cellsize);
+    }
+    */
+    
 	// Histogram the number of particles in each cell
 	int *incell = (int *)malloc(sizeof(int)*ncells);
 	for (int j=0; j<ncells; j++) incell[j] = 0.0;
 	for (int j=0; j<np; j++) incell[cell[j]]++;
 
+    //for (int j=0; j<ncells; j=j+100) printf("In cell %d there are %d particles\n",j,incell[j]);
+    
 	// Create list of filled cells
 	nf=0;
 	for (int j=0; j<ncells; j++) if(incell[j]>0) nf++;
 	filled = (int *)malloc(sizeof(int)*nf);
 	for (int j=0,k=0; j<ncells; j++) if(incell[j]>0) filled[k++]=j;
 
+    printf("\nThere are %d filled cells compared with %d total cells.\n",nf,ncells);
+    
 	// Count the number of positively weighted particles
 	sumw_pos = sumw_neg = 0.0;
 	for (int j=0; j<np; j++)

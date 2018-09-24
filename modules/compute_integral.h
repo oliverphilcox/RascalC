@@ -591,9 +591,11 @@ void compute_integral(Grid *grid, Parameters *par) {
     		(double)acc2/cnt2, (double)acc3/cnt3, (double)acc4/cnt4);
     printf("# Average of %f pairs per primary particle.\n",
     		(Float)cnt2/grid->np);
-    float x = par->rmax/grid->boxsize;
-    float expected = grid->np * (4*M_PI/3.0)*grid->np*x*x*x;
-    printf("# In a periodic box we would expect %1.0f pairs, off by a factor %f.\n", expected, cnt2/expected);
+    float x1 = par->rmax/grid->rect_boxsize.x;
+    float x2 = par->rmax/grid->rect_boxsize.y;
+    float x3 = par->rmax/grid->rect_boxsize.z;
+    float expected = grid->np * (4*M_PI/3.0)*grid->np*x1*x2*x3;
+    printf("# In a periodic cuboid box we would expect %1.0f pairs, off by a factor %f.\n", expected, cnt2/expected);
 
 //  Print the result
 #ifndef NOPRINT

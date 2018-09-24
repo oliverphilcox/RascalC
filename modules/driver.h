@@ -6,14 +6,14 @@
 
 // ====================  The Driver ===========================
 
-Particle *make_particles(Float boxsize, int np) {
+Particle *make_particles(Float3 rect_boxsize, int np) {
     // Make np random particles
     srand48(1);      // For reproducibility
     Particle *p = (Particle *)malloc(sizeof(Particle)*np);
     for (int j=0; j<np; j++) {
-        p[j].pos.x = drand48()*boxsize;
-        p[j].pos.y = drand48()*boxsize;
-        p[j].pos.z = drand48()*boxsize;
+        p[j].pos.x = drand48()*rect_boxsize.x;
+        p[j].pos.y = drand48()*rect_boxsize.y;
+        p[j].pos.z = drand48()*rect_boxsize.z;
         p[j].w = 1.0;
     }
     printf("# Done making %d random particles, periodically distributed.\n", np);
@@ -23,7 +23,7 @@ Particle *make_particles(Float boxsize, int np) {
 Particle *read_particles(Float rescale, int *np, const char *filename, const int rstart, uint64 nmax) {
     // This will read particles from a file, space-separated x,y,z,w,JK for weight w, jackknife region JK
     // Particle positions will be rescaled by the variable 'rescale'.
-    // For example, if rescale==boxsize, then inputing the unit cube will cover the periodic volume
+    // For example, if rescale==boxsize, then inputting the unit cube will cover the periodic volume
     char line[1000];
     int j=0,n=0;
     FILE *fp;
@@ -81,8 +81,8 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
     return p;
 }
 
-bool compute_bounding_box(Particle *p, int np, Float &boxsize, Float rmax, Float3& pmin) {
-    // Compute the boxsize of the bounding box and determine whether we are periodic
+bool compute_bounding_box(Particle *p, int np, Float3 &rect_boxsize, Float rmax, Float3& pmin, int nside) {
+    // Compute the boxsize of the bounding cuboid box and determine whether we are periodic
     Float3 pmax;
     bool box=false;
     pmin.x = pmin.y = pmin.z = 1e30;
@@ -110,8 +110,8 @@ bool compute_bounding_box(Particle *p, int np, Float &boxsize, Float rmax, Float
     	printf("#\n# WARNING: cubic input detected but you have not compiled with PERIODIC flag!\n#\n");
 #endif
         // Set boxsize to be the biggest dimension which allows for periodic overlap
-        boxsize = biggest;
-        printf("# Setting periodic box-size to %6.2f\n", boxsize);
+        rect_boxsize= {biggest,biggest,biggest};
+        printf("# Setting periodic box-size to %6.2f\n", biggest);
     } else {
         // Probably a non-periodic input (e.g. a real dataset)
         box=false;
@@ -119,11 +119,14 @@ bool compute_bounding_box(Particle *p, int np, Float &boxsize, Float rmax, Float
     	fprintf(stderr,"#\n# WARNING: non-cubic input detected but you have compiled with PERIODIC flag!\n#\n");
     	printf("#\n# WARNING: non-cubic input detected but you have compiled with PERIODIC flag!\n#\n");
 #endif
-        // set boxsize to just enclose the biggest dimension plus r_max 
+        // set max_boxsize to just enclose the biggest dimension plus r_max 
         // NB: We natively wrap the grid (to allow for any position of the center of the grid)
         // Must add rmax to biggest to ensure there is no periodic overlap in this case.
-        boxsize = 1.05*(biggest+rmax);
-        printf("# Setting non-periodic box-size to %6.2f\n", boxsize);
+        Float max_boxsize = 1.05*(biggest+rmax);
+        Float cellsize = max_boxsize/nside; // compute the width of each cell
+        // Now compute the size of the box in every dimension
+        rect_boxsize = ceil3(prange/cellsize)*cellsize; // to ensure we fit an integer number of cells in each direction
+        printf("# Setting non-periodic box-size to {%6.2f,%6.2f,%6.2f}\n", rect_boxsize.x,rect_boxsize.y,rect_boxsize.z);
 	}
     return box;
 }
