@@ -8,6 +8,11 @@ Float3 floor3(float3 p) {
     return Float3(floor(p.x), floor(p.y), floor(p.z));
 }
 
+// we need a vector ceil3 function
+Float3 ceil3(float3 p) {
+    return Float3(ceil(p.x), ceil(p.y), ceil(p.z));
+}
+
 // =================== Particles ====================
 // This is the info about each particle that we load in and store in the Grid.
 

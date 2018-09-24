@@ -86,12 +86,12 @@ int main(int argc, char *argv[]) {
     if (!par.make_random){
         orig_p = read_particles(par.rescale, &par.np, par.fname, par.rstart, par.nmax);
         assert(par.np>0);
-        par.perbox = compute_bounding_box(orig_p, par.np, par.boxsize, par.rmax, shift);
+        par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.rmax, shift, par.nside);
     } else {
     // If you want to just make random particles instead:
 	assert(par.np>0);
-	assert(par.boxsize==par.rescale);    // Nonsense if not!
-	orig_p = make_particles(par.boxsize, par.np);
+	//assert(par.boxsize==par.rescale);    // Nonsense if not!
+	orig_p = make_particles(par.rect_boxsize, par.np);
     // set as periodic if we make the random particles
     par.perbox = true;
     }
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
 
     // Now ready to compute!
     // Sort the particles into the grid.
-    Grid grid(orig_p, par.np, par.boxsize, par.nside, shift);
+    Grid grid(orig_p, par.np, par.rect_boxsize, par.nside, shift);
 
     Float grid_density = (double)par.np/grid.nf;//pow(par.nside,3);
     printf("Average number of particles per grid cell = %6.2f\n", grid_density);
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     printf("Average number of particles per max_radius ball = %6.2f\n",
-    		par.np*4.0*M_PI/3.0*pow(par.rmax/par.boxsize,3.0));
+    		par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
     if (grid_density<1){
         printf("#\n# WARNING: grid appears inefficiently fine.\n#\n");
         exit(1);
