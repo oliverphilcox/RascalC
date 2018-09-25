@@ -15,7 +15,9 @@ Particle *make_particles(Float3 rect_boxsize, int np) {
         p[j].pos.y = drand48()*rect_boxsize.y;
         p[j].pos.z = drand48()*rect_boxsize.z;
         p[j].w = 1.0;
+        p[j].JK = 0.;
     }
+    fprintf(stderr,"# WARNING - Jackknife regions are not yet implemented for particles made at random. All particles are assigned to the same region.\n");
     printf("# Done making %d random particles, periodically distributed.\n", np);
     return p;
 }

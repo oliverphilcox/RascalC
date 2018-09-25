@@ -81,6 +81,15 @@ public:
 	const char default_corname[500] = "xi_functions/QPM_Mash.xi";
 	//"../grid_multipoles_own/PatchySkyCorrSingle361.xi"//PatchySkyCorrMean.xi//QPMCorrMean.xi//QPMExtrapolated.xi//"QPM_D_ngc_rsd_fix3.xi"
 
+    // NEW PARAMETERS FOR NEW COMPUTE_INTEGRAL
+    
+    // Maximum number of iterations to compute the C_ab integrals over
+    int max_loops=10; 
+    int N2 = 10; // number of j cells per i cell
+    int N3 = 10; // number of k cells per j cell
+    int N4 = 10; // number of l cells per k cell
+    
+    
 	// Constructor
 	Parameters(int argc, char *argv[]){
 
