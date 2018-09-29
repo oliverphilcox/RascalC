@@ -140,6 +140,12 @@ int main(int argc, char *argv[]) {
     fflush(NULL);
 
     // Everything above here takes negligible time.  This line is nearly all of the work.
+    printf("\n\nRunning Test Class\n\n");
+#include "modules/compute_integral3.h"
+    compute_integral3(&grid,&par);
+    printf("\n\nTest Class Complete\n\n");
+    exit(1);
+
     compute_integral(&grid,&par);
 
     rusage ru;

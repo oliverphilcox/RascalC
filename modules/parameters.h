@@ -84,7 +84,7 @@ public:
     // NEW PARAMETERS FOR NEW COMPUTE_INTEGRAL
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=10; 
+    int max_loops=100; 
     int N2 = 10; // number of j cells per i cell
     int N3 = 10; // number of k cells per j cell
     int N4 = 10; // number of l cells per k cell
@@ -160,7 +160,6 @@ public:
 #else
 		nthread=1;
 #endif
-
 
 		// Output for posterity
 		printf("Box Size = {%6.5e,%6.5e,%6.5e}\n", rect_boxsize.x,rect_boxsize.y,rect_boxsize.z);
