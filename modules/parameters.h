@@ -82,7 +82,7 @@ public:
 	//"../grid_multipoles_own/PatchySkyCorrSingle361.xi"//PatchySkyCorrMean.xi//QPMCorrMean.xi//QPMExtrapolated.xi//"QPM_D_ngc_rsd_fix3.xi"
 
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=200; 
+    int max_loops=100; 
     int N2 = 10; // number of j cells per i cell
     int N3 = 10; // number of k cells per j cell
     int N4 = 10; // number of l cells per k cell
