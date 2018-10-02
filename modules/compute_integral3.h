@@ -171,7 +171,7 @@ public:
                 for (int n2=0; n2<par->N2; n2++){
                     
                     // Draw second cell from i weighted by 1/r^2
-                    integer3 delta2 = rd->random_cubedraw(&p2); 
+                    integer3 delta2 = rd->random_cubedraw(locrng, &p2); 
                     integer3 sec_id = prim_id + delta2;
                     Float3 cell_sep2 = grid->cell_sep(delta2);
                     int x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid, locrng);
@@ -202,7 +202,7 @@ public:
                         // LOOP OVER N4 L CELLS
                         for (int n4=0; n4<par->N4; n4++){
                             // Draw fourth cell from k cell weighted by 1/r^2
-                            integer3 delta4 = rd->random_cubedraw(&p4);
+                            integer3 delta4 = rd->random_cubedraw(locrng, &p4);
                             int x = draw_particle(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid, locrng);
                             if(x==1) continue;
                             p4*=p3;
@@ -225,20 +225,23 @@ public:
                 //TODO: Fix this calculation
                 fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
                 
-                    
                 TotalTime.Start(); // Restart the timer
-            }
-            
-            // add the cycle integral to the total integral so far
-            if (n_loops%par->nthread==0){
-                Float frob_RR, frob_C2, frob_C3, frob_C4;
-                sumint.frobenius_difference_sum(&locint,cnt2, cnt3, cnt4, frob_RR, frob_C2, frob_C3, frob_C4);
-                fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (RR), %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_RR, frob_C2, frob_C3, frob_C4);
+                Float frob_C2, frob_C3, frob_C4;
+                sumint.frobenius_difference_sum(&locint,frob_C2, frob_C3, frob_C4);
+                fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
                 if (frob_C4<1) convergence_counter++;
+                
             }
             else{
                 sumint.sum_ints(&locint); 
             }
+            // Save output after each loop
+            char output_string[50];
+            sprintf(output_string,"%d", n_loops);
+            
+            locint.normalize(grid->np,par->nofznorm,par->N2, par->N3, par->N4);
+            locint.save_integrals(output_string);
+            
             locint.sum_total_counts(cnt2, cnt3, cnt4); 
             locint.reset();
         }
@@ -278,7 +281,9 @@ public:
      
      printf("\nINTEGRALS NOT YET NORMALIZED PROPERLY!!\n");
      
-     sumint.save_integrals(); // save integrals to file
+     char out_string[5];
+     sprintf(out_string,"full");
+     sumint.save_integrals(out_string); // save integrals to file
      fflush(NULL);
      return;
      }
