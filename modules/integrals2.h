@@ -244,46 +244,31 @@ public:
         }
     }
     
-    void frobenius_difference_sum(Integrals2* ints, const uint64 old_cnt2, const uint64 old_cnt3, const uint64 old_cnt4,Float &frobRR,Float &frobC2, Float &frobC3, Float &frobC4){
+    void frobenius_difference_sum(Integrals2* ints, Float &frobC2, Float &frobC3, Float &frobC4){
         // Add the values accumulated in ints to the corresponding internal sums and compute the Frobenius norm difference between integrals
-        Float self_Ra=0, diff_Ra=0; //Frobenius norms
         Float self_c2=0, diff_c2=0;
         Float self_c3=0, diff_c3=0;
         Float self_c4=0, diff_c4=0;
-        uint64 new_cnt2, new_cnt3, new_cnt4;
-        new_cnt2=old_cnt2; // Additional pair/triple/quad counts
-        new_cnt3=old_cnt3,
-        new_cnt4=old_cnt4;
-        
-        // Count extra number of counts in integrals
-        ints->sum_total_counts(new_cnt2, new_cnt3, new_cnt4);
         
         // Compute Frobenius norms
         for(int i=0;i<nbin*mbin;i++){
-            Float factor_1=(1./(Float)new_cnt2-1./(Float)old_cnt2);
-            self_Ra+=pow(Ra[i]/(Float)new_cnt2,2.);
-            self_c2+=pow(c2[i]/(Float)new_cnt2,2.);
-            diff_Ra+=pow(Ra[i]*factor_1+ints->Ra[i]/(Float)new_cnt2,2.);
-            diff_c2+=pow(c2[i]*factor_1+ints->c2[i]/(Float)new_cnt2,2.);
-            c2[i]+=ints->c2[i];
-            Ra[i]+=ints->Ra[i];
-            binct[i]+=ints->binct[i];
+            self_c2+=pow(c2[i]/(Ra[i]*Ra[i]),2.);
+            diff_c2+=pow(c2[i]/(Ra[i]*Ra[i])-(c2[i]+ints->c2[i])/pow(Ra[i]+ints->Ra[i],2.),2.);
             
             for(int j=0;j<nbin*mbin;j++){
-                Float factor_3=(1./(Float)new_cnt3-1./(Float)old_cnt3);
-                Float factor_4=(1./(Float)new_cnt4-1./(Float)old_cnt4);
+                self_c4+=pow(c4[i*nbin*mbin+j]/(Ra[i]*Ra[j]),2.);
+                diff_c4+=pow(c4[i*nbin*mbin+j]/(Ra[i]*Ra[j])-(c4[i*nbin*mbin+j]+ints->c4[i*nbin*mbin+j])/((Ra[j]+ints->Ra[j])*(Ra[i]+ints->Ra[i])),2.);
+                self_c3+=pow(c3[i*nbin*mbin+j]/(Ra[i]*Ra[j]),2.);
+                diff_c3+=pow(c3[i*nbin*mbin+j]/(Ra[i]*Ra[j])-(c3[i*nbin*mbin+j]+ints->c3[i*nbin*mbin+j])/((Ra[j]+ints->Ra[j])*(Ra[i]+ints->Ra[i])),2.);
                 c3[i*nbin*mbin+j]+=ints->c3[i*nbin*mbin+j];
                 c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
                 binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
                 binct4[i*nbin*mbin+j]+=ints->binct4[i*nbin*mbin+j];
-                self_c3+=pow(c3[i*nbin*mbin+j]/(Float)new_cnt3,2.);
-                self_c4+=pow(c4[i*nbin*mbin+j]/(Float)new_cnt4,2.);
-                diff_c3+=pow(c3[i*nbin*mbin+j]*factor_3+ints->c3[i*nbin*mbin+j]/(Float)new_cnt3,2.);
-                diff_c4+=pow(c4[i*nbin*mbin+j]*factor_4+ints->c4[i*nbin*mbin+j]/(Float)new_cnt4,2.);
-            }
+            c2[i]+=ints->c2[i];
+            binct[i]+=ints->binct[i];
+            Ra[i]+=ints->Ra[i];
         }
-        self_Ra=sqrt(self_Ra);
-        diff_Ra=sqrt(diff_Ra);
+            }
         self_c2=sqrt(self_c2);
         diff_c2=sqrt(diff_c2);
         diff_c3=sqrt(diff_c3);
@@ -292,7 +277,6 @@ public:
         self_c4=sqrt(self_c4);
         
         // Return percent difference
-        frobRR=100.*(diff_Ra/self_Ra);
         frobC2=100.*(diff_c2/self_c2);
         frobC3=100.*(diff_c3/self_c3);
         frobC4=100.*(diff_c4/self_c4);
@@ -315,8 +299,6 @@ public:
         // n2,3,4 are number of pair/triple/quad cells used
         double corrf = (double)np/ngal; // Correction factor for the different densities of random points
         
-        printf("NOT YET NORMALIZED CORRECTLY!!");
-        
         for(int i = 0; i<nbin*mbin;i++){
             Ra[i]/=((Float)n2*corrf*corrf);
             c2[i]/=(Ra[i]*Ra[i]*(Float)n2*corrf*corrf);
@@ -328,19 +310,19 @@ public:
     }
         
     
-    void save_integrals() {
+    void save_integrals(char* suffix) {
     /* Print integral outputs to file. 
         * In txt files {c2,c3,c4,RR}_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 and RR_a that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
         */
         // Create output files
         char c2name[1000];
-        snprintf(c2name, sizeof c2name, "CovMatrices/c2_n%d_m%d.txt", nbin, mbin);
+        snprintf(c2name, sizeof c2name, "CovMatricesAll/c2_n%d_m%d_%s.txt", nbin, mbin,suffix);
         char c3name[1000];
-        snprintf(c3name, sizeof c3name, "CovMatrices/c3_n%d_m%d.txt", nbin, mbin);
+        snprintf(c3name, sizeof c3name, "CovMatricesAll/c3_n%d_m%d_%s.txt", nbin, mbin, suffix);
         char c4name[1000];
-        snprintf(c4name, sizeof c4name, "CovMatrices/c4_n%d_m%d.txt", nbin, mbin);
+        snprintf(c4name, sizeof c4name, "CovMatricesAll/c4_n%d_m%d_%s.txt", nbin, mbin, suffix);
         char RRname[1000];
-        snprintf(RRname, sizeof RRname, "CovMatrices/RR_n%d_m%d.txt", nbin, mbin);
+        snprintf(RRname, sizeof RRname, "CovMatricesAll/RR_n%d_m%d_%s.txt", nbin, mbin, suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
@@ -358,7 +340,8 @@ public:
             fprintf(C3File,"\n"); // new line each end of row
             fprintf(C4File,"\n");
         }
-        printf("Printed output to file in the CovMatrices/ directory");            
+        fflush(NULL);
+        //printf("Printed output to file in the CovMatricesAll/ directory\n");            
     }
       
 };
