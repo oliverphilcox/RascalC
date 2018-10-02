@@ -284,6 +284,9 @@ public:
      char out_string[5];
      sprintf(out_string,"full");
      sumint.save_integrals(out_string); // save integrals to file
+     printf("Printed integrals to file in the CovMatricesAll/ directory\n");
+     sumint.save_jackknife_integrals(out_string);
+     printf("Printed jackknife integrals to file in the CovMatricesJack/ directory\n");
      fflush(NULL);
      return;
      }

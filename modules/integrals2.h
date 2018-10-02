@@ -14,6 +14,7 @@ private:
     int nbin, mbin;
     Float rmin,rmax,mumin,mumax,dr,dmu; //Ranges in r and mu
     Float *Ra, *c2, *c3, *c4; // Arrays to accumulate integrals
+    Float *cxj, *c2j, *c3j, *c4j; // Arrays to accumulate jackknife integrals
     
     bool box,rad; // Flags to decide whether we have a periodic box and if we have a radial correlation function only
     
@@ -35,7 +36,12 @@ public:
         ec+=posix_memalign((void **) &c2, PAGE, sizeof(double)*nbin*mbin);
         ec+=posix_memalign((void **) &c3, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &c4, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
-
+        
+        ec+=posix_memalign((void **) &c2j, PAGE, sizeof(double)*nbin*mbin);
+        ec+=posix_memalign((void **) &c3j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        ec+=posix_memalign((void **) &c4j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        ec+=posix_memalign((void **) &cxj, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        
         ec+=posix_memalign((void **) &binct, PAGE, sizeof(uint64)*nbin*mbin);
         ec+=posix_memalign((void **) &binct3, PAGE, sizeof(uint64)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &binct4, PAGE, sizeof(uint64)*nbin*mbin*nbin*mbin);
@@ -64,6 +70,10 @@ public:
         free(c2);
         free(c3);
         free(c4);
+        free(cxj);
+        free(c2j);
+        free(c3j);
+        free(c4j);
         free(binct);
         free(binct3);
         free(binct4);
@@ -74,11 +84,15 @@ public:
         for (int j=0; j<nbin*mbin; j++) {
             Ra[j] = 0;
             c2[j] = 0;
+            c2j[j] = 0;
             binct[j] = 0;
         }
         for (int j=0; j<nbin*mbin*nbin*mbin; j++) {
             c3[j]=0;
             c4[j]=0;
+            c3j[j]=0;
+            c4j[j]=0;
+            cxj[j] = 0;
             binct3[j] = 0;
             binct4[j] = 0;
         }
@@ -93,7 +107,7 @@ public:
         // Accumulates the two point integral C2. Also outputs an array of xi_ij and bin values for later reuse.
         
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
-                Float rij_mag,rij_mu, rav, c2v;
+                Float rij_mag,rij_mu, rav, c2v, c2vj;
                 Particle pi = pi_list[i]; // first particle
                 
                 if(prim_ids[i]==pj_id){
@@ -118,12 +132,14 @@ public:
                 wij[i] = tmp_weight;
                 
                 // Now compute the integral:
+                c2vj = tmp_weight*tmp_weight*(1.+tmp_xi)/prob;
                 c2v = tmp_weight*tmp_weight*(1.+tmp_xi) / prob; // c2 contribution
                 rav = tmp_weight / prob; // RR_a contribution
                 
                 // Add to local integral counts:
                 Ra[tmp_bin]+=rav;
                 c2[tmp_bin]+=c2v;
+                c2j[tmp_bin]+=c2vj;
                 binct[tmp_bin]++;
         }
     }
@@ -133,7 +149,7 @@ public:
         
         for(int i=0;i<pln;i++){ // Iterate ovr particle in pi_list
             Particle pi = pi_list[i];
-            Float rik_mag,rik_mu,c3v,rjk_mag, rjk_mu;
+            Float rik_mag,rik_mu,c3v,c3vj,rjk_mag, rjk_mu;
             if(wij[i]==-1){
                 wijk[i]=-1;
                 continue; // skip incorrect bins / ij self counts
@@ -166,10 +182,12 @@ public:
             
             // Now compute the integral;
             c3v = tmp_weight*pi.w/prob*xi_jk_tmp;
+            c3vj = tmp_weight*pi.w/prob*xi_jk_tmp;
             
             // Add to local counts
             int tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c3[tmp_full_bin]+=c3v;
+            c3j[tmp_full_bin]+=c3vj;
             binct3[tmp_full_bin]++;
         }
     }
@@ -179,7 +197,7 @@ public:
         
         for(int i=0;i<pln;i++){ // Iterate ovr particle in pi_list
             Particle pi = pi_list[i];
-            Float ril_mag,ril_mu,rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v;
+            Float ril_mag,ril_mu,rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, c4vj, cxvj;
             if(wijk[i]==-1) continue; // skip incorrect bins / ij self counts
             
             if((prim_ids[i]==pl_id)||(pj_id==pl_id)||(pk_id==pl_id)) continue; // don't self-count
@@ -198,10 +216,14 @@ public:
             
             // Now compute the integral;
             c4v = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
+            c4vj = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
+            cxvj = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
             
             // Add to local counts
             int tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c4[tmp_full_bin]+=c4v;
+            c4j[tmp_full_bin]+=c4vj;
+            cxj[tmp_full_bin]+=cxvj;
             binct4[tmp_full_bin]++;
         }
     }
@@ -232,12 +254,16 @@ public:
         for(int i=0;i<nbin*mbin;i++){
             Ra[i]+=ints->Ra[i];
             c2[i]+=ints->c2[i];
+            c2j[i]+=ints->c2j[i];
             binct[i]+=ints->binct[i];
         }
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
                 c3[i*nbin*mbin+j]+=ints->c3[i*nbin*mbin+j];
+                c3j[i*nbin*mbin+j]+=ints->c3j[i*nbin*mbin+j];
                 c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
+                c4j[i*nbin*mbin+j]+=ints->c4j[i*nbin*mbin+j];
+                cxj[i*nbin*mbin+j]+=ints->cxj[i*nbin*mbin+j];
                 binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
                 binct4[i*nbin*mbin+j]+=ints->binct4[i*nbin*mbin+j];
             }
@@ -264,11 +290,16 @@ public:
                 c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
                 binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
                 binct4[i*nbin*mbin+j]+=ints->binct4[i*nbin*mbin+j];
+            }
             c2[i]+=ints->c2[i];
             binct[i]+=ints->binct[i];
+        }
+        
+        // Now update Ra values (must be separate from above calculation)
+        for(int i=0;i<nbin*mbin;i++){
             Ra[i]+=ints->Ra[i];
         }
-            }
+        
         self_c2=sqrt(self_c2);
         diff_c2=sqrt(diff_c2);
         diff_c3=sqrt(diff_c3);
@@ -302,9 +333,13 @@ public:
         for(int i = 0; i<nbin*mbin;i++){
             Ra[i]/=((Float)n2*corrf*corrf);
             c2[i]/=(Ra[i]*Ra[i]*(Float)n2*corrf*corrf);
+            c2j[i]/=(Ra[i]*Ra[i]*(Float)n2*corrf*corrf);
             for(int j=0;j<nbin*mbin;j++){
                 c3[i*nbin*mbin+j]/=((Float)n2*(Float)n3*Ra[i]*Ra[j]*pow(corrf,3));
                 c4[i*nbin*mbin+j]/=((Float)n2*(Float)n3*(Float)n4*Ra[i]*Ra[j]*pow(corrf,4));
+                c3j[i*nbin*mbin+j]/=((Float)n2*(Float)n3*Ra[i]*Ra[j]*pow(corrf,3));
+                c4j[i*nbin*mbin+j]/=((Float)n2*(Float)n3*(Float)n4*Ra[i]*Ra[j]*pow(corrf,4));
+                cxj[i*nbin*mbin+j]/=((Float)n2*(Float)n3*(Float)n4*Ra[i]*Ra[j]*pow(corrf,4));
             }
         }
     }
@@ -341,9 +376,44 @@ public:
             fprintf(C4File,"\n");
         }
         fflush(NULL);
-        //printf("Printed output to file in the CovMatricesAll/ directory\n");            
+                    
     }
-      
+
+    
+    void save_jackknife_integrals(char* suffix) {
+    /* Print jackknife integral outputs to file. 
+        * In txt files {c2,c3,c4,RR}_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 and RR_a that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
+        */
+        // Create output files
+        char c2name[1000];
+        snprintf(c2name, sizeof c2name, "CovMatricesJack/c2j_n%d_m%d_%s.txt", nbin, mbin,suffix);
+        char c3name[1000];
+        snprintf(c3name, sizeof c3name, "CovMatricesJack/c3j_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        char c4name[1000];
+        snprintf(c4name, sizeof c4name, "CovMatricesJack/c4j_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        char cxname[1000];
+        snprintf(cxname, sizeof cxname, "CovMatricesJack/cxj_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
+        FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
+        FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
+        FILE * CXFile = fopen(cxname,"w"); // for RR part of integral
+        
+        for (int j=0;j<nbin*mbin;j++){
+            fprintf(C2File,"%le\n",c2j[j]);
+        }
+        for(int i=0;i<nbin*mbin;i++){
+            for(int j=0;j<nbin*mbin;j++){
+                fprintf(C3File,"%le\t",c3j[i*nbin*mbin+j]);
+                fprintf(C4File,"%le\t",c4j[i*nbin*mbin+j]);
+                fprintf(CXFile,"%le\t",cxj[i*nbin*mbin+j]);
+            }
+            fprintf(C3File,"\n"); // new line each end of row
+            fprintf(C4File,"\n");
+            fprintf(CXFile,"\n");
+        }
+        fflush(NULL);
+    }
+
 };
 
 #endif
