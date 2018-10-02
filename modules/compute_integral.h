@@ -149,7 +149,8 @@ void compute_integral(Grid *grid, Parameters *par) {
 // ---- Initialize correlation function and selection grid ----
     STimer initial;
     initial.Start();
-
+    
+    gsl_rng_env_setup();
     CorrelationFunction *cf=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin);
 	RandomDraws *rd=new RandomDraws(cf,par, NULL, 0);
     Integrals sumint(par,cf);
@@ -169,8 +170,7 @@ void compute_integral(Grid *grid, Parameters *par) {
 
     TotalTime.Start();
 
-    gsl_rng_env_setup();
-
+    
 #ifdef OPENMP
 	cpu_set_t mask[par->nthread+1];
 	int tnum=0;

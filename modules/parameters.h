@@ -81,8 +81,6 @@ public:
 	const char default_corname[500] = "xi_functions/QPM_Mash.xi";
 	//"../grid_multipoles_own/PatchySkyCorrSingle361.xi"//PatchySkyCorrMean.xi//QPMCorrMean.xi//QPMExtrapolated.xi//"QPM_D_ngc_rsd_fix3.xi"
 
-    // NEW PARAMETERS FOR NEW COMPUTE_INTEGRAL
-    
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=100; 
     int N2 = 10; // number of j cells per i cell
@@ -101,6 +99,7 @@ public:
                 Float tmp_box=atof(argv[++i]);
                 rect_boxsize = {tmp_box,tmp_box,tmp_box};
                 }
+        else if (!strcmp(argv[i],"-maxloops")||!strcmp(argv[i],"-loops")) max_loops = atof(argv[++i]);
         else if (!strcmp(argv[i],"-rescale")||!strcmp(argv[i],"-scale")) rescale = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-rmax")||!strcmp(argv[i],"-max")) rmax = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-rmin")) rmin = atof(argv[++i]);
@@ -173,6 +172,7 @@ public:
 		printf("Mu Bins = %d\n", mbin);
 		printf("Mu Binning = {%6.5f, %6.5f, %6.5f}\n",mumin,mumax,(mumax-mumin)/mbin);
 		printf("Density Normalization = %6.5e\n",nofznorm);
+        printf("Maximum number of integration loops = %d\n",max_loops);
 
 	}
 private:
@@ -201,6 +201,7 @@ private:
 	    fprintf(stderr, "    -load <filename>: Triggers option to load the probability grid\n");
 	    fprintf(stderr, "    -balance: Rescale the negative weights so that the total weight is zero.\n");
 	    fprintf(stderr, "    -invert: Multiply all the weights by -1.\n");
+        fprintf(stderr, "    -loops: Maximum number of integral loops\n");
 
 
 	    exit(1);

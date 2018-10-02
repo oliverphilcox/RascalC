@@ -18,7 +18,6 @@ private:
     bool box,rad; // Flags to decide whether we have a periodic box and if we have a radial correlation function only
     
     uint64 *binct, *binct3, *binct4; // Arrays to accumulate bin counts
-    uint64 cnt2, cnt3, cnt4; // Total counts
     
 public:
     Integrals2(Parameters *par, CorrelationFunction *_cf){
@@ -135,7 +134,10 @@ public:
         for(int i=0;i<pln;i++){ // Iterate ovr particle in pi_list
             Particle pi = pi_list[i];
             Float rik_mag,rik_mu,c3v,rjk_mag, rjk_mu;
-            if(wij[i]==-1) continue; // skip incorrect bins / ij self counts
+            if(wij[i]==-1){
+                wijk[i]=-1;
+                continue; // skip incorrect bins / ij self counts
+            }
             
             if((prim_ids[i]==pk_id)||(pk_id==pj_id)){
                 wijk[i]=-1; // re-read to skip this later
@@ -182,7 +184,7 @@ public:
             
             if((prim_ids[i]==pl_id)||(pj_id==pl_id)||(pk_id==pl_id)) continue; // don't self-count
             
-            cleanup_l(pl.pos,pk.pos,rkl_mag, rkl_mu); // define angles/lengths
+            cleanup_l(pl.pos, pk.pos, rkl_mag, rkl_mu); // define angles/lengths
             int tmp_bin = getbin(rkl_mag,rkl_mu); // kl bin for each particle
             
             if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)) continue; // if not in correct bin
@@ -241,6 +243,60 @@ public:
             }
         }
     }
+    
+    void frobenius_difference_sum(Integrals2* ints, const uint64 old_cnt2, const uint64 old_cnt3, const uint64 old_cnt4,Float &frobRR,Float &frobC2, Float &frobC3, Float &frobC4){
+        // Add the values accumulated in ints to the corresponding internal sums and compute the Frobenius norm difference between integrals
+        Float self_Ra=0, diff_Ra=0; //Frobenius norms
+        Float self_c2=0, diff_c2=0;
+        Float self_c3=0, diff_c3=0;
+        Float self_c4=0, diff_c4=0;
+        uint64 new_cnt2, new_cnt3, new_cnt4;
+        new_cnt2=old_cnt2; // Additional pair/triple/quad counts
+        new_cnt3=old_cnt3,
+        new_cnt4=old_cnt4;
+        
+        // Count extra number of counts in integrals
+        ints->sum_total_counts(new_cnt2, new_cnt3, new_cnt4);
+        
+        // Compute Frobenius norms
+        for(int i=0;i<nbin*mbin;i++){
+            Float factor_1=(1./(Float)new_cnt2-1./(Float)old_cnt2);
+            self_Ra+=pow(Ra[i]/(Float)new_cnt2,2.);
+            self_c2+=pow(c2[i]/(Float)new_cnt2,2.);
+            diff_Ra+=pow(Ra[i]*factor_1+ints->Ra[i]/(Float)new_cnt2,2.);
+            diff_c2+=pow(c2[i]*factor_1+ints->c2[i]/(Float)new_cnt2,2.);
+            c2[i]+=ints->c2[i];
+            Ra[i]+=ints->Ra[i];
+            binct[i]+=ints->binct[i];
+            
+            for(int j=0;j<nbin*mbin;j++){
+                Float factor_3=(1./(Float)new_cnt3-1./(Float)old_cnt3);
+                Float factor_4=(1./(Float)new_cnt4-1./(Float)old_cnt4);
+                c3[i*nbin*mbin+j]+=ints->c3[i*nbin*mbin+j];
+                c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
+                binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
+                binct4[i*nbin*mbin+j]+=ints->binct4[i*nbin*mbin+j];
+                self_c3+=pow(c3[i*nbin*mbin+j]/(Float)new_cnt3,2.);
+                self_c4+=pow(c4[i*nbin*mbin+j]/(Float)new_cnt4,2.);
+                diff_c3+=pow(c3[i*nbin*mbin+j]*factor_3+ints->c3[i*nbin*mbin+j]/(Float)new_cnt3,2.);
+                diff_c4+=pow(c4[i*nbin*mbin+j]*factor_4+ints->c4[i*nbin*mbin+j]/(Float)new_cnt4,2.);
+            }
+        }
+        self_Ra=sqrt(self_Ra);
+        diff_Ra=sqrt(diff_Ra);
+        self_c2=sqrt(self_c2);
+        diff_c2=sqrt(diff_c2);
+        diff_c3=sqrt(diff_c3);
+        diff_c4=sqrt(diff_c4);
+        self_c3=sqrt(self_c3);
+        self_c4=sqrt(self_c4);
+        
+        // Return percent difference
+        frobRR=100.*(diff_Ra/self_Ra);
+        frobC2=100.*(diff_c2/self_c2);
+        frobC3=100.*(diff_c3/self_c3);
+        frobC4=100.*(diff_c4/self_c4);
+    }
 
     void sum_total_counts(uint64& acc2, uint64& acc3, uint64& acc4){
         // Add local counts to total bin counts in acc2-4
@@ -253,21 +309,20 @@ public:
         }
     }
     
-    void normalize(long n, int np, int ngal, int n3, int n4){
+    void normalize(int np, int ngal, int n2, int n3, int n4){
         // Normalize the accumulated integrals (partly done by the normalising probabilities used from the selected cubes)
         // np is the number of random particles used, ngal is the number of galaxies in the survey
+        // n2,3,4 are number of pair/triple/quad cells used
         double corrf = (double)np/ngal; // Correction factor for the different densities of random points
         
         printf("NOT YET NORMALIZED CORRECTLY!!");
         
-        Float dummy_n = (Float)n; // dummy to change type
-        
         for(int i = 0; i<nbin*mbin;i++){
-            Ra[i]/=(dummy_n*corrf*corrf);
-            c2[i]/=(Ra[i]*Ra[i]*dummy_n*corrf*corrf);
+            Ra[i]/=((Float)n2*corrf*corrf);
+            c2[i]/=(Ra[i]*Ra[i]*(Float)n2*corrf*corrf);
             for(int j=0;j<nbin*mbin;j++){
-                c3[i*nbin*mbin+j]/=(n3*Ra[i]*Ra[j]*dummy_n*pow(corrf,3));
-                c4[i*nbin*mbin+j]/=(n3*n4*Ra[j]*dummy_n*pow(corrf,4));
+                c3[i*nbin*mbin+j]/=((Float)n2*(Float)n3*Ra[i]*Ra[j]*pow(corrf,3));
+                c4[i*nbin*mbin+j]/=((Float)n2*(Float)n3*(Float)n4*Ra[i]*Ra[j]*pow(corrf,4));
             }
         }
     }
@@ -305,9 +360,7 @@ public:
         }
         printf("Printed output to file in the CovMatrices/ directory");            
     }
-
-
-    
+      
 };
 
 #endif

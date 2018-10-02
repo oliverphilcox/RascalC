@@ -15,6 +15,7 @@ private:
     CorrelationFunction *cf;
     RandomDraws *rd;
     uint64 cnt2,cnt3,cnt4;
+    int nbin, mbin; 
     
 private:
     int particle_list(int id_1D, Particle* &part_list, int* &id_list, Grid *grid){
@@ -47,7 +48,7 @@ private:
         return 0;
     }
     
-    int check_threads(Parameters *par){
+    void check_threads(Parameters *par){
         // Set up OPENMP and define which threads ot use
 #ifdef OPENMP
         cpu_set_t mask[par->nthread+1];
@@ -63,24 +64,20 @@ private:
             }
         }
         fprintf(stderr,"\n");
-        // Decide which thread we are in
-        int thread = omp_get_thread_num();
-        assert(omp_get_num_threads()<=par->nthread);
-        if (thread==0) printf("# Running on %d threads.\n", omp_get_num_threads());        
-#else
-        int thread = 0;
-        printf("# Running single threaded.\n");
-#endif
-        return thread;
+
     }
     
 public:    
      compute_integral3(Grid *grid, Parameters *par){
         // MAIN FUNCTION TO COMPUTE INTEGRALS
          
-         
+        nbin = par->nbin; // number of radial bins
+        mbin = par->mbin; // number of mu bins
+        
         STimer initial, TotalTime; // Time initialization
         initial.Start(); 
+        
+        int convergence_counter=0, printtime=0;// counter to stop loop early if convergence is reached.
          
 //-----------INITIALIZE OPENMP + CLASSES----------
         std::random_device urandom("/dev/urandom");
@@ -93,7 +90,7 @@ public:
 
         uint64 attempt2=0, attempt3=0, attempt4=0; // attempts to compute pairs/triples/quads
         
-        int thread = check_threads(par); // Define which threads we use
+        check_threads(par); // Define which threads we use
     
         initial.Stop();
         fprintf(stderr, "Init time: %g s\n",initial.Elapsed());
@@ -105,9 +102,18 @@ public:
         TotalTime.Start(); // Start timer
         
 #ifdef OPENMP       
-#pragma omp parallel firstprivate(steps) shared(sumint) reduction(+:attempt2,attempt3,attempt4)
+#pragma omp parallel firstprivate(steps) shared(sumint) reduction(+:attempt2,attempt3,attempt4,convergence_counter)
 #endif
         { // start parallel loop
+        // Decide which thread we are in
+        int thread = omp_get_thread_num();
+        assert(omp_get_num_threads()<=par->nthread);
+        if (thread==0) printf("# Starting integral computation on %d threads.\n", omp_get_num_threads());        
+#else
+        int thread = 0;
+        printf("# Starting integral computation single threaded.\n");
+#endif
+        //TODO: Make sure this works single-threaded
         
 //-----------DEFINE VARIABLES
         Particle *prim_list; // list of particles in first cell
@@ -139,13 +145,16 @@ public:
         assert(ec==0);
         
 //-----------START FIRST LOOP-----------
-       
 #ifdef OPENMP
 #pragma omp for schedule(dynamic)
 #endif
          for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
-            printf("Starting integral loop %d of %d\n",n_loops,par->max_loops);
-            
+             // End loops early if convergence has been acheived
+             if (convergence_counter==5){ 
+                if (printtime==0) printf("\n1 percent convergence acheived in C4 5 times, exiting.\n");
+                printtime++;
+                continue;
+            }
             // LOOP OVER ALL FILLED I CELLS
             for (int n1=0; n1<grid->nf;n1++){
                 int prim_id_1D = grid-> filled[n1]; // 1d ID for cell i 
@@ -162,7 +171,7 @@ public:
                 for (int n2=0; n2<par->N2; n2++){
                     
                     // Draw second cell from i weighted by 1/r^2
-                    integer3 delta2 = rd->random_cubedraw(locrng, &p2); 
+                    integer3 delta2 = rd->random_cubedraw(&p2); 
                     integer3 sec_id = prim_id + delta2;
                     Float3 cell_sep2 = grid->cell_sep(delta2);
                     int x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid, locrng);
@@ -193,7 +202,7 @@ public:
                         // LOOP OVER N4 L CELLS
                         for (int n4=0; n4<par->N4; n4++){
                             // Draw fourth cell from k cell weighted by 1/r^2
-                            integer3 delta4 = rd->random_cubedraw(locrng, &p4);
+                            integer3 delta4 = rd->random_cubedraw(&p4);
                             int x = draw_particle(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid, locrng);
                             if(x==1) continue;
                             p4*=p3;
@@ -208,14 +217,33 @@ public:
             }
             
 #pragma omp critical // only one processor can access at once
-        { // add the cycle integral to the total integral so far
-            sumint.sum_ints(&locint); 
-            locint.sum_total_counts(cnt2,cnt3,cnt4); // this adds the bin counts onto cnt2,3,4
+        {
+            if (n_loops%par->nthread==0){ // Print every nthread loops
+                TotalTime.Stop(); // interrupt timing to access .Elapsed()
+                int current_runtime = TotalTime.Elapsed();
+                int remaining_time = current_runtime/(n_loops/par->nthread+1)*(par->max_loops/par->nthread-n_loops/par->nthread);  // estimated remaining time
+                //TODO: Fix this calculation
+                fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
+                
+                    
+                TotalTime.Start(); // Restart the timer
+            }
+            
+            // add the cycle integral to the total integral so far
+            if (n_loops%par->nthread==0){
+                Float frob_RR, frob_C2, frob_C3, frob_C4;
+                sumint.frobenius_difference_sum(&locint,cnt2, cnt3, cnt4, frob_RR, frob_C2, frob_C3, frob_C4);
+                fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (RR), %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_RR, frob_C2, frob_C3, frob_C4);
+                if (frob_C4<1) convergence_counter++;
+            }
+            else{
+                sumint.sum_ints(&locint); 
+            }
+            locint.sum_total_counts(cnt2, cnt3, cnt4); 
             locint.reset();
         }
         
-        //TODO: Find some way of checking convergence of matrices at end of each cycle e.g. take old sumint and new sumint and compare?
-             
+            
         } // end cycle loop
         
          // Free up allocated memory at end of process
@@ -237,9 +265,10 @@ public:
      
      // Normalize the accumulated results
      //TODO Redo normalization!!! - what do we normalize by?
-     sumint.normalize(1,grid->np, par->nofznorm, 1, 1);
+     sumint.normalize(grid->np, par->nofznorm, par->N2, par->N3, par->N4);//cnt2, cnt3, cnt4);
      
-     fprintf(stderr, "\nTotal process time for %.2e cells and %.2e quads: %g s\n", double(par->max_loops*par->N2*par->N3*par->N4*grid->nf),double(par->max_loops*par->N2*par->N3*par->N4*grid->np),TotalTime.Elapsed());
+     int runtime = TotalTime.Elapsed();
+     fprintf(stderr, "\nTotal process time for %.2e cells and %.2e quads: %d s, i.e. %2.2d:%2.2d:%2.2d hms \n", double(par->max_loops*par->N2*par->N3*par->N4*grid->nf),double(par->max_loops*par->N2*par->N3*par->N4*grid->np),runtime, runtime/3600,runtime/60%60,runtime%60);
      printf("\nWe tried %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(attempt2),double(attempt3),double(attempt4));
      printf("We accepted %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(cnt2),double(cnt3),double(cnt4));
      printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/attempt2,(double)cnt3/attempt3,(double)cnt4/attempt4);
