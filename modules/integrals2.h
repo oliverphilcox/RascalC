@@ -15,6 +15,7 @@ private:
     Float rmin,rmax,mumin,mumax,dr,dmu; //Ranges in r and mu
     Float *Ra, *c2, *c3, *c4; // Arrays to accumulate integrals
     Float *cxj, *c2j, *c3j, *c4j; // Arrays to accumulate jackknife integrals
+    Float *errc4; // Integral to house the variance in C4;
     
     bool box,rad; // Flags to decide whether we have a periodic box and if we have a radial correlation function only
     
@@ -41,6 +42,7 @@ public:
         ec+=posix_memalign((void **) &c3j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &c4j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &cxj, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        ec+=posix_memalign((void **) &errc4, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         
         ec+=posix_memalign((void **) &binct, PAGE, sizeof(uint64)*nbin*mbin);
         ec+=posix_memalign((void **) &binct3, PAGE, sizeof(uint64)*nbin*mbin*nbin*mbin);
@@ -74,6 +76,7 @@ public:
         free(c2j);
         free(c3j);
         free(c4j);
+        free(errc4);
         free(binct);
         free(binct3);
         free(binct4);
@@ -93,6 +96,7 @@ public:
             c3j[j]=0;
             c4j[j]=0;
             cxj[j] = 0;
+            errc4[j] = 0;
             binct3[j] = 0;
             binct4[j] = 0;
         }
@@ -192,7 +196,7 @@ public:
         }
     }
         
-    inline void fourth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const int pj_id, const int pk_id, const int pl_id, const int* bin_ij, const Float* wijk, const Float* xi_ik, const Float* xi_jk, const double prob){
+    inline void fourth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const int pj_id, const int pk_id, const int pl_id, const int* bin_ij, const Float* wijk, const Float* xi_ik, const Float* xi_jk, const Float* xi_ij, const double prob){
         // Accumulates the three point integral C3. Also outputs an array of xi_ik and bin_ik values for later reuse.
         
         for(int i=0;i<pln;i++){ // Iterate ovr particle in pi_list
@@ -213,17 +217,19 @@ public:
             Float tmp_weight = wijk[i]*pl.w; // product of weights, w_iw_jw_kw_l
             Float xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
             Float xi_jl = cf->xi(rjl_mag, rjl_mu); // j-l correlation
+            Float xi_kl = cf->xi(rkl_mag, rkl_mu); // k-l correlation
             
             // Now compute the integral;
             c4v = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
             c4vj = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
-            cxvj = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
+            cxvj = tmp_weight/prob*(xi_ij[i]*xi_kl);
             
             // Add to local counts
             int tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c4[tmp_full_bin]+=c4v;
             c4j[tmp_full_bin]+=c4vj;
             cxj[tmp_full_bin]+=cxvj;
+            errc4[tmp_full_bin]+=pow(c4v,2.);
             binct4[tmp_full_bin]++;
         }
     }
@@ -270,22 +276,23 @@ public:
         }
     }
     
-    void frobenius_difference_sum(Integrals2* ints, Float &frobC2, Float &frobC3, Float &frobC4){
+    void frobenius_difference_sum(Integrals2* ints, int n_loop, Float &frobC2, Float &frobC3, Float &frobC4){
         // Add the values accumulated in ints to the corresponding internal sums and compute the Frobenius norm difference between integrals
+        Float n_loops = (Float)n_loop;
         Float self_c2=0, diff_c2=0;
         Float self_c3=0, diff_c3=0;
         Float self_c4=0, diff_c4=0;
         
         // Compute Frobenius norms
         for(int i=0;i<nbin*mbin;i++){
-            self_c2+=pow(c2[i]/(Ra[i]*Ra[i]),2.);
-            diff_c2+=pow(c2[i]/(Ra[i]*Ra[i])-(c2[i]+ints->c2[i])/pow(Ra[i]+ints->Ra[i],2.),2.);
+            self_c2+=pow(c2[i]/n_loops,2.);
+            diff_c2+=pow(c2[i]/n_loops-(c2[i]+ints->c2[i])/(n_loops+1.),2.);
             
             for(int j=0;j<nbin*mbin;j++){
-                self_c4+=pow(c4[i*nbin*mbin+j]/(Ra[i]*Ra[j]),2.);
-                diff_c4+=pow(c4[i*nbin*mbin+j]/(Ra[i]*Ra[j])-(c4[i*nbin*mbin+j]+ints->c4[i*nbin*mbin+j])/((Ra[j]+ints->Ra[j])*(Ra[i]+ints->Ra[i])),2.);
-                self_c3+=pow(c3[i*nbin*mbin+j]/(Ra[i]*Ra[j]),2.);
-                diff_c3+=pow(c3[i*nbin*mbin+j]/(Ra[i]*Ra[j])-(c3[i*nbin*mbin+j]+ints->c3[i*nbin*mbin+j])/((Ra[j]+ints->Ra[j])*(Ra[i]+ints->Ra[i])),2.);
+                self_c4+=pow(c4[i*nbin*mbin+j]/n_loops,2.);
+                diff_c4+=pow(c4[i*nbin*mbin+j]/n_loops-(c4[i*nbin*mbin+j]+ints->c4[i*nbin*mbin+j])/(n_loops+1.),2.);
+                self_c3+=pow(c3[i*nbin*mbin+j]/n_loops,2.);
+                diff_c3+=pow(c3[i*nbin*mbin+j]/n_loops-(c3[i*nbin*mbin+j]+ints->c3[i*nbin*mbin+j])/(n_loops+1.),2.);
                 c3[i*nbin*mbin+j]+=ints->c3[i*nbin*mbin+j];
                 c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
                 binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
@@ -324,22 +331,38 @@ public:
         }
     }
     
-    void normalize(int np, int ngal, int n2, int n3, int n4){
+    void normalize(int np, int ngal, Float n_pairs, Float n_triples, Float n_quads, bool use_RR){
         // Normalize the accumulated integrals (partly done by the normalising probabilities used from the selected cubes)
         // np is the number of random particles used, ngal is the number of galaxies in the survey
-        // n2,3,4 are number of pair/triple/quad cells used
+        // n_pair etc. are the number of PARTICLE pairs etc. attempted (not including rejected cells, but including pairs which don't fall in correct bin ranges)
+        // If use_RR=True, we normalize by RR_a, RR_b also
         double corrf = (double)np/ngal; // Correction factor for the different densities of random points
         
         for(int i = 0; i<nbin*mbin;i++){
-            Ra[i]/=((Float)n2*corrf*corrf);
-            c2[i]/=(Ra[i]*Ra[i]*(Float)n2*corrf*corrf);
-            c2j[i]/=(Ra[i]*Ra[i]*(Float)n2*corrf*corrf);
+            Ra[i]/=(n_pairs*corrf*corrf);
+            c2[i]/=(n_pairs*corrf*corrf);
+            c2j[i]/=(n_pairs*corrf*corrf);
             for(int j=0;j<nbin*mbin;j++){
-                c3[i*nbin*mbin+j]/=((Float)n2*(Float)n3*Ra[i]*Ra[j]*pow(corrf,3));
-                c4[i*nbin*mbin+j]/=((Float)n2*(Float)n3*(Float)n4*Ra[i]*Ra[j]*pow(corrf,4));
-                c3j[i*nbin*mbin+j]/=((Float)n2*(Float)n3*Ra[i]*Ra[j]*pow(corrf,3));
-                c4j[i*nbin*mbin+j]/=((Float)n2*(Float)n3*(Float)n4*Ra[i]*Ra[j]*pow(corrf,4));
-                cxj[i*nbin*mbin+j]/=((Float)n2*(Float)n3*(Float)n4*Ra[i]*Ra[j]*pow(corrf,4));
+                c3[i*nbin*mbin+j]/=(n_triples*pow(corrf,3));
+                c4[i*nbin*mbin+j]/=(n_quads*pow(corrf,4));
+                c3j[i*nbin*mbin+j]/=(n_triples*pow(corrf,3));
+                c4j[i*nbin*mbin+j]/=(n_quads*pow(corrf,4));
+                cxj[i*nbin*mbin+j]/=(n_quads*pow(corrf,4));
+            }
+        }
+        if(use_RR==1){
+            // Also normalize by RR counts
+            for(int i=0; i<nbin*mbin;i++){
+                c2[i]/=(Ra[i]*Ra[i]);
+                c2j[i]/=(Ra[i]*Ra[i]);
+                for(int j=0;j<nbin*mbin;j++){
+                    Float Ra_ij = Ra[i]*Ra[j];
+                    c3[i*nbin*mbin+j]/=Ra_ij;
+                    c4[i*nbin*mbin+j]/=Ra_ij;
+                    c3j[i*nbin*mbin+j]/=Ra_ij;
+                    c4j[i*nbin*mbin+j]/=Ra_ij;
+                    cxj[i*nbin*mbin+j]/=Ra_ij;
+                }
             }
         }
     }
@@ -412,6 +435,17 @@ public:
             fprintf(CXFile,"\n");
         }
         fflush(NULL);
+    }
+    
+    void compute_Neff(Float n_quads){
+    // Compute the effective N from the data given the number of sets of quads used 
+        for(int i=0;i<nbin*mbin;i++){
+            for(int j=0;j<nbin*mbin;j++){
+                Float var_c4; // variance in this bin
+                var_c4=errc4[i*nbin*mbin+j]n_quads-pow(c4[i*nbin*mbin+j],2.)
+                Float neff;
+                neff = pow(c4[i*nbin*mbin+j],2.)+c4[i*nbin*mbin+i]*c4[j*nbin*mbin+j];
+        
     }
 
 };
