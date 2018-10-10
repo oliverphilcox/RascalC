@@ -10,6 +10,7 @@ class compute_integral3{
 private:
     Grid *grid;
     CorrelationFunction *cf;
+    JK_weights *JK;
     RandomDraws *rd;
     uint64 cnt2,cnt3,cnt4;
     int nbin, mbin; 
@@ -66,7 +67,7 @@ private:
     }
     
 public:    
-     compute_integral3(Grid *grid, Parameters *par){
+     compute_integral3(Grid *grid, Parameters *par, JK_weights *JK){
         // MAIN FUNCTION TO COMPUTE INTEGRALS
          
         nbin = par->nbin; // number of radial bins
@@ -84,7 +85,7 @@ public:
         gsl_rng_env_setup(); // initialize gsl rng
         CorrelationFunction *cf=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin);
         RandomDraws *rd=new RandomDraws(cf,par, NULL, 0);
-        Integrals2 sumint(par,cf); // total integral
+        Integrals2 sumint(par,cf,JK); // total integral
 
         uint64 attempt2=0, attempt3=0, attempt4=0; // cell attempts to compute pairs/triples/quads
         uint64 n_pairs=0, n_triples=0, n_quads=0; // number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
@@ -101,7 +102,7 @@ public:
         TotalTime.Start(); // Start timer
         
 #ifdef OPENMP       
-#pragma omp parallel firstprivate(steps) shared(sumint) reduction(+:attempt2,attempt3,attempt4,n_pairs,n_triples,n_quads,convergence_counter)
+#pragma omp parallel firstprivate(steps) shared(sumint) reduction(+:attempt2,attempt3,attempt4,convergence_counter)
 #endif
         { // start parallel loop
         // Decide which thread we are in
@@ -126,7 +127,7 @@ public:
         Float *xi_ij, *xi_jk, *xi_ik, *w_ijk, *w_ij;
         int *bin_ij;
         
-        Integrals2 locint(par,cf); // Accumulates the integral contribution of each thread
+        Integrals2 locint(par,cf,JK); // Accumulates the integral contribution of each thread
         
         gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
         gsl_rng_set(locrng, steps*(thread+1));
@@ -220,7 +221,6 @@ public:
                             
                         }
                     }
-                    
                 }
             }
             
@@ -239,10 +239,12 @@ public:
                 fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
                 
                 TotalTime.Start(); // Restart the timer
-                Float frob_C2, frob_C3, frob_C4;
-                sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4);
+                Float frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j, frob_Cxj, ratio_x4;
+                sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j, frob_Cxj, ratio_x4);
                 fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
-                if (frob_C4<0.1) convergence_counter++;
+                fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j), %.3f (Cxj)\n",n_loops,frob_C2j, frob_C3j, frob_C4j, frob_Cxj);
+                fprintf(stderr,"Ratio of C_x^J and C_4^J terms: %.3f\n",ratio_x4);
+                if((frob_C4<0.1)&&(frob_C4j<0.1)) convergence_counter++;
                 
             }
             else{
@@ -282,7 +284,7 @@ public:
      TotalTime.Stop();
      
      // Normalize the accumulated results, using the RR counts
-     sumint.normalize(grid->np, par->nofznorm, (Float)n_pairs, (Float)n_triples, (Float)n_quads,1);
+     sumint.normalize(grid->np, par->nofznorm, (Float)n_pairs, (Float)n_triples, (Float)n_quads, 1);
      
      int runtime = TotalTime.Elapsed();
      fprintf(stderr, "\nTotal process time for %.2e cells and %.2e quads: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", double(par->max_loops*par->N2*par->N3*par->N4*grid->nf),double(par->max_loops*par->N2*par->N3*par->N4*grid->np),runtime, runtime/3600,runtime/60%60,runtime%60);
@@ -293,8 +295,6 @@ public:
      printf("Average of %.2f pairs per primary particle.\n",(Float)cnt2/grid->np);
        
      //TODO Add remaining time estimate
-     
-     printf("\nINTEGRALS NOT YET NORMALIZED PROPERLY!!\n");
      
      char out_string[5];
      sprintf(out_string,"full");

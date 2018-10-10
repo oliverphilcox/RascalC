@@ -9,6 +9,7 @@
 class Integrals2{
 public:
     CorrelationFunction *cf;
+    JK_weights *JK;
     
 private:
     int nbin, mbin;
@@ -22,8 +23,9 @@ private:
     uint64 *binct, *binct3, *binct4; // Arrays to accumulate bin counts
     
 public:
-    Integrals2(Parameters *par, CorrelationFunction *_cf){
+    Integrals2(Parameters *par, CorrelationFunction *_cf, JK_weights *_JK){
         cf = new CorrelationFunction(_cf);
+        JK = _JK;
         init(par);
     }
     
@@ -135,8 +137,12 @@ public:
                 xi_ij[i] = tmp_xi;
                 wij[i] = tmp_weight;
                 
+                 // Compute jackknife weight tensor:
+                Float JK_weight;
+                JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pi.JK),int(pj.JK),tmp_bin,tmp_bin);
+            
                 // Now compute the integral:
-                c2vj = tmp_weight*tmp_weight*(1.+tmp_xi)/prob;
+                c2vj = tmp_weight*tmp_weight*(1.+tmp_xi)/prob*JK_weight;
                 c2v = tmp_weight*tmp_weight*(1.+tmp_xi) / prob; // c2 contribution
                 rav = tmp_weight / prob; // RR_a contribution
                 
@@ -184,9 +190,13 @@ public:
             xi_ik[i]=xi_ik_tmp;
             wijk[i]=tmp_weight;
             
+            // Compute jackknife weight tensor:
+            Float JK_weight;
+            JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pi.JK),bin_ij[i],tmp_bin);
+            
             // Now compute the integral;
             c3v = tmp_weight*pi.w/prob*xi_jk_tmp;
-            c3vj = tmp_weight*pi.w/prob*xi_jk_tmp;
+            c3vj = tmp_weight*pi.w/prob*xi_jk_tmp*JK_weight;
             
             // Add to local counts
             int tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
@@ -219,10 +229,14 @@ public:
             Float xi_jl = cf->xi(rjl_mag, rjl_mu); // j-l correlation
             Float xi_kl = cf->xi(rkl_mag, rkl_mu); // k-l correlation
             
+            // Compute jackknife weight tensor:
+            Float JK_weight;
+            JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin);
+            
             // Now compute the integral;
             c4v = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
-            c4vj = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
-            cxvj = tmp_weight/prob*(xi_ij[i]*xi_kl);
+            c4vj = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i])*JK_weight;
+            cxvj = tmp_weight/prob*(xi_ij[i]*xi_kl)*JK_weight;
             
             // Add to local counts
             int tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
@@ -230,12 +244,35 @@ public:
             c4j[tmp_full_bin]+=c4vj;
             cxj[tmp_full_bin]+=cxvj;
             errc4[tmp_full_bin]+=pow(c4v,2.);
-            binct4[tmp_full_bin]++;
+            binct4[tmp_full_bin]++;            
         }
     }
         
+private:   
+    inline Float weight_tensor(int Ji, int Jj, int Jk, int Jl, const int bin_a, const int bin_b){
+        // Compute the jackknife weight tensor for jackknife regions J_i, J_j, J_k, J_l and w_aA weight matrix w_matrix. NB: J_x are collapsed jackknife indices here - only using the non-empty regions.
+        // JK_weights class holds list of filled JKs, number of filled JKs and the weight matrix.
+        // bin_a, bin_b specify the binning.
         
-private:
+        int nbins = JK->nbins;
+        
+        // Compute q_ij^A q_kl^A term
+        int first_weight = 0;
+        if (Ji==Jk) first_weight++;
+        if (Jj==Jk) first_weight++;
+        if (Ji==Jl) first_weight++;
+        if (Jj==Jl) first_weight++;
+        
+        // Compute q_ijw_bA _ q_klw_aA part
+        Float second_weight=JK->weights[Ji*nbins+bin_b]+JK->weights[Jj*nbins+bin_b]+JK->weights[Jk*nbins+bin_a]+JK->weights[Jl*nbins+bin_a];
+        
+        // Compute total weight (third part is precomputed)
+        Float total_weight = (Float)first_weight/4. - 0.5*second_weight + JK->product_weights[bin_a*nbins+bin_b];
+        
+        return total_weight;
+        
+    }
+        
     void cleanup_l(Float3 p1,Float3 p2,Float& norm,Float& mu){
         Float3 pos=p1-p2;
         norm = pos.norm();
@@ -276,33 +313,49 @@ public:
         }
     }
     
-    void frobenius_difference_sum(Integrals2* ints, int n_loop, Float &frobC2, Float &frobC3, Float &frobC4){
+    void frobenius_difference_sum(Integrals2* ints, int n_loop, Float &frobC2, Float &frobC3, Float &frobC4, Float &frobC2j, Float &frobC3j, Float &frobC4j, Float &frobCxj, Float &ratio_x4){
         // Add the values accumulated in ints to the corresponding internal sums and compute the Frobenius norm difference between integrals
         Float n_loops = (Float)n_loop;
         Float self_c2=0, diff_c2=0;
         Float self_c3=0, diff_c3=0;
         Float self_c4=0, diff_c4=0;
+        Float self_c2j=0, diff_c2j=0;
+        Float self_c3j=0, diff_c3j=0;
+        Float self_c4j=0, diff_c4j=0;
+        Float self_cxj=0, diff_cxj=0;
         
         // Compute Frobenius norms
         for(int i=0;i<nbin*mbin;i++){
             self_c2+=pow(c2[i]/n_loops,2.);
             diff_c2+=pow(c2[i]/n_loops-(c2[i]+ints->c2[i])/(n_loops+1.),2.);
+            self_c2j+=pow(c2j[i]/n_loops,2.);
+            diff_c2j+=pow(c2j[i]/n_loops-(c2j[i]+ints->c2j[i])/(n_loops+1.),2.);
             
             for(int j=0;j<nbin*mbin;j++){
                 self_c4+=pow(c4[i*nbin*mbin+j]/n_loops,2.);
                 diff_c4+=pow(c4[i*nbin*mbin+j]/n_loops-(c4[i*nbin*mbin+j]+ints->c4[i*nbin*mbin+j])/(n_loops+1.),2.);
+                self_c4j+=pow(c4j[i*nbin*mbin+j]/n_loops,2.);
+                diff_c4j+=pow(c4j[i*nbin*mbin+j]/n_loops-(c4j[i*nbin*mbin+j]+ints->c4j[i*nbin*mbin+j])/(n_loops+1.),2.);
+                self_cxj+=pow(cxj[i*nbin*mbin+j]/n_loops,2.);
+                diff_cxj+=pow(cxj[i*nbin*mbin+j]/n_loops-(cxj[i*nbin*mbin+j]+ints->cxj[i*nbin*mbin+j])/(n_loops+1.),2.);
                 self_c3+=pow(c3[i*nbin*mbin+j]/n_loops,2.);
                 diff_c3+=pow(c3[i*nbin*mbin+j]/n_loops-(c3[i*nbin*mbin+j]+ints->c3[i*nbin*mbin+j])/(n_loops+1.),2.);
+                self_c3j+=pow(c3j[i*nbin*mbin+j]/n_loops,2.);
+                diff_c3j+=pow(c3j[i*nbin*mbin+j]/n_loops-(c3j[i*nbin*mbin+j]+ints->c3j[i*nbin*mbin+j])/(n_loops+1.),2.);
                 c3[i*nbin*mbin+j]+=ints->c3[i*nbin*mbin+j];
                 c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
+                c3j[i*nbin*mbin+j]+=ints->c3j[i*nbin*mbin+j];
+                c4j[i*nbin*mbin+j]+=ints->c4j[i*nbin*mbin+j];
+                cxj[i*nbin*mbin+j]+=ints->cxj[i*nbin*mbin+j];
                 binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
                 binct4[i*nbin*mbin+j]+=ints->binct4[i*nbin*mbin+j];
             }
             c2[i]+=ints->c2[i];
+            c2j[i]+=ints->c2j[i];
             binct[i]+=ints->binct[i];
         }
         
-        // Now update Ra values (must be separate from above calculation)
+        // Now update Ra values
         for(int i=0;i<nbin*mbin;i++){
             Ra[i]+=ints->Ra[i];
         }
@@ -314,10 +367,26 @@ public:
         self_c3=sqrt(self_c3);
         self_c4=sqrt(self_c4);
         
+        
+        self_c2j=sqrt(self_c2j);
+        diff_c2j=sqrt(diff_c2j);
+        diff_c3j=sqrt(diff_c3j);
+        diff_c4j=sqrt(diff_c4j);
+        diff_cxj=sqrt(diff_cxj);
+        self_c3j=sqrt(self_c3j);
+        self_c4j=sqrt(self_c4j);
+        self_cxj=sqrt(self_cxj);
+        
         // Return percent difference
         frobC2=100.*(diff_c2/self_c2);
         frobC3=100.*(diff_c3/self_c3);
         frobC4=100.*(diff_c4/self_c4);
+        frobC2j=100.*(diff_c2j/self_c2j);
+        frobC3j=100.*(diff_c3j/self_c3j);
+        frobC4j=100.*(diff_c4j/self_c4j);
+        frobCxj=100.*(diff_cxj/self_cxj);
+        
+        ratio_x4 = self_cxj/self_c4j;
     }
 
     void sum_total_counts(uint64& acc2, uint64& acc3, uint64& acc4){
@@ -352,6 +421,24 @@ public:
         }
         if(use_RR==1){
             // Also normalize by RR counts
+            //NEW: Normalizing by RR counts from corrfunc:
+            for(int i=0; i<nbin*mbin;i++){
+                Float Ra_i = JK->RR_pair_counts[i]; 
+                c2[i]/=pow(Ra_i,2.);
+                c2j[i]/=pow(Ra_i,2.);
+                for(int j=0;j<nbin*mbin;j++){
+                    Float Rab=Ra_i*JK->RR_pair_counts[j];
+                    Float Rab_jk = Rab*(1.-JK->product_weights[i*nbin*mbin+j]);
+                    c3[i*nbin*mbin+j]/=Rab;
+                    c4[i*nbin*mbin+j]/=Rab;
+                    c3j[i*nbin*mbin+j]/=Rab_jk;
+                    c4j[i*nbin*mbin+j]/=Rab_jk;
+                    cxj[i*nbin*mbin+j]/=Rab_jk;
+                }
+            }
+            
+            // Using internal RR counts:
+            /*
             for(int i=0; i<nbin*mbin;i++){
                 c2[i]/=(Ra[i]*Ra[i]);
                 c2j[i]/=(Ra[i]*Ra[i]);
@@ -364,6 +451,7 @@ public:
                     cxj[i*nbin*mbin+j]/=Ra_ij;
                 }
             }
+            */
         }
     }
         
@@ -436,7 +524,7 @@ public:
         }
         fflush(NULL);
     }
-    
+ /*   
     void compute_Neff(Float n_quads){
     // Compute the effective N from the data given the number of sets of quads used 
         for(int i=0;i<nbin*mbin;i++){
@@ -447,7 +535,7 @@ public:
                 neff = pow(c4[i*nbin*mbin+j],2.)+c4[i*nbin*mbin+i]*c4[j*nbin*mbin+j];
         
     }
-
+*/
 };
 
 #endif

@@ -39,16 +39,19 @@ e.g. binfile.csv
 
 - Each weighted pair count (a floating point number) is on a separate line with the collapsed indexing scheme INDEX = {R_BIN}*{TOTAL_MU_BINS} + {MU_BIN}. This is used for both Corrfunc and the grid_covariance code.
 
+- NB: Any comment lines starting with '#' are ignored by the C++ code.
+
 - There are {TOTAL_R_BINS}*{TOTAL_MU_BINS} lines in total
 
 e.g. binned_pair_counts_n{}_m{}_j{}.dat
-
 
 // Jackknife weights
 
 - An ascii file containing a list of weights attached to each non-empty jackknife and each bin, defined as RR_{aA}/RR_{a}.
 
 - Each row is a tab-separated list of floating-point weights for each bin for a given jackknife region. The first entry on each row specifies the integer index of the jackknife region.
+
+- NB: Any comment lines starting with '#' are ignored by the C++ code.
 
 - The number of rows is equal to the number of non-empty jackknife regions in use and there are N_BINS+1 columns.
 

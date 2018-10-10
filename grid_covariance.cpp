@@ -54,6 +54,7 @@ typedef double3 Float3;
 #include "modules/random_draws.h"
 #include "modules/integrals.h"
 #include "modules/driver.h"
+#include "modules/jackknife_weights.h"
 
 // Very ugly way to get the correlation function into the integrator, but hey, it works
 CorrelationFunction * RandomDraws::corr;
@@ -69,7 +70,7 @@ STimer TotalTime;
 #define FLAT 1	// Select cells equiprobably up to a certain radius
 #define SEL 2	// Select cells weighted by the distance from the starting cell up to the radius defined by the input parameter xicutoff
 
-#include "modules/compute_integral.h"
+#include "modules/compute_integral3.h"
 
 
 
@@ -81,10 +82,13 @@ int main(int argc, char *argv[]) {
 
 	Parameters par=Parameters(argc,argv);
     
+    // Read in jackknife weights and RR pair counts
+    JK_weights weights(&par);
+    
     Float3 shift;
     Particle *orig_p;
     if (!par.make_random){
-        orig_p = read_particles(par.rescale, &par.np, par.fname, par.rstart, par.nmax);
+        orig_p = read_particles(par.rescale, &par.np, par.fname, par.rstart, par.nmax, &weights);
         assert(par.np>0);
         par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.rmax, shift, par.nside);
     } else {
@@ -140,14 +144,8 @@ int main(int argc, char *argv[]) {
     fflush(NULL);
 
     // Everything above here takes negligible time.  This line is nearly all of the work.
-    printf("\n\nRunning Test Class\n\n");
-#include "modules/compute_integral3.h"
-    compute_integral3(&grid,&par);
-    printf("\n\nTest Class Complete\n\n");
-    exit(1);
-
-    compute_integral(&grid,&par);
-
+    compute_integral3(&grid,&par,&weights);
+    
     rusage ru;
     getrusage(RUSAGE_SELF, &ru);
 
