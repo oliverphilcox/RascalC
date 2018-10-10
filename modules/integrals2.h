@@ -467,11 +467,14 @@ public:
         snprintf(c3name, sizeof c3name, "CovMatricesAll/c3_n%d_m%d_%s.txt", nbin, mbin, suffix);
         char c4name[1000];
         snprintf(c4name, sizeof c4name, "CovMatricesAll/c4_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        char c4errname[1000];
+        snprintf(c4errname, sizeof c4errname, "CovMatricesAll/c4err_n%d_m%d_%s.txt", nbin, mbin, suffix);
         char RRname[1000];
         snprintf(RRname, sizeof RRname, "CovMatricesAll/RR_n%d_m%d_%s.txt", nbin, mbin, suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
+        FILE * C4ErrFile = fopen(c4errname,"w"); // for variance of c4 part
         FILE * RRFile = fopen(RRname,"w"); // for RR part of integral
         
         for (int j=0;j<nbin*mbin;j++){
@@ -482,9 +485,11 @@ public:
             for(int j=0;j<nbin*mbin;j++){
                 fprintf(C3File,"%le\t",c3[i*nbin*mbin+j]);
                 fprintf(C4File,"%le\t",c4[i*nbin*mbin+j]);
+                fprintf(C4ErrFile,"%le\t",errc4[i*nbin*mbin+j]);
             }
             fprintf(C3File,"\n"); // new line each end of row
             fprintf(C4File,"\n");
+            fprintf(C4ErrFile,"\n");
         }
         fflush(NULL);
                     

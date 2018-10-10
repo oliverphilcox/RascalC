@@ -12,7 +12,7 @@ private:
     CorrelationFunction *cf;
     JK_weights *JK;
     RandomDraws *rd;
-    uint64 cnt2,cnt3,cnt4;
+    uint64 cnt2=0,cnt3=0,cnt4=0;
     int nbin, mbin; 
     
 private:
