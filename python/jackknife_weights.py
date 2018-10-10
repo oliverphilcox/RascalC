@@ -64,8 +64,11 @@ with open(filepath+weight_file,"w+") as weight_file:
     for j_id,jackknife_weight in enumerate(w_aA):
         weight_file.write("%s\t" %J_regions[j_id])
         for i in range(len(jackknife_weight)):
-            weight_file.write("%s\t" %jackknife_weight[i])
-        weight_file.write("\n")
+            weight_file.write("%s" %jackknife_weight[i])
+            if i == len(jackknife_weight)-1:
+                weight_file.write("\n");
+            else:
+                weight_file.write("\t");
 RR_a_file = 'binned_pair_counts_n%d_m%d_j%d.dat'%(nrbins,nmu_bins,N_jack)
 with open(filepath+RR_a_file,"w+") as RR_file:
     for i in range(len(RR_a)):

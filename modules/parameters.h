@@ -79,10 +79,17 @@ public:
 	// The name of the correlation function file
 	char *corname = NULL;
 	const char default_corname[500] = "xi_functions/QPM_Mash.xi";
-	//"../grid_multipoles_own/PatchySkyCorrSingle361.xi"//PatchySkyCorrMean.xi//QPMCorrMean.xi//QPMExtrapolated.xi//"QPM_D_ngc_rsd_fix3.xi"
-
+    
+    // Name of the jackknife weight file
+    char *jk_weight_file = NULL;
+    const char default_jk_weight_file[500] = "../weight_files/jackknife_weights_n10_m6_j169.dat";
+    
+    // Name of the RR bin file
+    char *RR_bin_file = NULL;
+    const char default_RR_bin_file[500] = "../weight_files/binned_pair_counts_n10_m6_j169.dat";
+    
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=100; 
+    int max_loops=10; 
     int N2 = 10; // number of j cells per i cell
     int N3 = 10; // number of k cells per j cell
     int N4 = 10; // number of l cells per k cell
@@ -119,6 +126,8 @@ public:
 		else if (!strcmp(argv[i],"-load")) loadname = argv[++i];
 		else if (!strcmp(argv[i],"-balance")) qbalance = 1;
 		else if (!strcmp(argv[i],"-invert")) qinvert = 1;
+        else if (!strcmp(argv[i],"-jackknife")||!strcmp(argv[i],"-jackknife_weights")||!strcmp(argv[i],"-weights")) jk_weight_file=argv[++i];
+        else if (!strcmp(argv[i],"-RRbin")||!strcmp(argv[i],"-RRbin_file")) RR_bin_file=argv[++i];
 		else if (!strcmp(argv[i],"-ran")||!strcmp(argv[i],"-np")) {
 			double tmp;
 			if (sscanf(argv[++i],"%lf", &tmp)!=1) {
@@ -152,7 +161,10 @@ public:
 	    assert(nside>0);
 	    if (rescale<=0.0) rescale = box_max;   // This would allow a unit cube to fill the periodic volume
 	    if (fname==NULL) fname = (char *) default_fname;   // No name was given
-	    if (corname==NULL) { corname = (char *) default_corname; }//fprintf(stderr,"No correlation file."); return 1;}// No name was given
+	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
+	    if (RR_bin_file==NULL) RR_bin_file = (char *) default_RR_bin_file; // no binning file was given
+	    if (corname==NULL) { corname = (char *) default_corname; }// No name was given
+	    
 
 #ifdef OPENMP
 		omp_set_num_threads(nthread);
@@ -199,6 +211,8 @@ private:
 	    fprintf(stderr, "    -save <filename>: Triggers option to store probability grid. <filename> has to end on \".bin\"\n");
 	    fprintf(stderr, "The file can then be reloaded on subsequent runs\n");
 	    fprintf(stderr, "    -load <filename>: Triggers option to load the probability grid\n");
+        fprintf(stderr, "    -weights <filename>; File containing the jackknife weights (normally computed from Corrfunc\n)");
+        fprintf(stderr, "    -RRbin_file <filename>; File containing the jackknife RR bin counts (computed from Corrfunc\n)");
 	    fprintf(stderr, "    -balance: Rescale the negative weights so that the total weight is zero.\n");
 	    fprintf(stderr, "    -invert: Multiply all the weights by -1.\n");
         fprintf(stderr, "    -loops: Maximum number of integral loops\n");

@@ -1,5 +1,6 @@
 // driver.h - this contains various c++ functions to create particles in random positions / read them in from file. Based on code by Alex Wiegand.
 #include "cell_utilities.h"
+#include "jackknife_weights.h"
 
 #ifndef DRIVER_H
 #define DRIVER_H
@@ -22,7 +23,7 @@ Particle *make_particles(Float3 rect_boxsize, int np) {
     return p;
 }
 
-Particle *read_particles(Float rescale, int *np, const char *filename, const int rstart, uint64 nmax) {
+Particle *read_particles(Float rescale, int *np, const char *filename, const int rstart, uint64 nmax, const JK_weights *JK) {
     // This will read particles from a file, space-separated x,y,z,w,JK for weight w, jackknife region JK
     // Particle positions will be rescaled by the variable 'rescale'.
     // For example, if rescale==boxsize, then inputting the unit cube will cover the periodic volume
@@ -60,11 +61,9 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
         p[j].pos.y = tmp[1]*rescale;
         p[j].pos.z = tmp[2]*rescale;
 
-        // NB: Only works for 5 entries per line now.
-        // If there are 5 or 7 entries per line get the weights from line 4 or 6
-        // Otherwise fill the weights with 1 or -1 depending on the value of rstart
+        // Get the weights from line 4 if present, else fill with +1/-1 depending on the value of rstart
         // For grid_covariance rstart is typically not used
-        if(stat!=5)//7&&stat!=5)
+        if(stat!=5)
 		   if(rstart>0&&j>=rstart)
 			   p[j].w = -1.;
 		   else
@@ -74,12 +73,22 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 			   p[j].w = -tmp[stat-2]; //read in weights
 		   else
 			   p[j].w = tmp[stat-2]; 
-        p[j].JK = tmp[stat-1]; // read in JK region
-		}
+        Float tmp_JK = tmp[stat-1]; // read in JK region
+		
+		// Collapse jacknife indices to only include filled JKs:
+		p[j].JK=-1;
+		for (int x=0;x<JK->n_JK_filled;x++){
+            if (JK->filled_JKs[x]==tmp_JK) p[j].JK=x;
+        }
+        assert(p[j].JK!=-1); // ensure we find jackknife index		    
+        
+        }
+		
 		j++;
     }
     fclose(fp);
     printf("# Done reading the particles\n");
+    
     return p;
 }
 
