@@ -1,3 +1,4 @@
+
 # Prerequisites
 *.d
 
@@ -33,3 +34,5 @@
 
 # Datafiles
 *.txt
+*.dat
+*.csv
