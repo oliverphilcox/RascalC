@@ -114,14 +114,19 @@ for N_BINS radial bins in the range MIN_R to MAX_R which is saved as OUTFILE.
         jackknife_weights_n{N_R}_m{N_MU}_j{N_J}.dat
 where N_R, N_MU and N_J specify the number of radial, mu and jackknife bins used. The binned_pair_counts file contains jackknife estimates of the RR pair counts for each bin (summed over all jackknife regions) and the jacknife_weights file contains the w_{aA} weights for each bin and jackknife. See file format descriptions above.
 
+- NB: This can be run for either periodic or non-periodic datasets. If periodic, the pair-separation angle theta (used in mu=cos(theta)) is measured from the Z axis, else it is measured from the radial direction. If the periodic flag is used here, the C++ code must be compiled with the -DPERIODIC flag.
+
 - Usage:
-    python jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS}
+    python jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC}
 for some input file of random particles, BIN_FILE specifying the radial binning (e.g. from the write_binning_file script), maximum mu value MU_MAX with a total of N_MU_BINS mu bins. NTHREADS is the number of parallel threads to run on.
 
 
 // C++ Code
 
 - To run with default options compile the .cpp files in the grid_covariance directory using make and run e.g. ./cov -def
+
 - Full usage options can be examined by running ./cov with no additional arguments.
+
+- Compile with -DPERIODIC flag if periodic RR pair count inputs are used.
 
 - OUTPUT:

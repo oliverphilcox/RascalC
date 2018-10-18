@@ -4,7 +4,7 @@ import sys
 import numpy as np
 
 if len(sys.argv)<5:
-    print "Please specify input parameters in the form {N_BINS MIN_R MAX_R OUTPUT_FILE}."
+    print "Please specify input parameters in the form {N_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}."
     sys.exit()
 nrbins = int(sys.argv[1])
 r_min = float(sys.argv[2])
