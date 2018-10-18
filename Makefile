@@ -5,7 +5,9 @@
 #CXX = icc -liomp5 -openmp
 
 CC = gcc
+#CFLAGS = -g 
 CFLAGS = -O3 -Wall
+#CXXFLAGS = -g -DOPENMP 
 CXXFLAGS = -O3 -Wall -DOPENMP 
 #-DPERIODIC
 #CXXFLAGS = -Wall -DOPENMP -O3 -unroll-aggressive -opt-prefetch -ipo

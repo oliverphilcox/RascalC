@@ -111,9 +111,9 @@ public:
         printf("Read in RR pair counts successfully.\n");
         
         // Compute SUM_A(w_aA*w_bA) for all jackknives
-        Float tmp_product=0.;
         for (int bin_a=0;bin_a<nbins;bin_a++){
             for (int bin_b=0;bin_b<nbins;bin_b++){
+                Float tmp_product=0.;
                 for (int x=0;x<n_JK_filled;x++){ // sum over jackknives
                     tmp_product+=weights[x*nbins+bin_a]*weights[x*nbins+bin_b];
                 product_weights[bin_a*nbins+bin_b]=tmp_product;

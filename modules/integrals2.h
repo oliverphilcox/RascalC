@@ -16,7 +16,7 @@ private:
     Float rmin,rmax,mumin,mumax,dr,dmu; //Ranges in r and mu
     Float *Ra, *c2, *c3, *c4; // Arrays to accumulate integrals
     Float *cxj, *c2j, *c3j, *c4j; // Arrays to accumulate jackknife integrals
-    Float *errc4; // Integral to house the variance in C4;
+    Float *errc4, *errc4j, *errcxj; // Integral to house the variance in C4, C4j and Cxj;
     
     bool box,rad; // Flags to decide whether we have a periodic box and if we have a radial correlation function only
     
@@ -44,7 +44,10 @@ public:
         ec+=posix_memalign((void **) &c3j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &c4j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &cxj, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        
         ec+=posix_memalign((void **) &errc4, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        ec+=posix_memalign((void **) &errc4j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        ec+=posix_memalign((void **) &errcxj, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         
         ec+=posix_memalign((void **) &binct, PAGE, sizeof(uint64)*nbin*mbin);
         ec+=posix_memalign((void **) &binct3, PAGE, sizeof(uint64)*nbin*mbin*nbin*mbin);
@@ -79,6 +82,8 @@ public:
         free(c3j);
         free(c4j);
         free(errc4);
+        free(errc4j);
+        free(errcxj);
         free(binct);
         free(binct3);
         free(binct4);
@@ -99,6 +104,8 @@ public:
             c4j[j]=0;
             cxj[j] = 0;
             errc4[j] = 0;
+            errc4j[j] = 0;
+            errcxj[j] = 0;
             binct3[j] = 0;
             binct4[j] = 0;
         }
@@ -209,14 +216,14 @@ public:
     inline void fourth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const int pj_id, const int pk_id, const int pl_id, const int* bin_ij, const Float* wijk, const Float* xi_ik, const Float* xi_jk, const Float* xi_ij, const double prob){
         // Accumulates the three point integral C3. Also outputs an array of xi_ik and bin_ik values for later reuse.
         
-        for(int i=0;i<pln;i++){ // Iterate ovr particle in pi_list
+        for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
             Particle pi = pi_list[i];
             Float ril_mag,ril_mu,rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, c4vj, cxvj;
             if(wijk[i]==-1) continue; // skip incorrect bins / ij self counts
             
             if((prim_ids[i]==pl_id)||(pj_id==pl_id)||(pk_id==pl_id)) continue; // don't self-count
             
-            cleanup_l(pl.pos, pk.pos, rkl_mag, rkl_mu); // define angles/lengths
+            cleanup_l(pk.pos, pl.pos, rkl_mag, rkl_mu); // define angles/lengths
             int tmp_bin = getbin(rkl_mag,rkl_mu); // kl bin for each particle
             
             if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)) continue; // if not in correct bin
@@ -224,7 +231,7 @@ public:
             cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
             cleanup_l(pl.pos,pj.pos,rjl_mag,rjl_mu); 
             
-            Float tmp_weight = wijk[i]*pl.w; // product of weights, w_iw_jw_kw_l
+            Float tmp_weight = wijk[i]*pl.w; // product of weights, w_i*w_j*w_k*w_l
             Float xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
             Float xi_jl = cf->xi(rjl_mag, rjl_mu); // j-l correlation
             Float xi_kl = cf->xi(rkl_mag, rkl_mu); // k-l correlation
@@ -244,12 +251,14 @@ public:
             c4j[tmp_full_bin]+=c4vj;
             cxj[tmp_full_bin]+=cxvj;
             errc4[tmp_full_bin]+=pow(c4v,2.);
+            errc4j[tmp_full_bin]+=pow(c4vj,2.);
+            errcxj[tmp_full_bin]+=pow(cxvj,2.);
             binct4[tmp_full_bin]++;            
         }
     }
         
 private:   
-    inline Float weight_tensor(int Ji, int Jj, int Jk, int Jl, const int bin_a, const int bin_b){
+    inline Float weight_tensor(const int Ji, const int Jj, const int Jk, const int Jl, const int bin_a, const int bin_b){
         // Compute the jackknife weight tensor for jackknife regions J_i, J_j, J_k, J_l and w_aA weight matrix w_matrix. NB: J_x are collapsed jackknife indices here - only using the non-empty regions.
         // JK_weights class holds list of filled JKs, number of filled JKs and the weight matrix.
         // bin_a, bin_b specify the binning.
@@ -307,6 +316,9 @@ public:
                 c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
                 c4j[i*nbin*mbin+j]+=ints->c4j[i*nbin*mbin+j];
                 cxj[i*nbin*mbin+j]+=ints->cxj[i*nbin*mbin+j];
+                errc4[i*nbin*mbin+j]+=ints->errc4[i*nbin*mbin+j];
+                errc4j[i*nbin*mbin+j]+=ints->errc4j[i*nbin*mbin+j];
+                errcxj[i*nbin*mbin+j]+=ints->errcxj[i*nbin*mbin+j];
                 binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
                 binct4[i*nbin*mbin+j]+=ints->binct4[i*nbin*mbin+j];
             }
@@ -407,51 +419,49 @@ public:
         // If use_RR=True, we normalize by RR_a, RR_b also
         double corrf = (double)np/ngal; // Correction factor for the different densities of random points
         
+        // To avoid recomputation
+        double corrf2 = pow(corrf,2.);
+        double corrf3 = corrf2*corrf;
+        double corrf4 = corrf3*corrf;
+        double corrf8 = corrf4*corrf4;
+        
         for(int i = 0; i<nbin*mbin;i++){
-            Ra[i]/=(n_pairs*corrf*corrf);
-            c2[i]/=(n_pairs*corrf*corrf);
-            c2j[i]/=(n_pairs*corrf*corrf);
+            Ra[i]/=(n_pairs*corrf2);
+            c2[i]/=(n_pairs*corrf2);
+            c2j[i]/=(n_pairs*corrf2);
             for(int j=0;j<nbin*mbin;j++){
-                c3[i*nbin*mbin+j]/=(n_triples*pow(corrf,3));
-                c4[i*nbin*mbin+j]/=(n_quads*pow(corrf,4));
-                c3j[i*nbin*mbin+j]/=(n_triples*pow(corrf,3));
-                c4j[i*nbin*mbin+j]/=(n_quads*pow(corrf,4));
-                cxj[i*nbin*mbin+j]/=(n_quads*pow(corrf,4));
+                c3[i*nbin*mbin+j]/=(n_triples*corrf3);
+                c4[i*nbin*mbin+j]/=(n_quads*corrf4);
+                c3j[i*nbin*mbin+j]/=(n_triples*corrf3);
+                c4j[i*nbin*mbin+j]/=(n_quads*corrf4);
+                cxj[i*nbin*mbin+j]/=(n_quads*corrf4);
+                errc4[i*nbin*mbin+j]/=(n_quads*corrf8);
+                errc4j[i*nbin*mbin+j]/=(n_quads*corrf8);
+                errcxj[i*nbin*mbin+j]/=(n_quads*corrf8);
             }
         }
+        
+        
         if(use_RR==1){
             // Also normalize by RR counts
             //NEW: Normalizing by RR counts from corrfunc:
             for(int i=0; i<nbin*mbin;i++){
                 Float Ra_i = JK->RR_pair_counts[i]; 
-                c2[i]/=pow(Ra_i,2.);
-                c2j[i]/=pow(Ra_i,2.);
+                c2[i]/=pow(Ra_i,2.)*corrf2; // must normalize by galaxy number here
+                c2j[i]/=pow(Ra_i,2.)*corrf2*(1.-JK->product_weights[i*nbin*mbin+i]);
                 for(int j=0;j<nbin*mbin;j++){
                     Float Rab=Ra_i*JK->RR_pair_counts[j];
                     Float Rab_jk = Rab*(1.-JK->product_weights[i*nbin*mbin+j]);
-                    c3[i*nbin*mbin+j]/=Rab;
-                    c4[i*nbin*mbin+j]/=Rab;
-                    c3j[i*nbin*mbin+j]/=Rab_jk;
-                    c4j[i*nbin*mbin+j]/=Rab_jk;
-                    cxj[i*nbin*mbin+j]/=Rab_jk;
+                    c3[i*nbin*mbin+j]/=Rab*corrf3;
+                    c4[i*nbin*mbin+j]/=Rab*corrf4;
+                    c3j[i*nbin*mbin+j]/=Rab_jk*corrf3;
+                    c4j[i*nbin*mbin+j]/=Rab_jk*corrf4;
+                    cxj[i*nbin*mbin+j]/=Rab_jk*corrf4;
+                    errc4[i*nbin*mbin+j]/=pow(Rab_jk,2.)*corrf8;
+                    errc4j[i*nbin*mbin+j]/=pow(Rab_jk,2.)*corrf8;
+                    errcxj[i*nbin*mbin+j]/=pow(Rab_jk,2.)*corrf8;
                 }
             }
-            
-            // Using internal RR counts:
-            /*
-            for(int i=0; i<nbin*mbin;i++){
-                c2[i]/=(Ra[i]*Ra[i]);
-                c2j[i]/=(Ra[i]*Ra[i]);
-                for(int j=0;j<nbin*mbin;j++){
-                    Float Ra_ij = Ra[i]*Ra[j];
-                    c3[i*nbin*mbin+j]/=Ra_ij;
-                    c4[i*nbin*mbin+j]/=Ra_ij;
-                    c3j[i*nbin*mbin+j]/=Ra_ij;
-                    c4j[i*nbin*mbin+j]/=Ra_ij;
-                    cxj[i*nbin*mbin+j]/=Ra_ij;
-                }
-            }
-            */
         }
     }
         
@@ -492,6 +502,14 @@ public:
             fprintf(C4ErrFile,"\n");
         }
         fflush(NULL);
+        
+        // Close open files
+        
+        fclose(C2File);
+        fclose(C3File);
+        fclose(C4File);
+        fclose(C4ErrFile);
+        fclose(RRFile);
                     
     }
 
@@ -509,10 +527,16 @@ public:
         snprintf(c4name, sizeof c4name, "CovMatricesJack/c4j_n%d_m%d_%s.txt", nbin, mbin, suffix);
         char cxname[1000];
         snprintf(cxname, sizeof cxname, "CovMatricesJack/cxj_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        char c4errname[1000];
+        snprintf(c4errname, sizeof c4errname, "CovMatricesJack/c4errj_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        char cxerrname[1000];
+        snprintf(cxerrname, sizeof cxerrname, "CovMatricesJack/cxerrj_n%d_m%d_%s.txt", nbin, mbin, suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
         FILE * CXFile = fopen(cxname,"w"); // for RR part of integral
+        FILE * C4ErrFile = fopen(c4errname,"w"); // for c4 part of integral
+        FILE * CXErrFile = fopen(cxerrname,"w"); // for c4 part of integral
         
         for (int j=0;j<nbin*mbin;j++){
             fprintf(C2File,"%le\n",c2j[j]);
@@ -522,25 +546,59 @@ public:
                 fprintf(C3File,"%le\t",c3j[i*nbin*mbin+j]);
                 fprintf(C4File,"%le\t",c4j[i*nbin*mbin+j]);
                 fprintf(CXFile,"%le\t",cxj[i*nbin*mbin+j]);
+                fprintf(C4ErrFile,"%le\t",errc4j[i*nbin*mbin+j]);
+                fprintf(CXErrFile,"%le\t",errcxj[i*nbin*mbin+j]);
             }
             fprintf(C3File,"\n"); // new line each end of row
             fprintf(C4File,"\n");
             fprintf(CXFile,"\n");
+            fprintf(C4ErrFile,"\n");
+            fprintf(CXErrFile,"\n");
         }
         fflush(NULL);
+        
+        // Close open files
+        
+        fclose(C2File);
+        fclose(C3File);
+        fclose(C4File);
+        fclose(CXFile);
+        fclose(C4ErrFile);
+        fclose(CXErrFile);
+                    
     }
- /*   
-    void compute_Neff(Float n_quads){
-    // Compute the effective N from the data given the number of sets of quads used 
+    
+    void compute_Neff(Float n_quads, Float &N_eff, Float &N_eff_jack){
+        // Compute the effective mean N from the data given the number of sets of quads used. 
+        // This takes unnormalized integrals as inputs
+        Float N4=0., N4j=0.;
+        Float norm4=0., norm4j=0.;
+        
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
-                Float var_c4; // variance in this bin
-                var_c4=errc4[i*nbin*mbin+j]n_quads-pow(c4[i*nbin*mbin+j],2.)
-                Float neff;
-                neff = pow(c4[i*nbin*mbin+j],2.)+c4[i*nbin*mbin+i]*c4[j*nbin*mbin+j];
-        
+                // Read in integral components + normalize by 1/n_quads;
+                Float c4ij=c4[i*nbin*mbin+j]/n_quads;
+                Float c4ii=c4[i*nbin*mbin+i]/n_quads;
+                Float c4jj=c4[j*nbin*mbin+j]/n_quads;
+                Float errc4ij=errc4[i*nbin*mbin+j]/n_quads;
+                Float cjtot_tmp_ij = (c4j[i*nbin*mbin+j]+cxj[i*nbin*mbin+j])/n_quads;
+                Float cjtot_tmp_ii = (c4j[i*nbin*mbin+i]+cxj[i*nbin*mbin+i])/n_quads;
+                Float cjtot_tmp_jj = (c4j[j*nbin*mbin+j]+cxj[j*nbin*mbin+j])/n_quads;
+                Float cjerr_tmp_ij = (errc4j[i*nbin*mbin+j]+errcxj[i*nbin*mbin+j])/n_quads;
+                
+                // For N4;
+                N4+=(pow(c4ij,2.)+c4ii*c4jj)/(errc4ij-pow(c4ij,2.));//*pow(c4ij,2.)
+                norm4+=1;//pow(c4ij,2.);
+                
+                // For N4j;
+                N4j+=(pow(cjtot_tmp_ij,2.)+cjtot_tmp_ii*cjtot_tmp_jj)/(cjerr_tmp_ij-pow(cjtot_tmp_ij,2.));//*pow(cjtot_tmp_ij,2.)
+                norm4j+=1;//pow(cjtot_tmp_ij,2.);
+            }
+        }
+        N_eff = N4/norm4;
+        N_eff_jack=N4j/norm4j;
     }
-*/
+
 };
 
 #endif
