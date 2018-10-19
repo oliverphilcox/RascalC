@@ -3,7 +3,7 @@
 #ifndef COMPUTE_INTEGRAL3_H
 #define COMPUTE_INTEGRAL3_H
 
-#include "integrals2.h"
+#include "integrals3.h"
 
 class compute_integral3{
     
@@ -308,9 +308,9 @@ public:
      char out_string[5];
      sprintf(out_string,"full");
      sumint.save_integrals(out_string); // save integrals to file
-     printf("Printed integrals to file in the CovMatricesAll/ directory\n");
+     printf("Printed integrals to file in the ModCovMatricesAll/ directory\n");
      sumint.save_jackknife_integrals(out_string);
-     printf("Printed jackknife integrals to file in the CovMatricesJack/ directory\n");
+     printf("Printed jackknife integrals to file in the ModCovMatricesJack/ directory\n");
      fflush(NULL);
      return;
      }

@@ -59,7 +59,7 @@ public:
 	int mbin = 10;
 
 	// The number of threads to run on
-	int nthread=4;
+	int nthread=10;
 
 	// The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
@@ -74,7 +74,7 @@ public:
 
 	// The name of the input file
 	char *fname = NULL;
-	const char default_fname[500] = "../random_particles/spherical_particles.txt";//test_particles_small.txt";
+	const char default_fname[500] = "../spherical_particles.txt";//test_particles_small.txt";
 
 	// The name of the correlation function file
 	char *corname = NULL;
