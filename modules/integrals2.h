@@ -568,11 +568,11 @@ public:
                     
     }
     
-    void compute_Neff(Float n_quads, Float &N_eff, Float &N_eff_jack){
+    void compute_Neff(Float n_quads, Float &N_eff, Float &N_eff_jack, Float &N_eff_x){
         // Compute the effective mean N from the data given the number of sets of quads used. 
         // This takes unnormalized integrals as inputs
-        Float N4=0., N4j=0.;
-        Float norm4=0., norm4j=0.;
+        Float N4=0., N4j=0., N4x=0.;
+        Float norm4=0., norm4j=0., normxj=0.;
         
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
@@ -580,23 +580,36 @@ public:
                 Float c4ij=c4[i*nbin*mbin+j]/n_quads;
                 Float c4ii=c4[i*nbin*mbin+i]/n_quads;
                 Float c4jj=c4[j*nbin*mbin+j]/n_quads;
-                Float errc4ij=errc4[i*nbin*mbin+j]/n_quads;
-                Float cjtot_tmp_ij = (c4j[i*nbin*mbin+j]+cxj[i*nbin*mbin+j])/n_quads;
-                Float cjtot_tmp_ii = (c4j[i*nbin*mbin+i]+cxj[i*nbin*mbin+i])/n_quads;
-                Float cjtot_tmp_jj = (c4j[j*nbin*mbin+j]+cxj[j*nbin*mbin+j])/n_quads;
-                Float cjerr_tmp_ij = (errc4j[i*nbin*mbin+j]+errcxj[i*nbin*mbin+j])/n_quads;
+                
+                Float c4j_ij=c4j[i*nbin*mbin+j]/n_quads;
+                Float c4j_ii=c4j[i*nbin*mbin+i]/n_quads;
+                Float c4j_jj=c4j[j*nbin*mbin+j]/n_quads;
+                
+                Float cxj_ij=cxj[i*nbin*mbin+j]/n_quads;
+                Float cxj_ii=cxj[i*nbin*mbin+i]/n_quads;
+                Float cxj_jj=cxj[j*nbin*mbin+j]/n_quads;
+                
+                // Compute pixel variances
+                Float var_c4 = (errc4[i*nbin*mbin+j]/n_quads - pow(c4ij,2.))/(n_quads-1.);
+                Float var_c4j = (errc4j[i*nbin*mbin+j]/n_quads - pow(c4j_ij,2.))/(n_quads-1.);
+                Float var_cxj = (errcxj[i*nbin*mbin+j]/n_quads - pow(cxj_ij,2.))/(n_quads-1.);
                 
                 // For N4;
-                N4+=(pow(c4ij,2.)+c4ii*c4jj)/(errc4ij-pow(c4ij,2.));//*pow(c4ij,2.)
-                norm4+=1;//pow(c4ij,2.);
+                N4+=(pow(c4ij,2.)+c4ii*c4jj)/var_c4*c4ij;//*pow(c4ij,2.)
+                norm4+=c4ij;//pow(c4ij,2.);
                 
                 // For N4j;
-                N4j+=(pow(cjtot_tmp_ij,2.)+cjtot_tmp_ii*cjtot_tmp_jj)/(cjerr_tmp_ij-pow(cjtot_tmp_ij,2.));//*pow(cjtot_tmp_ij,2.)
-                norm4j+=1;//pow(cjtot_tmp_ij,2.);
+                N4j+=(pow(c4j_ij,2.)+c4j_ii*c4j_jj)/var_c4j*c4j_ij;//*pow(cjtot_tmp_ij,2.)
+                norm4j+=c4j_ij;//pow(cjtot_tmp_ij,2.);
+                
+                // For N4x;
+                N4x+=(pow(cxj_ij,2.)+cxj_ii*cxj_jj)/var_cxj*cxj_ij;
+                normxj+=cxj_ij;
             }
         }
         N_eff = N4/norm4;
         N_eff_jack=N4j/norm4j;
+        N_eff_x = N4x/normxj;
     }
 
 };
