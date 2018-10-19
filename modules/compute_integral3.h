@@ -244,14 +244,14 @@ public:
                 if((frob_C4<0.1)&&(frob_C4j<0.1)) convergence_counter++;
                 
                 // Report N_eff for the integrals:
-                Float N_eff, N_eff_jack;
-                sumint.compute_Neff((Float)n_quads, N_eff, N_eff_jack);
+                Float N_eff, N_eff_jack, N_eff_x;
+                sumint.compute_Neff((Float)n_quads, N_eff, N_eff_jack, N_eff_x);
                 
                 if (n_loops!=0){
                     fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
                     fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j), %.3f (Cxj)\n",n_loops,frob_C2j, frob_C3j, frob_C4j, frob_Cxj);
                     fprintf(stderr,"Ratio of C_x^J and C_4^J terms: %.3f\n",ratio_x4);
-                    fprintf(stderr, "N_eff estimate: %.3e (C4) %.3e (C4j)\n", N_eff, N_eff_jack);
+                    fprintf(stderr, "N_eff estimate: %.3e (C4) %.3e (C4j) %.3e (Cxj) \n", N_eff, N_eff_jack,N_eff_x);
                 }
             }
             else{
