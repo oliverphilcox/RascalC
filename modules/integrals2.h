@@ -149,8 +149,8 @@ public:
                 JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pi.JK),int(pj.JK),tmp_bin,tmp_bin);
             
                 // Now compute the integral:
-                c2vj = tmp_weight*tmp_weight*(1.+tmp_xi)/prob*JK_weight;
-                c2v = tmp_weight*tmp_weight*(1.+tmp_xi) / prob; // c2 contribution
+                c2vj = 2.*tmp_weight*tmp_weight*(1.+tmp_xi)/prob*JK_weight;
+                c2v = 2.*tmp_weight*tmp_weight*(1.+tmp_xi) / prob; // c2 contribution
                 rav = tmp_weight / prob; // RR_a contribution
                 
                 // Add to local integral counts:
@@ -201,9 +201,9 @@ public:
             Float JK_weight;
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pi.JK),bin_ij[i],tmp_bin);
             
-            // Now compute the integral;
-            c3v = tmp_weight*pi.w/prob*xi_jk_tmp;
-            c3vj = tmp_weight*pi.w/prob*xi_jk_tmp*JK_weight;
+            // Now compute the integral (using symmetry factor of 4);
+            c3v = 4.*tmp_weight*pi.w/prob*xi_jk_tmp;
+            c3vj = 4.*tmp_weight*pi.w/prob*xi_jk_tmp*JK_weight;
             
             // Add to local counts
             int tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
