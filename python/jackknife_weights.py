@@ -14,7 +14,7 @@ binfile = str(sys.argv[2])
 mu_max = float(sys.argv[3])
 nmu_bins = int(sys.argv[4])
 nthreads = int(sys.argv[5])
-periodic = bool(sys.argv[6])
+periodic = int(sys.argv[6])
 
 
 ## First read in weights and positions:
