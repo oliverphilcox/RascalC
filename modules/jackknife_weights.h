@@ -30,7 +30,7 @@ public:
         // NB: The indexing is defined as INDEX = JACKKNIFE_ID * NBINS + BIN_ID
         
         nbins = par->nbin*par->mbin; // define number of bins in total
-        char line[50000];
+        char line[100000];
         n_JK_filled = 0; // line number
         FILE *fp;
         FILE *fp2;
@@ -47,7 +47,7 @@ public:
             
         fprintf(stderr,"\nReading jackknife file '%s' and RR bin count file '%s'\n",par->jk_weight_file,par->RR_bin_file);
         // Count lines to construct the correct size
-        while (fgets(line,50000,fp)!=NULL){
+        while (fgets(line,100000,fp)!=NULL){
             if (line[0]=='#') continue; // comment line
             if (line[0]=='\n') continue;
             n_JK_filled++;
@@ -69,7 +69,7 @@ public:
         int counter; // counts which element in line
         
         // Read in values to file
-        while (fgets(line,50000,fp)!=NULL) {
+        while (fgets(line,100000,fp)!=NULL) {
             // Select required lines in file
             if (line[0]=='#') continue;
             if (line[0]=='\n') continue;
@@ -100,7 +100,7 @@ public:
         printf("Read in jackknife weights successfully.\n"); 
         
         index=0;
-        while (fgets(line,1000,fp2)!=NULL){
+        while (fgets(line,5000,fp2)!=NULL){
             // Select required lines in file
             if (line[0]=='#') continue;
             if (line[0]=='\n') continue;
