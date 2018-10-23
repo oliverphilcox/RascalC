@@ -118,6 +118,7 @@ public:
     
     inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const int pj_id, Float* &xi_ij, int* &bin, Float* &wij, const double prob){
         // Accumulates the two point integral C2. Also outputs an array of xi_ij and bin values for later reuse.
+        // Prob. here is defined as g_ij / f_ij where g_ij is the sampling PDF and f_ij is the true data PDF for picking pairs (equal to n_i/N n_j/N for N particles)
         
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
                 Float rij_mag,rij_mu, rav, c2v, c2vj;
@@ -157,7 +158,7 @@ public:
                 Ra[tmp_bin]+=rav;
                 c2[tmp_bin]+=c2v;
                 c2j[tmp_bin]+=c2vj;
-                binct[tmp_bin]++;
+                binct[tmp_bin]++; // only count actual contributions to bin
         }
     }
     
@@ -418,7 +419,6 @@ public:
         // n_pair etc. are the number of PARTICLE pairs etc. attempted (not including rejected cells, but including pairs which don't fall in correct bin ranges)
         // If use_RR=True, we normalize by RR_a, RR_b also
         double corrf = (double)np/ngal; // Correction factor for the different densities of random points
-        
         // To avoid recomputation
         double corrf2 = pow(corrf,2.);
         double corrf3 = corrf2*corrf;
@@ -443,23 +443,23 @@ public:
         
         
         if(use_RR==1){
-            // Also normalize by RR counts
+            // Further normalize by RR counts
             //NEW: Normalizing by RR counts from corrfunc:
             for(int i=0; i<nbin*mbin;i++){
                 Float Ra_i = JK->RR_pair_counts[i]; 
-                c2[i]/=pow(Ra_i,2.)*corrf2; // must normalize by galaxy number here
-                c2j[i]/=pow(Ra_i,2.)*corrf2*(1.-JK->product_weights[i*nbin*mbin+i]);
+                c2[i]/=pow(Ra_i,2.); // must normalize by galaxy number here
+                c2j[i]/=pow(Ra_i,2.)*(1.-JK->product_weights[i*nbin*mbin+i]);
                 for(int j=0;j<nbin*mbin;j++){
                     Float Rab=Ra_i*JK->RR_pair_counts[j];
                     Float Rab_jk = Rab*(1.-JK->product_weights[i*nbin*mbin+j]);
-                    c3[i*nbin*mbin+j]/=Rab*corrf3;
-                    c4[i*nbin*mbin+j]/=Rab*corrf4;
-                    c3j[i*nbin*mbin+j]/=Rab_jk*corrf3;
-                    c4j[i*nbin*mbin+j]/=Rab_jk*corrf4;
-                    cxj[i*nbin*mbin+j]/=Rab_jk*corrf4;
-                    errc4[i*nbin*mbin+j]/=pow(Rab_jk,2.)*corrf8;
-                    errc4j[i*nbin*mbin+j]/=pow(Rab_jk,2.)*corrf8;
-                    errcxj[i*nbin*mbin+j]/=pow(Rab_jk,2.)*corrf8;
+                    c3[i*nbin*mbin+j]/=Rab;
+                    c4[i*nbin*mbin+j]/=Rab;
+                    c3j[i*nbin*mbin+j]/=Rab_jk;
+                    c4j[i*nbin*mbin+j]/=Rab_jk;
+                    cxj[i*nbin*mbin+j]/=Rab_jk;
+                    errc4[i*nbin*mbin+j]/=pow(Rab_jk,2.);
+                    errc4j[i*nbin*mbin+j]/=pow(Rab_jk,2.);
+                    errcxj[i*nbin*mbin+j]/=pow(Rab_jk,2.);
                 }
             }
         }
@@ -471,6 +471,13 @@ public:
         * In txt files {c2,c3,c4,RR}_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 and RR_a that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
         */
         // Create output files
+        
+        //TODO: Remove
+        // ALSO SAVE BIN COUNTS:
+        char binname[1000];
+        snprintf(binname,sizeof binname, "CovMatricesAll/binct_c4_n%d_m%d_%s.txt",nbin,mbin,suffix);
+        FILE * BinFile = fopen(binname,"w");
+        
         char c2name[1000];
         snprintf(c2name, sizeof c2name, "CovMatricesAll/c2_n%d_m%d_%s.txt", nbin, mbin,suffix);
         char c3name[1000];
@@ -493,10 +500,13 @@ public:
         }
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
+                //TODO: Remove bin
+                fprintf(BinFile,"%llu\t",binct4[i*nbin*mbin+j]);
                 fprintf(C3File,"%le\t",c3[i*nbin*mbin+j]);
                 fprintf(C4File,"%le\t",c4[i*nbin*mbin+j]);
                 fprintf(C4ErrFile,"%le\t",errc4[i*nbin*mbin+j]);
             }
+            fprintf(BinFile,"\n");
             fprintf(C3File,"\n"); // new line each end of row
             fprintf(C4File,"\n");
             fprintf(C4ErrFile,"\n");

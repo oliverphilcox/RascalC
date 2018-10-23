@@ -87,10 +87,8 @@
             RandomDraws *rd=new RandomDraws(cf,par, NULL, 0);
             Integrals2 sumint(par,cf,JK); // total integral
 
-            
-            uint64 tot_pairs=0, tot_triples=0, tot_quads=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
-            uint64 cell_attempt2=0,cell_attempt3=0,cell_attempt4=0; // number of j,k,l cells attempted
-            uint64 used_cell2=0,used_cell3=0,used_cell4=0; // number of used j,k,l cells
+            uint64 attempt2=0, attempt3=0, attempt4=0; // cell attempts to compute pairs/triples/quads
+            uint64 n_pairs=0, n_triples=0, n_quads=0; // number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
             
             check_threads(par); // Define which threads we use
         
@@ -104,7 +102,7 @@
             TotalTime.Start(); // Start timer
             
     #ifdef OPENMP       
-    #pragma omp parallel firstprivate(steps) shared(sumint) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4)
+    #pragma omp parallel firstprivate(steps) shared(sumint) reduction(+:attempt2,attempt3,attempt4,convergence_counter)
     #endif
             { // start parallel loop
             // Decide which thread we are in
@@ -146,7 +144,7 @@
             ec+=posix_memalign((void **) &w_ijk, PAGE, sizeof(Float)*mnp);
             assert(ec==0);
             
-            uint64 loc_used_pairs=0, loc_used_triples=0, loc_used_quads=0; // local counts of used pairs/triples/quads
+            int loc_pairs = 0, loc_triples=0, loc_quads=0; // local number of pair/triple/quad particle counts
             
     //-----------START FIRST LOOP-----------
     #ifdef OPENMP
@@ -167,19 +165,13 @@
                     
                     //TODO: Fix attempts calculation - should take into account pairs/triples rejected
                     
-                    //attempt2+=pln*par->N2; // number of pairs attempted
+                    attempt2+=pln*par->N2; // number of pairs attempted
                     
                     if(pln==0) continue; // skip if empty
                     
-                    loc_used_pairs+=pln*par->N2;
-                    loc_used_triples+=pln*par->N2*par->N3;
-                    loc_used_quads+=pln*par->N3*par->N4;
                     
                     // LOOP OVER N2 J CELLS
                     for (int n2=0; n2<par->N2; n2++){
-                        cell_attempt2+=1; // new cell attempted
-                        //loc_used_pairs+=pln; // update pair count for each pair used here (including those later ignored due to incorrect bins etc.)
-                        // NB: We need to include the empty cells here also to ensure that p2 represents the probability a cell is chosen
                         
                         // Draw second cell from i weighted by 1/r^2
                         integer3 delta2 = rd->random_cubedraw(locrng, &p2); 
@@ -189,53 +181,41 @@
                         int x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid, sln, locrng);
                         if(x==1) continue; // skip if error
                         
-                        used_cell2+=1; // new cell accepted
                         p2*=1./(grid->np*(double)sln); // probability is divided by total number of particles and number of particles in cell
+                    
+                        loc_pairs+=pln; // update pair count for each pair used here
                     
                         // Compute C2 integral
                         locint.second(prim_list, prim_ids, pln, particle_j, pid_j, xi_ij, bin_ij, w_ij, p2);
                         
-                        
-                        //attempt3+=pln*par->N3; // number of triples attempted
+                        attempt3+=pln*par->N3; // number of triples attempted
                         
                         // LOOP OVER N3 K CELLS
                         for (int n3=0; n3<par->N3; n3++){
-                            cell_attempt3+=1; // new third cell attempted
-                            
                             // Draw third cell from j weighted by xi(r)
                             integer3 delta3 = rd->random_xidraw(locrng, &p3);
                             integer3 thi_id = sec_id + delta3;
                             Float3 cell_sep3 = cell_sep2+grid->cell_sep(delta3);
                             int x = draw_particle(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng);
                             if(x==1) continue; 
-                            
-                            used_cell3+=1; // new third cell used
-                            //loc_used_triples+=pln; // update triples counts
-                            
                             p3*=p2/(double)tln; // update probability
                             
-                            //loc_triples+=pln; // update triple count for each triple used
+                            loc_triples+=pln; // update triple count for each triple used
                             
                             // Compute third integral
                             locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_jk, xi_ik, w_ijk, p3);
                             
-                            //attempt4+=pln*par->N4; // number of quads attempted 
+                            attempt4+=pln*par->N4; // number of quads attempted 
                             
                             // LOOP OVER N4 L CELLS
                             for (int n4=0; n4<par->N4; n4++){
-                                cell_attempt4+=1; // new fourth cell attempted
-                                
                                 // Draw fourth cell from k cell weighted by 1/r^2
                                 integer3 delta4 = rd->random_cubedraw(locrng, &p4);
                                 int x = draw_particle(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid,fln,locrng);
                                 if(x==1) continue;
-                                
-                                used_cell4+=1; // new fourth cell used
-                                //loc_used_quads+=pln;
-                                
                                 p4*=p3/(double)fln;
                                 
-                                //loc_quads+=pln; // update quad count
+                                loc_quads+=pln; // update quad count
                                 
                                 // Now compute the four-point integral
                                 locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, xi_jk, xi_ij, p4);
@@ -247,10 +227,10 @@
                 
     #pragma omp critical // only one processor can access at once
             {
-                // Update used pair/triple/quad counts
-                tot_pairs+=loc_used_pairs;
-                tot_triples+=loc_used_triples;
-                tot_quads+=loc_used_quads; 
+                // Update pair/triple/quad counts
+                n_pairs+=loc_pairs;
+                n_triples+=loc_triples;
+                n_quads+=loc_quads; 
                 
                 if (n_loops%par->nthread==0){ // Print every nthread loops
                     TotalTime.Stop(); // interrupt timing to access .Elapsed()
@@ -266,7 +246,7 @@
                     
                     // Report N_eff for the integrals:
                     Float N_eff, N_eff_jack, N_eff_x;
-                    sumint.compute_Neff((Float)tot_quads, N_eff, N_eff_jack, N_eff_x);
+                    sumint.compute_Neff((Float)n_quads, N_eff, N_eff_jack, N_eff_x);
                     
                     if (n_loops!=0){
                         fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
@@ -282,14 +262,15 @@
                 char output_string[50];
                 sprintf(output_string,"%d", n_loops);
                 
-                locint.normalize(grid->np,par->nofznorm, (Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads, 0); // don't normalize by RR here
+                printf("IS THE PAIR COUNT WRONG HERE??\n\n");
+                locint.normalize(grid->np,par->nofznorm, (Float)loc_pairs, (Float)loc_triples, (Float)loc_quads, 0); // don't normalize by RR here
                 locint.save_integrals(output_string);
                 locint.save_jackknife_integrals(output_string);
                 
                 locint.sum_total_counts(cnt2, cnt3, cnt4); 
                 locint.reset();
                 
-                loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;
+                loc_pairs=0; loc_triples=0; loc_quads=0;
                 
                 }
             
@@ -314,17 +295,18 @@
         TotalTime.Stop();
         
         // Normalize the accumulated results, using the RR counts
-        sumint.normalize(grid->np, par->nofznorm, (Float)tot_pairs, (Float)tot_triples,(Float)tot_quads,1);//(Float)n_triples, (Float)n_quads, 1);
+        sumint.normalize(grid->np, par->nofznorm, (Float)attempt2, (Float)attempt3,(Float)attempt4,1);//(Float)n_triples, (Float)n_quads, 1);
         
         int runtime = TotalTime.Elapsed();
-        fprintf(stderr, "\nTotal process time for %.2e sets of cells and %.2e quads of particles: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", double(used_cell4),double(tot_quads),runtime, runtime/3600,runtime/60%60,runtime%60);
-        printf("We tried %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(cell_attempt2),double(cell_attempt3),double(cell_attempt4));
-        printf("Of these, we accepted %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(used_cell2),double(used_cell3),double(used_cell4));
-        printf("We sampled %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(tot_pairs),double(tot_triples),double(tot_quads));
-        printf("Of these, we have integral contributions from %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(cnt2),double(cnt3),double(cnt4));
-        printf("Cell acceptance ratios are %.3f for pairs, $%.3f for triples and %.3f for quads.\n",(double)used_cell2/cell_attempt2,(double)used_cell3/cell_attempt3,(double)used_cell4/cell_attempt4);
-        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
-        printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid->np);
+        fprintf(stderr, "\nTotal process time for %.2e cells and %.2e quads: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", double(par->max_loops*par->N2*par->N3*par->N4*grid->nf),double(par->max_loops*par->N2*par->N3*par->N4*grid->np),runtime, runtime/3600,runtime/60%60,runtime%60);
+        printf("SORT OUT WHAT THESE MEAN: \n\n");
+        printf("We tried %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(attempt2),double(attempt3),double(attempt4));
+        printf("We tried %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(n_pairs),double(n_triples),double(n_quads));
+        printf("We accepted %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(cnt2),double(cnt3),double(cnt4));
+        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/n_pairs,(double)cnt3/n_triples,(double)cnt4/n_quads);
+        printf("Average of %.2f pairs per primary particle.\n",(Float)cnt2/grid->np);
+        
+        //TODO Add remaining time estimate
         
         char out_string[5];
         sprintf(out_string,"full");
