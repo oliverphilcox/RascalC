@@ -165,21 +165,15 @@
                     integer3 prim_id = grid->cell_id_from_1d(prim_id_1D); // define first cell
                     pln = particle_list(prim_id_1D, prim_list, prim_ids, grid); // update list of particles and number of particles
                     
-                    //TODO: Fix attempts calculation - should take into account pairs/triples rejected
-                    
-                    //attempt2+=pln*par->N2; // number of pairs attempted
-                    
                     if(pln==0) continue; // skip if empty
                     
                     loc_used_pairs+=pln*par->N2;
                     loc_used_triples+=pln*par->N2*par->N3;
-                    loc_used_quads+=pln*par->N3*par->N4;
+                    loc_used_quads+=pln*par->N2*par->N3*par->N4;
                     
                     // LOOP OVER N2 J CELLS
                     for (int n2=0; n2<par->N2; n2++){
                         cell_attempt2+=1; // new cell attempted
-                        //loc_used_pairs+=pln; // update pair count for each pair used here (including those later ignored due to incorrect bins etc.)
-                        // NB: We need to include the empty cells here also to ensure that p2 represents the probability a cell is chosen
                         
                         // Draw second cell from i weighted by 1/r^2
                         integer3 delta2 = rd->random_cubedraw(locrng, &p2); 
@@ -195,9 +189,6 @@
                         // Compute C2 integral
                         locint.second(prim_list, prim_ids, pln, particle_j, pid_j, xi_ij, bin_ij, w_ij, p2);
                         
-                        
-                        //attempt3+=pln*par->N3; // number of triples attempted
-                        
                         // LOOP OVER N3 K CELLS
                         for (int n3=0; n3<par->N3; n3++){
                             cell_attempt3+=1; // new third cell attempted
@@ -205,21 +196,16 @@
                             // Draw third cell from j weighted by xi(r)
                             integer3 delta3 = rd->random_xidraw(locrng, &p3);
                             integer3 thi_id = sec_id + delta3;
-                            Float3 cell_sep3 = cell_sep2+grid->cell_sep(delta3);
+                            Float3 cell_sep3 = cell_sep2 + grid->cell_sep(delta3);
                             int x = draw_particle(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng);
                             if(x==1) continue; 
                             
                             used_cell3+=1; // new third cell used
-                            //loc_used_triples+=pln; // update triples counts
                             
                             p3*=p2/(double)tln; // update probability
                             
-                            //loc_triples+=pln; // update triple count for each triple used
-                            
                             // Compute third integral
                             locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_jk, xi_ik, w_ijk, p3);
-                            
-                            //attempt4+=pln*par->N4; // number of quads attempted 
                             
                             // LOOP OVER N4 L CELLS
                             for (int n4=0; n4<par->N4; n4++){
@@ -231,11 +217,8 @@
                                 if(x==1) continue;
                                 
                                 used_cell4+=1; // new fourth cell used
-                                //loc_used_quads+=pln;
                                 
                                 p4*=p3/(double)fln;
-                                
-                                //loc_quads+=pln; // update quad count
                                 
                                 // Now compute the four-point integral
                                 locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, xi_jk, xi_ij, p4);
@@ -322,7 +305,7 @@
         printf("Of these, we accepted %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(used_cell2),double(used_cell3),double(used_cell4));
         printf("We sampled %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(tot_pairs),double(tot_triples),double(tot_quads));
         printf("Of these, we have integral contributions from %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(cnt2),double(cnt3),double(cnt4));
-        printf("Cell acceptance ratios are %.3f for pairs, $%.3f for triples and %.3f for quads.\n",(double)used_cell2/cell_attempt2,(double)used_cell3/cell_attempt3,(double)used_cell4/cell_attempt4);
+        printf("Cell acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)used_cell2/cell_attempt2,(double)used_cell3/cell_attempt3,(double)used_cell4/cell_attempt4);
         printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
         printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid->np);
         

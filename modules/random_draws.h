@@ -105,7 +105,9 @@ public:
 		nsidecube = 2 * maxsep + 1;
 		long nn=0;
 
-        integData(&xcube,&nn,f,nsidecube,boxside,1./2.);
+        printf("\nUsing xi(r) sampling for j-k cells\n");
+        printf("Using 1/r^2 sampling for i-j and k-l cells\n");
+        integData(&xcube,&nn,f,nsidecube,boxside,1.);// (previously 1./2.);
 
 		// Set up actual sampler
 		cube = ransampl_alloc( nn );
@@ -246,8 +248,9 @@ public:
 										int ic=is*i+len;
 										int kc=ks*k+len;
 										int lc=ls*l+len;
-
-										(*x)[nside*nside*ic+nside*kc+lc]=val;
+                                        
+                                        //printf("Just using 1/r^2 probabilities of centers of cells for both samplers\n");
+                                        (*x)[nside*nside*ic+nside*kc+lc]=val;//1./(0.1+pow(i,2.)+pow(k,2.)+pow(l,2.));//val;
 		//								if(i==len&&k==len)
 		//									printf("%d %f, ",side*side*ic+side*kc+lc,y[side*side*ic+side*kc+lc]/val-1);
 									}

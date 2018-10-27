@@ -138,7 +138,9 @@ bool compute_bounding_box(Particle *p, int np, Float3 &rect_boxsize, Float rmax,
         // Now compute the size of the box in every dimension
         rect_boxsize = ceil3(prange/cellsize)*cellsize; // to ensure we fit an integer number of cells in each direction
         printf("# Setting non-periodic box-size to {%6.2f,%6.2f,%6.2f}\n", rect_boxsize.x,rect_boxsize.y,rect_boxsize.z);
-	}
+    }
+	
+	
     return box;
 }
 

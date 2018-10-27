@@ -31,7 +31,7 @@ public:
 	// The radius beyond which the correlation function is set to zero
 	Float xicutoff = 400.0;
 
-	Float nofznorm=626798;//6684485//681013//672940//674847 629310
+	Float nofznorm=1000000;//626798;//6684485//681013//672940//674847 629310
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
@@ -89,7 +89,7 @@ public:
     const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n10_m6_j48.dat";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=100; 
+    int max_loops=4; 
     int N2 = 10; // number of j cells per i cell
     int N3 = 10; // number of k cells per j cell
     int N4 = 10; // number of l cells per k cell
