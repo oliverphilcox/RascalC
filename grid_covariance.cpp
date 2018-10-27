@@ -91,8 +91,8 @@ int main(int argc, char *argv[]) {
         orig_p = read_particles(par.rescale, &par.np, par.fname, par.rstart, par.nmax, &weights);
         assert(par.np>0);
         //Testing:
-        par.nofznorm=par.np;
-        printf("\nRESETTING N_GAL NORM\n");
+        //par.nofznorm=par.np;
+        //printf("\nRESETTING N_GAL NORM\n");
         //Testing end
         par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.rmax, shift, par.nside);
     } else {
