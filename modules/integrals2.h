@@ -477,6 +477,9 @@ public:
         char binname[1000];
         snprintf(binname,sizeof binname, "CovMatricesAll/binct_c4_n%d_m%d_%s.txt",nbin,mbin,suffix);
         FILE * BinFile = fopen(binname,"w");
+        char bin2name[1000];
+        snprintf(bin2name,sizeof bin2name, "CovMatricesAll/binct_c2_n%d_m%d_%s.txt",nbin,mbin,suffix);
+        FILE * Bin2File = fopen(bin2name,"w");
         
         char c2name[1000];
         snprintf(c2name, sizeof c2name, "CovMatricesAll/c2_n%d_m%d_%s.txt", nbin, mbin,suffix);
@@ -497,6 +500,7 @@ public:
         for (int j=0;j<nbin*mbin;j++){
             fprintf(C2File,"%le\n",c2[j]);
             fprintf(RRFile,"%le\n",Ra[j]);
+            fprintf(Bin2File,"%llu\n",binct[j]);
         }
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
@@ -515,6 +519,8 @@ public:
         
         // Close open files
         
+        fclose(BinFile);
+        fclose(Bin2File);
         fclose(C2File);
         fclose(C3File);
         fclose(C4File);

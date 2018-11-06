@@ -11,7 +11,7 @@
         Grid *grid;
         CorrelationFunction *cf;
         JK_weights *JK;
-        RandomDraws *rd;
+        RandomDraws2 *rd;
         uint64 cnt2=0,cnt3=0,cnt4=0;
         int nbin, mbin; 
         
@@ -84,7 +84,7 @@
             unsigned long int steps = dist(urandom);        
             gsl_rng_env_setup(); // initialize gsl rng
             CorrelationFunction *cf=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin);
-            RandomDraws *rd=new RandomDraws(cf,par, NULL, 0);
+            RandomDraws2 *rd=new RandomDraws2(cf,par, NULL, 0);
             Integrals2 sumint(par,cf,JK); // total integral
 
             
@@ -266,8 +266,9 @@
                 sprintf(output_string,"%d", n_loops);
                 
                 locint.normalize(grid->np,par->nofznorm, (Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads, 0); // don't normalize by RR here
-                locint.save_integrals(output_string);
-                locint.save_jackknife_integrals(output_string);
+                //TODO: Decide whether to save integrals partially
+                //locint.save_integrals(output_string);
+                //locint.save_jackknife_integrals(output_string);
                 
                 locint.sum_total_counts(cnt2, cnt3, cnt4); 
                 locint.reset();

@@ -21,7 +21,7 @@ public:
 
 	// The minimum radius of the smallest bin.
 	Float rmin = 50.0;
-
+    
 	// The maximum mu of the largest bin.
 	Float mumax = 1.0;
 
@@ -78,7 +78,7 @@ public:
 
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "xi_functions/simple_xi_trunc.xi";
+	const char default_corname[500] = "xi_functions/simple_xi.xi";
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL;
