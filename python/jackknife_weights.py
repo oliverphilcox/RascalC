@@ -6,15 +6,16 @@ import sys
 import numpy as np
 
 # PARAMETERS
-if len(sys.argv)<7:
-    print "Usage: python jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC}"
+if len(sys.argv)<8:
+    print "Usage: python jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {N_GAL} {NTHREADS} {PERIODIC}"
     sys.exit()
 fname = str(sys.argv[1])
 binfile = str(sys.argv[2])
 mu_max = float(sys.argv[3])
 nmu_bins = int(sys.argv[4])
-nthreads = int(sys.argv[5])
-periodic = int(sys.argv[6])
+N_gal = int(float(sys.argv[5]))
+nthreads = int(sys.argv[6])
+periodic = int(sys.argv[7])
 
 
 ## First read in weights and positions:
@@ -42,6 +43,8 @@ for n, line in enumerate(file(fname, 'r')):
 N = len(X) # number of particles
 J_regions = np.unique(J) # jackknife regions in use
 N_jack = len(J_regions) # number of non-empty jackknife regions
+
+print("Ratio of number of galaxeis to number of random particles: %.2f" %(N_gal/N))
 
 ## Determine number of radial bins in binning file:
 print("Counting lines in binfile");
@@ -88,7 +91,7 @@ if not periodic:
         cross_RR=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,Ra,Dec,com_dist,weights1=W,weight_type='pair_product',
                     RA2=Ra[filt],DEC2=Dec[filt],CZ2=com_dist[filt],weights2=W[filt],verbose=False,is_comoving_dist=True)
         # Weight by average particle weighting
-        RR_aA[i]=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
+        RR_aA[i]=cross_RR[:]['npairs']*cross_RR[:]['weightavg']*(N_gal/N)**2.
         
 else:
     # Compute RR counts for the periodic case (measuring mu from the Z-axis)
@@ -105,7 +108,7 @@ else:
         cross_RR=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,X,Y,Z,weights1=W,weight_type='pair_product',
                     X2=X[filt],Y2=Y[filt],Z2=Z[filt],weights2=W[filt],periodic=False,verbose=False)
         # Weight by average particle weighting
-        RR_aA[i]=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
+        RR_aA[i]=cross_RR[:]['npairs']*cross_RR[:]['weightavg']*(N_gal/N)**2.
     
 
 # Now compute weights from pair counts
