@@ -1,4 +1,4 @@
-// Read-me for the grid-covariance code developed by Alex Wiegand, Oliver Philcox, Ross O'Connell & Daniel Eisenstein
+// Read-me for the COMAJE (COvariance MAtrix Jackknife Estimator) code developed by Alex Wiegand, Oliver Philcox, Ross O'Connell & Daniel Eisenstein
 
 ----------- SYSTEM REQUIREMENTS ---------
 
@@ -28,7 +28,7 @@ e.g.
 100.    150.
 150.    200.
 
-- A linear radial binning file can be created by the write_binning_file script.
+- A linear/log/hybrid radial binning file can be created by the write_binning_file_{linear,log,hybrid}.py script.
 
 e.g. binfile.csv
 
@@ -65,6 +65,7 @@ e.g. jackknife_weights_n{}_m{}_j{}.dat
 
 
 ---------- UTILITY FUNCTIONS -------------
+These are all located in the python/ directory.
 
 // create_jackknives
 
@@ -90,14 +91,24 @@ for input ascii file INFILE (in the current directory), output ascii file OUTFIL
 - The output file is of the correct format to use in the rest of the analysis.
 
 
-// write_binning_file
+// write_binning_file scripts
 
-- Python script to create an ascii file containing the radial bins used in the covariance matrix for use with Corrfunc. (Angular bins are specified separately).
+- Python scripts to create an ascii file containing the radial bins used in the covariance matrix for use with Corrfunc. (Angular bins are specified separately).
+
+- Scripts are provided for three types of binning in r-space: linear, log and hybrid log-linear (log up to some cut-off scale, then linear).
+
+- NB: Bins are provided in base-e here.
 
 - Usage: 
-    python write_binning_file.py {N_BINS} {MIN_R} {MAX_R} {OUTFILE}
+    python write_binning_file_linear.py {N_BINS} {MIN_R} {MAX_R} {OUTFILE}
+    python write_binning_file_log.py {N_BINS} {MIN_R} {MAX_R} {OUTFILE}
+
 for N_BINS radial bins in the range MIN_R to MAX_R which is saved as OUTFILE.
 
+    python write_binning_file_hybrid.py {N_LOG_BINS} {N_LIN_BINS} {MIN_R} {CUTOFF_R} {MAX_R} {OUTFILE}
+    
+for N_LOG_BINS bins in (MIN_R, CUTOFF_R) radial range and N_LIN_BINS bins in (CUTOFF_R, MAX_R) radial range, saved as OUTFILE.
+    
 
 ----------- BASIC USAGE -----------------
 

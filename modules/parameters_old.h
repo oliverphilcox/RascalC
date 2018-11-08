@@ -45,8 +45,9 @@ public:
 	// The maximum number of points to read
 	uint64 nmax = 1000000000000;
 
+
     // The number of mu bins
-	int mbin = 3;
+	int mbin = 1;
 
 	// The number of threads to run on
 	int nthread=4;
@@ -72,27 +73,32 @@ public:
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "python/binfile_linear.csv";
+    const char default_radial_bin_file[500] = "python/hybrid_binning.csv";
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL;
-    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n30_m3_j48.dat";
+    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n36_m1_j48.dat";
     
     // Name of the RR bin file
     char *RR_bin_file = NULL;
-    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n30_m3_j48.dat";
+    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m1_j48.dat";
+    
+    // The number of radial bins
+    // NB: This doesn't need to be equal to the number in the xi file
+	int nbin = 36;
+    
+    // The maximum radius of the largest bin.
+	Float rmax = 200.0;
+
+	// The minimum radius of the smallest bin.
+	Float rmin = 20.0;
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=4; 
+    int max_loops=20; 
     int N2 = 10; // number of j cells per i cell
     int N3 = 10; // number of k cells per j cell
     int N4 = 10; // number of l cells per k cell
     
-    // Radial binning parameters (will be set from file)
-    int nbin=0;
-    Float rmin, rmax;
-    Float * radial_bins_low;
-    Float * radial_bins_high;
     
 	// Constructor
 	Parameters(int argc, char *argv[]){
@@ -107,6 +113,8 @@ public:
                 }
         else if (!strcmp(argv[i],"-maxloops")||!strcmp(argv[i],"-loops")) max_loops = atof(argv[++i]);
         else if (!strcmp(argv[i],"-rescale")||!strcmp(argv[i],"-scale")) rescale = atof(argv[++i]);
+		else if (!strcmp(argv[i],"-rmax")||!strcmp(argv[i],"-max")) rmax = atof(argv[++i]);
+		else if (!strcmp(argv[i],"-rmin")) rmin = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-mumax")) mumax = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-mumin")) mumin = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-xicut")) xicutoff = atof(argv[++i]);
@@ -117,6 +125,7 @@ public:
 		else if (!strcmp(argv[i],"-rs")) rstart = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-nmax")) nmax = atoll(argv[++i]);
 		else if (!strcmp(argv[i],"-nthread")||!strcmp(argv[i],"-nthreads")) nthread = atoi(argv[++i]);
+		else if (!strcmp(argv[i],"-nbin")) nbin = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-save")||!strcmp(argv[i],"-store")) savename = argv[++i];
 		else if (!strcmp(argv[i],"-load")) loadname = argv[++i];
@@ -152,22 +161,16 @@ public:
 
 	    assert(mumin>=0); // We take the absolte value of mu
 	    assert(mumax<=1); // mu > 1 makes no sense
-        
-        if (rescale<=0.0) rescale = box_max;   // This would allow a unit cube to fill the periodic volume
+
+	    assert(box_min>0.0);
+	    assert(rmax>0.0);
+	    assert(nside>0);
+	    if (rescale<=0.0) rescale = box_max;   // This would allow a unit cube to fill the periodic volume
 	    if (fname==NULL) fname = (char *) default_fname;   // No name was given
 	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
 	    if (RR_bin_file==NULL) RR_bin_file = (char *) default_RR_bin_file; // no binning file was given
 	    if (corname==NULL) { corname = (char *) default_corname; }// No name was given
 	    if (radial_bin_file==NULL) {radial_bin_file = (char *) default_radial_bin_file;} // No radial binning given
-	    
-	    // Read in the radial binning
-	    //TODO: Initialize nbin, rmin, rmax somewhere - not an input
-        read_radial_binning(radial_bin_file);
-        printf("Read in %d radial bins in range (%.0f, %.0f) successfully.\n",nbin,rmin,rmax);
-        
-	    assert(box_min>0.0);
-	    assert(rmax>0.0);
-	    assert(nside>0);
 	    
 
 #ifdef OPENMP
@@ -184,7 +187,7 @@ public:
 		printf("Max Radius in Grid Units = %6.5e\n", gridsize);
 		if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
 		printf("Radial Bins = %d\n", nbin);
-		printf("Radial Binning = {%6.5f, %6.5f} over %d bins (user-defined bin widths) \n",rmin,rmax,nbin);
+		printf("Radial Binning = {%6.5f, %6.5f, %6.5f}\n",rmin,rmax,(rmax-rmin)/nbin);
 		printf("Mu Bins = %d\n", mbin);
 		printf("Mu Binning = {%6.5f, %6.5f, %6.5f}\n",mumin,mumax,(mumax-mumin)/mbin);
 		printf("Density Normalization = %6.5e\n",nofznorm);
@@ -197,6 +200,7 @@ private:
 	    fprintf(stderr, "   -box <boxsize> : If creating particles randomly, this is the periodic size of the cubic computational domain.  Default 400. If reading from file, this is reset dynamically creating a cuboidal box.\n");
 	    fprintf(stderr, "   -scale <rescale>: How much to dilate the input positions by.  Default 0.\n");
 	    fprintf(stderr, "             Zero or negative value causes =boxsize, rescaling unit cube to full periodicity\n");
+	    fprintf(stderr, "   -rmax <rmax>: The maximum radius of the largest pair bin.  Default 200.\n");
 	    fprintf(stderr, "   -xicut <xicutoff>: The radius beyond which xi is set to zero.  Default 1000.\n");
 	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 50.\n");
 	    fprintf(stderr, "             Recommend having several grid cells per rmax. There are {nside} cells along the longest dimension of the periodic box.\n");
@@ -206,8 +210,9 @@ private:
 	    fprintf(stderr, "   -def: This allows one to accept the defaults without giving other entries.\n");
 	    fprintf(stderr, "\n");
         fprintf(stderr, "   -cor <file>: File location of inut correlation function file.\n");
-	    fprintf(stderr, "   -mbin:  The number of mu bins (spaced linearly).\n");
-        fprintf(stderr, "   -mumin / -mumax: Minimum / maximum mu binning to use.\n");
+	    fprintf(stderr, "   -nbin:  The number of radial bins.\n");
+	    fprintf(stderr, "   -mbin:  The number of mu bins.\n");
+	    fprintf(stderr, "The radial bin spacing (currently linear) is hard-coded.\n");
 	    fprintf(stderr, "\n");
 	    fprintf(stderr, "For advanced use, there is an option store the grid of probabilities used for sampling.\n");
 	    fprintf(stderr, "    -save <filename>: Triggers option to store probability grid. <filename> has to end on \".bin\"\n");
@@ -224,68 +229,12 @@ private:
 	    exit(1);
 	}
 
-    void read_radial_binning(char* binfile_name){//, int nbin, Float min_r, Float max_r){
-        // Read the radial binning file and determine the number of bins
-        char line[100000];
-    
-        FILE *fp;
-        fp = fopen(binfile_name,"r");
-        if (fp==NULL){
-            fprintf(stderr,"Radial binning file %s not found\n",binfile_name);
-            abort();
-        }
-        fprintf(stderr,"\nReading radial binning file '%s'\n",binfile_name);
-        
-        // Count lines to construct the correct size
-        while (fgets(line,10000,fp)!=NULL){
-            if (line[0]=='#') continue; // comment line
-            if (line[0]=='\n') continue;
-                nbin++;
-            }
-            printf("\n# Found %d radial bins in the file\n",nbin);
-            rewind(fp); // restart file
-            
-            // Now allocate memory to the weights array
-            int ec=0;
-            ec+=posix_memalign((void **) &radial_bins_low, PAGE, sizeof(Float)*nbin);
-            ec+=posix_memalign((void **) &radial_bins_high, PAGE, sizeof(Float)*nbin);
-            assert(ec==0);
-            
-            int line_count=0; // line counter
-            int counter=0; // counts which element in line
-            
-            // Read in values to file
-            while (fgets(line,100000,fp)!=NULL) {
-                // Select required lines in file
-                if (line[0]=='#') continue;
-                if (line[0]=='\n') continue;
-                
-                // Split into variables
-                char * split_string;
-                split_string = strtok(line, "\t");
-                counter=0;
-                
-                // Iterate over line
-                while (split_string!=NULL){
-                    if(counter==0){
-                        radial_bins_low[line_count]=atof(split_string);
-                        }
-                    if(counter==1){
-                        radial_bins_high[line_count]=atof(split_string);
-                        }
-                    if(counter>1){
-                        fprintf(stderr,"Incorrect file format");
-                        abort();
-                    }
-                    split_string = strtok(NULL,"\t");
-                    counter++;
-                }
-                line_count++;
-            }
-            
-            rmin = radial_bins_low[0];
-            rmax = radial_bins_high[line_count-1];
-            assert(line_count==nbin);
-    }
 };
+
+// Define function to read radial binning file
+void read_radial_binning(){
+    
+    
+}
+
 #endif
