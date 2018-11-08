@@ -12,11 +12,13 @@ public:
     JK_weights *JK;
     
 private:
-    int nbin, mbin;
-    Float rmin,rmax,mumin,mumax,dr,dmu; //Ranges in r and mu
+    int nbin, mbin, n_jack;
+    Float rmin,rmax,mumin,mumax,dmu; //Ranges in r and mu
+    Float *r_high, *r_low; // Max and min of each radial bin
     Float *Ra, *c2, *c3, *c4; // Arrays to accumulate integrals
     Float *cxj, *c2j, *c3j, *c4j; // Arrays to accumulate jackknife integrals
     Float *errc4, *errc4j, *errcxj; // Integral to house the variance in C4, C4j and Cxj;
+    Float *EEaA; // Array to accumulate the xi-weighted pair counts
     
     bool box,rad; // Flags to decide whether we have a periodic box and if we have a radial correlation function only
     
@@ -32,6 +34,7 @@ public:
     void init(Parameters *par){
         nbin = par->nbin; // number of radial bins
         mbin = par->mbin; // number of mu bins
+        n_jack = JK->n_JK_filled; // number of non-empty jackknives
         
         int ec=0;
         // Initialize the binning
@@ -53,6 +56,8 @@ public:
         ec+=posix_memalign((void **) &binct3, PAGE, sizeof(uint64)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &binct4, PAGE, sizeof(uint64)*nbin*mbin*nbin*mbin);
 
+        ec+=posix_memalign((void **) &EEaA, PAGE, sizeof(double)*nbin*mbin*n_jack);
+        
         assert(ec==0);
 
         reset();
@@ -65,7 +70,9 @@ public:
         mumax=par->mumax;
         mumin=par->mumin;
 
-        dr=(rmax-rmin)/nbin;
+        r_high = par->radial_bins_high;
+        r_low = par->radial_bins_low;
+        
         dmu=(mumax-mumin)/mbin;
 
         rad=mbin==1&&dmu==1.;
@@ -87,6 +94,7 @@ public:
         free(binct);
         free(binct3);
         free(binct4);
+        free(EEaA);
 
     }
 
@@ -109,11 +117,26 @@ public:
             binct3[j] = 0;
             binct4[j] = 0;
         }
+        for (int j=0;j<nbin*mbin*n_jack;j++){
+            EEaA[j] = 0;
+        }
     }
 
     inline int getbin(Float r, Float mu){
         // Linearizes 2D indices
-        return floor((r-rmin)/dr) *mbin + floor((mu-mumin)/dmu);
+        
+        // First define which r bin we are in;
+        int which_bin = -1; // default if outside bins
+        for(int i=0;i<nbin;i++){
+            if((r>r_low[i])&&(r<r_high[i])){
+                which_bin=i;
+                break;
+            }
+            if((i==nbin-1)&&(r>r_high[i])){
+                which_bin=nbin; // if above top bin
+            }
+        }
+        return which_bin*mbin + floor((mu-mumin)/dmu);
     }
     
     inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const int pj_id, Float* &xi_ij, int* &bin, Float* &wij, const double prob){
@@ -159,6 +182,12 @@ public:
                 c2[tmp_bin]+=c2v;
                 c2j[tmp_bin]+=c2vj;
                 binct[tmp_bin]++; // only count actual contributions to bin
+                
+                // Now add EEaA bin counts:
+                int jk_bin_i = int(pi.JK)*nbin*mbin+tmp_bin; // EEaA bin for i particle
+                int jk_bin_j = int(pj.JK)*nbin*mbin+tmp_bin; // EEaA bin for j particle
+                EEaA[jk_bin_i]+=rav*tmp_xi/2; // add half contribution to each jackknife
+                EEaA[jk_bin_j]+=rav*tmp_xi/2;
         }
     }
     
@@ -235,11 +264,14 @@ public:
             Float tmp_weight = wijk[i]*pl.w; // product of weights, w_i*w_j*w_k*w_l
             Float xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
             Float xi_jl = cf->xi(rjl_mag, rjl_mu); // j-l correlation
+            // TODO: Remove if we don't need this for Cx_ab
             Float xi_kl = cf->xi(rkl_mag, rkl_mu); // k-l correlation
             
             // Compute jackknife weight tensor:
             Float JK_weight;
+            printf("Eval4:\n");
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin);
+            printf("Weight 4 %.2f\n",JK_weight);
             
             // Now compute the integral;
             c4v = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
@@ -277,7 +309,10 @@ private:
         Float second_weight=JK->weights[Ji*nbins+bin_b]+JK->weights[Jj*nbins+bin_b]+JK->weights[Jk*nbins+bin_a]+JK->weights[Jl*nbins+bin_a];
         
         // Compute total weight (third part is precomputed)
+        //TODO: Swap bin_a and bin_b in last term
         Float total_weight = (Float)first_weight/4. - 0.5*second_weight + JK->product_weights[bin_a*nbins+bin_b];
+        
+        printf("w1: %.3f, w2: %.3f, w3: %.3f\n",first_weight/4.,second_weight*-0.5,JK->product_weights[bin_a*nbins+bin_b]);
         
         return total_weight;
         
@@ -324,6 +359,12 @@ public:
                 binct4[i*nbin*mbin+j]+=ints->binct4[i*nbin*mbin+j];
             }
         }
+        for(int i=0;i<n_jack;i++){
+            for(int j=0;j<nbin*mbin;j++){
+                EEaA[i*nbin*mbin+j]+=ints->EEaA[i*nbin*mbin+j];
+            }
+        }
+        
     }
     
     void frobenius_difference_sum(Integrals2* ints, int n_loop, Float &frobC2, Float &frobC3, Float &frobC4, Float &frobC2j, Float &frobC3j, Float &frobC4j, Float &frobCxj, Float &ratio_x4){
@@ -371,6 +412,13 @@ public:
         // Now update Ra values
         for(int i=0;i<nbin*mbin;i++){
             Ra[i]+=ints->Ra[i];
+        }
+        
+        // Update EE values
+        for(int i=0;i<n_jack;i++){
+            for(int j=0;j<nbin*mbin;j++){
+                EEaA[i*nbin*mbin+j]+=ints->EEaA[i*nbin*mbin+j];
+            }
         }
         
         self_c2=sqrt(self_c2);
@@ -425,6 +473,12 @@ public:
         double corrf4 = corrf3*corrf;
         double corrf8 = corrf4*corrf4;
         
+        for(int i=0;i<n_jack;i++){
+            for(int j=0;j<nbin*mbin;j++){
+                EEaA[i*nbin*mbin+j]/=(n_pairs*corrf2);
+            }
+        }
+        
         for(int i = 0; i<nbin*mbin;i++){
             Ra[i]/=(n_pairs*corrf2);
             c2[i]/=(n_pairs*corrf2);
@@ -474,6 +528,9 @@ public:
         
         //TODO: Remove
         // ALSO SAVE BIN COUNTS:
+        char EEname[1000];
+        snprintf(EEname,sizeof EEname, "CovMatricesAll/EE_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        
         char binname[1000];
         snprintf(binname,sizeof binname, "CovMatricesAll/binct_c4_n%d_m%d_%s.txt",nbin,mbin,suffix);
         FILE * BinFile = fopen(binname,"w");
@@ -495,6 +552,7 @@ public:
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
         FILE * C4ErrFile = fopen(c4errname,"w"); // for variance of c4 part
+        FILE * EEFile = fopen(EEname, "w"); // for EE integral
         FILE * RRFile = fopen(RRname,"w"); // for RR part of integral
         
         for (int j=0;j<nbin*mbin;j++){
@@ -515,6 +573,13 @@ public:
             fprintf(C4File,"\n");
             fprintf(C4ErrFile,"\n");
         }
+        for(int i=0;i<n_jack;i++){
+            for(int j=0;j<nbin*mbin;j++){
+                //Do we need EE?
+                fprintf(EEFile,"%le\t",EEaA[i*nbin*mbin+j]);
+            }
+            fprintf(EEFile,"\n");
+        }
         fflush(NULL);
         
         // Close open files
@@ -526,7 +591,7 @@ public:
         fclose(C4File);
         fclose(C4ErrFile);
         fclose(RRFile);
-                    
+        fclose(EEFile);                    
     }
 
     

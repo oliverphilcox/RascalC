@@ -13,7 +13,7 @@ fname = str(sys.argv[1])
 binfile = str(sys.argv[2])
 mu_max = float(sys.argv[3])
 nmu_bins = int(sys.argv[4])
-N_gal = int(float(sys.argv[5]))
+N_gal = float(sys.argv[5])
 nthreads = int(sys.argv[6])
 periodic = int(sys.argv[7])
 
@@ -44,7 +44,7 @@ N = len(X) # number of particles
 J_regions = np.unique(J) # jackknife regions in use
 N_jack = len(J_regions) # number of non-empty jackknife regions
 
-print("Ratio of number of galaxeis to number of random particles: %.2f" %(N_gal/N))
+print("Ratio of number of galaxies to number of random particles: %.1e" %(N_gal/N))
 
 ## Determine number of radial bins in binning file:
 print("Counting lines in binfile");
