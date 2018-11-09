@@ -13,7 +13,7 @@ class Grid {
     Float cellsize;   // Size of one cell
     Float max_boxsize; // largest dimension of the cuboid box
     Particle *p;	// Pointer to the list of particles
-    int np;		// Number of particles
+    int np,np1,np2;		// Number of particles (total and number in each partition
     integer3 nside_cuboid; // number of cells along each dimension of cuboidal box
     int np_pos;		// Number of particles
     int *pid;		// The original ordering
@@ -149,8 +149,14 @@ class Grid {
 	for (int j=0, tot=0; j<ncells; tot+=incell[j], j++) {
 	    c[j].start = tot;
 	    c[j].np = 0;  // We'll count these as we add the particles
+	    c[j].np1 = 0;
+        c[j].np2 = 0;
 	}
 
+	// Initialize number of particles in each partition
+	np1=0;
+    np2=0;
+	
 	// Copy the particles into the cell-ordered list
 	for (int j=0; j<np; j++) {
 	    Cell *thiscell = c+cell[j];
@@ -172,6 +178,14 @@ class Grid {
 	    */
 
 	    thiscell->np += 1;
+        if(p[index].rand_class==0){
+            thiscell->np1+=1;
+            np1++;
+        }
+        if(p[index].rand_class==1){
+            thiscell->np2+=1;
+            np2++;
+        }
 	}
 
 	// Checking that all is well.
@@ -187,6 +201,9 @@ class Grid {
 	assert(tot == np);
 
 	free(cell);
+    
+    printf("NUMBER OF PARTICLES IN EACH PARTITION = %d vs %d\n\n\n\n", np1, np2);
+    
 	return;
     }
 

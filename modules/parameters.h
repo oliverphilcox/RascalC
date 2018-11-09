@@ -46,7 +46,7 @@ public:
 	uint64 nmax = 1000000000000;
 
     // The number of mu bins
-	int mbin = 3;
+	int mbin = 10;
 
 	// The number of threads to run on
 	int nthread=4;
@@ -76,14 +76,14 @@ public:
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL;
-    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n30_m3_j48.dat";
+    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n36_m10_j48.dat";
     
     // Name of the RR bin file
     char *RR_bin_file = NULL;
-    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n30_m3_j48.dat";
+    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m10_j48.dat";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=4; 
+    int max_loops=12; 
     int N2 = 10; // number of j cells per i cell
     int N3 = 10; // number of k cells per j cell
     int N4 = 10; // number of l cells per k cell
