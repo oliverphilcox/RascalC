@@ -202,9 +202,7 @@ class Grid {
 
 	free(cell);
     
-    printf("NUMBER OF PARTICLES IN EACH PARTITION = %d vs %d\n\n\n\n", np1, np2);
-    
-	return;
+    return;
     }
 
 };   // End Grid class
