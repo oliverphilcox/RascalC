@@ -21,6 +21,8 @@ class Particle {
     Float3 pos;
     Float w;  // The weight for each particle
     Float JK; // The Jackknife region ID for each particle (stored as float for ease)
+    int rand_class; // Integer 0 or 1 which defines which set of random particles this is in. 
+    // This is set at read-in at random and used for the EE computation to avoid diagonal non-cancellation.
 };
 
 
@@ -39,6 +41,8 @@ class Cell {
   public:
     int start;	// The starting index of the particle list
     int np;
+    int np1; // number of particles in cell in random-partition 1
+    int np2;
 };
 
 

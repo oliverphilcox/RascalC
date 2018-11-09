@@ -17,6 +17,7 @@ Particle *make_particles(Float3 rect_boxsize, int np) {
         p[j].pos.z = drand48()*rect_boxsize.z;
         p[j].w = 1.0;
         p[j].JK = 0.;
+        p[j].rand_class = rand()%2; // assign random class to each particle
     }
     fprintf(stderr,"# WARNING - Jackknife regions are not yet implemented for particles made at random. All particles are assigned to the same region.\n");
     printf("# Done making %d random particles, periodically distributed.\n", np);
@@ -60,7 +61,8 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
         p[j].pos.x = tmp[0]*rescale;
         p[j].pos.y = tmp[1]*rescale;
         p[j].pos.z = tmp[2]*rescale;
-
+        p[j].rand_class = rand()%2;
+        
         // Get the weights from line 4 if present, else fill with +1/-1 depending on the value of rstart
         // For grid_covariance rstart is typically not used
         if(stat!=5)
