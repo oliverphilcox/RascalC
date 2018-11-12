@@ -239,6 +239,7 @@ public:
                                     int ic=is*i+len;
                                     int kc=ks*k+len;
                                     int lc=ls*l+len;
+                                    if(val<=0) val=0.;
                                     (*x)[nside*nside*ic+nside*kc+lc]=val;
                                 }
                             }
