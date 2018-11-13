@@ -185,7 +185,7 @@ public:
                 
                 // Now add EEaA bin counts:
                 // If both in random set-0
-                if ((pi.rand_class==0)&&(pi.rand_class==0)){
+                if ((pi.rand_class==0)&&(pj.rand_class==0)){
                     int jk_bin_i = int(pi.JK)*nbin*mbin+tmp_bin; // EEaA bin for i particle
                     int jk_bin_j = int(pj.JK)*nbin*mbin+tmp_bin; // EEaA bin for j particle
                     EEaA1[jk_bin_i]+=tmp_weight/prob1*tmp_xi/2; // add half contribution to each jackknife
@@ -193,7 +193,7 @@ public:
                 }
                 
                 // If both in random set-1
-                if((pi.rand_class==1)&&(pi.rand_class==1)){
+                if((pi.rand_class==1)&&(pj.rand_class==1)){
                     int jk_bin_i = int(pi.JK)*nbin*mbin+tmp_bin; // EEaA bin for i particle
                     int jk_bin_j = int(pj.JK)*nbin*mbin+tmp_bin; // EEaA bin for j particle
                     EEaA2[jk_bin_i]+=tmp_weight/prob2*tmp_xi/2; // add half contribution to each jackknife
