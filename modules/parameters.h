@@ -25,7 +25,7 @@ public:
 	// The radius beyond which the correlation function is set to zero
 	Float xicutoff = 400.0;
 
-	Float nofznorm=1198006; //1198006 - for BOSS DR12
+	Float nofznorm=10000000;//1198006; //1198006 - for BOSS DR12
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
@@ -64,11 +64,11 @@ public:
 
 	// The name of the input file
 	char *fname = NULL;
-	const char default_fname[500] = "../random_particles/test_particles_mid.txt";//test_particles_small.txt";
+	const char default_fname[500] = "../random_particles/spherical_particles.txt";//test_particles_mid.txt";//test_particles_small.txt";
 
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "xi_functions/QPM_Mash.xi";
+	const char default_corname[500] = "xi_functions/simple_xi.xi";
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
@@ -76,11 +76,11 @@ public:
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL;
-    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n36_m10_j169.dat";
+    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n36_m10_j48.dat";
     
     // Name of the RR bin file
     char *RR_bin_file = NULL;
-    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m10_j169.dat";
+    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m10_j48.dat";
     
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=50; 
