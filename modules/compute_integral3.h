@@ -274,9 +274,8 @@
                 sprintf(output_string,"%d", n_loops);
                 
                 locint.normalize(grid->np,par->nofznorm, (Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads, 0); // don't normalize by RR here
-                //TODO: Decide whether to save integrals partially
-                //locint.save_integrals(output_string);
-                //locint.save_jackknife_integrals(output_string);
+                locint.save_integrals(output_string);
+                locint.save_jackknife_integrals(output_string);
                 
                 locint.sum_total_counts(cnt2, cnt3, cnt4); 
                 locint.reset();
@@ -321,6 +320,7 @@
         char out_string[5];
         sprintf(out_string,"full");
         sumint.save_integrals(out_string); // save integrals to file
+        sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file
         printf("Printed integrals to file in the CovMatricesAll/ directory\n");
         sumint.save_jackknife_integrals(out_string);
         printf("Printed jackknife integrals to file in the CovMatricesJack/ directory\n");
