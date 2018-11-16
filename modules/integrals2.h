@@ -120,6 +120,8 @@ public:
             c4[j]=0;
             c3j[j]=0;
             c4j[j]=0;
+            errc3[j] = 0;
+            errc3j[j] = 0;
             errc4[j] = 0;
             errc4j[j] = 0;
             binct3[j] = 0;
@@ -266,6 +268,8 @@ public:
             int tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c3[tmp_full_bin]+=c3v;
             c3j[tmp_full_bin]+=c3vj;
+            errc3[tmp_full_bin]+=pow(c3v,2.);
+            errc3j[tmp_full_bin]+=pow(c3vj,2.);
             binct3[tmp_full_bin]++;
         }
     }
@@ -368,6 +372,8 @@ public:
                 c3j[i*nbin*mbin+j]+=ints->c3j[i*nbin*mbin+j];
                 c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
                 c4j[i*nbin*mbin+j]+=ints->c4j[i*nbin*mbin+j];
+                errc3[i*nbin*mbin+j]+=ints->errc3[i*nbin*mbin+j];
+                errc3j[i*nbin*mbin+j]+=ints->errc3j[i*nbin*mbin+j];
                 errc4[i*nbin*mbin+j]+=ints->errc4[i*nbin*mbin+j];
                 errc4j[i*nbin*mbin+j]+=ints->errc4j[i*nbin*mbin+j];
                 binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
@@ -484,6 +490,7 @@ public:
         double corrf2 = pow(corrf,2.);
         double corrf3 = corrf2*corrf;
         double corrf4 = corrf3*corrf;
+        double corrf6 = corrf3*corrf3;
         double corrf8 = corrf4*corrf4;
         
         for(int i=0;i<n_jack;i++){
@@ -505,6 +512,8 @@ public:
                 c4[i*nbin*mbin+j]/=(n_quads*corrf4);
                 c3j[i*nbin*mbin+j]/=(n_triples*corrf3);
                 c4j[i*nbin*mbin+j]/=(n_quads*corrf4);
+                errc3[i*nbin*mbin+j]/=(n_triples*corrf6);
+                errc3j[i*nbin*mbin+j]/=(n_triples*corrf6);
                 errc4[i*nbin*mbin+j]/=(n_quads*corrf8);
                 errc4j[i*nbin*mbin+j]/=(n_quads*corrf8);
             }
