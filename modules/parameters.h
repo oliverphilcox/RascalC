@@ -82,6 +82,9 @@ public:
     char *RR_bin_file = NULL;
     const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m10_j48.dat";
     
+    // Cut-off radius below which correlation function is set to zero:
+    Float r_cutoff=5.;
+    
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=50; 
     int N2 = 10; // number of j cells per i cell

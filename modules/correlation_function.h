@@ -17,6 +17,8 @@ class CorrelationFunction{
         
 		gsl_interp2d* interp_2d;
 		gsl_spline* corfu1d;
+        
+        double r_cutoff;
 
 	public:
 		double xi(double r, double mu){
@@ -31,6 +33,9 @@ class CorrelationFunction{
 					if(r>rmax){
 						return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,tr, xa, ya)/pow(tr,2)*pow(r/rmax,-4);
 					}
+					else if(r<r_cutoff){
+                        return 0.;
+                    }
 					else
 						return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,tr, xa, ya)/pow(tr,2);
 				}
@@ -241,8 +246,10 @@ class CorrelationFunction{
 			interpolate();
 		}
 
-	CorrelationFunction(const char *filename, int mbin, double dmu){
+	CorrelationFunction(const char *filename, int mbin, double dmu, double _r_cutoff){
 		// Construct from input file
+        
+        r_cutoff=_r_cutoff; // read in from input
 
 		readData(filename,&x,&y,&z,&xsize,&ysize);
 
@@ -272,57 +279,6 @@ class CorrelationFunction{
 
 		interpolate();
 
-//		Old tests of the correlation function and its interpolation
-//		printf("\n");
-//		printf("\n");
-//		for(int i=0;i<xsize;i++){
-//			for(int j=0;j<ysize;j++){
-//			printf("%e ", xi(x[i],y[j]-0.001*0));
-//			}
-//			printf("\n");
-//		}
-
-//		printf("\n");
-//		printf("\n");
-//		for(int i=0;i<2000;i++){
-//			for(int j=0;j<1000;j++){
-//			printf("%e ", xi(0.25+i/2.,j/1000.));
-//			}
-//			printf("\n");
-//		}
-
-//		for(int i=0;i<xsize-1;i++){
-//			printf("%f=%f\n",x[i+1],xs[i]);
-//		}
-//
-//		for(int i=0;i<ysize-2;i++){
-//			printf("%f=%f\n",y[i+1],ys[i]);
-//		}
-//		for(int i=0;i<ysize*xsize;i++){
-//			printf("%f ",z[i]);
-//		}
-
-//    gsl_rng_env_setup();
-//    gsl_rng* rng = gsl_rng_alloc( gsl_rng_default );
-//
-//    double* binxi = new double[40];
-//    int* bincount = new int[40];
-//    for(int i=0;i<40;i++){
-//    	binxi[i]=0.;
-//    	bincount[i]=0;
-//    }
-//    double ha,hi;
-//    for(int i=0;i<200000000;i++){
-//    	ha=160*gsl_rng_uniform(rng);
-//    	hi=gsl_rng_uniform(rng);
-//    	binxi[(int)floor(ha/4)]+=xi(ha,hi);
-//    	bincount[(int)floor(ha/4)]++;
-//    }
-//
-//    for(int i=0;i<40;i++){
-//		printf("%f %d %f\n",binxi[i],bincount[i],binxi[i]/bincount[i]);
-//	}
-//		exit(0);
 	}
 
 	~CorrelationFunction() {
