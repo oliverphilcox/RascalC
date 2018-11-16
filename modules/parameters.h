@@ -186,6 +186,7 @@ public:
 		Float gridsize = rmax/(box_max/nside);
 		printf("Max Radius in Grid Units = %6.5e\n", gridsize);
 		if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
+        printf("Cutoff radius = %.2f\n", r_cutoff);
 		printf("Radial Bins = %d\n", nbin);
 		printf("Radial Binning = {%6.5f, %6.5f} over %d bins (user-defined bin widths) \n",rmin,rmax,nbin);
 		printf("Mu Bins = %d\n", mbin);
