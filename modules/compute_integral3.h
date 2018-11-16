@@ -85,7 +85,7 @@
             std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
             unsigned long int steps = dist(urandom);        
             gsl_rng_env_setup(); // initialize gsl rng
-            CorrelationFunction *cf=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin);
+            CorrelationFunction *cf=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin,par->r_cutoff);
             RandomDraws2 *rd=new RandomDraws2(cf,par, NULL, 0);
             Integrals2 sumint(par,cf,JK); // total integral
 
