@@ -156,6 +156,7 @@
     #pragma omp for schedule(dynamic)
     #endif
             for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
+                printf("Running i-loop %d of %d\n on thread %d.",n_loops+1,par->max_loops,thread);
                 // End loops early if convergence has been acheived
                 if (convergence_counter==5){ 
                     if (printtime==0) printf("\n0.1 percent convergence acheived in C4 5 times, exiting.\n");
