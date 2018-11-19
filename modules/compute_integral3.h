@@ -156,13 +156,14 @@
     #pragma omp for schedule(dynamic)
     #endif
             for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
-                printf("Running i-loop %d of %d\n on thread %d.",n_loops+1,par->max_loops,thread);
+                
                 // End loops early if convergence has been acheived
                 if (convergence_counter==5){ 
                     if (printtime==0) printf("\n0.1 percent convergence acheived in C4 5 times, exiting.\n");
                     printtime++;
                     continue;
                     }
+                    
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid->nf;n1++){
                     int prim_id_1D = grid-> filled[n1]; // 1d ID for cell i 
@@ -203,10 +204,10 @@
                         for (int n3=0; n3<par->N3; n3++){
                             cell_attempt3+=1; // new third cell attempted
                             
-                            // Draw third cell from j weighted by xi(r)
-                            integer3 delta3 = rd->random_xidraw(locrng, &p3);
-                            integer3 thi_id = sec_id + delta3;
-                            Float3 cell_sep3 = cell_sep2 + grid->cell_sep(delta3);
+                            // Draw third cell from i weighted by xi(r)
+                            integer3 delta3 = rd->random_cubedraw(locrng, &p3);
+                            integer3 thi_id = prim_id + delta3;
+                            Float3 cell_sep3 = grid->cell_sep(delta3);
                             int x = draw_particle(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng,dump,dump); // sln1, sln2 are not used here
                             if(x==1) continue; 
                             
