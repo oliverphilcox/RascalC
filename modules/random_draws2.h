@@ -100,7 +100,7 @@ public:
 		nsidecube = 2 * maxsep + 1;
 		long nn=0;
 
-        printf("\nUsing xi(r) sampling for j-k cells\n");
+        printf("\nCurrently using 1/r^2 sampling for j-k cells\n");
         printf("Using 1/r^2 sampling for i-j and k-l cells\n");
         compute_r2_prob(&xcube,&nn,nsidecube,boxside);
 

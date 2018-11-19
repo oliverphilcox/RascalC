@@ -223,7 +223,7 @@ public:
     inline void third(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const int pj_id, const int pk_id, const int* bin_ij, const Float* wij, Float* &xi_jk, Float* &xi_ik, Float* wijk, const double prob){
         // Accumulates the three point integral C3. Also outputs an array of xi_ik and bin_ik values for later reuse.
         
-        for(int i=0;i<pln;i++){ // Iterate ovr particle in pi_list
+        for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
             Particle pi = pi_list[i];
             Float rik_mag,rik_mu,c3v,c3vj,rjk_mag, rjk_mu;
             if(wij[i]==-1){
@@ -241,7 +241,7 @@ public:
             int tmp_bin = getbin(rik_mag,rik_mu); // bin for each particle
             
             if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)){
-                wijk[i] = -1;
+                //wijk[i] = -1; // don't disregard this term since it can still add to c4
                 continue; // if not in correct bin
             }
             
@@ -664,6 +664,11 @@ public:
             char binname[1000];
             snprintf(binname,sizeof binname, "CovMatricesAll/binct_c4_n%d_m%d_%s.txt",nbin,mbin,suffix);
             FILE * BinFile = fopen(binname,"w");
+            
+            char bin3name[1000];
+            snprintf(bin3name,sizeof bin3name, "CovMatricesAll/binct_c3_n%d_m%d_%s.txt",nbin,mbin,suffix);
+            FILE * Bin3File = fopen(bin3name,"w");
+            
             char bin2name[1000];
             snprintf(bin2name,sizeof bin2name, "CovMatricesAll/binct_c2_n%d_m%d_%s.txt",nbin,mbin,suffix);
             FILE * Bin2File = fopen(bin2name,"w");
@@ -675,8 +680,10 @@ public:
             for(int i=0;i<nbin*mbin;i++){
                 for(int j=0;j<nbin*mbin;j++){
                     fprintf(BinFile,"%llu\t",binct4[i*nbin*mbin+j]);
+                    fprintf(Bin3File,"%llu\t",binct3[i*nbin*mbin+j]);
                     }
                 fprintf(BinFile,"\n");
+                fprintf(Bin3File,"\n");
             }
             
             for(int i=0;i<n_jack;i++){
@@ -695,6 +702,7 @@ public:
         
             fclose(BinFile);
             fclose(Bin2File);
+            fclose(Bin3File);
             fclose(EE1File);
             fclose(EE2File);
             fclose(RR1File);

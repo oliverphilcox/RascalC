@@ -26,7 +26,7 @@ public:
 	Float xicutoff = 400.0;
     
     // Cut-off radius below which correlation function is set to zero:
-    Float r_cutoff=5.;    
+    Float r_cutoff = 5.;    
 
 	Float nofznorm=1198006; //1198006 - for BOSS DR12
 
@@ -79,11 +79,11 @@ public:
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL;
-    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n36_m10_j169.dat";
+    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n36_m10_j169.dat";//169.dat";
     
     // Name of the RR bin file
     char *RR_bin_file = NULL;
-    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m10_j169.dat";
+    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m10_j169.dat";//;169.dat";
     
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=10; 
