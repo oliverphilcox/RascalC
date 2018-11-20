@@ -204,8 +204,8 @@
                         for (int n3=0; n3<par->N3; n3++){
                             cell_attempt3+=1; // new third cell attempted
                             
-                            // Draw third cell from i weighted by xi(r)
-                            integer3 delta3 = rd->random_cubedraw(locrng, &p3);
+                            // Draw third cell from i weighted by |xi(r)|
+                            integer3 delta3 = rd->random_xidraw(locrng, &p3);
                             integer3 thi_id = prim_id + delta3;
                             Float3 cell_sep3 = grid->cell_sep(delta3);
                             int x = draw_particle(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng,dump,dump); // sln1, sln2 are not used here
