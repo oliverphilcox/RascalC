@@ -189,6 +189,7 @@
                     if((float(n1)/float(grid->nf)*100)>=percent_counter){
                         percent_counter+=1.;
                         printf("Using cell %d of %d on core %d\n",n1+1,grid->nf,n_loops);
+                    }
                     
                     prim_id_1D = grid-> filled[n1]; // 1d ID for cell i 
                     prim_id = grid->cell_id_from_1d(prim_id_1D); // define first cell
