@@ -19,6 +19,7 @@ public:
 	int nside;     // Number of cells in each direction of large draw
 	int nsidecube; // Number of cells in each direction of maxsep cube
 	double boxside;
+    double r_min;
 	double *x; // Probability grid for 1/r^2 kernel
 	double *xcube; // Probability grid for xi(r) kernel
 
@@ -40,6 +41,7 @@ public:
         // Define grid of nside up to the maximum xi cut-off scale (as a cubic grid)
         Float box_max = fmax(fmax(par->rect_boxsize.x,par->rect_boxsize.y),par->rect_boxsize.z);
         boxside=box_max/par->nside;
+        r_min=par->r_cutoff;
         nside=2*ceil(par->xicutoff/boxside)+1; 
         
 		// If precalculated grid has been saved, load it
@@ -218,7 +220,7 @@ public:
             Float R = boxside/2, n;
 
             // Define integration limits (using some large upper limit)
-            double xmin[1]={0}, xmax[1]={2*boxside*len}, val, err, param[2]={R,0};
+            double xmin[1]={0}, xmax[1]={2*boxside*len}, val, err, param[3]={R,0,r_min};
             
 #ifdef OPENMP
 #pragma omp for schedule(dynamic,32)
@@ -371,6 +373,7 @@ public:
         // Read in parameters
         const double R = param[0];
         const double n = param[1];
+        const double r_min = param[2];
         
         // Compute integrand
         Float factor_1 = pow((x[0]+n)/(2*R),2);
@@ -378,10 +381,10 @@ public:
         
         if(n<=0){
             // Replace expression by Taylor series in this limit
-            fval[0]= pow(x[0],2)*(abs(corr->xi(x[0]))+1./pow(x[0],2.)) / (2*pow(R,3))*exp(-pow(x[0]/(2*R),2));
+            fval[0]= pow(x[0],2)*(abs(corr->xi(x[0]))+1./pow(x[0]+r_min,2.)) / (2*pow(R,3))*exp(-pow(x[0]/(2*R),2));
         } else{
             // Use full expression for non-zero n
-            fval[0] = x[0]*(abs(corr->xi(x[0]))+1./pow(x[0],2.)) / (R*n) * (exp(-factor_1)+exp(-factor_2));
+            fval[0] = x[0]*(abs(corr->xi(x[0]))+1./pow(x[0]+r_min,2.)) / (R*n) * (exp(-factor_1)+exp(-factor_2));
         }
         
         return 0;

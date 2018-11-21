@@ -27,18 +27,21 @@ class CorrelationFunction{
 			// as a simple r^-4 power law for each mu bin independently (may lead to different signs for
 			// neighbouring mu bins if the correlation function is noisy and fluctuates around 0
 			if(mudim){
-				if(mu<mumin||mu>mumax||r<rmin||r>rmax){
-					double tmu = fmin(fmax(mu,mumin),mumax);
-					double tr = fmin(fmax(r,rmin),rmax);
-					if(r>rmax){
-						return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,tr, xa, ya)/pow(tr,2)*pow(r/rmax,-4);
-					}
-					else if(r<r_cutoff){
-                        return 0.;
+                if(r>rmax){
+                    double tmu = fmin(fmax(mu,mumin),mumax);
+					return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,rmax, xa, ya)/pow(rmax,2)*pow(r/rmax,-4);
+                }
+                else if(r<r_cutoff){
+                    return 0.;
+                }
+                if(mu<mumin){
+                    double tr = fmin(fmax(r,rmin),rmax);
+                    return gsl_interp2d_eval_extrap(interp_2d,y,x,z,mumin,tr, xa, ya)/pow(tr,2);
+                }
+                else if(mu>mumax){
+                    double tr = fmin(fmax(r,rmin),rmax);
+                    return gsl_interp2d_eval_extrap(interp_2d,y,x,z,mumax,tr, xa, ya)/pow(tr,2);
                     }
-					else
-						return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,tr, xa, ya)/pow(tr,2);
-				}
 				else{
 					return gsl_interp2d_eval_extrap(interp_2d,y,x,z,mu,r, xa, ya)/pow(r,2);
 				}
@@ -46,13 +49,7 @@ class CorrelationFunction{
 			else
 				return xi(r);
 		}
-		double xi2(double r12, double r2) {
-			// Simple test correlation function to compare to sobol
-			double r0 = 8.0;
-		    return r0*r0/(r12*r12+1.0);
-		    	// Simple case, r_0 = 8 Mpc, softening at 1 Mpc
-		}
-
+		
 		double xi(double r){
 			// Radial correlation function
 			// xi values beyond the maximal radius in the correlation function file read in are extrapolated
@@ -61,7 +58,7 @@ class CorrelationFunction{
 				return gsl_spline_eval(corfu1d,rmax, x1a)/pow(rmax,2)*pow(r/rmax,-4);
 			}
 			else{
-				if(r<rmin){
+				if((r<rmin)||(r<r_cutoff)){
 					return 0.;
 				}
 				else
@@ -165,10 +162,6 @@ class CorrelationFunction{
 				fprintf(stderr,"Found %d columns but %d mu-values in the second line. Aborting.\n", m, ny); abort();
 			}
 
-//			for(int i=0;i<n*m;i++){
-//				printf("%f ",(*z)[i]);
-//			}
-
 		}
 
 	private:
@@ -214,17 +207,11 @@ class CorrelationFunction{
 				y1[i]=0;
 				col=0;
 				for(int j=0;j<ysize;j++){
-	//				if((j==0&&y[0]==0.)||(j==ysize-1&&y[ysize-1]==1.))
-	//					ct++;
-	//				else{
 						y1[i]+=z[ct++];
 						col++;
-	//				}
-
 				}
 				y1[i]/=col;
-	//			fprintf(stderr,"%f ",y1[i]);
-			}
+            }
 
 			if(mudim){
 				interp_2d=gsl_interp2d_alloc(gsl_interp2d_bicubic, ysize, xsize);
