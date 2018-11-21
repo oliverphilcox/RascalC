@@ -188,7 +188,7 @@
                 for (int n1=0; n1<grid->nf;n1++){
                     if((float(n1)/float(grid->nf)*100)>=percent_counter){
                         percent_counter+=1.;
-                        printf("Using cell %d of %d on core %d\n",n1+1,grid->nf,n_loops);
+                        printf("Using cell %d of %d on core %d: %.0f percent complete\n",n1+1,grid->nf,n_loops,percent_counter);
                     }
                     
                     prim_id_1D = grid-> filled[n1]; // 1d ID for cell i 
