@@ -146,6 +146,7 @@
             int* prim_ids; // list of particle IDs in primary cell
             double p2,p3,p4,p22,p21; // probabilities
             int mnp = grid->maxnp; // max number of particles
+            Float percent_counter=0.;
             Float xi_jk=0, *xi_ik, *w_ijk, *w_ij; // arrays to store xi and weight values
             int *bin_ij; // i-j separation bin
             
@@ -185,7 +186,9 @@
                     
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid->nf;n1++){
-                    if(n1%10==0) printf("Using cell %d of %d on core %d\n",n1+1,grid->nf,n_loops);
+                    if((float(n1)/float(grid->nf)*100)>=percent_counter){
+                        percent_counter+=1.;
+                        printf("Using cell %d of %d on core %d\n",n1+1,grid->nf,n_loops);
                     
                     prim_id_1D = grid-> filled[n1]; // 1d ID for cell i 
                     prim_id = grid->cell_id_from_1d(prim_id_1D); // define first cell
