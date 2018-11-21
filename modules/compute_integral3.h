@@ -30,6 +30,24 @@
         return no_particles;
         }
         
+        int draw_particle_without_class(integer3 id_3D, Particle &particle, int &pid, integer3 shift, Grid *grid, int &n_particles, gsl_rng* locrng){
+            // Draw a random particle from a cell given the cell ID.
+            // This updates the particle and particle ID and returns 1 if error.
+            // This is used for k,l cells (with no indication of particle random class)
+            int id_1D = grid-> test_cell(id_3D); 
+            if(id_1D<0) return 1; // error if cell not in grid
+            Cell cell = grid->c[id_1D];
+            if(cell.np==0) return 1; // error if empty cell
+            pid = floor(gsl_rng_uniform(locrng)*cell.np) + cell.start; // draw random ID
+            particle = grid->p[pid]; // define particle
+            n_particles = cell.np; // no. of particles in cell 
+    #ifdef PERIODIC
+            particle.pos+=shift;
+    #endif
+            return 0;
+        }
+                                        
+                                        
         int draw_particle(integer3 id_3D, Particle &particle, int &pid, integer3 shift, Grid *grid, int &n_particles, gsl_rng* locrng, int &n_particles1, int &n_particles2){
             // Draw a random particle from a cell given the cell ID.
             // This updates the particle and particle ID and returns 1 if error.
@@ -128,9 +146,12 @@
             int* prim_ids; // list of particle IDs in primary cell
             double p2,p3,p4,p22,p21; // probabilities
             int mnp = grid->maxnp; // max number of particles
-            Float *xi_ij, *xi_jk, *xi_ik, *w_ijk, *w_ij; // arrays to store xi and weight values
+            Float xi_jk=0, *xi_ik, *w_ijk, *w_ij; // arrays to store xi and weight values
             int *bin_ij; // i-j separation bin
-            int dump; // dummy for unused variables
+            
+            int prim_id_1D, x;
+            integer3 prim_id, delta2, sec_id, delta3, thi_id, delta4;
+            Float3 cell_sep2, cell_sep3;
             
             Integrals2 locint(par,cf,JK); // Accumulates the integral contribution of each thread
             
@@ -141,10 +162,8 @@
             int ec=0;
             ec+=posix_memalign((void **) &prim_list, PAGE, sizeof(Particle)*mnp);
             ec+=posix_memalign((void **) &prim_ids, PAGE, sizeof(int)*mnp);
-            ec+=posix_memalign((void **) &xi_ij, PAGE, sizeof(Float)*mnp);
             ec+=posix_memalign((void **) &bin_ij, PAGE, sizeof(int)*mnp);
             ec+=posix_memalign((void **) &w_ij, PAGE, sizeof(Float)*mnp);
-            ec+=posix_memalign((void **) &xi_jk, PAGE, sizeof(Float)*mnp);
             ec+=posix_memalign((void **) &xi_ik, PAGE, sizeof(Float)*mnp);
             ec+=posix_memalign((void **) &w_ijk, PAGE, sizeof(Float)*mnp);
             assert(ec==0);
@@ -166,8 +185,10 @@
                     
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid->nf;n1++){
-                    int prim_id_1D = grid-> filled[n1]; // 1d ID for cell i 
-                    integer3 prim_id = grid->cell_id_from_1d(prim_id_1D); // define first cell
+                    if(n1%10==0) printf("Using cell %d of %d on core %d\n",n1+1,grid->nf,n_loops);
+                    
+                    prim_id_1D = grid-> filled[n1]; // 1d ID for cell i 
+                    prim_id = grid->cell_id_from_1d(prim_id_1D); // define first cell
                     pln = particle_list(prim_id_1D, prim_list, prim_ids, grid); // update list of particles and number of particles
                     
                     if(pln==0) continue; // skip if empty
@@ -181,11 +202,11 @@
                         cell_attempt2+=1; // new cell attempted
                         
                         // Draw second cell from i weighted by 1/r^2
-                        integer3 delta2 = rd->random_cubedraw(locrng, &p2); 
+                        delta2 = rd->random_cubedraw(locrng, &p2); 
                         // p2 is the ratio of sampling to true pair distribution here
-                        integer3 sec_id = prim_id + delta2;
-                        Float3 cell_sep2 = grid->cell_sep(delta2);
-                        int x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid, sln, locrng, sln1, sln2);
+                        sec_id = prim_id + delta2;
+                        cell_sep2 = grid->cell_sep(delta2);
+                        x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid, sln, locrng, sln1, sln2);
                         if(x==1) continue; // skip if error
                         
                         used_cell2+=1; // new cell accepted
@@ -198,17 +219,17 @@
                         p2*=1./(grid->np*(double)sln); // probability is divided by total number of particles and number of particles in cell
                         
                         // Compute C2 integral
-                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, xi_ij, bin_ij, w_ij, p2, p21, p22);
+                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, p21, p22);
                         
                         // LOOP OVER N3 K CELLS
                         for (int n3=0; n3<par->N3; n3++){
                             cell_attempt3+=1; // new third cell attempted
                             
                             // Draw third cell from i weighted by |xi(r)|
-                            integer3 delta3 = rd->random_xidraw(locrng, &p3);
-                            integer3 thi_id = prim_id + delta3;
-                            Float3 cell_sep3 = grid->cell_sep(delta3);
-                            int x = draw_particle(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng,dump,dump); // sln1, sln2 are not used here
+                            delta3 = rd->random_xidraw(locrng, &p3);
+                            thi_id = prim_id + delta3;
+                            cell_sep3 = grid->cell_sep(delta3);
+                            x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng); 
                             if(x==1) continue; 
                             
                             used_cell3+=1; // new third cell used
@@ -223,8 +244,8 @@
                                 cell_attempt4+=1; // new fourth cell attempted
                                 
                                 // Draw fourth cell from k cell weighted by 1/r^2
-                                integer3 delta4 = rd->random_cubedraw(locrng, &p4);
-                                int x = draw_particle(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid,fln,locrng,dump,dump); //sln1, sln2 are not used here
+                                delta4 = rd->random_cubedraw(locrng, &p4);
+                                x = draw_particle_without_class(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid,fln,locrng); 
                                 if(x==1) continue;
                                 
                                 used_cell4+=1; // new fourth cell used
@@ -232,7 +253,7 @@
                                 p4*=p3/(double)fln;
                                 
                                 // Now compute the four-point integral
-                                locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, xi_jk, xi_ij, p4);
+                                locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, xi_jk, p4);
                                 
                             }
                         }
@@ -292,8 +313,6 @@
             // Free up allocated memory at end of process
             free(prim_list);
             gsl_rng_free(locrng);
-            free(xi_ij);
-            free(xi_jk);
             free(xi_ik);
             free(bin_ij);
             free(w_ij);
@@ -319,8 +338,8 @@
         printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
         printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid->np);
         
-        printf("\n Trial speed: %.2e quads per second\n",double(tot_quads)/runtime);
-        printf("Acceptance speed: %.2e quads per second\n",double(cnt4)/runtime);
+        printf("\nTrial speed: %.2e quads per core per second\n",double(tot_quads)/(runtime*double(par->nthread)));
+        printf("Acceptance speed: %.2e quads per core per second\n",double(cnt4)/(runtime*double(par->nthread)));
         
         char out_string[5];
         sprintf(out_string,"full");

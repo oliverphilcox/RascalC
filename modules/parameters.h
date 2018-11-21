@@ -67,7 +67,7 @@ public:
 
 	// The name of the input file
 	char *fname = NULL;
-	const char default_fname[500] = "../random_particles/test_particles.txt";//test_particles_mid.txt";//test_particles_small.txt";
+	const char default_fname[500] = "../random_particles/test_particles.txt";//test_particles.txt";//test_particles_mid.txt";//test_particles_small.txt";
 
 	// The name of the correlation function file
 	char *corname = NULL;
@@ -88,8 +88,8 @@ public:
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=10; 
     int N2 = 10; // number of j cells per i cell
-    int N3 = 10; // number of k cells per j cell
-    int N4 = 60; // number of l cells per k cell
+    int N3 = 20; // number of k cells per j cell
+    int N4 = 30; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
