@@ -3,10 +3,10 @@
 #include "correlation_function.h"
 #include "cell_utilities.h"
 
-#ifndef INTEGRALS_2_H
-#define INTEGRALS_2_H
+#ifndef INTEGRALS_4_H
+#define INTEGRALS_4_H
 
-class Integrals2{
+class Integrals4{
 public:
     CorrelationFunction *cf;
     JK_weights *JK;
@@ -26,7 +26,7 @@ private:
     uint64 *binct, *binct3, *binct4; // Arrays to accumulate bin counts
     
 public:
-    Integrals2(Parameters *par, CorrelationFunction *_cf, JK_weights *_JK){
+    Integrals4(Parameters *par, CorrelationFunction *_cf, JK_weights *_JK){
         cf = new CorrelationFunction(_cf);
         JK = _JK;
         init(par);
@@ -85,7 +85,7 @@ public:
 
     }
 
-    ~Integrals2() {
+    ~Integrals4() {
         free(Ra);
         free(c2);
         free(c3);
@@ -152,19 +152,20 @@ public:
         return which_bin*mbin + floor((mu-mumin)/dmu);
     }
     
-    inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const int pj_id, int* &bin, Float* &wij, const double prob, const double prob1, const double prob2){
+    inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle * sec_list, const int* sec_ids, int sln, int* &bin, Float* &wij, const double prob){
         // Accumulates the two point integral C2. Also outputs an array of xi_ij and bin values for later reuse.
         // Prob. here is defined as g_ij / f_ij where g_ij is the sampling PDF and f_ij is the true data PDF for picking pairs (equal to n_i/N n_j/N for N particles)
-        // Prob1/2 are for when we divide the random particles into two subsets 1 and 2.
         
         Float rij_mag,rij_mu, rav, c2v, c2vj, tmp_weight, tmp_xi;
-        Particle pi;
-        int tmp_bin,jk_bin_i,jk_bin_j;
+        Particle pi,pj;
+        int tmp_bin;
         
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
+            for(int j=0;j<sln;j++){
                 pi = pi_list[i]; // first particle
+                pj = sec_list[j]; // second particle 
                 
-                if(prim_ids[i]==pj_id){
+                if(prim_ids[i]==sec_ids[j]){
                     wij[i]=-1;
                     continue; // don't self-count
                 }
@@ -189,9 +190,9 @@ public:
                 JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pi.JK),int(pj.JK),tmp_bin,tmp_bin);
             
                 // Now compute the integral:
-                c2v = 2.*tmp_weight*tmp_weight*(1.+tmp_xi) / prob; // c2 contribution
+                c2v = 2.*tmp_weight*tmp_weight*(1.+tmp_xi) / (prob*sln); // c2 contribution
                 c2vj = c2v * JK_weight;
-                rav = tmp_weight / prob; // RR_a contribution
+                rav = tmp_weight / (prob*sln); // RR_a contribution
                 
                 // Add to local integral counts:
                 Ra[tmp_bin]+=rav;
@@ -199,26 +200,7 @@ public:
                 c2j[tmp_bin]+=c2vj;
                 binct[tmp_bin]++; // only count actual contributions to bin
                 
-                // Now add EEaA bin counts:
-                // If both in random set-0
-                if ((pi.rand_class==0)&&(pj.rand_class==0)){
-                    jk_bin_i = int(pi.JK)*nbin*mbin+tmp_bin; // EEaA bin for i particle
-                    jk_bin_j = int(pj.JK)*nbin*mbin+tmp_bin; // EEaA bin for j particle
-                    EEaA1[jk_bin_i]+=tmp_weight/prob1*tmp_xi/2.; // add half contribution to each jackknife
-                    EEaA1[jk_bin_j]+=tmp_weight/prob1*tmp_xi/2.;
-                    RRaA1[jk_bin_i]+=tmp_weight/prob1/2;
-                    RRaA1[jk_bin_j]+=tmp_weight/prob1/2;
-                }
-                
-                // If both in random set-1
-                if((pi.rand_class==1)&&(pj.rand_class==1)){
-                    jk_bin_i = int(pi.JK)*nbin*mbin+tmp_bin; // EEaA bin for i particle
-                    jk_bin_j = int(pj.JK)*nbin*mbin+tmp_bin; // EEaA bin for j particle
-                    EEaA2[jk_bin_i]+=tmp_weight/prob2*tmp_xi/2; // add half contribution to each jackknife
-                    EEaA2[jk_bin_j]+=tmp_weight/prob2*tmp_xi/2;
-                    RRaA2[jk_bin_i]+=tmp_weight/prob2/2;
-                    RRaA2[jk_bin_j]+=tmp_weight/prob2/2;
-                }
+            }
         }
     }
     
@@ -278,51 +260,55 @@ public:
         }
     }
         
-    inline void fourth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const int pj_id, const int pk_id, const int pl_id, const int* bin_ij, const Float* wijk, const Float* xi_ik, const Float xi_jk, const double prob){
+    inline void fourth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle* fou_list, const int* fou_ids, const int fln, const Particle pj, const Particle pk, const int pj_id, const int pk_id, const int* bin_ij, const Float* wijk, const Float* xi_ik, const Float xi_jk, const double prob){
         // Accumulates the three point integral C3. Also outputs an array of xi_ik and bin_ik values for later reuse.
         
         // First perform any operations common to all i particles
-        Float rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, c4vj, xi_jl, tmp_weight, JK_weight; //xi_il,ril_mag,ril_mu;
-        Particle pi;
-        int tmp_bin,tmp_full_bin;
+        Float ril_mag,ril_mu,c4v, c4vj, xi_il,JK_weight;
+        Particle pi,pl;
+        int tmp_bin_kl[fln],tmp_full_bin,pl_id;
         
-        if((pj_id==pl_id)||(pk_id==pl_id)) return; // no self counting
+        Float xi_jl[fln],rkl_mag,rkl_mu,rjl_mag,rjl_mu;
         
-        cleanup_l(pk.pos, pl.pos, rkl_mag, rkl_mu); // define angles/lengths
-        cleanup_l(pl.pos,pj.pos,rjl_mag,rjl_mu); 
+        for(int l=0;l<fln;l++){
+            pl=fou_list[l];
+            cleanup_l(pk.pos, pl.pos, rkl_mag, rkl_mu); // define angles/lengths
+            cleanup_l(pl.pos,pj.pos,rjl_mag,rjl_mu); 
+            tmp_bin_kl[l] = getbin(rkl_mag,rkl_mu); // kl bin for each particle
+            xi_jl[l] = cf->xi(rjl_mag,rjl_mu);
+        }
         
-        tmp_bin = getbin(rkl_mag,rkl_mu); // kl bin for each particle
-            
-        if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)) return; // if not in correct bin
+        for(int l=0;l<fln;l++){
+            pl_id=fou_ids[l];
+            pl=fou_list[l];
+            if((pj_id==pl_id)||(pk_id==pl_id)) return; // no self counting
+            if ((tmp_bin_kl[l]<0)||(tmp_bin_kl[l]>=nbin*mbin)) return; // if not in correct bin
         
-        xi_jl = cf->xi(rjl_mag, rjl_mu); // j-l correlation
-        
-        // Iterate over particle in pi_list
-        for(int i=0;i<pln;i++){ 
-            pi = pi_list[i];
-            if(wijk[i]==-1) continue; // skip incorrect bins / ij self counts
-            
-            if(prim_ids[i]==pl_id) continue; // don't self-count
-            
-            //cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
-            
-            tmp_weight = wijk[i]*pl.w; // product of weights, w_i*w_j*w_k*w_l
-            //xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
-            
-            // Compute jackknife weight tensor:
-            JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin);
-            
-            // Now compute the integral;
-            c4v = 2.*tmp_weight/prob*xi_ik[i]*xi_jl;//(xi_il*xi_jk+xi_jl*xi_ik[i]);
-            c4vj = c4v*JK_weight;
-            
-            // Add to local counts
-            tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
-            c4[tmp_full_bin]+=c4v;
-            c4j[tmp_full_bin]+=c4vj;
-            errc4[tmp_full_bin]+=pow(c4v,2.);
-            errc4j[tmp_full_bin]+=pow(c4vj,2.);
-            binct4[tmp_full_bin]++;            
+            // Iterate over particle in pi_list
+            for(int i=0;i<pln;i++){ 
+                if(prim_ids[i]==pl_id) continue; // don't self-count
+                if(wijk[i]==-1) continue; // skip incorrect bins / ij self counts
+                pi = pi_list[i];
+                
+                cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
+                    
+                xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
+                    
+                // Compute jackknife weight tensor:
+                JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin_kl[l]);
+                    
+                // Now compute the integral;
+                c4v = wijk[i]*pl.w/prob*(xi_il*xi_jk+xi_jl[l]*xi_ik[i]);
+                c4vj = c4v*JK_weight;
+                    
+                // Add to local counts
+                tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin_kl[l];
+                c4[tmp_full_bin]+=c4v;
+                c4j[tmp_full_bin]+=c4vj;
+                errc4[tmp_full_bin]+=pow(c4v,2.);
+                errc4j[tmp_full_bin]+=pow(c4vj,2.);
+                binct4[tmp_full_bin]++;            
+            }
         }
     }
         
@@ -370,7 +356,7 @@ private:
         }
     }
 public:
-    void sum_ints(Integrals2* ints) {
+    void sum_ints(Integrals4* ints) {
         // Add the values accumulated in ints to the corresponding internal sums
         for(int i=0;i<nbin*mbin;i++){
             Ra[i]+=ints->Ra[i];
@@ -403,7 +389,7 @@ public:
         
     }
     
-    void frobenius_difference_sum(Integrals2* ints, int n_loop, Float &frobC2, Float &frobC3, Float &frobC4, Float &frobC2j, Float &frobC3j, Float &frobC4j){
+    void frobenius_difference_sum(Integrals4* ints, int n_loop, Float &frobC2, Float &frobC3, Float &frobC4, Float &frobC2j, Float &frobC3j, Float &frobC4j){
         // Add the values accumulated in ints to the corresponding internal sums and compute the Frobenius norm difference between integrals
         Float n_loops = (Float)n_loop;
         Float self_c2=0, diff_c2=0;

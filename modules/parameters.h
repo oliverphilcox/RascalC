@@ -28,12 +28,12 @@ public:
     // Cut-off radius below which correlation function is set to zero:
     Float r_cutoff = 5.;    
 
-	Float nofznorm=1198006; //1198006 - for BOSS DR12
+	Float nofznorm=1e7;//1198006; //1198006 - for BOSS DR12
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 301;
+	int nside = 51;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
@@ -49,10 +49,10 @@ public:
 	uint64 nmax = 1000000000000;
 
     // The number of mu bins
-	int mbin = 10;
+	int mbin = 3;//10;
 
 	// The number of threads to run on
-	int nthread=10;
+	int nthread=4;
 
 	// The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
@@ -67,29 +67,29 @@ public:
 
 	// The name of the input file
 	char *fname = NULL;
-	const char default_fname[500] = "../random_particles/test_particles.txt";//test_particles.txt";//test_particles_mid.txt";//test_particles_small.txt";
+	const char default_fname[500] = "../random_particles/spherical_particles.txt";//test_particles.txt";//test_particles_mid.txt";//test_particles_small.txt";
 
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "xi_functions/QPM_Mash.xi";
+	const char default_corname[500] = "xi_functions/simple_xi.xi";//QPM_Mash.xi";
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "python/binfile_linear.csv";
+    const char default_radial_bin_file[500] = "python/binfile_small.csv";
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL;
-    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n36_m10_j169.dat";//169.dat";
+    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n9_m3_j48.dat";//169.dat";
     
     // Name of the RR bin file
     char *RR_bin_file = NULL;
-    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m10_j169.dat";//;169.dat";
+    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n9_m3_j48.dat";//;169.dat";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=10; 
-    int N2 = 20; // number of j cells per i cell
-    int N3 = 25; // number of k cells per j cell
-    int N4 = 50; // number of l cells per k cell
+    int max_loops=28;//10; 
+    int N2 = 100;//20; // number of j cells per i cell
+    int N3 = 20;//25; // number of k cells per j cell
+    int N4 = 40;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
