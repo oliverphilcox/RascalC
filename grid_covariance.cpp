@@ -65,11 +65,6 @@ STimer TotalTime;
 // ====================  Computing the integrals ==================
 
 
-// Available sampling strategies:
-#define ALL 0   // Use all cells in the grid up to a certain radius
-#define FLAT 1	// Select cells equiprobably up to a certain radius
-#define SEL 2	// Select cells weighted by the distance from the starting cell up to the radius defined by the input parameter xicutoff
-
 #include "modules/compute_integral3.h"
 
 
@@ -116,8 +111,8 @@ int main(int argc, char *argv[]) {
     }
     printf("Average number of particles per max_radius ball = %6.2f\n",
     		par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
-    if (grid_density<1){
-        printf("#\n# WARNING: grid appears inefficiently fine.\n#\n");
+    if (grid_density<2){
+        printf("#\n# WARNING: grid appears inefficiently fine; exiting.\n#\n");
         exit(1);
     }
 

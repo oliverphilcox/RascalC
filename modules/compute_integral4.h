@@ -1,11 +1,11 @@
     // This class computes the contributions to the C_ab integral iterating over cells and particles. It is a heavily modified version of code by Alex Wiegand.
 
-    #ifndef COMPUTE_INTEGRAL3_H
-    #define COMPUTE_INTEGRAL3_H
+    #ifndef COMPUTE_INTEGRAL4_H
+    #define COMPUTE_INTEGRAL4_H
 
-    #include "integrals2.h"
+    #include "integrals3.h"
 
-    class compute_integral3{
+    class compute_integral4{
         
     private:
         Grid *grid;
@@ -87,7 +87,7 @@
         }
         
     public:    
-        compute_integral3(Grid *grid, Parameters *par, JK_weights *JK){
+        compute_integral4(Grid *grid, Parameters *par, JK_weights *JK){
             // MAIN FUNCTION TO COMPUTE INTEGRALS
             
             nbin = par->nbin; // number of radial bins
@@ -105,12 +105,13 @@
             gsl_rng_env_setup(); // initialize gsl rng
             CorrelationFunction *cf=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin,par->r_cutoff);
             RandomDraws2 *rd=new RandomDraws2(cf,par, NULL, 0);
-            Integrals2 sumint(par,cf,JK); // total integral
+            Integrals3 sumint(par,cf,JK); // total integral
 
             
             uint64 tot_pairs=0, tot_triples=0, tot_quads=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
             uint64 cell_attempt2=0,cell_attempt3=0,cell_attempt4=0; // number of j,k,l cells attempted
             uint64 used_cell2=0,used_cell3=0,used_cell4=0; // number of used j,k,l cells
+            uint64 fln_sum=0; // total number of l particles used
             
             check_threads(par); // Define which threads we use
         
@@ -124,7 +125,7 @@
             TotalTime.Start(); // Start timer
             
     #ifdef OPENMP       
-    #pragma omp parallel firstprivate(steps) shared(sumint) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4)
+    #pragma omp parallel firstprivate(steps) shared(sumint) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,fln_sum,used_cell2,used_cell3,used_cell4)
     #endif
             { // start parallel loop
             // Decide which thread we are in
@@ -140,8 +141,8 @@
     //-----------DEFINE VARIABLES
             Particle *prim_list; // list of particles in first cell
             int pln,sln,tln,fln,sln1,sln2; // number of particles in each cell
-            int pid_j, pid_k, pid_l; // particle IDs particles drawn from j,k,l cell
-            Particle particle_j, particle_k, particle_l; // randomly drawn particle
+            int pid_j, pid_k; // particle IDs particles drawn from j,k,l cell
+            Particle particle_j, particle_k; // randomly drawn particle
             //int* bin; // a-b bins for particles
             int* prim_ids; // list of particle IDs in primary cell
             double p2,p3,p4,p22,p21; // probabilities
@@ -154,7 +155,10 @@
             integer3 prim_id, delta2, sec_id, delta3, thi_id, delta4;
             Float3 cell_sep2, cell_sep3;
             
-            Integrals2 locint(par,cf,JK); // Accumulates the integral contribution of each thread
+            Particle *fou_list; // list of particles in l cell
+            int *fou_ids, fou_id_1D; // list of particle ids in l cell
+            
+            Integrals3 locint(par,cf,JK); // Accumulates the integral contribution of each thread
             
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
             gsl_rng_set(locrng, steps*(thread+1));
@@ -163,6 +167,8 @@
             int ec=0;
             ec+=posix_memalign((void **) &prim_list, PAGE, sizeof(Particle)*mnp);
             ec+=posix_memalign((void **) &prim_ids, PAGE, sizeof(int)*mnp);
+            ec+=posix_memalign((void **) &fou_list, PAGE, sizeof(Particle)*mnp);
+            ec+=posix_memalign((void **) &fou_ids, PAGE, sizeof(int)*mnp);
             ec+=posix_memalign((void **) &bin_ij, PAGE, sizeof(int)*mnp);
             ec+=posix_memalign((void **) &w_ij, PAGE, sizeof(Float)*mnp);
             ec+=posix_memalign((void **) &xi_ik, PAGE, sizeof(Float)*mnp);
@@ -178,6 +184,7 @@
             for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
                 
                 percent_counter=0.;
+                printf("\nNEED TO INCLUDE QUAD COUNTS HERE PROPERLY\n");
                 // End loops early if convergence has been acheived
                 if (convergence_counter==5){ 
                     if (printtime==0) printf("\n0.1 percent convergence acheived in C4 5 times, exiting.\n");
@@ -250,15 +257,20 @@
                                 
                                 // Draw fourth cell from k cell weighted by 1/r^2
                                 delta4 = rd->random_cubedraw(locrng, &p4);
-                                x = draw_particle_without_class(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid,fln,locrng); 
-                                if(x==1) continue;
+                                integer3 fou_id = thi_id+delta4;
+                                
+                                fou_id_1D = grid-> test_cell(fou_id); 
+                                if(fou_id_1D<0) continue; // error if cell not in grid
+                                
+                                fln = particle_list(fou_id_1D,fou_list,fou_ids,grid);
+                                fln_sum+=fln;
                                 
                                 used_cell4+=1; // new fourth cell used
                                 
                                 p4*=p3/(double)fln;
                                 
                                 // Now compute the four-point integral
-                                locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, xi_jk, p4);
+                                locint.fourth(prim_list, prim_ids, pln, fou_list, fou_ids, fln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ijk, xi_ik, xi_jk, p4);
                                 
                             }
                         }
@@ -331,6 +343,9 @@
         TotalTime.Stop();
         
         // Normalize the accumulated results, using the RR counts
+        Float grid_density = double(fln_sum)/double(cell_attempt4);//(double)par->np/grid->nf;//pow(par.nside,3);
+        printf("\nSampling density in l cell: %.2f\n",grid_density);
+        //tot_quads*=grid_density;
         sumint.normalize(grid->np, par->nofznorm, (Float)tot_pairs, (Float)tot_triples,(Float)tot_quads,1);//(Float)n_triples, (Float)n_quads, 1);
         
         int runtime = TotalTime.Elapsed();
@@ -340,7 +355,7 @@
         printf("We sampled %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(tot_pairs),double(tot_triples),double(tot_quads));
         printf("Of these, we have integral contributions from %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(cnt2),double(cnt3),double(cnt4));
         printf("Cell acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)used_cell2/cell_attempt2,(double)used_cell3/cell_attempt3,(double)used_cell4/cell_attempt4);
-        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
+        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/(tot_quads));
         printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid->np);
         
         printf("\nTrial speed: %.2e quads per core per second\n",double(tot_quads)/(runtime*double(par->nthread)));
