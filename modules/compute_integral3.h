@@ -188,7 +188,7 @@
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid->nf;n1++){
                     if((float(n1)/float(grid->nf)*100)>=percent_counter){
-                        printf("Using cell %d of %d on core %d on run %d of %d: %.0f percent complete\n",n1+1,grid->nf,thread,1+n_loops/par->nthread, par->max_loops/par->nthread,percent_counter);
+                        printf("Using cell %d of %d on core %d on run %d of %d: %.0f percent complete\n",n1+1,grid->nf,thread,1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),percent_counter);
                         percent_counter+=5.;
                     }
                     
@@ -350,9 +350,9 @@
         sprintf(out_string,"full");
         sumint.save_integrals(out_string,1); // save integrals to file
         sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file
-        printf("Printed integrals to file in the CovMatricesAll/ directory\n");
+        printf("Printed integrals to file in the %sCovMatricesAll/ directory\n",par->out_file);
         sumint.save_jackknife_integrals(out_string);
-        printf("Printed jackknife integrals to file in the CovMatricesJack/ directory\n");
+        printf("Printed jackknife integrals to file in the %sCovMatricesJack/ directory\n",par->out_file);
         fflush(NULL);
         return;
         }

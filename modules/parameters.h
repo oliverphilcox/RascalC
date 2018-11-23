@@ -26,14 +26,14 @@ public:
 	Float xicutoff = 400.0;
     
     // Cut-off radius below which correlation function is set to zero:
-    Float r_cutoff = 5.;    
+    Float r_cutoff = 0.;    
 
 	Float nofznorm=1e7;//1198006; //1198006 - for BOSS DR12
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 51;
+	int nside = 251;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
@@ -49,10 +49,10 @@ public:
 	uint64 nmax = 1000000000000;
 
     // The number of mu bins
-	int mbin = 3;//10;
-
-	// The number of threads to run on
-	int nthread=4;
+	int mbin = 10;
+    
+    // The number of threads to run on
+	int nthread=10;
 
 	// The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
@@ -67,35 +67,38 @@ public:
 
 	// The name of the input file
 	char *fname = NULL;
-	const char default_fname[500] = "../random_particles/spherical_particles.txt";//test_particles.txt";//test_particles_mid.txt";//test_particles_small.txt";
+	const char default_fname[500] = "../random_particles/test_particles.txt";//test_particles_mid.txt";//test_particles_small.txt";
 
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "xi_functions/simple_xi.xi";//QPM_Mash.xi";
+	const char default_corname[500] = "xi_functions/QPM_Mash.xi";
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "python/binfile_small.csv";
+    const char default_radial_bin_file[500] = "python/binfile_linear.csv";
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL;
-    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n9_m3_j48.dat";//169.dat";
+    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n36_m10_j48.dat";//169.dat";
     
     // Name of the RR bin file
     char *RR_bin_file = NULL;
-    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n9_m3_j48.dat";//;169.dat";
+    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m10_j48.dat";//;169.dat";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=28;//10; 
-    int N2 = 100;//20; // number of j cells per i cell
-    int N3 = 20;//25; // number of k cells per j cell
-    int N4 = 40;//50; // number of l cells per k cell
+    int max_loops=30;//10; 
+    int N2 = 5;//20; // number of j cells per i cell
+    int N3 = 5;//25; // number of k cells per j cell
+    int N4 = 5;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
     Float rmin, rmax;
     Float * radial_bins_low;
     Float * radial_bins_high;
+    
+    char *out_file = NULL;
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/DR12/";
     
 	// Constructor
 	Parameters(int argc, char *argv[]){
@@ -125,6 +128,7 @@ public:
 		else if (!strcmp(argv[i],"-load")) loadname = argv[++i];
 		else if (!strcmp(argv[i],"-balance")) qbalance = 1;
 		else if (!strcmp(argv[i],"-invert")) qinvert = 1;
+        else if (!strcmp(argv[i],"-output")) out_file = argv[++i];
         else if (!strcmp(argv[i],"-binfile")||!strcmp(argv[i],"-radial_binfile")) radial_bin_file=argv[++i];
         else if (!strcmp(argv[i],"-jackknife")||!strcmp(argv[i],"-jackknife_weights")||!strcmp(argv[i],"-weights")) jk_weight_file=argv[++i];
         else if (!strcmp(argv[i],"-RRbin")||!strcmp(argv[i],"-RRbin_file")) RR_bin_file=argv[++i];
@@ -161,8 +165,11 @@ public:
 	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
 	    if (RR_bin_file==NULL) RR_bin_file = (char *) default_RR_bin_file; // no binning file was given
 	    if (corname==NULL) { corname = (char *) default_corname; }// No name was given
-	    if (radial_bin_file==NULL) {radial_bin_file = (char *) default_radial_bin_file;} // No radial binning given
+	    if (radial_bin_file==NULL) {radial_bin_file = (char *) default_radial_bin_file;} // No radial binning 
+	    if (out_file==NULL) out_file = (char *) default_out_file; // no output savefile
 	    
+	    create_directory();
+        
 	    // Read in the radial binning
 	    //TODO: Initialize nbin, rmin, rmax somewhere - not an input
         read_radial_binning(radial_bin_file);
@@ -193,6 +200,7 @@ public:
 		printf("Mu Binning = {%6.5f, %6.5f, %6.5f}\n",mumin,mumax,(mumax-mumin)/mbin);
 		printf("Density Normalization = %6.5e\n",nofznorm);
         printf("Maximum number of integration loops = %d\n",max_loops);
+        printf("Output directory: '%s'\n",out_file);
 
 	}
 private:
@@ -223,10 +231,27 @@ private:
 	    fprintf(stderr, "    -balance: Rescale the negative weights so that the total weight is zero.\n");
 	    fprintf(stderr, "    -invert: Multiply all the weights by -1.\n");
         fprintf(stderr, "    -loops: Maximum number of integral loops\n");
+        fprintf(stderr, "    -output: (Pre-existing) directory to save output covariance matrices into\n");   
 
 
 	    exit(1);
 	}
+	
+	void create_directory(){
+        // Initialize output directory:
+	    // First create whole directory if it doesn't exist:
+	    if (mkdir(out_file,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)==0){
+            printf("\nCreating output directory\n");
+        }
+	    char cname[1000],cjname[1000];
+        snprintf(cname, sizeof cname, "%sCovMatricesAll/",out_file);
+        snprintf(cjname, sizeof cjname, "%sCovMatricesJack/",out_file);
+	    if (mkdir(cname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0){
+            }
+        if (mkdir(cjname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)!=0){
+        }
+    }
+	    
 
     void read_radial_binning(char* binfile_name){//, int nbin, Float min_r, Float max_r){
         // Read the radial binning file and determine the number of bins

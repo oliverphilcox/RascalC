@@ -20,7 +20,7 @@ private:
     Float *errc4, *errc4j, *errc3, *errc3j; // Integral to house the variance in C4, C4j, C3 and C3j;
     Float *EEaA1, *EEaA2; // Array to accumulate the two-independent xi-weighted pair counts
     Float *RRaA1, *RRaA2; // Array to accumulate the two-independent pair count estimates 
-    
+    char* out_file;
     bool box,rad; // Flags to decide whether we have a periodic box and if we have a radial correlation function only
     
     uint64 *binct, *binct3, *binct4; // Arrays to accumulate bin counts
@@ -35,6 +35,7 @@ public:
     void init(Parameters *par){
         nbin = par->nbin; // number of radial bins
         mbin = par->mbin; // number of mu bins
+        out_file = par->out_file; // output directory
         n_jack = JK->n_JK_filled; // number of non-empty jackknives
         
         int ec=0;
@@ -595,8 +596,7 @@ public:
         fclose(CountsFile);
     }
         
-    
-    void save_integrals(char* suffix, bool save_all) {
+      void save_integrals(char* suffix, bool save_all) {
     /* Print integral outputs to file. 
         * In txt files {c2,c3,c4,RR}_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 and RR_a that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
         */
@@ -607,17 +607,17 @@ public:
         //TODO: Put EE counts in jackknife integrals instead?
         
         char c2name[1000];
-        snprintf(c2name, sizeof c2name, "CovMatricesAll/c2_n%d_m%d_%s.txt", nbin, mbin,suffix);
+        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_m%d_%s.txt", out_file,nbin, mbin,suffix);
         char c3name[1000];
-        snprintf(c3name, sizeof c3name, "CovMatricesAll/c3_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c4name[1000];
-        snprintf(c4name, sizeof c4name, "CovMatricesAll/c4_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c4errname[1000];
-        snprintf(c4errname, sizeof c4errname, "CovMatricesAll/c4err_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c4errname, sizeof c4errname, "%sCovMatricesAll/c4err_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c3errname[1000];
-        snprintf(c3errname, sizeof c3errname, "CovMatricesAll/c3err_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c3errname, sizeof c3errname, "%sCovMatricesAll/c3err_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char RRname[1000];
-        snprintf(RRname, sizeof RRname, "CovMatricesAll/RR_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(RRname, sizeof RRname, "%sCovMatricesAll/RR_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
@@ -658,14 +658,14 @@ public:
         if(save_all==1){
             // TO REMOVE??
             char RR1name[1000];
-            snprintf(RR1name,sizeof RR1name, "CovMatricesAll/RR1_n%d_m%d_%s.txt", nbin, mbin, suffix);
+            snprintf(RR1name,sizeof RR1name, "%sCovMatricesAll/RR1_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
             char RR2name[1000];
-            snprintf(RR2name,sizeof RR2name, "CovMatricesAll/RR2_n%d_m%d_%s.txt", nbin, mbin, suffix);
+            snprintf(RR2name,sizeof RR2name, "%sCovMatricesAll/RR2_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         
             char EE1name[1000];
-            snprintf(EE1name,sizeof EE1name, "CovMatricesAll/EE1_n%d_m%d_%s.txt", nbin, mbin, suffix);
+            snprintf(EE1name,sizeof EE1name, "%sCovMatricesAll/EE1_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
             char EE2name[1000];
-            snprintf(EE2name,sizeof EE2name, "CovMatricesAll/EE2_n%d_m%d_%s.txt", nbin, mbin, suffix);
+            snprintf(EE2name,sizeof EE2name, "%sCovMatricesAll/EE2_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
             
             FILE * EE1File = fopen(EE1name, "w"); // for EE1 integral
             FILE * EE2File = fopen(EE2name,"w"); // for EE2 integral
@@ -674,15 +674,15 @@ public:
             FILE * RR2File = fopen(RR2name,"w"); // for RR2 integral
         
             char binname[1000];
-            snprintf(binname,sizeof binname, "CovMatricesAll/binct_c4_n%d_m%d_%s.txt",nbin,mbin,suffix);
+            snprintf(binname,sizeof binname, "%sCovMatricesAll/binct_c4_n%d_m%d_%s.txt",out_file, nbin,mbin,suffix);
             FILE * BinFile = fopen(binname,"w");
             
             char bin3name[1000];
-            snprintf(bin3name,sizeof bin3name, "CovMatricesAll/binct_c3_n%d_m%d_%s.txt",nbin,mbin,suffix);
+            snprintf(bin3name,sizeof bin3name, "%sCovMatricesAll/binct_c3_n%d_m%d_%s.txt",out_file, nbin,mbin,suffix);
             FILE * Bin3File = fopen(bin3name,"w");
             
             char bin2name[1000];
-            snprintf(bin2name,sizeof bin2name, "CovMatricesAll/binct_c2_n%d_m%d_%s.txt",nbin,mbin,suffix);
+            snprintf(bin2name,sizeof bin2name, "%sCovMatricesAll/binct_c2_n%d_m%d_%s.txt",out_file, nbin,mbin,suffix);
             FILE * Bin2File = fopen(bin2name,"w");
         
             for (int j=0;j<nbin*mbin;j++){
@@ -729,17 +729,17 @@ public:
         */
         // Create output files
         char c2name[1000];
-        snprintf(c2name, sizeof c2name, "CovMatricesJack/c2j_n%d_m%d_%s.txt", nbin, mbin,suffix);
+        snprintf(c2name, sizeof c2name, "%sCovMatricesJack/c2j_n%d_m%d_%s.txt", out_file, nbin, mbin,suffix);
         char c3name[1000];
-        snprintf(c3name, sizeof c3name, "CovMatricesJack/c3j_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c3name, sizeof c3name, "%sCovMatricesJack/c3j_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c4name[1000];
-        snprintf(c4name, sizeof c4name, "CovMatricesJack/c4j_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c4name, sizeof c4name, "%sCovMatricesJack/c4j_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char cxname[1000];
-        snprintf(cxname, sizeof cxname, "CovMatricesJack/cxj_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(cxname, sizeof cxname, "%sCovMatricesJack/cxj_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c4errname[1000];
-        snprintf(c4errname, sizeof c4errname, "CovMatricesJack/c4errj_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c4errname, sizeof c4errname, "%sCovMatricesJack/c4errj_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c3errname[1000];
-        snprintf(c3errname, sizeof c3errname, "CovMatricesJack/c3errj_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c3errname, sizeof c3errname, "%sCovMatricesJack/c3errj_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
