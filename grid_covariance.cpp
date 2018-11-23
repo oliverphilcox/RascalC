@@ -20,6 +20,7 @@
 #include "STimer.cc"
 #include "./cubature/cubature.h"
 #include <limits>
+#include <sys/stat.h>
 
 
 //#define OPENMP
