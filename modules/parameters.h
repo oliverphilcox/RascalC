@@ -28,7 +28,7 @@ public:
     // Cut-off radius below which correlation function is set to zero:
     Float r_cutoff = 5.;    
 
-	Float nofznorm=1e7;//1198006; //1198006 - for BOSS DR12
+	Float nofznorm=1198006; //1198006 - for BOSS DR12
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
