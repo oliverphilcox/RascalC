@@ -381,10 +381,10 @@ public:
         
         if(n<=0){
             // Replace expression by Taylor series in this limit
-            fval[0]= pow(x[0],2)*(abs(corr->xi(x[0]))+pow(r_min,2.)/pow(x[0]+r_min,4.)) / (2*pow(R,3))*exp(-pow(x[0]/(2*R),2));
+            fval[0]= pow(x[0],2)/ (2*pow(R,3))*exp(-pow(x[0]/(2*R),2))*corr->xi(x[0]);//(abs(corr->xi(x[0]))+pow(r_min,2.)/pow(x[0]+r_min,4.)) ;
         } else{
             // Use full expression for non-zero n
-            fval[0] = x[0]*(abs(corr->xi(x[0]))+pow(r_min,2.)/pow(x[0]+r_min,4.)) / (R*n) * (exp(-factor_1)+exp(-factor_2));
+            fval[0] = x[0]*/ (R*n) * (exp(-factor_1)+exp(-factor_2))*corr-xi(x[0]);//(abs(corr->xi(x[0]))+pow(r_min,2.)/pow(x[0]+r_min,4.)) ;
         }
         
         return 0;

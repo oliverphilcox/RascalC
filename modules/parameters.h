@@ -26,14 +26,14 @@ public:
 	Float xicutoff = 400.0;
     
     // Cut-off radius below which correlation function is set to zero:
-    Float r_cutoff = 0.;    
+    Float r_cutoff = 5.;    
 
 	Float nofznorm=1e7;//1198006; //1198006 - for BOSS DR12
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 251;
+	int nside = 301;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
