@@ -586,7 +586,7 @@ public:
         // Print the counts for each integral (used for combining the estimates outside of C++)
         // This is the number of counts used in each loop [always the same]
         char counts_file[1000];
-        snprintf(counts_file, sizeof counts_file, "CovMatricesAll/total_counts_n%d_m%d.txt",nbin,mbin);
+        snprintf(counts_file, sizeof counts_file, "%sCovMatricesAll/total_counts_n%d_m%d.txt",out_file,nbin,mbin);
         FILE * CountsFile = fopen(counts_file,"w");
         fprintf(CountsFile,"%llu\n",pair_counts);
         fprintf(CountsFile,"%llu\n",triple_counts);

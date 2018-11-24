@@ -230,9 +230,9 @@
                         for (int n3=0; n3<par->N3; n3++){
                             cell_attempt3+=1; // new third cell attempted
                             
-                            // Draw third cell from i weighted by |xi(r)|
+                            // Draw third cell from j weighted by |xi(r)|
                             delta3 = rd->random_xidraw(locrng, &p3);
-                            thi_id = prim_id + delta3;
+                            thi_id = sec_id + delta3;
                             cell_sep3 = grid->cell_sep(delta3);
                             x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng); 
                             if(x==1) continue; 
