@@ -234,7 +234,7 @@ public:
                         
                         hcubature(1, xi_fun, &param[0], 1, xmin, xmax, 0, 0, 1e-5, ERROR_INDIVIDUAL, &val, &err);
                         
-                        printf("\nn: %.1f, prob: %.2e, err: %.2e",n,val,err);
+                        //printf("\nn: %.1f, prob: %.2e, err: %.2e",n,val,err);
                         
                         // Insert the calculated value to its grid position
                         for(int is=-1;is<=1;is+=2){
@@ -382,10 +382,10 @@ public:
         
         if(n<=0){
             // Replace expression by Taylor series in this limit
-            fval[0]= pow(x[0],2)/ (2*pow(R,3))*exp(-pow(x[0]/(2*R),2))*corr->xi(x[0]);//(abs(corr->xi(x[0]))+pow(r_min,2.)/pow(x[0]+r_min,4.)) ;
+            fval[0]= pow(x[0],2)/ (pow(R,3))*exp(-pow(x[0]/(2*R),2))*pow(x[0],-2.);//(abs(corr->xi(x[0]))+pow(r_min,2.)/pow(x[0]+r_min,4.)) ;
         } else{ 
             // Use full expression for non-zero n
-            fval[0] = x[0]/ (R*n) * (exp(-factor_1)+exp(-factor_2))*corr->xi(x[0]);//(abs(corr->xi(x[0]))+pow(r_min,2.)/pow(x[0]+r_min,4.)) ;
+            fval[0] = x[0]/ (R*n) * (exp(-factor_2)-exp(-factor_1))*pow(x[0],-2.);//(abs(corr->xi(x[0]))+pow(r_min,2.)/pow(x[0]+r_min,4.)) ;
         }
         
         return 0;
