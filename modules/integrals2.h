@@ -20,7 +20,7 @@ private:
     Float *errc4, *errc4j, *errc3, *errc3j; // Integral to house the variance in C4, C4j, C3 and C3j;
     Float *EEaA1, *EEaA2; // Array to accumulate the two-independent xi-weighted pair counts
     Float *RRaA1, *RRaA2; // Array to accumulate the two-independent pair count estimates 
-    
+    char* out_file;
     bool box,rad; // Flags to decide whether we have a periodic box and if we have a radial correlation function only
     
     uint64 *binct, *binct3, *binct4; // Arrays to accumulate bin counts
@@ -155,9 +155,12 @@ public:
         // Prob. here is defined as g_ij / f_ij where g_ij is the sampling PDF and f_ij is the true data PDF for picking pairs (equal to n_i/N n_j/N for N particles)
         // Prob1/2 are for when we divide the random particles into two subsets 1 and 2.
         
+        Float tmp_weight, tmp_xi, rij_mag, rij_mu, rav, c2v, c2vj, JK_weight;
+        Particle pi;
+        int tmp_bin, jk_bin_i, jk_bin_j;
+
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
-                Float rij_mag,rij_mu, rav, c2v, c2vj;
-                Particle pi = pi_list[i]; // first particle
+                pi = pi_list[i]; // first particle
                 
                 if(prim_ids[i]==pj_id){
                     wij[i]=-1;
@@ -165,15 +168,15 @@ public:
                 }
                 
                 cleanup_l(pi.pos,pj.pos,rij_mag,rij_mu); // define |r_ij| and ang(r_ij)
-                int tmp_bin = getbin(rij_mag, rij_mu); // bin for each particle
+                tmp_bin = getbin(rij_mag, rij_mu); // bin for each particle
                 
                 if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)){
                     wij[i]=-1;
                     continue; // if not in correct bin
                 }
                 
-                Float tmp_weight = pi.w*pj.w; // product of weights
-                Float tmp_xi = cf->xi(rij_mag, rij_mu); // correlation function for i-j
+                tmp_weight = pi.w*pj.w; // product of weights
+                tmp_xi = cf->xi(rij_mag, rij_mu); // correlation function for i-j
                 
                 // Save into arrays for later
                 bin[i]=tmp_bin;
@@ -181,12 +184,11 @@ public:
                 wij[i] = tmp_weight;
                 
                  // Compute jackknife weight tensor:
-                Float JK_weight;
                 JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pi.JK),int(pj.JK),tmp_bin,tmp_bin);
             
                 // Now compute the integral:
-                c2vj = 2.*tmp_weight*tmp_weight*(1.+tmp_xi)/prob*JK_weight;
                 c2v = 2.*tmp_weight*tmp_weight*(1.+tmp_xi) / prob; // c2 contribution
+                c2vj = c2v*JK_weight;
                 rav = tmp_weight / prob; // RR_a contribution
                 
                 // Add to local integral counts:
@@ -198,8 +200,8 @@ public:
                 // Now add EEaA bin counts:
                 // If both in random set-0
                 if ((pi.rand_class==0)&&(pj.rand_class==0)){
-                    int jk_bin_i = int(pi.JK)*nbin*mbin+tmp_bin; // EEaA bin for i particle
-                    int jk_bin_j = int(pj.JK)*nbin*mbin+tmp_bin; // EEaA bin for j particle
+                    jk_bin_i = int(pi.JK)*nbin*mbin+tmp_bin; // EEaA bin for i particle
+                    jk_bin_j = int(pj.JK)*nbin*mbin+tmp_bin; // EEaA bin for j particle
                     EEaA1[jk_bin_i]+=tmp_weight/prob1*tmp_xi/2.; // add half contribution to each jackknife
                     EEaA1[jk_bin_j]+=tmp_weight/prob1*tmp_xi/2.;
                     RRaA1[jk_bin_i]+=tmp_weight/prob1/2;
@@ -208,8 +210,8 @@ public:
                 
                 // If both in random set-1
                 if((pi.rand_class==1)&&(pj.rand_class==1)){
-                    int jk_bin_i = int(pi.JK)*nbin*mbin+tmp_bin; // EEaA bin for i particle
-                    int jk_bin_j = int(pj.JK)*nbin*mbin+tmp_bin; // EEaA bin for j particle
+                    jk_bin_i = int(pi.JK)*nbin*mbin+tmp_bin; // EEaA bin for i particle
+                    jk_bin_j = int(pj.JK)*nbin*mbin+tmp_bin; // EEaA bin for j particle
                     EEaA2[jk_bin_i]+=tmp_weight/prob2*tmp_xi/2; // add half contribution to each jackknife
                     EEaA2[jk_bin_j]+=tmp_weight/prob2*tmp_xi/2;
                     RRaA2[jk_bin_i]+=tmp_weight/prob2/2;
@@ -221,9 +223,16 @@ public:
     inline void third(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const int pj_id, const int pk_id, const int* bin_ij, const Float* wij, Float* &xi_jk, Float* &xi_ik, Float* wijk, const double prob){
         // Accumulates the three point integral C3. Also outputs an array of xi_ik and bin_ik values for later reuse.
         
+        // First define variables:
+        Particle pi;
+        Float rik_mag, rik_mu, c3v, c3vj, rjk_mag, rjk_mu, tmp_weight, xi_jk_tmp, xi_ik_tmp, JK_weight;
+        int tmp_bin, tmp_full_bin;
+        
+        cleanup_l(pj.pos,pk.pos,rjk_mag,rjk_mu); 
+        xi_jk_tmp = cf->xi(rjk_mag, rjk_mu); // correlation function for j-k
+        
         for(int i=0;i<pln;i++){ // Iterate ovr particle in pi_list
-            Particle pi = pi_list[i];
-            Float rik_mag,rik_mu,c3v,c3vj,rjk_mag, rjk_mu;
+            pi = pi_list[i];
             if(wij[i]==-1){
                 wijk[i]=-1;
                 continue; // skip incorrect bins / ij self counts
@@ -236,18 +245,15 @@ public:
             
             cleanup_l(pi.pos,pk.pos,rik_mag,rik_mu); // define angles/lengths
             
-            int tmp_bin = getbin(rik_mag,rik_mu); // bin for each particle
+            tmp_bin = getbin(rik_mag,rik_mu); // bin for each particle
             
             if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)){
-                wijk[i] = -1;
+                //wijk[i] = -1;
                 continue; // if not in correct bin
             }
             
-            cleanup_l(pj.pos,pk.pos,rjk_mag,rjk_mu); 
-            
-            Float tmp_weight = wij[i]*pk.w; // product of weights, w_iw_jw_k
-            Float xi_jk_tmp = cf->xi(rjk_mag, rjk_mu); // correlation function for j-k
-            Float xi_ik_tmp = cf->xi(rik_mag, rik_mu); // not used here but used later
+            tmp_weight = wij[i]*pk.w; // product of weights, w_iw_jw_k
+            xi_ik_tmp = cf->xi(rik_mag, rik_mu); // not used here but used later
             
             // save arrays for later
             xi_jk[i]=xi_jk_tmp;
@@ -255,18 +261,19 @@ public:
             wijk[i]=tmp_weight;
             
             // Compute jackknife weight tensor:
-            Float JK_weight;
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pi.JK),bin_ij[i],tmp_bin);
             
             // Now compute the integral (using symmetry factor of 4);
             c3v = 4.*tmp_weight*pi.w/prob*xi_jk_tmp;
-            c3vj = 4.*tmp_weight*pi.w/prob*xi_jk_tmp*JK_weight;
+            c3vj = c3v*JK_weight;
             
             // Add to local counts
-            int tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
+            tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c3[tmp_full_bin]+=c3v;
             c3j[tmp_full_bin]+=c3vj;
             binct3[tmp_full_bin]++;
+            errc3[tmp_full_bin]+=pow(c3v,2.);
+            errc3j[tmp_full_bin]+=pow(c3vj,2.);
         }
     }
         
@@ -368,6 +375,8 @@ public:
                 c3j[i*nbin*mbin+j]+=ints->c3j[i*nbin*mbin+j];
                 c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
                 c4j[i*nbin*mbin+j]+=ints->c4j[i*nbin*mbin+j];
+                errc3[i*nbin*mbin+j]+=ints->errc3[i*nbin*mbin+j];
+                errc3j[i*nbin*mbin+j]+=ints->errc3j[i*nbin*mbin+j];
                 errc4[i*nbin*mbin+j]+=ints->errc4[i*nbin*mbin+j];
                 errc4j[i*nbin*mbin+j]+=ints->errc4j[i*nbin*mbin+j];
                 binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
@@ -483,6 +492,7 @@ public:
         // To avoid recomputation
         double corrf2 = pow(corrf,2.);
         double corrf3 = corrf2*corrf;
+        double corrf6 = corrf3*corrf3;
         double corrf4 = corrf3*corrf;
         double corrf8 = corrf4*corrf4;
         
@@ -505,6 +515,8 @@ public:
                 c4[i*nbin*mbin+j]/=(n_quads*corrf4);
                 c3j[i*nbin*mbin+j]/=(n_triples*corrf3);
                 c4j[i*nbin*mbin+j]/=(n_quads*corrf4);
+                errc3[i*nbin*mbin+j]/=(n_triples*corrf6);
+                errc3j[i*nbin*mbin+j]/=(n_triples*corrf6);
                 errc4[i*nbin*mbin+j]/=(n_quads*corrf8);
                 errc4j[i*nbin*mbin+j]/=(n_quads*corrf8);
             }
@@ -564,7 +576,7 @@ public:
         // Print the counts for each integral (used for combining the estimates outside of C++)
         // This is the number of counts used in each loop [always the same]
         char counts_file[1000];
-        snprintf(counts_file, sizeof counts_file, "CovMatricesAll/total_counts_n%d_m%d.txt",nbin,mbin);
+        snprintf(counts_file, sizeof counts_file, "%sCovMatricesAll/total_counts_n%d_m%d.txt",out_file,nbin,mbin);
         FILE * CountsFile = fopen(counts_file,"w");
         fprintf(CountsFile,"%llu\n",pair_counts);
         fprintf(CountsFile,"%llu\n",triple_counts);
@@ -586,17 +598,17 @@ public:
         //TODO: Put EE counts in jackknife integrals instead?
         
         char c2name[1000];
-        snprintf(c2name, sizeof c2name, "CovMatricesAll/c2_n%d_m%d_%s.txt", nbin, mbin,suffix);
+        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_m%d_%s.txt", out_file,nbin, mbin,suffix);
         char c3name[1000];
-        snprintf(c3name, sizeof c3name, "CovMatricesAll/c3_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c4name[1000];
-        snprintf(c4name, sizeof c4name, "CovMatricesAll/c4_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c4errname[1000];
-        snprintf(c4errname, sizeof c4errname, "CovMatricesAll/c4err_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c4errname, sizeof c4errname, "%sCovMatricesAll/c4err_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c3errname[1000];
-        snprintf(c3errname, sizeof c3errname, "CovMatricesAll/c3err_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c3errname, sizeof c3errname, "%sCovMatricesAll/c3err_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char RRname[1000];
-        snprintf(RRname, sizeof RRname, "CovMatricesAll/RR_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(RRname, sizeof RRname, "%sCovMatricesAll/RR_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
@@ -636,27 +648,32 @@ public:
         
         if(save_all==1){
             // TO REMOVE??
-            char RR1name[1000];
-            snprintf(RR1name,sizeof RR1name, "CovMatricesAll/RR1_n%d_m%d_%s.txt", nbin, mbin, suffix);
-            char RR2name[1000];
-            snprintf(RR2name,sizeof RR2name, "CovMatricesAll/RR2_n%d_m%d_%s.txt", nbin, mbin, suffix);
+            //char RR1name[1000];
+            //snprintf(RR1name,sizeof RR1name, "%sCovMatricesAll/RR1_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
+            //char RR2name[1000];
+            //snprintf(RR2name,sizeof RR2name, "%sCovMatricesAll/RR2_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         
-            char EE1name[1000];
-            snprintf(EE1name,sizeof EE1name, "CovMatricesAll/EE1_n%d_m%d_%s.txt", nbin, mbin, suffix);
-            char EE2name[1000];
-            snprintf(EE2name,sizeof EE2name, "CovMatricesAll/EE2_n%d_m%d_%s.txt", nbin, mbin, suffix);
+            //char EE1name[1000];
+            //snprintf(EE1name,sizeof EE1name, "%sCovMatricesAll/EE1_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
+            //char EE2name[1000];
+            //snprintf(EE2name,sizeof EE2name, "%sCovMatricesAll/EE2_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
             
-            FILE * EE1File = fopen(EE1name, "w"); // for EE1 integral
-            FILE * EE2File = fopen(EE2name,"w"); // for EE2 integral
+            //FILE * EE1File = fopen(EE1name, "w"); // for EE1 integral
+            //FILE * EE2File = fopen(EE2name,"w"); // for EE2 integral
             
-            FILE * RR1File = fopen(RR1name, "w"); // for RR1 integral
-            FILE * RR2File = fopen(RR2name,"w"); // for RR2 integral
+            //FILE * RR1File = fopen(RR1name, "w"); // for RR1 integral
+            //FILE * RR2File = fopen(RR2name,"w"); // for RR2 integral
         
             char binname[1000];
-            snprintf(binname,sizeof binname, "CovMatricesAll/binct_c4_n%d_m%d_%s.txt",nbin,mbin,suffix);
+            snprintf(binname,sizeof binname, "%sCovMatricesAll/binct_c4_n%d_m%d_%s.txt",out_file, nbin,mbin,suffix);
             FILE * BinFile = fopen(binname,"w");
+            
+            char bin3name[1000];
+            snprintf(bin3name,sizeof bin3name, "%sCovMatricesAll/binct_c3_n%d_m%d_%s.txt",out_file, nbin,mbin,suffix);
+            FILE * Bin3File = fopen(bin3name,"w");
+            
             char bin2name[1000];
-            snprintf(bin2name,sizeof bin2name, "CovMatricesAll/binct_c2_n%d_m%d_%s.txt",nbin,mbin,suffix);
+            snprintf(bin2name,sizeof bin2name, "%sCovMatricesAll/binct_c2_n%d_m%d_%s.txt",out_file, nbin,mbin,suffix);
             FILE * Bin2File = fopen(bin2name,"w");
         
             for (int j=0;j<nbin*mbin;j++){
@@ -666,30 +683,33 @@ public:
             for(int i=0;i<nbin*mbin;i++){
                 for(int j=0;j<nbin*mbin;j++){
                     fprintf(BinFile,"%llu\t",binct4[i*nbin*mbin+j]);
+                    fprintf(Bin3File,"%llu\t",binct3[i*nbin*mbin+j]);
                     }
                 fprintf(BinFile,"\n");
+                fprintf(Bin3File,"\n");
             }
             
-            for(int i=0;i<n_jack;i++){
-                for(int j=0;j<nbin*mbin;j++){
-                    //TODO: Do we need to save this?
-                    fprintf(EE1File,"%le\t",EEaA1[i*nbin*mbin+j]);
-                    fprintf(EE2File,"%le\t",EEaA2[i*nbin*mbin+j]);
-                    fprintf(RR1File,"%le\t",RRaA1[i*nbin*mbin+j]);
-                    fprintf(RR2File,"%le\t",RRaA2[i*nbin*mbin+j]);
-                }
-                fprintf(EE1File,"\n");
-                fprintf(EE2File,"\n");
-                fprintf(RR1File,"\n");
-                fprintf(RR2File,"\n");
-            }
+//             for(int i=0;i<n_jack;i++){
+//                 for(int j=0;j<nbin*mbin;j++){
+//                     //TODO: Do we need to save this?
+//                     fprintf(EE1File,"%le\t",EEaA1[i*nbin*mbin+j]);
+//                     fprintf(EE2File,"%le\t",EEaA2[i*nbin*mbin+j]);
+//                     fprintf(RR1File,"%le\t",RRaA1[i*nbin*mbin+j]);
+//                     fprintf(RR2File,"%le\t",RRaA2[i*nbin*mbin+j]);
+//                 }
+//                 fprintf(EE1File,"\n");
+//                 fprintf(EE2File,"\n");
+//                 fprintf(RR1File,"\n");
+//                 fprintf(RR2File,"\n");
+//             }
         
             fclose(BinFile);
             fclose(Bin2File);
-            fclose(EE1File);
-            fclose(EE2File);
-            fclose(RR1File);
-            fclose(RR2File);
+            fclose(Bin3File);
+//             fclose(EE1File);
+//             fclose(EE2File);
+//             fclose(RR1File);
+//             fclose(RR2File);
         }
     }
 
@@ -700,17 +720,17 @@ public:
         */
         // Create output files
         char c2name[1000];
-        snprintf(c2name, sizeof c2name, "CovMatricesJack/c2j_n%d_m%d_%s.txt", nbin, mbin,suffix);
+        snprintf(c2name, sizeof c2name, "%sCovMatricesJack/c2j_n%d_m%d_%s.txt", out_file, nbin, mbin,suffix);
         char c3name[1000];
-        snprintf(c3name, sizeof c3name, "CovMatricesJack/c3j_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c3name, sizeof c3name, "%sCovMatricesJack/c3j_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c4name[1000];
-        snprintf(c4name, sizeof c4name, "CovMatricesJack/c4j_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c4name, sizeof c4name, "%sCovMatricesJack/c4j_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char cxname[1000];
-        snprintf(cxname, sizeof cxname, "CovMatricesJack/cxj_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(cxname, sizeof cxname, "%sCovMatricesJack/cxj_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c4errname[1000];
-        snprintf(c4errname, sizeof c4errname, "CovMatricesJack/c4errj_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c4errname, sizeof c4errname, "%sCovMatricesJack/c4errj_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c3errname[1000];
-        snprintf(c3errname, sizeof c3errname, "CovMatricesJack/c3errj_n%d_m%d_%s.txt", nbin, mbin, suffix);
+        snprintf(c3errname, sizeof c3errname, "%sCovMatricesJack/c3errj_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
