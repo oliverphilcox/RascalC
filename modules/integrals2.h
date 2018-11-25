@@ -35,6 +35,7 @@ public:
     void init(Parameters *par){
         nbin = par->nbin; // number of radial bins
         mbin = par->mbin; // number of mu bins
+        out_file = par->out_file; // output directory
         n_jack = JK->n_JK_filled; // number of non-empty jackknives
         
         int ec=0;

@@ -87,7 +87,7 @@ public:
     
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=10;//10; 
-    int N2 = 5;//20; // number of j cells per i cell
+    int N2 = 10;//20; // number of j cells per i cell
     int N3 = 10;//25; // number of k cells per j cell
     int N4 = 0;//50; // number of l cells per k cell
     
