@@ -148,6 +148,7 @@
             Float *xi_ij, *xi_jk, *xi_ik, *w_ijk, *w_ij; // arrays to store xi and weight values
             int *bin_ij; // i-j separation bin
             Float percent_counter;
+            int x;
             
             Integrals2 locint(par,cf,JK); // Accumulates the integral contribution of each thread
             
@@ -209,7 +210,7 @@
                         // p2 is the ratio of sampling to true pair distribution here
                         integer3 sec_id = prim_id + delta2;
                         Float3 cell_sep2 = grid->cell_sep(delta2);
-                        int x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid, sln, locrng, sln1, sln2);
+                        x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid, sln, locrng, sln1, sln2);
                         if(x==1) continue; // skip if error
                         
                         used_cell2+=1; // new cell accepted
@@ -229,10 +230,10 @@
                             cell_attempt3+=1; // new third cell attempted
                             
                             // Draw third cell from j weighted by xi(r)
-                            integer3 delta3 = rd->random_cubedraw(locrng, &p3);
-                            integer3 thi_id = sec_id + delta3;
+                            integer3 delta3 = rd->random_xidraw(locrng, &p3);
+                            integer3 thi_id = prim_id + delta3;
                             Float3 cell_sep3 = cell_sep2 + grid->cell_sep(delta3);
-                            int x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng); // sln1, sln2 are not used here
+                            x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng); // sln1, sln2 are not used here
                             if(x==1) continue; 
                             
                             used_cell3+=1; // new third cell used
@@ -248,7 +249,7 @@
                                 
                                 // Draw fourth cell from k cell weighted by 1/r^2
                                 integer3 delta4 = rd->random_cubedraw(locrng, &p4);
-                                int x = draw_particle_without_class(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid,fln,locrng); //sln1, sln2 are not used here
+                                x = draw_particle_without_class(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid,fln,locrng); //sln1, sln2 are not used here
                                 if(x==1) continue;
                                 
                                 used_cell4+=1; // new fourth cell used
