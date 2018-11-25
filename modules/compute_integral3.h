@@ -49,6 +49,23 @@
             return 0;
         }
         
+        int draw_particle_without_class(integer3 id_3D, Particle &particle, int &pid, integer3 shift, Grid *grid, int &n_particles, gsl_rng* locrng){
+            // Draw a random particle from a cell given the cell ID.
+            // This updates the particle and particle ID and returns 1 if error.
+            // This is used for k,l cells (with no indication of particle random class)
+            int id_1D = grid-> test_cell(id_3D); 
+            if(id_1D<0) return 1; // error if cell not in grid
+            Cell cell = grid->c[id_1D];
+            if(cell.np==0) return 1; // error if empty cell
+            pid = floor(gsl_rng_uniform(locrng)*cell.np) + cell.start; // draw random ID
+            particle = grid->p[pid]; // define particle
+            n_particles = cell.np; // no. of particles in cell 
+    #ifdef PERIODIC
+            particle.pos+=shift;
+    #endif
+            return 0;
+        }
+        
         void check_threads(Parameters *par){
             // Set up OPENMP and define which threads ot use
     #ifdef OPENMP
@@ -131,7 +148,6 @@
             Float *xi_ij, *xi_jk, *xi_ik, *w_ijk, *w_ij; // arrays to store xi and weight values
             int *bin_ij; // i-j separation bin
             Float percent_counter;
-            int dump; // dummy for unused variables
             
             Integrals2 locint(par,cf,JK); // Accumulates the integral contribution of each thread
             
@@ -213,10 +229,10 @@
                             cell_attempt3+=1; // new third cell attempted
                             
                             // Draw third cell from j weighted by xi(r)
-                            integer3 delta3 = rd->random_xidraw(locrng, &p3);
+                            integer3 delta3 = rd->random_cubedraw(locrng, &p3);
                             integer3 thi_id = sec_id + delta3;
                             Float3 cell_sep3 = cell_sep2 + grid->cell_sep(delta3);
-                            int x = draw_particle(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng,dump,dump); // sln1, sln2 are not used here
+                            int x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng); // sln1, sln2 are not used here
                             if(x==1) continue; 
                             
                             used_cell3+=1; // new third cell used
@@ -232,7 +248,7 @@
                                 
                                 // Draw fourth cell from k cell weighted by 1/r^2
                                 integer3 delta4 = rd->random_cubedraw(locrng, &p4);
-                                int x = draw_particle(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid,fln,locrng,dump,dump); //sln1, sln2 are not used here
+                                int x = draw_particle_without_class(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid,fln,locrng); //sln1, sln2 are not used here
                                 if(x==1) continue;
                                 
                                 used_cell4+=1; // new fourth cell used
