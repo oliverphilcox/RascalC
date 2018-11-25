@@ -230,6 +230,7 @@ public:
                     for(int l = 0;l<=len;l++){
                         //NB: This for-loop recomputes a lot of values but its speed makes this irrelevant
                         n = sqrt(pow(i,2)+pow(k,2)+pow(l,2))*boxside; // distance from origin
+                        printf("\nn: %.2f",n);
                         param[1]=n;
                         
                         hcubature(1, xi_fun, &param[0], 1, xmin, xmax, 0, 0, 1e-5, ERROR_INDIVIDUAL, &val, &err);
@@ -367,7 +368,6 @@ public:
         
     static int xi_integrand(unsigned ndim, const double *x, void *fdata, unsigned fdim, double *fval){
         // Integrand for the 1d probability grid integral weighted by xi(r) (in correct cubature format).
-        // NB: This must be multiplied by a prefactor independent of the integration variable x.
         double* param = (double *) fdata;
         
         // Read in parameters
