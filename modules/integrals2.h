@@ -244,8 +244,6 @@ public:
                 continue; // don't self-count
             }
             
-            rik_mag=0.;
-            rik_mu=0.;
             cleanup_l(pi.pos,pk.pos,rik_mag,rik_mu); // define angles/lengths
             
             tmp_bin = getbin(rik_mag,rik_mu); // bin for each particle
