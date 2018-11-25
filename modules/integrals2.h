@@ -244,6 +244,8 @@ public:
                 continue; // don't self-count
             }
             
+            rik_mag=0.;
+            rik_mu=0.;
             cleanup_l(pi.pos,pk.pos,rik_mag,rik_mu); // define angles/lengths
             
             tmp_bin = getbin(rik_mag,rik_mu); // bin for each particle
@@ -281,35 +283,40 @@ public:
     inline void fourth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const int pj_id, const int pk_id, const int pl_id, const int* bin_ij, const Float* wijk, const Float* xi_ik, const Float* xi_jk, const Float* xi_ij, const double prob){
         // Accumulates the three point integral C3. Also outputs an array of xi_ik and bin_ik values for later reuse.
         
+        // First define variables
+        Particle pi;
+        Float ril_mag,ril_mu,rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, c4vj, xi_il, xi_jl, tmp_weight, JK_weight;
+        int tmp_bin, tmp_full_bin;    
+        
+        // Compute quantities independent of i
+        cleanup_l(pl.pos,pj.pos,rjl_mag,rjl_mu); 
+        xi_jl = cf->xi(rjl_mag, rjl_mu); // j-l correlation
+        if((pj_id==pl_id)||(pk_id==pl_id)) return;
+        
+        cleanup_l(pk.pos, pl.pos, rkl_mag, rkl_mu); // define angles/lengths
+        tmp_bin = getbin(rkl_mag,rkl_mu); // kl bin for each particle
+            
+        if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)) return; // if not in correct bin            
+        
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
-            Particle pi = pi_list[i];
-            Float ril_mag,ril_mu,rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, c4vj;
+            pi = pi_list[i];
             if(wijk[i]==-1) continue; // skip incorrect bins / ij self counts
             
-            if((prim_ids[i]==pl_id)||(pj_id==pl_id)||(pk_id==pl_id)) continue; // don't self-count
-            
-            cleanup_l(pk.pos, pl.pos, rkl_mag, rkl_mu); // define angles/lengths
-            int tmp_bin = getbin(rkl_mag,rkl_mu); // kl bin for each particle
-            
-            if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)) continue; // if not in correct bin
+            if(prim_ids[i]==pl_id) continue; // don't self-count
             
             cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
-            cleanup_l(pl.pos,pj.pos,rjl_mag,rjl_mu); 
-            
-            Float tmp_weight = wijk[i]*pl.w; // product of weights, w_i*w_j*w_k*w_l
-            Float xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
-            Float xi_jl = cf->xi(rjl_mag, rjl_mu); // j-l correlation
+            tmp_weight = wijk[i]*pl.w; // product of weights, w_i*w_j*w_k*w_l
+            xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
             
             // Compute jackknife weight tensor:
-            Float JK_weight;
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin);
             
             // Now compute the integral;
             c4v = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
-            c4vj = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i])*JK_weight;
+            c4vj = c4v*JK_weight;
             
             // Add to local counts
-            int tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
+            tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c4[tmp_full_bin]+=c4v;
             c4j[tmp_full_bin]+=c4vj;
             errc4[tmp_full_bin]+=pow(c4v,2.);
