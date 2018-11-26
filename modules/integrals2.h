@@ -283,7 +283,8 @@ public:
         
         // First define variables
         Particle pi;
-        Float ril_mag,ril_mu,rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, c4vj, xi_il, xi_jl, tmp_weight, JK_weight;
+        Float rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, c4vj, xi_jl, tmp_weight, JK_weight;
+        //Float ril_mag, ril_mu, xi_il;
         int tmp_bin, tmp_full_bin;    
         
         // Compute quantities independent of i
