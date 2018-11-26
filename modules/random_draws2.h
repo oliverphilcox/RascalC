@@ -219,6 +219,8 @@ public:
             int len=(nside-1)/2; // This works because nside has been required to be odd
             Float R = boxside/2, n;
 
+            printf("Boxside: %.2f, R: %.2f",boxside,R);
+            
             // Define integration limits (using some large upper limit)
             double xmin[1]={0}, xmax[1]={2*boxside*len}, val, err, param[3]={R,0,r_min};
             
@@ -382,10 +384,10 @@ public:
         
         if(n<=0){
             // Replace expression by Taylor series in this limit
-            fval[0]= pow(x[0],2)/ (pow(R,3))*exp(-pow(x[0]/(2*R),2))*pow(x[0],-2.);//(abs(corr->xi(x[0]))+pow(r_min,2.)/pow(x[0]+r_min,4.)) ;
+            fval[0]= pow(x[0],2)/ (pow(R,3))*exp(-pow(x[0]/(2*R),2))*(abs(corr->xi(x[0]))+1/pow(x[0]+r_min,2.)) ;
         } else{ 
             // Use full expression for non-zero n
-            fval[0] = x[0]/ (R*n) * (exp(-factor_2)-exp(-factor_1))*pow(x[0],-2.);//(abs(corr->xi(x[0]))+pow(r_min,2.)/pow(x[0]+r_min,4.)) ;
+            fval[0] = x[0]/ (R*n) * (exp(-factor_2)-exp(-factor_1))*(abs(corr->xi(x[0]))+1./pow(x[0]+r_min,2.)) ;
         }
         
         return 0;
