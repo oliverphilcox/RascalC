@@ -241,7 +241,7 @@ public:
                 continue; // skip incorrect bins / ij self counts
             }
             
-            if(prim_ids[i]==pk_id)){
+            if(prim_ids[i]==pk_id){
                 wijk[i]=-1; // re-read to skip this later
                 continue; // don't self-count
             }
