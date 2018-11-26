@@ -302,15 +302,15 @@ public:
             
             if(prim_ids[i]==pl_id) continue; // don't self-count
             
-            cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
+            //cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
             tmp_weight = wijk[i]*pl.w; // product of weights, w_i*w_j*w_k*w_l
-            xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
+            //xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
             
             // Compute jackknife weight tensor:
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin);
             
             // Now compute the integral;
-            c4v = tmp_weight/prob*(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
+            c4v = 2.*tmp_weight/prob*(xi_ik[i]*xi_jl);//(xi_il*xi_jk[i]+xi_jl*xi_ik[i]);
             c4vj = c4v*JK_weight;
             
             // Add to local counts

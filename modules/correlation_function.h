@@ -12,16 +12,14 @@ class CorrelationFunction{
 		double *x,*y,*z;
 		double rmin,rmax,mumin,mumax;
 		bool mudim;
-		gsl_interp_accel *xa, *ya, *x1a;
-        
-        
+		gsl_interp_accel *xa, *ya, *x1a;        
 		gsl_interp2d* interp_2d;
 		gsl_spline* corfu1d;
         
         double r_cutoff;
 
 	public:
-		double xi(double r, double mu){
+        double xi(double r, double mu){
 			// 2D correlation function in radius and angular bins
 			// xi values beyond the maximal radius in the correlation function file read in are extrapolated
 			// as a simple r^-4 power law for each mu bin independently (may lead to different signs for
@@ -90,6 +88,7 @@ class CorrelationFunction{
 			char * pch;
 			int n=0,m=0;
 			double x0;
+            
 			FILE *fp;
 			fp = fopen(filename, "r");
 			if (fp==NULL) {
@@ -141,7 +140,7 @@ class CorrelationFunction{
 				nx++;
 				for(int i=0;i<m;i++){
 					(*z)[i]=0.;
-					nz++;
+                    nz++;
 				}
 			}
 
