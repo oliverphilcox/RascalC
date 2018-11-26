@@ -26,7 +26,7 @@ public:
 	Float xicutoff = 400.0;
     
     // Cut-off radius below which correlation function is set to zero:
-    Float r_cutoff = 0.;    
+    Float r_cutoff = 5.;    
 
 	Float nofznorm=1198006; //1198006 - for BOSS DR12
 
@@ -87,9 +87,9 @@ public:
     
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=10;//10; 
-    int N2 = 8;//20; // number of j cells per i cell
-    int N3 = 8;//25; // number of k cells per j cell
-    int N4 = 8;//50; // number of l cells per k cell
+    int N2 = 6;//20; // number of j cells per i cell
+    int N3 = 6;//25; // number of k cells per j cell
+    int N4 = 6;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;

@@ -232,6 +232,8 @@ public:
         cleanup_l(pj.pos,pk.pos,rjk_mag,rjk_mu); 
         xi_jk_tmp = cf->xi(rjk_mag, rjk_mu); // correlation function for j-k
         
+        if (pk_id==pj_id) return;
+        
         for(int i=0;i<pln;i++){ // Iterate ovr particle in pi_list
             pi = pi_list[i];
             if(wij[i]==-1){
@@ -239,7 +241,7 @@ public:
                 continue; // skip incorrect bins / ij self counts
             }
             
-            if((prim_ids[i]==pk_id)||(pk_id==pj_id)){
+            if(prim_ids[i]==pk_id)){
                 wijk[i]=-1; // re-read to skip this later
                 continue; // don't self-count
             }
@@ -249,7 +251,7 @@ public:
             tmp_bin = getbin(rik_mag,rik_mu); // bin for each particle
             
             if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)){
-                wijk[i] = -1;
+                //wijk[i] = -1;
                 continue; // if not in correct bin
             }
             
@@ -284,7 +286,7 @@ public:
         // First define variables
         Particle pi;
         Float rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, c4vj, xi_jl, tmp_weight, JK_weight;
-        Float ril_mag, ril_mu, xi_il;
+        //Float ril_mag, ril_mu, xi_il;
         int tmp_bin, tmp_full_bin;    
         
         // Compute quantities independent of i
@@ -303,15 +305,16 @@ public:
             
             if(prim_ids[i]==pl_id) continue; // don't self-count
             
-            cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
             tmp_weight = wijk[i]*pl.w; // product of weights, w_i*w_j*w_k*w_l
-            xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
+            //xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
+            //cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
             
             // Compute jackknife weight tensor:
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin);
             
             // Now compute the integral;
-            c4v = tmp_weight/prob*(xi_ik[i]*xi_jl+xi_il*xi_jk[i]);
+            //c4v = tmp_weight/prob*(xi_ik[i]*xi_jl+xi_il*xi_jk[i]);
+            c4v = tmp_weight/prob*2*xi_ik[i]*xi_jl;//
             c4vj = c4v*JK_weight;
             
             // Add to local counts
