@@ -249,7 +249,7 @@ public:
             tmp_bin = getbin(rik_mag,rik_mu); // bin for each particle
             
             if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)){
-                //wijk[i] = -1;
+                wijk[i] = -1;
                 continue; // if not in correct bin
             }
             

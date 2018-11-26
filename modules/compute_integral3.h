@@ -234,7 +234,7 @@
                             // Draw third cell from j weighted by xi(r)
                             delta3 = rd->random_xidraw(locrng, &p3);
                             thi_id = prim_id + delta3;
-                            cell_sep3 = cell_sep2 + grid->cell_sep(delta3);
+                            cell_sep3 = grid->cell_sep(delta3);
                             x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng); // sln1, sln2 are not used here
                             if(x==1) continue; 
                             
