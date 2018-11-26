@@ -26,7 +26,7 @@ public:
 	Float xicutoff = 400.0;
     
     // Cut-off radius below which correlation function is set to zero:
-    Float r_cutoff = 5.;    
+    Float r_cutoff = 20.;    
 
 	Float nofznorm=1198006; //1198006 - for BOSS DR12
 
@@ -71,7 +71,7 @@ public:
 
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "xi_functions/simple_xi.xi";
+	const char default_corname[500] = "xi_functions/QPM_Mash.xi";
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
