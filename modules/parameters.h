@@ -86,10 +86,10 @@ public:
     const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m10_j169.dat";//;169.dat";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=1;//0;//10; 
-    int N2 = 1;//12;//20; // number of j cells per i cell
-    int N3 = 1;//24;//25; // number of k cells per j cell
-    int N4 = 1;//48;//50; // number of l cells per k cell
+    int max_loops=10;//0;//10; 
+    int N2 = 3;//12;//20; // number of j cells per i cell
+    int N3 = 3;//24;//25; // number of k cells per j cell
+    int N4 = 3;//48;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
