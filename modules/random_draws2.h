@@ -217,10 +217,8 @@ public:
 #pragma omp parallel
         {            
             int len=(nside-1)/2; // This works because nside has been required to be odd
-            Float n, R = boxside;///2;
+            Float n, R = boxside/2;
 
-            printf("Boxside: %.2f, R: %.2f",boxside,R);
-            
             // Define integration limits (using some large upper limit)
             double xmin[1]={0}, xmax[1]={2*boxside*len}, val, err, param[3]={R,0,r_min};
             
