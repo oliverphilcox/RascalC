@@ -33,7 +33,7 @@ public:
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 301;
+	int nside = 401;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
@@ -87,9 +87,9 @@ public:
     
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=10;//10; 
-    int N2 = 6;//20; // number of j cells per i cell
-    int N3 = 6;//25; // number of k cells per j cell
-    int N4 = 6;//50; // number of l cells per k cell
+    int N2 = 12;//20; // number of j cells per i cell
+    int N3 = 24;//25; // number of k cells per j cell
+    int N4 = 48;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
