@@ -383,7 +383,7 @@ public:
         Float factor_2 = pow((x[0]-n)/(2*R),2);
         
         Float tmp_xi = corr->xi(x[0]);
-        if tmp_xi<1e-3{
+        if(tmp_xi<1e-3){
             tmp_xi=10./pow(x[0],2.);
         }
         if(n<=0){
