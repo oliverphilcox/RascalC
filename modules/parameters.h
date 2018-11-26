@@ -26,7 +26,7 @@ public:
 	Float xicutoff = 400.0;
     
     // Cut-off radius below which correlation function is set to zero:
-    Float r_cutoff = 20.;    
+    Float r_cutoff = 5.;    
 
 	Float nofznorm=1198006; //1198006 - for BOSS DR12
 
