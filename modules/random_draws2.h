@@ -217,7 +217,7 @@ public:
 #pragma omp parallel
         {            
             int len=(nside-1)/2; // This works because nside has been required to be odd
-            Float R = boxside/2, n;
+            Float n, R = boxside;///2;
 
             printf("Boxside: %.2f, R: %.2f",boxside,R);
             
@@ -384,10 +384,10 @@ public:
         
         if(n<=0){
             // Replace expression by Taylor series in this limit
-            fval[0]= pow(x[0],2)/ (pow(R,3))*exp(-pow(x[0]/(2*R),2))*(abs(corr->xi(x[0]))+100./pow(x[0]+r_min,2.)) ;
+            fval[0]= pow(x[0],2)/ (pow(R,3))*exp(-pow(x[0]/(2*R),2))*(abs(corr->xi(x[0]))+0/pow(x[0]+r_min,2.)) ;
         } else{ 
             // Use full expression for non-zero n
-            fval[0] = x[0]/ (R*n) * (exp(-factor_2)-exp(-factor_1))*(abs(corr->xi(x[0]))+100./pow(x[0]+r_min,2.)) ;
+            fval[0] = x[0]/ (R*n) * (exp(-factor_2)-exp(-factor_1))*(abs(corr->xi(x[0]))+0/pow(x[0]+r_min,2.)) ;
         }
         
         return 0;
