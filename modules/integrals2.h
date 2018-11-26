@@ -317,6 +317,15 @@ public:
             c4v = tmp_weight/prob*2*xi_ik[i]*xi_jl;//
             c4vj = c4v*JK_weight;
             
+            // TESTING OUTPUT
+            FILE * testfile = fopen("testing.dat","a");
+            Float rij,rik,rkl,dump;
+            cleanup_l(pi.pos,pj.pos,rij,dump);
+            cleanup_l(pi.pos,pk.pos,rik,dump);
+            cleanup_l(pk.pos,pl.pos,rkl,dump);
+            fprintf(testfile,"%.2f\t%.2f\t%.2f\t%.2f\n",rij,rik,rkl,c4v);
+            fclose(testfile);
+            
             // Add to local counts
             tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c4[tmp_full_bin]+=c4v;
