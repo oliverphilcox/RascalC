@@ -32,6 +32,10 @@ class CorrelationFunction{
                 else if(r<r_cutoff){
                     return 0.;
                 }
+                else if(r<r_min){
+                    double tmu = fmin(fmax(mu,mumin),mumax);
+					return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,rmin, xa, ya)/pow(rmin,2);
+                }
                 if(mu<mumin){
                     double tr = fmin(fmax(r,rmin),rmax);
                     return gsl_interp2d_eval_extrap(interp_2d,y,x,z,mumin,tr, xa, ya)/pow(tr,2);
