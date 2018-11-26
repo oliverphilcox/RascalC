@@ -232,7 +232,7 @@
                             cell_attempt3+=1; // new third cell attempted
                             
                             // Draw third cell from j weighted by xi(r)
-                            delta3 = rd->random_xidraw(locrng, &p3);
+                            delta3 = rd->random_cubedraw(locrng, &p3);
                             thi_id = prim_id + delta3;
                             cell_sep3 = grid->cell_sep(delta3);
                             x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng); // sln1, sln2 are not used here
@@ -249,9 +249,9 @@
                             for (int n4=0; n4<par->N4; n4++){
                                 cell_attempt4+=1; // new fourth cell attempted
                                 
-                                // Draw fourth cell from k cell weighted by xi(r)
-                                delta4 = rd->random_xidraw(locrng, &p4);
-                                x = draw_particle_without_class(sec_id+delta4,particle_l,pid_l,cell_sep2+grid->cell_sep(delta4),grid,fln,locrng); //sln1, sln2 are not used here
+                                // Draw fourth cell from k cell weighted by 1/r^2
+                                delta4 = rd->random_cubedraw(locrng, &p4);
+                                x = draw_particle_without_class(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid,fln,locrng); //sln1, sln2 are not used here
                                 if(x==1) continue;
                                 
                                 used_cell4+=1; // new fourth cell used
