@@ -346,6 +346,9 @@
         printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
         printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid->np);
         
+        printf("\nTrial speed: %.2e quads per core per second\n",double(tot_quads)/(runtime*double(par->nthread)));
+        printf("Acceptance speed: %.2e quads per core per second\n",double(cnt4)/(runtime*double(par->nthread)));
+        
         char out_string[5];
         sprintf(out_string,"full");
         sumint.save_integrals(out_string,1); // save integrals to file
