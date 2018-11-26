@@ -383,9 +383,9 @@ public:
         Float factor_2 = pow((x[0]-n)/(2*R),2);
         
         Float tmp_xi = corr->xi(x[0]);
-        if tmp_xi<1e-3:
-            tmp_xi=10./pow(x[0],2.)
-        
+        if tmp_xi<1e-3{
+            tmp_xi=10./pow(x[0],2.);
+        }
         if(n<=0){
             // Replace expression by Taylor series in this limit
             fval[0]= pow(x[0],2)/ (pow(R,3))*exp(-pow(x[0]/(2*R),2))*tmp_xi;//(abs(corr->xi(x[0]))+0/pow(x[0]+r_min,2.)) ;
