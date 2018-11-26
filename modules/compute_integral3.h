@@ -250,7 +250,7 @@
                                 cell_attempt4+=1; // new fourth cell attempted
                                 
                                 // Draw fourth cell from k cell weighted by 1/r^2
-                                delta4 = rd->random_xidraw(locrng,&p4);
+                                delta4 = rd->random_cubedraw(locrng,&p4);
                                 x = draw_particle_without_class(thi_id+delta4,particle_l,pid_l,cell_sep3+grid->cell_sep(delta4),grid,fln,locrng); //sln1, sln2 are not used here
                                 if(x==1) continue;
                                 
