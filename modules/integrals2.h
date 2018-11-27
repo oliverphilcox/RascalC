@@ -311,7 +311,7 @@ public:
             tmp_weight = wij[i]*pk.w; // product of weights, w_iw_jw_k
             
             // save arrays for later
-            xi_jk[i]=0.//xi_jk_tmp;
+            xi_jk[i]=0.;//xi_jk_tmp;
             xi_ik[i]=xi_ik_tmp;
             wijk[i]=tmp_weight;
             
