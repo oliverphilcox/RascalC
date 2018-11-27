@@ -232,10 +232,10 @@
                             cell_attempt3+=1; // new third cell attempted
                             
                             // Draw third cell from j weighted by xi(r)
-                            delta3 = rd->random_xidraw(locrng, &p3);
-                            thi_id = sec_id + delta3;
+                            delta3 = rd->random_cubedraw(locrng, &p3);
+                            thi_id = prim_id + delta3;
                             cell_sep3 = grid->cell_sep(delta3);
-                            x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep2+cell_sep3,grid,tln,locrng);
+                            x = draw_particle_without_class(thi_id,particle_k,pid_k,0.*cell_sep2+cell_sep3,grid,tln,locrng);
                             if(x==1) continue; 
                             
                             used_cell3+=1; // new third cell used
@@ -251,7 +251,7 @@
                                 
                                 // Draw fourth cell from k cell weighted by 1/r^2
                                 delta4 = rd->random_xidraw(locrng,&p4);
-                                x = draw_particle_without_class(prim_id+delta4,particle_l,pid_l,0.*cell_sep2+grid->cell_sep(delta4),grid,fln,locrng);
+                                x = draw_particle_without_class(sec_id+delta4,particle_l,pid_l,cell_sep2+grid->cell_sep(delta4),grid,fln,locrng);
                                 if(x==1) continue;
                                 
                                 used_cell4+=1; // new fourth cell used
@@ -353,9 +353,9 @@
         sprintf(out_string,"full");
         sumint.save_integrals(out_string,1); // save integrals to file
         sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file
-        printf("Printed integrals to file in the CovMatricesAll/ directory\n");
+        printf("Printed integrals to file in the %sCovMatricesAll/ directory\n",par->out_string);
         sumint.save_jackknife_integrals(out_string);
-        printf("Printed jackknife integrals to file in the CovMatricesJack/ directory\n");
+        printf("Printed jackknife integrals to file in the %sCovMatricesJack/ directory\n",par->out_string);
         fflush(NULL);
         return;
         }
