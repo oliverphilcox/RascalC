@@ -28,7 +28,7 @@ public:
     // Cut-off radius below which correlation function is set to zero:
     Float r_cutoff = 0.;    
 
-	Float nofznorm=1e7;//1198006; //1198006 - for BOSS DR12
+	Float nofznorm=1198006; //1198006 - for BOSS DR12
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
@@ -87,9 +87,9 @@ public:
     
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=10;//0;//10; 
-    int N2 = 5;//12;//20; // number of j cells per i cell
-    int N3 = 5;//24;//25; // number of k cells per j cell
-    int N4 = 5;//48;//50; // number of l cells per k cell
+    int N2 = 12;//12;//20; // number of j cells per i cell
+    int N3 = 24;//24;//25; // number of k cells per j cell
+    int N4 = 48;//48;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
