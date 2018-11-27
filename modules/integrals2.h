@@ -313,8 +313,8 @@ public:
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin);
             
             // Now compute the integral;
-            c4v = tmp_weight/prob*(xi_ik[i]*xi_jl+xi_il*xi_jk[i]);
-            //c4v = tmp_weight/prob*2*xi_ik[i]*xi_jl;//
+            //c4v = tmp_weight/prob*(xi_ik[i]*xi_jl+xi_il*xi_jk[i]);
+            c4v = tmp_weight/prob*2*xi_ik[i]*xi_jl;//
             c4vj = c4v*JK_weight;
             
 //             // TESTING OUTPUT
