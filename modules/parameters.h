@@ -87,9 +87,9 @@ public:
     
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=10;//0;//10; 
-    int N2 = 8;//12;//20; // number of j cells per i cell
-    int N3 = 16;//24;//25; // number of k cells per j cell
-    int N4 = 32;//48;//50; // number of l cells per k cell
+    int N2 = 12;//12;//20; // number of j cells per i cell
+    int N3 = 24;//24;//25; // number of k cells per j cell
+    int N4 = 48;//48;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
