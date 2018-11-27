@@ -52,7 +52,7 @@ public:
 	int mbin = 10;
     
     // The number of threads to run on
-	int nthread=10;
+	int nthread=4;
 
 	// The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
@@ -71,7 +71,7 @@ public:
 
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "xi_functions/simple_xi.xi";//QPM_Mash.xi";
+	const char default_corname[500] = "xi_functions/QPM_Mash.xi";//simple_xi.xi";//QPM_Mash.xi";
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
@@ -87,9 +87,9 @@ public:
     
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=10;//0;//10; 
-    int N2 = 24;//12;//20; // number of j cells per i cell
-    int N3 = 48;//24;//25; // number of k cells per j cell
-    int N4 = 96;//48;//50; // number of l cells per k cell
+    int N2 = 10;//12;//20; // number of j cells per i cell
+    int N3 = 10;//24;//25; // number of k cells per j cell
+    int N4 = 10;//48;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
@@ -98,7 +98,7 @@ public:
     Float * radial_bins_high;
     
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Spherical/";
+    const char default_out_file[500] = "";///mnt/store1/oliverphilcox/Spherical/";
     
 	// Constructor
 	Parameters(int argc, char *argv[]){
