@@ -286,7 +286,7 @@ public:
         // First define variables
         Particle pi;
         Float rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, c4vj, xi_jl, tmp_weight, JK_weight;
-        Float ril_mag, ril_mu, xi_il;
+        //Float ril_mag, ril_mu, xi_il;
         int tmp_bin, tmp_full_bin;    
         
         // Compute quantities independent of i
@@ -306,8 +306,8 @@ public:
             if(prim_ids[i]==pl_id) continue; // don't self-count
             
             tmp_weight = wijk[i]*pl.w; // product of weights, w_i*w_j*w_k*w_l
-            cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
-            xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
+            //cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
+            //xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
             
             // Compute jackknife weight tensor:
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin);
