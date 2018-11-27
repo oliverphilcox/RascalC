@@ -353,9 +353,9 @@
         sprintf(out_string,"full");
         sumint.save_integrals(out_string,1); // save integrals to file
         sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file
-        printf("Printed integrals to file in the %sCovMatricesAll/ directory\n",par->out_string);
+        printf("Printed integrals to file in the %sCovMatricesAll/ directory\n",par->out_file);
         sumint.save_jackknife_integrals(out_string);
-        printf("Printed jackknife integrals to file in the %sCovMatricesJack/ directory\n",par->out_string);
+        printf("Printed jackknife integrals to file in the %sCovMatricesJack/ directory\n",par->out_file);
         fflush(NULL);
         return;
         }
