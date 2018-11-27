@@ -232,7 +232,7 @@
                             cell_attempt3+=1; // new third cell attempted
                             
                             // Draw third cell from j weighted by xi(r)
-                            delta3 = rd->random_cubedraw(locrng, &p3);
+                            delta3 = rd->random_xidraw(locrng, &p3);
                             thi_id = prim_id + delta3;
                             cell_sep3 = grid->cell_sep(delta3);
                             x = draw_particle_without_class(thi_id,particle_k,pid_k,0.*cell_sep2+cell_sep3,grid,tln,locrng);
@@ -243,7 +243,7 @@
                             p3*=p2/(double)tln; // update probability
                             
                             // Compute third integral
-                            locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_jk, xi_ik, w_ijk, p3);
+                            locint.alternate_third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_jk, xi_ik, w_ijk, p3);
                             
                             // LOOP OVER N4 L CELLS
                             for (int n4=0; n4<par->N4; n4++){
