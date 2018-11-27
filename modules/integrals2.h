@@ -250,11 +250,6 @@ public:
             
             tmp_bin = getbin(rik_mag,rik_mu); // bin for each particle
             
-            if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)){
-                //wijk[i] = -1;
-                continue; // if not in correct bin
-            }
-            
             tmp_weight = wij[i]*pk.w; // product of weights, w_iw_jw_k
             xi_ik_tmp = cf->xi(rik_mag, rik_mu); // not used here but used later
             
@@ -263,6 +258,10 @@ public:
             xi_ik[i]=xi_ik_tmp;
             wijk[i]=tmp_weight;
             
+            if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)){
+                // Don't add contributions of this to C3 - but STILL save xi_ik etc. for later
+                continue; // if not in correct bin
+            }
             // Compute jackknife weight tensor:
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pi.JK),bin_ij[i],tmp_bin);
             
@@ -317,15 +316,16 @@ public:
             c4v = tmp_weight/prob*2*xi_ik[i]*xi_jl;//
             c4vj = c4v*JK_weight;
             
-//             // TESTING OUTPUT
-//             FILE * testfile = fopen("testing.dat","a");
-//             Float rij,rik,rkl,dump;
-//             cleanup_l(pi.pos,pj.pos,rij,dump);
-//             cleanup_l(pi.pos,pk.pos,rik,dump);
-//             cleanup_l(pk.pos,pl.pos,rkl,dump);
-//             fprintf(testfile,"%.2f\t%.2f\t%.2f\t%.2f\n",rij,rik,rkl,c4v);
-//             fclose(testfile);
-            
+             // TESTING OUTPUT
+//              FILE * testfile = fopen("testing.dat","a");
+//              Float rij,rik,rkl,rjl,dump,rik_mu,rjl_mu;
+//              cleanup_l(pi.pos,pj.pos,rij,dump);
+//              cleanup_l(pi.pos,pk.pos,rik,rik_mu);
+//              cleanup_l(pk.pos,pl.pos,rkl,dump);
+//              cleanup_l(pj.pos,pl.pos,rjl,rjl_mu);
+//              fprintf(testfile,"%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e\t%.2e\n",rij,rik,rik_mu,rkl,rjl,rjl_mu,xi_ik[i],xi_jl,c4v,prob);
+//              fclose(testfile);
+//             
             // Add to local counts
             tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c4[tmp_full_bin]+=c4v;

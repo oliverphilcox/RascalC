@@ -1,0 +1,9 @@
+GOSLING
+
+CUBE SAMPLING OF K FROM J AND L FROM I
+
+ALAN
+
+CUBE SAMPLING OF K FROM I AND L FROM J
+
+Both are only using the 2*xi_ik*xi_jl part of the integrand. Bob should be better??
