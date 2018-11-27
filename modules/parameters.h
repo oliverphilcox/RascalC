@@ -89,7 +89,7 @@ public:
     int max_loops=10;//0;//10; 
     int N2 = 10;//12;//20; // number of j cells per i cell
     int N3 = 10;//24;//25; // number of k cells per j cell
-    int N4 = 10;//48;//50; // number of l cells per k cell
+    int N4 = 20;//48;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
