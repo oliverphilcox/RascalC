@@ -145,7 +145,7 @@
             int* prim_ids; // list of particle IDs in primary cell
             double p2,p3,p4,p22,p21; // probabilities
             int mnp = grid->maxnp; // max number of particles
-            Float *xi_ij, *xi_jk, *xi_ik, *w_ijk, *w_ij; // arrays to store xi and weight values
+            Float *xi_ik, *w_ijk, *w_ij; // arrays to store xi and weight values
             int *bin_ij; // i-j separation bin
             Float percent_counter;
             int x, prim_id_1D;
@@ -161,10 +161,8 @@
             int ec=0;
             ec+=posix_memalign((void **) &prim_list, PAGE, sizeof(Particle)*mnp);
             ec+=posix_memalign((void **) &prim_ids, PAGE, sizeof(int)*mnp);
-            ec+=posix_memalign((void **) &xi_ij, PAGE, sizeof(Float)*mnp);
             ec+=posix_memalign((void **) &bin_ij, PAGE, sizeof(int)*mnp);
             ec+=posix_memalign((void **) &w_ij, PAGE, sizeof(Float)*mnp);
-            ec+=posix_memalign((void **) &xi_jk, PAGE, sizeof(Float)*mnp);
             ec+=posix_memalign((void **) &xi_ik, PAGE, sizeof(Float)*mnp);
             ec+=posix_memalign((void **) &w_ijk, PAGE, sizeof(Float)*mnp);
             assert(ec==0);
@@ -225,7 +223,7 @@
                         p2*=1./(grid->np*(double)sln); // probability is divided by total number of particles and number of particles in cell
                         
                         // Compute C2 integral
-                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, xi_ij, bin_ij, w_ij, p2, p21, p22);
+                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, p21, p22);
                         
                         // LOOP OVER N3 K CELLS
                         for (int n3=0; n3<par->N3; n3++){
@@ -243,7 +241,7 @@
                             p3*=p2/(double)tln; // update probability
                             
                             // Compute third integral
-                            locint.alternate_third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_jk, xi_ik, w_ijk, p3);
+                            locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_ik, w_ijk, p3);
                             
                             // LOOP OVER N4 L CELLS
                             for (int n4=0; n4<par->N4; n4++){
@@ -259,7 +257,7 @@
                                 p4*=p3/(double)fln;
                                 
                                 // Now compute the four-point integral
-                                locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, xi_jk, xi_ij, p4);
+                                locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, p4);
                                 
                             }
                         }
@@ -319,8 +317,6 @@
             // Free up allocated memory at end of process
             free(prim_list);
             gsl_rng_free(locrng);
-            free(xi_ij);
-            free(xi_jk);
             free(xi_ik);
             free(bin_ij);
             free(w_ij);

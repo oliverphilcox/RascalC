@@ -220,7 +220,7 @@ public:
             Float n, R = boxside/2;
 
             // Define integration limits (using some large upper limit)
-            double xmin[1]={0}, xmax[1]={2*boxside*len}, val, err, param[3]={R,0,r_min};
+            double xmin[1]={0}, xmax[1]={2*boxside*len}, val, err, param[2]={R,0};
             
 #ifdef OPENMP
 #pragma omp for schedule(dynamic,32)
@@ -374,7 +374,6 @@ public:
         // Read in parameters
         const double R = param[0];
         const double n = param[1];
-        const double r_min = param[2];
         
         // Compute integrand
         Float factor_1 = pow((x[0]+n)/(2*R),2);
@@ -386,10 +385,10 @@ public:
         }
         if(n<=0){
             // Replace expression by Taylor series in this limit
-            fval[0]= pow(x[0],2)/ (pow(R,3))*exp(-pow(x[0]/(2*R),2))*tmp_xi;//(abs(corr->xi(x[0]))+0/pow(x[0]+r_min,2.)) ;
+            fval[0]= pow(x[0],2)/ (pow(R,3))*exp(-pow(x[0]/(2*R),2))*tmp_xi;
         } else{ 
             // Use full expression for non-zero n
-            fval[0] = x[0]/ (R*n) * (exp(-factor_2)-exp(-factor_1))*tmp_xi;//(abs(corr->xi(x[0]))+0/pow(x[0]+r_min,2.)) ;
+            fval[0] = x[0]/ (R*n) * (exp(-factor_2)-exp(-factor_1))*tmp_xi;
         }
         
         return 0;
