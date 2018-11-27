@@ -98,7 +98,7 @@ public:
     Float * radial_bins_high;
     
     char *out_file = NULL;
-    const char default_out_file[500] = "";///mnt/store1/oliverphilcox/Spherical/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Spherical/";
     
 	// Constructor
 	Parameters(int argc, char *argv[]){
