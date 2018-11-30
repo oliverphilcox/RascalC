@@ -117,20 +117,6 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-
-//   Count occupation of pos and neg cells
-//    printf("BEG\n");
-//    for(int ii=0;ii<grid.ncells;ii++){
-//    	Cell fou=grid.c[ii];
-//    	int sne=0;
-//    	int spo=0;
-//    	for (int l = fou.start; l<fou.start+fou.np; l++)
-//    		grid.p[l].w>0?spo++:sne++;
-//    	printf("%d %d\n",spo,sne);
-//    }
-//
-//    return 0;
-
     printf("# Done gridding the particles\n");
     printf("# %d particles in use, %d with positive weight\n", grid.np, grid.np_pos);
     printf("# Weights: Positive particles sum to %f\n", grid.sumw_pos);

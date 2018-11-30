@@ -167,7 +167,7 @@
             ec+=posix_memalign((void **) &w_ijk, PAGE, sizeof(Float)*mnp);
             assert(ec==0);
             
-            uint64 loc_used_pairs=0, loc_used_triples=0, loc_used_quads=0; // local counts of used pairs/triples/quads
+            uint64 loc_used_pairs, loc_used_triples, loc_used_quads; // local counts of used pairs/triples/quads
             
     //-----------START FIRST LOOP-----------
     #ifdef OPENMP
@@ -175,6 +175,7 @@
     #endif
             for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
                 percent_counter=0.;
+                loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;                
                 
                 // End loops early if convergence has been acheived
                 if (convergence_counter==5){ 
@@ -229,11 +230,11 @@
                         for (int n3=0; n3<par->N3; n3++){
                             cell_attempt3+=1; // new third cell attempted
                             
-                            // Draw third cell from j weighted by xi(r)
+                            // Draw third cell from i weighted by xi(r)
                             delta3 = rd->random_xidraw(locrng, &p3);
                             thi_id = prim_id + delta3;
                             cell_sep3 = grid->cell_sep(delta3);
-                            x = draw_particle_without_class(thi_id,particle_k,pid_k,0.*cell_sep2+cell_sep3,grid,tln,locrng);
+                            x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng);
                             if(x==1) continue; 
                             
                             used_cell3+=1; // new third cell used
@@ -247,7 +248,7 @@
                             for (int n4=0; n4<par->N4; n4++){
                                 cell_attempt4+=1; // new fourth cell attempted
                                 
-                                // Draw fourth cell from k cell weighted by 1/r^2
+                                // Draw fourth cell from j cell weighted by xi(r)
                                 delta4 = rd->random_xidraw(locrng,&p4);
                                 x = draw_particle_without_class(sec_id+delta4,particle_l,pid_l,cell_sep2+grid->cell_sep(delta4),grid,fln,locrng);
                                 if(x==1) continue;
@@ -306,8 +307,6 @@
                 
                 locint.sum_total_counts(cnt2, cnt3, cnt4); 
                 locint.reset();
-                
-                loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;
                 
                 }
             
