@@ -161,13 +161,12 @@ public:
         int tmp_bin, jk_bin_i, jk_bin_j;
 
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
-                pi = pi_list[i]; // first particle
-                
                 if(prim_ids[i]==pj_id){
                     wij[i]=-1;
                     continue; // don't self-count
                 }
                 
+                pi = pi_list[i]; // first particle
                 cleanup_l(pi.pos,pj.pos,rij_mag,rij_mu); // define |r_ij| and ang(r_ij)
                 tmp_bin = getbin(rij_mag, rij_mu); // bin for each particle
                 
@@ -232,14 +231,12 @@ public:
         tmp_bin = getbin(rjk_mag,rjk_mu); // bin for each particle
         //xi_jk_tmp = cf->xi(rjk_mag, rjk_mu); // correlation function for j-k
         
-        if (pk_id==pj_id) return;
-        
         for(int i=0;i<pln;i++){ // Iterate ovr particle in pi_list
-            pi = pi_list[i];
-            if((wij[i]==-1)||(prim_ids[i]==pk_id)){
+            if((pk_id==pj_id)||(wij[i]==-1)||(prim_ids[i]==pk_id)){
                 wijk[i]=-1;
-                continue; // skip incorrect bins / ij self counts
+                continue; // skip incorrect bins / ij,jk self counts
             }
+            pi = pi_list[i];
             cleanup_l(pi.pos,pk.pos,rik_mag,rik_mu); // define angles/lengths
             xi_ik_tmp = cf->xi(rik_mag, rik_mu); 
             
@@ -290,11 +287,10 @@ public:
         if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)) return; // if not in correct bin            
         
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
-            pi = pi_list[i];
             if(wijk[i]==-1) continue; // skip incorrect bins / ij self counts
-            
             if(prim_ids[i]==pl_id) continue; // don't self-count
             
+            pi = pi_list[i];
             tmp_weight = wijk[i]*pl.w; // product of weights, w_i*w_j*w_k*w_l
             //cleanup_l(pl.pos,pi.pos,ril_mag,ril_mu); 
             //xi_il = cf->xi(ril_mag, ril_mu); // correlation function for i-l
@@ -414,7 +410,7 @@ public:
         Float self_c3j=0, diff_c3j=0;
         Float self_c4j=0, diff_c4j=0;
         
-        // Compute Frobenius norms
+        // Compute Frobenius norms and sum integrals
         for(int i=0;i<nbin*mbin;i++){
             self_c2+=pow(c2[i]/n_loops,2.);
             diff_c2+=pow(c2[i]/n_loops-(c2[i]+ints->c2[i])/(n_loops+1.),2.);
@@ -431,20 +427,20 @@ public:
                 self_c3j+=pow(c3j[i*nbin*mbin+j]/n_loops,2.);
                 diff_c3j+=pow(c3j[i*nbin*mbin+j]/n_loops-(c3j[i*nbin*mbin+j]+ints->c3j[i*nbin*mbin+j])/(n_loops+1.),2.);
                 c3[i*nbin*mbin+j]+=ints->c3[i*nbin*mbin+j];
-                c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
                 c3j[i*nbin*mbin+j]+=ints->c3j[i*nbin*mbin+j];
+                c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
                 c4j[i*nbin*mbin+j]+=ints->c4j[i*nbin*mbin+j];
+                errc3[i*nbin*mbin+j]+=ints->errc3[i*nbin*mbin+j];
+                errc3j[i*nbin*mbin+j]+=ints->errc3j[i*nbin*mbin+j];
+                errc4[i*nbin*mbin+j]+=ints->errc4[i*nbin*mbin+j];
+                errc4j[i*nbin*mbin+j]+=ints->errc4j[i*nbin*mbin+j];
                 binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
                 binct4[i*nbin*mbin+j]+=ints->binct4[i*nbin*mbin+j];
             }
+            Ra[i]+=ints->Ra[i];
             c2[i]+=ints->c2[i];
             c2j[i]+=ints->c2j[i];
             binct[i]+=ints->binct[i];
-        }
-        
-        // Now update Ra values
-        for(int i=0;i<nbin*mbin;i++){
-            Ra[i]+=ints->Ra[i];
         }
         
         // Update EE values
