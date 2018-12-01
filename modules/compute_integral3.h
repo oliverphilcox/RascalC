@@ -153,8 +153,8 @@
             
             Integrals2 locint(par,cf,JK); // Accumulates the integral contribution of each thread
             
-            //gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-            //gsl_rng_set(locrng, steps*(thread+1));
+            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
+            gsl_rng_set(locrng, steps*(thread+1));
             
             // Assign memory
             int ec=0;
@@ -174,10 +174,10 @@
     #endif
             for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
                 percent_counter=0.;
-                loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;     
+                loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;  
                 
-                gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-                gsl_rng_set(locrng, steps*(n_loops+1));
+                
+                RandomDraws2 *rd=new RandomDraws2(cf,par, NULL, 0);
             
                 
                 // End loops early if convergence has been acheived
@@ -186,6 +186,7 @@
                     printtime++;
                     continue;
                     }
+                    
                     
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid->nf;n1++){
@@ -313,8 +314,7 @@
                 
                 }
             
-            gsl_rng_free(locrng);
-              
+                
             } // end cycle loop
             
             // Free up allocated memory at end of process
