@@ -553,7 +553,7 @@ public:
             }
         }
         
-        
+        //TODO: Remove this option?? (done by default)
         if(use_RR==1){
             // Further normalize by RR counts from corrfunc
             for(int i=0; i<nbin*mbin;i++){

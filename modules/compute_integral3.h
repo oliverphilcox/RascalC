@@ -301,7 +301,7 @@
                 char output_string[50];
                 sprintf(output_string,"%d", n_loops);
                 
-                locint.normalize(grid->np,par->nofznorm, (Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads, 0); // don't normalize by RR here
+                locint.normalize(grid->np,par->nofznorm, (Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads, 1); // do normalize by RR here
                 locint.save_integrals(output_string,0);
                 locint.save_jackknife_integrals(output_string);
                 
