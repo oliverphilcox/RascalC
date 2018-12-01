@@ -178,8 +178,8 @@
                 loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;                
                 
                 // End loops early if convergence has been acheived
-                if (convergence_counter==5){ 
-                    if (printtime==0) printf("\n0.1 percent convergence acheived in C4 5 times, exiting.\n");
+                if (convergence_counter==50){ 
+                    if (printtime==0) printf("\n0.1 percent convergence acheived in C4 50 times, exiting.\n");
                     printtime++;
                     continue;
                     }
