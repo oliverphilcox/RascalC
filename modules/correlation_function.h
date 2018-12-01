@@ -16,8 +16,6 @@ class CorrelationFunction{
 		gsl_interp2d* interp_2d;
 		gsl_spline* corfu1d;
         
-        double r_cutoff;
-
 	public:
         double xi(double r, double mu){
 			// 2D correlation function in radius and angular bins
@@ -28,9 +26,6 @@ class CorrelationFunction{
                 if(r>rmax){
                     double tmu = fmin(fmax(mu,mumin),mumax);
 					return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,rmax, xa, ya)/pow(rmax,2)*pow(r/rmax,-4);
-                }
-                else if(r<r_cutoff){
-                    return 0.;
                 }
                 else if(r<rmin){
                     double tmu = fmin(fmax(mu,mumin),mumax);
@@ -60,7 +55,7 @@ class CorrelationFunction{
 				return gsl_spline_eval(corfu1d,rmax, x1a)/pow(rmax,2)*pow(r/rmax,-4);
 			}
 			else{
-				if((r<rmin)||(r<r_cutoff)){
+				if(r<rmin){
 					return 0.;
 				}
 				else
@@ -236,11 +231,9 @@ class CorrelationFunction{
 			interpolate();
 		}
 
-	CorrelationFunction(const char *filename, int mbin, double dmu, double _r_cutoff){
+	CorrelationFunction(const char *filename, int mbin, double dmu){
 		// Construct from input file
         
-        r_cutoff=_r_cutoff; // read in from input
-
 		readData(filename,&x,&y,&z,&xsize,&ysize);
 
 		if(ysize<=1&&mbin>1){

@@ -102,7 +102,7 @@
             std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
             unsigned long int steps = dist(urandom);        
             gsl_rng_env_setup(); // initialize gsl rng
-            CorrelationFunction *cf=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin, par->r_cutoff);
+            CorrelationFunction *cf=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin);
             RandomDraws2 *rd=new RandomDraws2(cf,par, NULL, 0);
             Integrals2 sumint(par,cf,JK); // total integral
 
@@ -123,7 +123,7 @@
             TotalTime.Start(); // Start timer
             
     #ifdef OPENMP       
-    #pragma omp parallel firstprivate(steps,grid,par,printtime) shared(sumint,TotalTime,JK,rd,gsl_rng_default) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(steps,grid,par,printtime,cf) shared(sumint,TotalTime,JK,rd,gsl_rng_default) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
             { // start parallel loop
             // Decide which thread we are in
             int thread = omp_get_thread_num();
@@ -151,9 +151,7 @@
             integer3 delta2, delta3, delta4, prim_id, sec_id, thi_id;
             Float3 cell_sep2,cell_sep3;
             
-            
-            CorrelationFunction *cf_local=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin, par->r_cutoff);
-            Integrals2 locint(par,cf_local,JK); // Accumulates the integral contribution of each thread
+            Integrals2 locint(par,cf,JK); // Accumulates the integral contribution of each thread
             
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
             gsl_rng_set(locrng, steps*(thread+1));
@@ -226,7 +224,7 @@
                         p2*=1./(grid->np*(double)sln); // probability is divided by total number of particles and number of particles in cell
                         
                         // Compute C2 integral
-                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, p21, p22);
+                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, p21, p22,thread);
                         
                         // LOOP OVER N3 K CELLS
                         for (int n3=0; n3<par->N3; n3++){

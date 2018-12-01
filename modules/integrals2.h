@@ -151,7 +151,7 @@ public:
         return which_bin*mbin + floor((mu-mumin)/dmu);
     }
     
-    inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const int pj_id, int* &bin, Float* &wij, const double prob, const double prob1, const double prob2){
+    inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const int pj_id, int* &bin, Float* &wij, const double prob, const double prob1, const double prob2,int thread){
         // Accumulates the two point integral C2. Also outputs an array of bin values for later reuse.
         // Prob. here is defined as g_ij / f_ij where g_ij is the sampling PDF and f_ij is the true data PDF for picking pairs (equal to n_i/N n_j/N for N particles)
         // Prob1/2 are for when we divide the random particles into two subsets 1 and 2.
@@ -195,6 +195,13 @@ public:
                 c2[tmp_bin]+=c2v;
                 c2j[tmp_bin]+=c2vj;
                 binct[tmp_bin]++; // only count actual contributions to bin
+                
+                
+                //TESTING OUTPUT
+//                 FILE * testfile = fopen("testing.dat","a");
+//                 fprintf(testfile,"%d\t%.2e\t%.2e\t%.2e\t%.2e\n",thread,rij_mag,tmp_xi,c2v,prob);
+//                 fclose(testfile);
+//  
                 
                 // Now add EEaA bin counts:
                 // If both in random set-0

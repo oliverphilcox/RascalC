@@ -19,8 +19,7 @@ public:
 	int nside;     // Number of cells in each direction of large draw
 	int nsidecube; // Number of cells in each direction of maxsep cube
 	double boxside;
-    double r_min;
-	double *x; // Probability grid for 1/r^2 kernel
+    double *x; // Probability grid for 1/r^2 kernel
 	double *xcube; // Probability grid for xi(r) kernel
 
 	private:
@@ -41,7 +40,6 @@ public:
         // Define grid of nside up to the maximum xi cut-off scale (as a cubic grid)
         Float box_max = fmax(fmax(par->rect_boxsize.x,par->rect_boxsize.y),par->rect_boxsize.z);
         boxside=box_max/par->nside;
-        r_min=par->r_cutoff;
         nside=2*ceil(par->xicutoff/boxside)+1; 
         
 		// If precalculated grid has been saved, load it

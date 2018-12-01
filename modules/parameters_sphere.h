@@ -25,9 +25,6 @@ public:
 	// The radius beyond which the correlation function is set to zero
 	Float xicutoff = 400.0;
     
-    // Cut-off radius below which correlation function is set to zero:
-    Float r_cutoff = 0.;    
-
 	Float nofznorm=1e7;//1198006; //1198006 - for BOSS DR12
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
@@ -193,8 +190,7 @@ public:
 		Float gridsize = rmax/(box_max/nside);
 		printf("Max Radius in Grid Units = %6.5e\n", gridsize);
 		if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
-        printf("Cutoff radius = %.2f\n", r_cutoff);
-		printf("Radial Bins = %d\n", nbin);
+        printf("Radial Bins = %d\n", nbin);
 		printf("Radial Binning = {%6.5f, %6.5f} over %d bins (user-defined bin widths) \n",rmin,rmax,nbin);
 		printf("Mu Bins = %d\n", mbin);
 		printf("Mu Binning = {%6.5f, %6.5f, %6.5f}\n",mumin,mumax,(mumax-mumin)/mbin);
