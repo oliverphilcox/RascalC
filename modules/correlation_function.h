@@ -56,7 +56,7 @@ class CorrelationFunction{
 			}
 			else{
 				if(r<rmin){
-					return 0.;
+					return gsl_spline_eval(corfu1d,rmin,x1a)/pow(rmin,2);
 				}
 				else
 					return gsl_spline_eval(corfu1d,r, x1a)/pow(r,2);
