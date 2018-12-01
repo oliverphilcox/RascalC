@@ -265,36 +265,38 @@
                     }
                 }
                 
-    #pragma omp critical // only one processor can access at once
-            {
                 // Update used pair/triple/quad counts
                 tot_pairs+=loc_used_pairs;
                 tot_triples+=loc_used_triples;
                 tot_quads+=loc_used_quads; 
+               
                 
-//                 if (n_loops%par->nthread==0){ // Print every nthread loops
-//                     TotalTime.Stop(); // interrupt timing to access .Elapsed()
-//                     int current_runtime = TotalTime.Elapsed();
-//                     int remaining_time = current_runtime/(n_loops/par->nthread+1)*(par->max_loops/par->nthread-n_loops/par->nthread);  // estimated remaining time
-//                     //TODO: Fix this calculation
-//                     fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
-//                     
-//                     TotalTime.Start(); // Restart the timer
-//                     Float frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j;
-//                     sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j);
-//                     if((frob_C4<0.01)&&(frob_C4j<0.01)) convergence_counter++;
-//                     
-//                     // Report N_eff for the integrals:
-//                     Float N_eff, N_eff_jack;
-//                     sumint.compute_Neff((Float)tot_quads, N_eff, N_eff_jack);
-//                     
-//                     if (n_loops!=0){
-//                         fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
-//                         fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n",n_loops,frob_C2j, frob_C3j, frob_C4j);
-//                         fprintf(stderr, "N_eff estimate: %.3e (C4) %.3e (C4j) \n", N_eff, N_eff_jack);
-//                     }
-//                 }
-//                 
+    #pragma omp critical // only one processor can access at once
+            {
+                 
+                if (n_loops%par->nthread==0){ // Print every nthread loops
+                    TotalTime.Stop(); // interrupt timing to access .Elapsed()
+                    int current_runtime = TotalTime.Elapsed();
+                    int remaining_time = current_runtime/(n_loops/par->nthread+1)*(par->max_loops/par->nthread-n_loops/par->nthread);  // estimated remaining time
+                    //TODO: Fix this calculation
+                    fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
+                    
+                    TotalTime.Start(); // Restart the timer
+                    Float frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j;
+                    sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j);
+                    if((frob_C4<0.01)&&(frob_C4j<0.01)) convergence_counter++;
+                    
+                    // Report N_eff for the integrals:
+                    Float N_eff, N_eff_jack;
+                    sumint.compute_Neff((Float)tot_quads, N_eff, N_eff_jack);
+                    
+                    if (n_loops!=0){
+                        fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
+                        fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n",n_loops,frob_C2j, frob_C3j, frob_C4j);
+                        fprintf(stderr, "N_eff estimate: %.3e (C4) %.3e (C4j) \n", N_eff, N_eff_jack);
+                    }
+                }
+                
                 // Sum up integrals
                 sumint.sum_ints(&locint); 
                 
