@@ -71,7 +71,7 @@ public:
 
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "xi_functions/QPM_Mash.xi";//simple_xi.xi";//QPM_Mash.xi";
+	const char default_corname[500] = "xi_functions/simple_xi.xi";//QPM_Mash.xi";//simple_xi.xi";//QPM_Mash.xi";
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
