@@ -123,7 +123,7 @@
             TotalTime.Start(); // Start timer
             
     #ifdef OPENMP       
-    #pragma omp parallel firstprivate(steps,grid,par,printtime) shared(sumint,TotalTime,JK,cf,rd,gsl_rng_default) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(steps,grid,par,printtime) shared(sumint,TotalTime,JK,rd,gsl_rng_default) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
             { // start parallel loop
             // Decide which thread we are in
             int thread = omp_get_thread_num();
@@ -135,7 +135,7 @@
     #endif
             //TODO: Make sure this works single-threaded
             
-    //-----------DEFINE VARIABLES
+    //-----------DEFINE LOCAL THREAD VARIABLES
             Particle *prim_list; // list of particles in first cell
             int pln,sln,tln,fln,sln1,sln2; // number of particles in each cell
             int pid_j, pid_k, pid_l; // particle IDs particles drawn from j,k,l cell
@@ -151,7 +151,9 @@
             integer3 delta2, delta3, delta4, prim_id, sec_id, thi_id;
             Float3 cell_sep2,cell_sep3;
             
-            Integrals2 locint(par,cf,JK); // Accumulates the integral contribution of each thread
+            
+            CorrelationFunction *cf_local=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin, par->r_cutoff);
+            Integrals2 locint(par,cf_local,JK); // Accumulates the integral contribution of each thread
             
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
             gsl_rng_set(locrng, steps*(thread+1));
