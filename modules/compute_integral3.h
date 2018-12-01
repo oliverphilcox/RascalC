@@ -9,9 +9,9 @@
         
     private:
         Grid *grid;
-        CorrelationFunction *cf;
+        //CorrelationFunction *cf;
         JK_weights *JK;
-        RandomDraws2 *rd;
+        //RandomDraws2 *rd;
         uint64 cnt2=0,cnt3=0,cnt4=0;
         int nbin, mbin; 
         
@@ -82,7 +82,7 @@
                 }
             }
             fprintf(stderr,"\n");
-
+    #endif
         }
         
     public:    
@@ -123,8 +123,7 @@
             TotalTime.Start(); // Start timer
             
     #ifdef OPENMP       
-    #pragma omp parallel firstprivate(steps) shared(sumint) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4)
-    #endif
+    #pragma omp parallel firstprivate(steps,grid,par,printtime) shared(sumint,TotalTime,JK,cf,rd,gsl_rng_default) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
             { // start parallel loop
             // Decide which thread we are in
             int thread = omp_get_thread_num();
@@ -178,7 +177,7 @@
                 loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;                
                 
                 // End loops early if convergence has been acheived
-                if (convergence_counter==50){ 
+                if (convergence_counter==5){ 
                     if (printtime==0) printf("\n0.1 percent convergence acheived in C4 50 times, exiting.\n");
                     printtime++;
                     continue;
