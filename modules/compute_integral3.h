@@ -153,8 +153,8 @@
             
             Integrals2 locint(par,cf,JK); // Accumulates the integral contribution of each thread
             
-            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-            gsl_rng_set(locrng, steps*(thread+1));
+            //gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
+            //gsl_rng_set(locrng, steps*(thread+1));
             
             // Assign memory
             int ec=0;
@@ -174,7 +174,11 @@
     #endif
             for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
                 percent_counter=0.;
-                loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;                
+                loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;     
+                
+                gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
+                gsl_rng_set(locrng, steps*(n_loops+1));
+            
                 
                 // End loops early if convergence has been acheived
                 if (convergence_counter==5){ 
@@ -309,12 +313,13 @@
                 
                 }
             
-                
+            gsl_rng_free(locrng);
+              
             } // end cycle loop
             
             // Free up allocated memory at end of process
             free(prim_list);
-            gsl_rng_free(locrng);
+            //gsl_rng_free(locrng);
             free(xi_ik);
             free(bin_ij);
             free(w_ij);
