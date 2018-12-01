@@ -426,32 +426,8 @@ public:
                 diff_c3+=pow(c3[i*nbin*mbin+j]/n_loops-(c3[i*nbin*mbin+j]+ints->c3[i*nbin*mbin+j])/(n_loops+1.),2.);
                 self_c3j+=pow(c3j[i*nbin*mbin+j]/n_loops,2.);
                 diff_c3j+=pow(c3j[i*nbin*mbin+j]/n_loops-(c3j[i*nbin*mbin+j]+ints->c3j[i*nbin*mbin+j])/(n_loops+1.),2.);
-                c3[i*nbin*mbin+j]+=ints->c3[i*nbin*mbin+j];
-                c3j[i*nbin*mbin+j]+=ints->c3j[i*nbin*mbin+j];
-                c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
-                c4j[i*nbin*mbin+j]+=ints->c4j[i*nbin*mbin+j];
-                errc3[i*nbin*mbin+j]+=ints->errc3[i*nbin*mbin+j];
-                errc3j[i*nbin*mbin+j]+=ints->errc3j[i*nbin*mbin+j];
-                errc4[i*nbin*mbin+j]+=ints->errc4[i*nbin*mbin+j];
-                errc4j[i*nbin*mbin+j]+=ints->errc4j[i*nbin*mbin+j];
-                binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
-                binct4[i*nbin*mbin+j]+=ints->binct4[i*nbin*mbin+j];
+                }
             }
-            Ra[i]+=ints->Ra[i];
-            c2[i]+=ints->c2[i];
-            c2j[i]+=ints->c2j[i];
-            binct[i]+=ints->binct[i];
-        }
-        
-        // Update EE values
-        for(int i=0;i<n_jack;i++){
-            for(int j=0;j<nbin*mbin;j++){
-                EEaA1[i*nbin*mbin+j]+=ints->EEaA1[i*nbin*mbin+j];
-                EEaA2[i*nbin*mbin+j]+=ints->EEaA2[i*nbin*mbin+j];
-                RRaA1[i*nbin*mbin+j]+=ints->RRaA1[i*nbin*mbin+j];
-                RRaA2[i*nbin*mbin+j]+=ints->RRaA2[i*nbin*mbin+j];
-            }
-        }
         
         self_c2=sqrt(self_c2);
         diff_c2=sqrt(diff_c2);
@@ -459,7 +435,6 @@ public:
         diff_c4=sqrt(diff_c4);
         self_c3=sqrt(self_c3);
         self_c4=sqrt(self_c4);
-        
         
         self_c2j=sqrt(self_c2j);
         diff_c2j=sqrt(diff_c2j);
