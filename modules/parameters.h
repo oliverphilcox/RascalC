@@ -84,9 +84,9 @@ public:
     
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=10;//10; 
-    int N2 = 20;//20; // number of j cells per i cell
-    int N3 = 25;//25; // number of k cells per j cell
-    int N4 = 50;//50; // number of l cells per k cell
+    int N2 = 3;//20;//20; // number of j cells per i cell
+    int N3 = 3;//25;//25; // number of k cells per j cell
+    int N4 = 3;//50;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
@@ -95,7 +95,7 @@ public:
     Float * radial_bins_high;
     
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/CorrectedDR12/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/SmallDR12/";
     
 	// Constructor
 	Parameters(int argc, char *argv[]){

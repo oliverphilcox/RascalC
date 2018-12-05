@@ -288,12 +288,12 @@
                     
                     // Report N_eff for the integrals:
                     Float N_eff, N_eff_jack;
-                    sumint.compute_Neff((Float)tot_quads, N_eff, N_eff_jack);
+                    sumint.compute_Neff((Float)tot_quads, (Float)tot_triples, (Float)tot_pairs, N_eff, N_eff_jack);
                     
                     if (n_loops!=0){
                         fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
                         fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n",n_loops,frob_C2j, frob_C3j, frob_C4j);
-                        fprintf(stderr, "N_eff estimate: %.3e (C4) %.3e (C4j) \n", N_eff, N_eff_jack);
+                        fprintf(stderr,"N_eff estimate: %.3e (C4) %.3e (C4j) \n", N_eff, N_eff_jack);
                     }
                 }
                 
