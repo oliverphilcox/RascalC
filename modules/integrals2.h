@@ -17,7 +17,7 @@ private:
     Float *r_high, *r_low; // Max and min of each radial bin
     Float *Ra, *c2, *c3, *c4; // Arrays to accumulate integrals
     Float *cxj, *c2j, *c3j, *c4j; // Arrays to accumulate jackknife integrals
-    Float *errc4, *errc4j, *errc3, *errc3j; // Integral to house the variance in C4, C4j, C3 and C3j;
+    Float *errc4, *errc4j, *errc3, *errc3j, *errc2, *errc2j; // Integral to house the variance in C4, C4j, C3 and C3j;
     Float *EEaA1, *EEaA2; // Array to accumulate the two-independent xi-weighted pair counts
     Float *RRaA1, *RRaA2; // Array to accumulate the two-independent pair count estimates 
     char* out_file;
@@ -55,6 +55,9 @@ public:
         
         ec+=posix_memalign((void **) &errc3, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &errc3j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        
+        ec+=posix_memalign((void **) &errc2, PAGE, sizeof(double)*nbin*mbin);
+        ec+=posix_memalign((void **) &errc2j, PAGE, sizeof(double)*nbin*mbin);
         
         ec+=posix_memalign((void **) &binct, PAGE, sizeof(uint64)*nbin*mbin);
         ec+=posix_memalign((void **) &binct3, PAGE, sizeof(uint64)*nbin*mbin*nbin*mbin);
@@ -95,6 +98,8 @@ public:
         free(c2j);
         free(c3j);
         free(c4j);
+        free(errc2);
+        free(errc2j);
         free(errc4);
         free(errc4j);
         free(errc3j);
@@ -115,6 +120,8 @@ public:
             c2[j] = 0;
             c2j[j] = 0;
             binct[j] = 0;
+            errc2[j]=0;
+            errc2j[j]=0;
         }
         for (int j=0; j<nbin*mbin*nbin*mbin; j++) {
             c3[j]=0;
@@ -194,6 +201,8 @@ public:
                 Ra[tmp_bin]+=rav;
                 c2[tmp_bin]+=c2v;
                 c2j[tmp_bin]+=c2vj;
+                errc2[tmp_bin]+=pow(c2v,2);
+                errc2j[tmp_bin]+=pow(c2vj,2);
                 binct[tmp_bin]++; // only count actual contributions to bin
                 
                 
@@ -381,6 +390,8 @@ public:
             c2[i]+=ints->c2[i];
             c2j[i]+=ints->c2j[i];
             binct[i]+=ints->binct[i];
+            errc2[i]+=ints->errc2[i];
+            errc2j[i]+=ints->errc2j[i];
         }
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
@@ -498,6 +509,8 @@ public:
             Ra[i]/=(n_pairs*corrf2);
             c2[i]/=(n_pairs*corrf2);
             c2j[i]/=(n_pairs*corrf2);
+            errc2[i]/=(n_pairs*corrf4);
+            errc2j[i]/=(n_pairs*corrf4);
             for(int j=0;j<nbin*mbin;j++){
                 c3[i*nbin*mbin+j]/=(n_triples*corrf3);
                 c4[i*nbin*mbin+j]/=(n_quads*corrf4);
@@ -542,6 +555,8 @@ public:
                 Float Ra_i = JK->RR_pair_counts[i]; 
                 c2[i]/=pow(Ra_i,2.); // must normalize by galaxy number here
                 c2j[i]/=pow(Ra_i,2.)*(1.-JK->product_weights[i*nbin*mbin+i]);
+                errc2[i]/=pow(Ra_i,4.);
+                errc2j[i]/=pow(Ra_i,4.)*pow(1.-JK->product_weights[i*nbin*mbin+i],2.);
                 for(int j=0;j<nbin*mbin;j++){
                     Float Rab=Ra_i*JK->RR_pair_counts[j];
                     Float Rab_jk = Rab*(1.-JK->product_weights[i*nbin*mbin+j]);
@@ -591,6 +606,8 @@ public:
         snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c4name[1000];
         snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
+        char c2errname[1000];
+        snprintf(c2errname, sizeof c2errname, "%sCovMatricesAll/c2err_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c4errname[1000];
         snprintf(c4errname, sizeof c4errname, "%sCovMatricesAll/c4err_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c3errname[1000];
@@ -601,12 +618,14 @@ public:
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
         FILE * C4ErrFile = fopen(c4errname,"w"); // for variance of c4 part
-        FILE * C3ErrFile = fopen(c3errname,"w"); // for variance of c4 part
+        FILE * C3ErrFile = fopen(c3errname,"w"); // for variance of c3 part
+        FILE * C2ErrFile = fopen(c2errname,"w"); // for variance of c2 part
         FILE * RRFile = fopen(RRname,"w"); // for RR part of integral
         
         for (int j=0;j<nbin*mbin;j++){
             fprintf(C2File,"%le\n",c2[j]);
             fprintf(RRFile,"%le\n",Ra[j]);
+            fprintf(C2ErrFile,"%le\n",errc2[j]);
         }
         
         for(int i=0;i<nbin*mbin;i++){
@@ -630,6 +649,7 @@ public:
         fclose(C2File);
         fclose(C3File);
         fclose(C4File);
+        fclose(C2ErrFile);
         fclose(C3ErrFile);
         fclose(C4ErrFile);
         fclose(RRFile);
@@ -719,14 +739,18 @@ public:
         snprintf(c4errname, sizeof c4errname, "%sCovMatricesJack/c4errj_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         char c3errname[1000];
         snprintf(c3errname, sizeof c3errname, "%sCovMatricesJack/c3errj_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
+        char c2errname[1000];
+        snprintf(c2errname, sizeof c2errname, "%sCovMatricesJack/c2errj_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
         FILE * CXFile = fopen(cxname,"w"); // for RR part of integral
         FILE * C4ErrFile = fopen(c4errname,"w"); // for c4 part of integral
         FILE * C3ErrFile = fopen(c3errname,"w"); // for c3 part of integral
+        FILE * C2ErrFile = fopen(c2errname,"w"); // for c2 part of integral
         
         for (int j=0;j<nbin*mbin;j++){
+            fprintf(C2ErrFile,"%le\n",errc2j[j]);
             fprintf(C2File,"%le\n",c2j[j]);
         }
         for(int i=0;i<nbin*mbin;i++){
@@ -751,43 +775,58 @@ public:
         fclose(C3File);
         fclose(C4File);
         fclose(CXFile);
+        fclose(C2ErrFile);
         fclose(C3ErrFile);
         fclose(C4ErrFile);
     }
     
-    void compute_Neff(Float n_quads, Float &N_eff, Float &N_eff_jack){
-        // Compute the effective mean N from the data given the number of sets of quads used. 
+    void compute_Neff(Float n_quads, Float n_triples, Float n_pairs, Float &N_eff, Float &N_eff_jack){
+        // Compute the effective mean N from the data given the number of sets of quads, triples and pairs used. 
         // n_quads is the number of quads TRIED (whether or not they are accepted)
-        Float N4=0., N4j=0.;
-        Float norm4=0., norm4j=0.;
+        Float N=0., Nj=0.;
+        Float norm=0., normj=0.;
         
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
                 // Read in integral components + normalize by 1/n_quads;
-                Float c4ij=c4[i*nbin*mbin+j]/n_quads;
-                Float c4ii=c4[i*nbin*mbin+i]/n_quads;
-                Float c4jj=c4[j*nbin*mbin+j]/n_quads;
+                Float cij=c4[i*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
+                Float cii=c4[i*nbin*mbin+i]/n_quads+c3[i*nbin*mbin+j]/n_triples;
+                Float cjj=c4[j*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
                 
-                Float c4j_ij=c4j[i*nbin*mbin+j]/n_quads;
-                Float c4j_ii=c4j[i*nbin*mbin+i]/n_quads;
-                Float c4j_jj=c4j[j*nbin*mbin+j]/n_quads;
+                Float cj_ij=c4j[i*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
+                Float cj_ii=c4j[i*nbin*mbin+i]/n_quads+c3[i*nbin*mbin+j]/n_triples;
+                Float cj_jj=c4j[j*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
                 
-                // Compute pixel variances
-                Float var_c4 = (errc4[i*nbin*mbin+j]/n_quads - pow(c4ij,2.))/(n_quads-1.);
-                Float var_c4j = (errc4j[i*nbin*mbin+j]/n_quads - pow(c4j_ij,2.))/(n_quads-1.);
+                Float err_c = errc4[i*nbin*mbin+j]/n_quads+errc3[i*nbin*mbin+j]/n_triples;
+                Float err_cj = errc4j[i*nbin*mbin+j]/n_quads+errc3j[i*nbin*mbin+j]/n_triples;
+                
+                if(i==j){
+                    cij+=c2[i];
+                    cii+=c2[i];
+                    cjj+=c2[i];
+                    cj_ij+=c2j[i];
+                    cj_ii+=c2j[i];
+                    cj_jj+=c2j[i];
+                    err_c+=errc2[i];
+                    err_cj+=errc2j[i];
+                }
+                
+                // Compute pixel variances - use n_quads as the number of quads here
+                Float var_c = (err_c - pow(cij,2.))/(n_quads-1.);
+                Float var_cj = (err_cj - pow(cj_ij,2.))/(n_quads-1.);
                 
                 // For N4;
-                N4+=(pow(c4ij,2.)+c4ii*c4jj)/var_c4;//*c4ij;//*pow(c4ij,2.)
-                norm4+=1;//c4ij;//pow(c4ij,2.);
+                N+=(pow(cij,2.)+cii*cjj)/var_c;//*c4ij;//*pow(c4ij,2.)
+                norm+=1;//c4ij;//pow(c4ij,2.);
                 
                 // For N4j;
-                N4j+=(pow(c4j_ij,2.)+c4j_ii*c4j_jj)/var_c4j;//*c4j_ij;//*pow(cjtot_tmp_ij,2.)
-                norm4j+=1;//c4j_ij;//pow(cjtot_tmp_ij,2.);
+                Nj+=(pow(cj_ij,2.)+cj_ii*cj_jj)/var_cj;//*c4j_ij;//*pow(cjtot_tmp_ij,2.)
+                normj+=1;//c4j_ij;//pow(cjtot_tmp_ij,2.);
                 
                 }
         }
-        N_eff = N4/norm4;
-        N_eff_jack=N4j/norm4j;
+        N_eff = N/norm;
+        N_eff_jack=Nj/normj;
     }
 
 };
