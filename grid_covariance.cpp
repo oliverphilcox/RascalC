@@ -73,61 +73,122 @@ STimer TotalTime;
 // ================================ main() =============================
 
 
-
 int main(int argc, char *argv[]) {
-
+    
 	Parameters par=Parameters(argc,argv);
+        
+    int max_no_functions=1; // required number of xi / random_draws / jackknife_weight functions
+    int no_fields=1; // number of different fields used
+    if(par.multi_tracers==true){
+        max_no_functions=3;
+        no_fields=2;
+    }
+    
     
     // Read in jackknife weights and RR pair counts
-    JK_weights weights(&par);
+    JK_weights all_weights[max_no_functions]; // create empty functions
+
+    //TODO: Remove true
+    if(true){ 
+        JK_weights tmp(&par,1,1);
+        all_weights[0].copy(&tmp); // save into global memory
+    }
     
-    Float3 shift;
-    Particle *orig_p;
-    if (!par.make_random){
-        orig_p = read_particles(par.rescale, &par.np, par.fname, par.rstart, par.nmax, &weights);
+    if(par.multi_tracers==true){
+        JK_weights tmp12(&par,1,2), tmp2(&par,2,2);
+        all_weights[1].copy(&tmp2);
+        all_weights[2].copy(&tmp12);
+    }
+    
+    // Now read in particles to grid:
+    Grid all_grid[no_fields]; // create empty grids
+    
+    for(int index=0;index<no_fields;index++){
+        //Grid this_grid;
+        Float3 shift;
+        Particle *orig_p;
+        if (!par.make_random){
+            char *filename;
+            if(index==0) filename=par.fname;
+            else filename=par.fname2;
+            orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax, &all_weights[index]);
+            assert(par.np>0);
+            par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.rmax, shift, par.nside);
+        } else {
+        // If you want to just make random particles instead:
         assert(par.np>0);
-        par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.rmax, shift, par.nside);
-    } else {
-    // If you want to just make random particles instead:
-	assert(par.np>0);
-	//assert(par.boxsize==par.rescale);    // Nonsense if not!
-	orig_p = make_particles(par.rect_boxsize, par.np);
-    // set as periodic if we make the random particles
-    par.perbox = true;
+        //assert(par.boxsize==par.rescale);    // Nonsense if not!
+        orig_p = make_particles(par.rect_boxsize, par.np);
+        // set as periodic if we make the random particles
+        par.perbox = true;
+        }
+        
+        if (par.qinvert) invert_weights(orig_p, par.np);
+        if (par.qbalance) balance_weights(orig_p, par.np);
+
+        // Now ready to compute!
+        // Sort the particles into the grid.
+        Float nofznorm=par.nofznorm;
+        if(index==1) nofznorm=par.nofznorm2;
+        Grid tmp_grid(orig_p, par.np, par.rect_boxsize, par.nside, shift, nofznorm);
+
+        Float grid_density = (double)par.np/tmp_grid.nf;//pow(par.nside,3);
+        printf("\n RANDOM CATALOG %d DIAGNOSTICS:\n",index+1);
+        printf("Average number of particles per grid cell = %6.2f\n", grid_density);
+        Float max_density = 16.0;
+        if (grid_density>max_density){
+            fprintf(stderr,"Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n",max_density);
+            exit(1);
+        }
+        printf("Average number of particles per max_radius ball = %6.2f\n",
+                par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
+        if (grid_density<2){
+            printf("#\n# WARNING: grid appears inefficiently fine; exiting.\n#\n");
+            exit(1);
+        }
+
+        printf("# Done gridding the particles\n");
+        printf("# %d particles in use, %d with positive weight\n", tmp_grid.np, all_grid[index].np_pos);
+        printf("# Weights: Positive particles sum to %f\n", tmp_grid.sumw_pos);
+        printf("#          Negative particles sum to %f\n", tmp_grid.sumw_neg);
+
+        // Now save grid to global memory:
+        all_grid[index].copy(&tmp_grid);
+        
+        free(orig_p); // Particles are now only stored in grid
+        
+        fflush(NULL);
     }
     
-    if (par.qinvert) invert_weights(orig_p, par.np);
-    if (par.qbalance) balance_weights(orig_p, par.np);
-
-    // Now ready to compute!
-    // Sort the particles into the grid.
-    Grid grid(orig_p, par.np, par.rect_boxsize, par.nside, shift);
-
-    Float grid_density = (double)par.np/grid.nf;//pow(par.nside,3);
-    printf("Average number of particles per grid cell = %6.2f\n", grid_density);
-    Float max_density = 16.0;
-    if (grid_density>max_density){
-        fprintf(stderr,"Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n",max_density);
-        exit(1);
+    // Now define all possible correlation functions and random draws:
+    CorrelationFunction all_cf[max_no_functions];
+    RandomDraws2 all_rd[max_no_functions];
+    //TODO: Remove true
+    if(true){
+        CorrelationFunction tmp_cf(par.corname,par.mbin,par.mumax-par.mumin);
+        all_cf[0].copy_function(&tmp_cf);
+        RandomDraws2 tmp_rd(&tmp_cf,&par,NULL,0);
+        all_rd[0].copy(&tmp_rd);//RandomDraws2(&cf,&par,NULL,0);
     }
-    printf("Average number of particles per max_radius ball = %6.2f\n",
-    		par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
-    if (grid_density<2){
-        printf("#\n# WARNING: grid appears inefficiently fine; exiting.\n#\n");
-        exit(1);
-    }
-
-    printf("# Done gridding the particles\n");
-    printf("# %d particles in use, %d with positive weight\n", grid.np, grid.np_pos);
-    printf("# Weights: Positive particles sum to %f\n", grid.sumw_pos);
-    printf("#          Negative particles sum to %f\n", grid.sumw_neg);
-    free(orig_p); // Particles are now only stored in grid
-
-    fflush(NULL);
-
-    // Everything above here takes negligible time.  This line is nearly all of the work.
-    compute_integral3(&grid,&par,&weights);
     
+    if(par.multi_tracers==true){
+        CorrelationFunction tmp_cf12(par.corname12,par.mbin,par.mumax-par.mumin), tmp_cf2(par.corname2,par.mbin,par.mumax-par.mumin);
+        all_cf[1].copy_function(&tmp_cf2);
+        all_cf[2].copy_function(&tmp_cf12);
+        RandomDraws2 rd2(&tmp_cf2,&par,NULL,0), rd12(&tmp_cf12,&par,NULL,0);
+        all_rd[1].copy(&rd2);
+        all_rd[2].copy(&rd12);
+    }
+    
+    compute_integral3(all_grid,&par,all_weights,all_cf,all_rd,1,1,1,1,1); // final digit is iteration number
+
+    if(par.multi_tracers==true){
+        compute_integral3(all_grid,&par,all_weights,all_cf,all_rd,1,2,1,1,2);
+        compute_integral3(all_grid,&par,all_weights,all_cf,all_rd,1,2,2,1,3);
+        compute_integral3(all_grid,&par,all_weights,all_cf,all_rd,1,1,2,2,4);
+        compute_integral3(all_grid,&par,all_weights,all_cf,all_rd,2,1,2,2,5);
+        compute_integral3(all_grid,&par,all_weights,all_cf,all_rd,2,2,2,2,6);
+    }
     rusage ru;
     getrusage(RUSAGE_SELF, &ru);
 

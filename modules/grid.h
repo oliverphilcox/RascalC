@@ -6,7 +6,7 @@
 
 class Grid {
   public:
-    Float boxsize;   // Size of the periodic volume - DEPRACATED
+    //Float boxsize;   // Size of the periodic volume - DEPRACATED
     Float3 rect_boxsize; // 3D dimensions of the periodic volume
     int nside, ncells;       // Grid size (per linear and per volume)
     Cell *c;		// The list of cells
@@ -20,6 +20,7 @@ class Grid {
     int *filled; //List of filled cells
     int nf;      //Number of filled cells
     int maxnp;   //Max number of particles in a single cell
+    Float norm; // no. randoms / no. galaxies for normalization
     Float sumw_pos, sumw_neg; // Summing the weights
 
     int test_cell(integer3 cell){
@@ -77,16 +78,52 @@ class Grid {
 	// Return the position difference corresponding to a cell separation
         return cellsize*sep;
     }
+    
+    void copy(Grid *g){
+        // Copy grid object
+        rect_boxsize=g->rect_boxsize; 
+        nside=g->nside;
+        ncells=g->ncells;
+        cellsize=g->cellsize;
+        max_boxsize=g->max_boxsize;
+        np=g->np;
+        np1=g->np1;
+        np2=g->np2;
+        nside_cuboid = g->nside_cuboid;
+        np_pos = g->np_pos;
+        norm = g-> norm;
+        nf=g->nf;
+        maxnp=g->maxnp;
+        sumw_pos=g->sumw_pos;
+        sumw_neg=g->sumw_neg;
+        
+        // Allocate memory:
+        p = (Particle *)malloc(sizeof(Particle)*np);
+        pid = (int *)malloc(sizeof(int)*np);
+        c  = (Cell *)malloc(sizeof(Cell)*ncells);
+        filled = (int *)malloc(sizeof(int)*nf);
+	
+        // Copy in lists elementwise
+        for(int j=0;j<ncells;j++) c[j]=g->c[j];
+        for(int j=0;j<np;j++) p[j]=g->p[j];
+        for(int j=0;j<np;j++) pid[j]=g->pid[j];
+        for(int j=0;j<nf;j++) filled[j]=g->filled[j];
+    }
 
     ~Grid() {
 	// The destructor
         free(p);
-	free(pid);
-	free(c);
-	return;
+        free(pid);
+        free(c);
+        free(filled);
+        return;
+    }
+    
+    Grid(){
+       //empty constructor
     }
 
-    Grid(Particle *input, int _np, Float3 _rect_boxsize, int _nside, Float3 shift) {
+    Grid(Particle *input, int _np, Float3 _rect_boxsize, int _nside, Float3 shift, Float nofznorm) {
 	// The constructor: the input set of particles is copied into a
 	// new list, which is ordered by cell.
 	// After this, Grid is self-sufficient; one could discard *input
@@ -110,15 +147,6 @@ class Grid {
 	// Shift them to the primary volume first
 	int *cell = (int *)malloc(sizeof(int)*np);
 	for (int j=0; j<np; j++) cell[j] = pos_to_cell(input[j].pos - shift);
-
-    /* testing
-    for (int j=0; j<10; j++){
-        Float3 tmp=input[j].pos-shift;
-        printf("position: %.2f %.2f %.2f\n",tmp.x,tmp.y,tmp.z);
-        printf("cell number: %d\n",cell[j]);
-        printf("cellsize: %.2f", cellsize);
-    }
-    */
     
 	// Histogram the number of particles in each cell
 	int *incell = (int *)malloc(sizeof(int)*ncells);
@@ -200,6 +228,9 @@ class Grid {
 	free(incell);
 	assert(tot == np);
 
+    // compute normalization
+    norm = Float(np)/nofznorm;
+    
 	free(cell);
     
     return;
