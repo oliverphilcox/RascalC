@@ -33,10 +33,17 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
     FILE *fp;
     int stat;
     double tmp[5];
+
     fp = fopen(filename, "r");
     if (fp==NULL) {
         fprintf(stderr,"File %s not found\n", filename); abort();
     }
+
+    // Store filled jackknives in local memory to avoid file corruption
+    int tmp_n_JK = JK->n_JK_filled;
+    int tmp_filled_JK[tmp_n_JK];
+    for(int ii=0;ii<tmp_n_JK;ii++) tmp_filled_JK[ii]=JK->filled_JKs[ii];
+    
     // Count lines to construct the correct size
     while (fgets(line,1000,fp)!=NULL&&(uint)n<nmax) {
         if (line[0]=='#') continue;
@@ -44,10 +51,12 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
         n++;
     }
     rewind(fp);
+    
     *np = n;
     Particle *p = (Particle *)malloc(sizeof(Particle)*n);
     printf("# Found %d particles from %s\n", n, filename);
     printf("# Rescaling input positions by factor %f\n", rescale);
+    
     while (fgets(line,1000,fp)!=NULL&&j<n) {
         if (line[0]=='#') continue;
         if (line[0]=='\n') continue;
@@ -75,12 +84,14 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 			   p[j].w = -tmp[stat-2]; //read in weights
 		   else
 			   p[j].w = tmp[stat-2]; 
-        Float tmp_JK = tmp[stat-1]; // read in JK region
+        int tmp_JK = tmp[stat-1]; // read in JK region
 		
 		// Collapse jacknife indices to only include filled JKs:
 		p[j].JK=-1;
-		for (int x=0;x<JK->n_JK_filled;x++){
-            if (JK->filled_JKs[x]==tmp_JK) p[j].JK=x;
+        
+        for (int x=0;x<tmp_n_JK;x++){
+            //printf("tmp_JK: %d filled JK:%d\n",tmp_JK,JK->filled_JKs[x]);
+            if (tmp_filled_JK[x]==tmp_JK) p[j].JK=x;
         }
         assert(p[j].JK!=-1); // ensure we find jackknife index		    
         

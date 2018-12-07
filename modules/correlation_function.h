@@ -161,6 +161,37 @@ class CorrelationFunction{
 			}
 
 		}
+		
+    public:
+        void copy_function(CorrelationFunction *cf){
+           // Copy a preexisting correlation function into this object
+            xsize=cf->xsize;
+            ysize=cf->ysize;
+            rmin=cf->rmin;
+            rmax=cf->rmax;
+            mumin=cf->mumin;
+            mumax=cf->mumax;
+            mudim=cf->mudim;
+            
+            // Allocate memory
+            x = (double *)malloc(sizeof(double)*xsize);
+            y = (double *)malloc(sizeof(double)*ysize);
+            z = (double *)malloc(sizeof(double)*xsize*ysize);
+            
+            // Read in x,y,z grids
+            int ct=0;
+            for(int i=0;i<xsize;i++){
+                x[i]=cf->x[i];
+                for(int j=0;j<ysize;j++){
+                    z[ct]=cf->z[ct];
+                    ct++;
+                }
+            }
+            for(int j=0;j<ysize;j++) y[j]=cf->y[j];
+            
+            // activate the interpolator function here
+            interpolate();
+		}
 
 	private:
 		void copy(int& _xsize, int& _ysize, double ** _x, double ** _y, double ** _z, double& _rmin,
@@ -223,13 +254,16 @@ class CorrelationFunction{
 			x1a = gsl_interp_accel_alloc();
 		}
 	public:
-
+        CorrelationFunction(){
+            // empty constructor
+        }
 		CorrelationFunction(CorrelationFunction* corr){
 			// Copy constructor
 
 			corr->copy(xsize,ysize,&x,&y,&z,rmin,rmax,mumin,mumax,mudim);
 			interpolate();
 		}
+		
 
 	CorrelationFunction(const char *filename, int mbin, double dmu){
 		// Construct from input file

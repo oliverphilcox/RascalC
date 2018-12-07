@@ -105,7 +105,7 @@ public:
     const char default_RR_bin_file12[500] = "weight_files/binned_pair_counts_n36_m10_j48.dat";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=5;//10; 
+    int max_loops=10;//10; 
     int N2 = 3;//20;//20; // number of j cells per i cell
     int N3 = 3;//25;//25; // number of k cells per j cell
     int N4 = 3;//50;//50; // number of l cells per k cell
@@ -120,11 +120,11 @@ public:
     bool multi_tracers;
     
     char *out_file = NULL;
-    const char default_out_file[500] = "MultiTracerTest/";
+    const char default_out_file[500] = "MultiTracerTest";
     
 	// Constructor
 	Parameters(int argc, char *argv[]){
-        
+
 	    if (argc==1) usage();
 	    int i=1;
 	    while (i<argc) {
@@ -178,7 +178,6 @@ public:
 		}
 		i++;
 	    }
-	    
 	    // compute smallest and largest boxsizes
 	    Float box_min = fmin(fmin(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
 	    Float box_max = fmax(fmax(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
@@ -197,8 +196,6 @@ public:
 	    
 	    if (fname==NULL) fname = (char *) default_fname;   // No name was given
 	    if (fname2==NULL) fname2 = (char *) default_fname2;   // No name was given
-	    if (corname2==NULL) { corname2 = (char *) default_corname2; }// No name was given
-	    if (corname12==NULL) { corname12 = (char *) default_corname12; }// No name was given
 	    if (RR_bin_file==NULL) RR_bin_file = (char *) default_RR_bin_file; // no binning file was given
 	    if (RR_bin_file12==NULL) RR_bin_file12 = (char *) default_RR_bin_file12; // no binning file was given
 	    if (RR_bin_file2==NULL) RR_bin_file2 = (char *) default_RR_bin_file2; // no binning file was given
@@ -206,29 +203,34 @@ public:
 	    if (jk_weight_file12==NULL) jk_weight_file12 = (char *) default_jk_weight_file12; // No jackknife name was given
 	    if (jk_weight_file2==NULL) jk_weight_file2 = (char *) default_jk_weight_file2; // No jackknife name was given
 	    
-	    
 	    // Decide if we are using multiple tracers:
 	    if (strlen(fname2)!=0){
             if ((strlen(RR_bin_file12)==0)||(strlen(RR_bin_file2)==0)){
                 printf("Two random particle sets input but not enough RR pair count files! Exiting.");
                 exit(1);
             }
-            else if ((strlen(jk_weight_file12)==0)||(strlen(jk_weight_file2)==0)){
-                printf("Two random particle sets input but not enough jackknife weight files! Exiting.");
-                exit(1);
-            }
-            else if ((strlen(corname2)==0)||(strlen(corname12)==0)){
-                printf("Two random particle sets input but not enough jackknife weight files! Exiting.");
-                exit(1);
-            }
-            else if (nofznorm2==0){
-                printf("Two random particle sets input but only one n_of_z norm provided; exiting.");
-                exit(1);
-            }
             else{
-                // Set multi_tracers parameter since we have all required data
-                printf("Using two sets of tracer particles");
-                multi_tracers=true;
+                if((strlen(jk_weight_file12)==0)||(strlen(jk_weight_file2)==0)){
+                    printf("Two random particle sets input but not enough jackknife weight files! Exiting.");
+                    exit(1);
+                }
+                else{
+                    if ((strlen(corname2)==0)||(strlen(corname12)==0)){
+                        printf("Two random particle sets input but not enough jackknife weight files! Exiting.");
+                        exit(1);
+                    }
+                    else{
+                        if (nofznorm2==0){
+                            printf("Two random particle sets input but only one n_of_z norm provided; exiting.");
+                            exit(1);
+                        }
+                        else{
+                            // Set multi_tracers parameter since we have all required data
+                            printf("Using two sets of tracer particles");
+                            multi_tracers=true;
+                        }
+                    }
+                }
             }
         }
         else{
@@ -244,7 +246,6 @@ public:
             jk_weight_file2=jk_weight_file;
         }
 	    
-	    printf("HERE2\n");
 	    
 	    create_directory();
         

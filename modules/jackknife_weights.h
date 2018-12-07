@@ -13,6 +13,35 @@ public:
     int nbins; // total number of bins
     Float* product_weights; // houses a matrix of SUM_A{w_aA*w_bA} terms for later use with indexing bin_a*nbins+bin_b
     
+public: 
+    
+    void copy(JK_weights *JK){
+        // Copy JK_weights object
+        n_JK_filled=JK->n_JK_filled;
+        nbins=JK->nbins;
+        weights = (Float *)malloc(sizeof(Float)*nbins*n_JK_filled);
+        filled_JKs = (int *)malloc(sizeof(int)*n_JK_filled);
+        RR_pair_counts = (Float *)malloc(sizeof(Float)*nbins);
+        product_weights = (Float *)malloc(sizeof(Float)*nbins*nbins);
+
+        int ct=0;
+        for(int i=0;i<nbins;i++){
+            RR_pair_counts[i]=JK->RR_pair_counts[i];
+            for(int j=0;j<nbins;j++){
+                product_weights[ct]=JK->product_weights[ct];
+                ct++;
+            }
+        }
+        ct=0;
+        for(int i=0;i<n_JK_filled;i++){
+            filled_JKs[i]=JK->filled_JKs[i];
+            for(int j=0;j<nbins;j++){
+                weights[ct]=JK->weights[ct];
+                ct++;
+            }
+        }
+    }
+    
 public:
     ~JK_weights() {
         // The destructor
@@ -23,29 +52,52 @@ public:
         return;
     }
     
-    JK_weights(Parameters *par){
+    JK_weights(){};
+    
+    //JK_weights(JK_weights* JK){
+    //    // Constructor to copy an existing file:
+    //    JK->copy(&weights, &filled_JKs, &RR_pair_counts, n_JK_filled, nbins, &product_weights);
+    //}
+    
+    JK_weights(Parameters *par, int index1, int index2){
         
         // This reads in weights for each jackknife region for each bin from file.
         // File should have bins in space-separated columns and bins in rows, with the jackknife number in the first column.
         // NB: The indexing is defined as INDEX = JACKKNIFE_ID * NBINS + BIN_ID
+        // index1 and index2 define which random set of particles to use here
         
         nbins = par->nbin*par->mbin; // define number of bins in total
         char line[100000];
         n_JK_filled = 0; // line number
         FILE *fp;
         FILE *fp2;
-        fp = fopen(par->jk_weight_file,"r");
-        fp2 = fopen(par->RR_bin_file,"r");
+        char *jk_file;
+        char *RR_file;
+        if((index1==1)&&(index2==1)){
+            jk_file=par->jk_weight_file;
+            RR_file = par->RR_bin_file;
+        }
+        else if((index1==2)&&(index2==2)){
+            jk_file = par->jk_weight_file2;
+            RR_file = par->RR_bin_file2;
+        }
+        else{
+            jk_file = par->jk_weight_file12;
+            RR_file = par->RR_bin_file12;
+        }
+        
+        fp = fopen(jk_file,"r");
+        fp2 = fopen(RR_file,"r");
         if (fp==NULL){
-            fprintf(stderr,"Jackknife file %s not found\n",par->jk_weight_file);
+            fprintf(stderr,"Jackknife file %s not found\n",jk_file);
             abort();
         }
         if (fp2==NULL){
-            fprintf(stderr,"RR bin count file %s not found\n",par->RR_bin_file);
+            fprintf(stderr,"RR bin count file %s not found\n",RR_file);
             abort();
         }
             
-        fprintf(stderr,"\nReading jackknife file '%s' and RR bin count file '%s'\n",par->jk_weight_file,par->RR_bin_file);
+        fprintf(stderr,"\nReading jackknife file '%s' and RR bin count file '%s'\n",jk_file,RR_file);
         // Count lines to construct the correct size
         while (fgets(line,100000,fp)!=NULL){
             if (line[0]=='#') continue; // comment line

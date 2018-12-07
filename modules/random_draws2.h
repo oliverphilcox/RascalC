@@ -29,10 +29,42 @@ public:
 		// Sampling of short distance
 		ransampl_ws* cube;
 
-
-	public:
-
-		RandomDraws2(CorrelationFunction *fun,Parameters *par,const double *xin, long np){ 
+    public: 
+        void copy(RandomDraws2 *rd){
+            // Copy a random draws object and allocate the sampler.
+            // NB: We don't redefine corr here as it is unused post-initialization
+            
+            nside=rd->nside;
+            nsidecube=rd->nsidecube;
+            boxside=rd->boxside;
+            
+            // Allocate memory:
+            int x_size=pow(nside,3);
+            int xcube_size = pow(nsidecube,3);
+            x = (double *)malloc(sizeof(double)*x_size);
+			xcube = (double *)malloc(sizeof(double)*xcube_size);
+            
+            // Read in x, xcube arrays:
+            for(int i=0;i<x_size;i++) x[i]=rd->x[i];
+            for(int i=0;i<xcube_size;i++) xcube[i]=rd->x[i];
+            
+            // Set up actual samplers
+            ws = ransampl_alloc(x_size);
+            ransampl_set(ws, x);
+            
+            // Set up actual sampler
+            cube = ransampl_alloc(xcube_size);
+            ransampl_set(cube, xcube);            
+        }
+        
+        
+        
+    public:
+	    RandomDraws2(){
+            //empty constructor            
+        }
+        
+        RandomDraws2(CorrelationFunction *fun,Parameters *par,const double *xin, long np){ 
 
 		long n=np;
 		corr=fun;

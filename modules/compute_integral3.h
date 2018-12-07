@@ -3,14 +3,14 @@
     #ifndef COMPUTE_INTEGRAL3_H
     #define COMPUTE_INTEGRAL3_H
 
-    #include "integrals2.h"
+    #include "integrals5.h"
 
     class compute_integral3{
         
     private:
-        Grid *grid;
+        //Grid *grid;
         //CorrelationFunction *cf;
-        JK_weights *JK;
+        //JK_weights *JK;
         //RandomDraws2 *rd;
         uint64 cnt2=0,cnt3=0,cnt4=0;
         int nbin, mbin; 
@@ -85,9 +85,58 @@
     #endif
         }
         
+        CorrelationFunction* which_cf(CorrelationFunction all_cf[], int Ia, int Ib){
+            // Returns the relevant correlation function for two input field indices
+            if((Ia==1)&(Ib==1)) return &all_cf[0];
+            else if ((Ia==2)&&(Ib==2)) return &all_cf[1];
+            else return &all_cf[2];
+        }
+        RandomDraws2* which_rd(RandomDraws2 all_rd[], int Ia, int Ib){
+            // Returns the relevant correlation function for two input field indices
+            if((Ia==1)&(Ib==1)) return &all_rd[0];
+            else if ((Ia==2)&&(Ib==2)) return &all_rd[1];
+            else return &all_rd[2];
+        }
+        
+        Grid* which_grid(Grid all_grid[], int Ia){
+            // Returns the relevant correlation function for two input field indices
+            if(Ia==1) return &all_grid[0];
+            else return &all_grid[1];
+        }
+        
+        JK_weights* which_JK(JK_weights all_JK[], int Ia, int Ib){
+            // Returns the relevant correlation function for two input field indices
+            if((Ia==1)&(Ib==1)) return &all_JK[0];
+            else if ((Ia==2)&&(Ib==2)) return &all_JK[1];
+            else return &all_JK[2];
+        }
+        
     public:    
-        compute_integral3(Grid *grid, Parameters *par, JK_weights *JK){
+        compute_integral3(Grid all_grid[], Parameters *par, JK_weights all_JK[], CorrelationFunction all_cf[], RandomDraws2 all_rd[], int I1, int I2, int I3, int I4, int iter_no){
             // MAIN FUNCTION TO COMPUTE INTEGRALS
+            
+            int tot_iter=1; // total number of iterations
+            if(par->multi_tracers==true) tot_iter=6;
+            
+            // Define relevant grids 
+            Grid *grid1 = which_grid(all_grid,I1);
+            Grid *grid2 = which_grid(all_grid,I2);
+            Grid *grid3 = which_grid(all_grid,I3);
+            Grid *grid4 = which_grid(all_grid,I4);
+            
+            // Define relevant correlation functions
+            CorrelationFunction *cf12 = which_cf(all_cf,I1,I2);
+            CorrelationFunction *cf13 = which_cf(all_cf,I1,I3);
+            CorrelationFunction *cf24 = which_cf(all_cf,I2,I4);
+            
+            // Define relevant random draw classes:
+            RandomDraws2 *rd13 = which_rd(all_rd,I1,I3);
+            RandomDraws2 *rd24 = which_rd(all_rd,I2,I4);
+            
+            // Define relevant jackknife JK_weights
+            JK_weights *JK12 = which_JK(all_JK,I1,I2);
+            JK_weights *JK23 = which_JK(all_JK,I2,I3);
+            JK_weights *JK34 = which_JK(all_JK,I3,I4);
             
             nbin = par->nbin; // number of radial bins
             mbin = par->mbin; // number of mu bins
@@ -97,15 +146,14 @@
             
             int convergence_counter=0, printtime=0;// counter to stop loop early if convergence is reached.
             
+            
+            
     //-----------INITIALIZE OPENMP + CLASSES----------
             std::random_device urandom("/dev/urandom");
             std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
             unsigned long int steps = dist(urandom);        
             gsl_rng_env_setup(); // initialize gsl rng
-            CorrelationFunction *cf=new CorrelationFunction(par->corname,par->mbin,par->mumax-par->mumin);
-            RandomDraws2 *rd=new RandomDraws2(cf,par, NULL, 0);
-            Integrals2 sumint(par,cf,JK); // total integral
-
+            Integrals5 sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // total integral
             
             uint64 tot_pairs=0, tot_triples=0, tot_quads=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
             uint64 cell_attempt2=0,cell_attempt3=0,cell_attempt4=0; // number of j,k,l cells attempted
@@ -115,23 +163,23 @@
         
             initial.Stop();
             fprintf(stderr, "Init time: %g s\n",initial.Elapsed());
-            printf("# Filled cells: %d\n",grid->nf);
-            printf("# All points in use: %d\n",grid->np);
-            printf("# Max points in one cell %d\n",grid->maxnp);
+            printf("# 1st grid filled cells: %d\n",grid1->nf);
+            printf("# All 1st grid points in use: %d\n",grid1->np);
+            printf("# Max points in one cell in grid 1%d\n",grid1->maxnp);
             fflush(NULL);
             
             TotalTime.Start(); // Start timer
             
     #ifdef OPENMP       
-    #pragma omp parallel firstprivate(steps,grid,par,printtime,cf) shared(sumint,TotalTime,JK,rd,gsl_rng_default) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
             { // start parallel loop
             // Decide which thread we are in
             int thread = omp_get_thread_num();
             assert(omp_get_num_threads()<=par->nthread);
-            if (thread==0) printf("# Starting integral computation on %d threads.\n", omp_get_num_threads());        
+            if (thread==0) printf("# Starting integral computation %d of %d on %d threads.\n", iter_no, tot_iter, omp_get_num_threads());        
     #else
             int thread = 0;
-            printf("# Starting integral computation single threaded.\n");
+            printf("# Starting integral computation %d of %d single threaded.\n",iter_no,tot_iter);
     #endif
             //TODO: Make sure this works single-threaded
             
@@ -143,7 +191,7 @@
             //int* bin; // a-b bins for particles
             int* prim_ids; // list of particle IDs in primary cell
             double p2,p3,p4,p22,p21; // probabilities
-            int mnp = grid->maxnp; // max number of particles
+            int mnp = grid1->maxnp; // max number of particles in a grid1 cell
             Float *xi_ik, *w_ijk, *w_ij; // arrays to store xi and weight values
             int *bin_ij; // i-j separation bin
             Float percent_counter;
@@ -151,7 +199,7 @@
             integer3 delta2, delta3, delta4, prim_id, sec_id, thi_id;
             Float3 cell_sep2,cell_sep3;
             
-            Integrals2 locint(par,cf,JK); // Accumulates the integral contribution of each thread
+            Integrals5 locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // Accumulates the integral contribution of each thread
             
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
             gsl_rng_set(locrng, steps*(thread+1));
@@ -185,16 +233,16 @@
                     
                     
                 // LOOP OVER ALL FILLED I CELLS
-                for (int n1=0; n1<grid->nf;n1++){
+                for (int n1=0; n1<grid1->nf;n1++){
                     
-                    if((float(n1)/float(grid->nf)*100)>=percent_counter){
-                        printf("Using cell %d of %d on core %d on run %d of %d: %.0f percent complete\n",n1+1,grid->nf,thread,1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),percent_counter);
+                    if((float(n1)/float(grid1->nf)*100)>=percent_counter){
+                        printf("Integral %d of %d, run %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n",iter_no,tot_iter,1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),thread, n1+1,grid1->nf,percent_counter);
                         percent_counter+=5.;
                     }
                     
-                    prim_id_1D = grid-> filled[n1]; // 1d ID for cell i 
-                    prim_id = grid->cell_id_from_1d(prim_id_1D); // define first cell
-                    pln = particle_list(prim_id_1D, prim_list, prim_ids, grid); // update list of particles and number of particles
+                    prim_id_1D = grid1-> filled[n1]; // 1d ID for cell i 
+                    prim_id = grid1->cell_id_from_1d(prim_id_1D); // define first cell
+                    pln = particle_list(prim_id_1D, prim_list, prim_ids, grid1); // update list of particles and number of particles
                     
                     if(pln==0) continue; // skip if empty
                     
@@ -207,34 +255,34 @@
                         cell_attempt2+=1; // new cell attempted
                         
                         // Draw second cell from i weighted by 1/r^2
-                        delta2 = rd->random_cubedraw(locrng, &p2); 
+                        delta2 = rd13->random_cubedraw(locrng, &p2); // can use any rd class here since drawing as 1/r^2
                         // p2 is the ratio of sampling to true pair distribution here
                         sec_id = prim_id + delta2;
-                        cell_sep2 = grid->cell_sep(delta2);
-                        x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid, sln, locrng, sln1, sln2);
+                        cell_sep2 = grid2->cell_sep(delta2);
+                        x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid2, sln, locrng, sln1, sln2);
                         if(x==1) continue; // skip if error
                         
                         used_cell2+=1; // new cell accepted
                         
                         // Probabilities for two random-particle partitions
-                        p21=p2/(grid->np1*(double)sln1); // divide probability by total number of particles in 1st partition and number in cell
-                        p22=p2/(grid->np2*(double)sln2); // for partition 2
+                        p21=p2/(grid1->np1*(double)sln1); // divide probability by total number of particles in 1st partition and number in cell
+                        p22=p2/(grid1->np2*(double)sln2); // for partition 2
                         
                         // For all particles
-                        p2*=1./(grid->np*(double)sln); // probability is divided by total number of particles and number of particles in cell
+                        p2*=1./(grid1->np*(double)sln); // probability is divided by total number of i particles and number of particles in cell
                         
                         // Compute C2 integral
-                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, p21, p22,thread);
+                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, p21, p22);
                         
                         // LOOP OVER N3 K CELLS
                         for (int n3=0; n3<par->N3; n3++){
                             cell_attempt3+=1; // new third cell attempted
                             
                             // Draw third cell from i weighted by xi(r)
-                            delta3 = rd->random_xidraw(locrng, &p3);
+                            delta3 = rd13->random_xidraw(locrng, &p3); // use 1-3 random draw class here for xi_13
                             thi_id = prim_id + delta3;
-                            cell_sep3 = grid->cell_sep(delta3);
-                            x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng);
+                            cell_sep3 = grid3->cell_sep(delta3); 
+                            x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid3,tln,locrng); // draw from third grid
                             if(x==1) continue; 
                             
                             used_cell3+=1; // new third cell used
@@ -248,9 +296,9 @@
                             for (int n4=0; n4<par->N4; n4++){
                                 cell_attempt4+=1; // new fourth cell attempted
                                 
-                                // Draw fourth cell from j cell weighted by xi(r)
-                                delta4 = rd->random_xidraw(locrng,&p4);
-                                x = draw_particle_without_class(sec_id+delta4,particle_l,pid_l,cell_sep2+grid->cell_sep(delta4),grid,fln,locrng);
+                                // Draw fourth cell from j cell weighted by xi_24(r)
+                                delta4 = rd24->random_xidraw(locrng,&p4); 
+                                x = draw_particle_without_class(sec_id+delta4,particle_l,pid_l,cell_sep2+grid4->cell_sep(delta4),grid4,fln,locrng); // draw from 4th grid
                                 if(x==1) continue;
                                 
                                 used_cell4+=1; // new fourth cell used
@@ -304,7 +352,7 @@
                 char output_string[50];
                 sprintf(output_string,"%d", n_loops);
                 
-                locint.normalize(grid->np,par->nofznorm, (Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads, 1); // do normalize by RR here
+                locint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads, 1); // do normalize by RR here
                 locint.save_integrals(output_string,0);
                 locint.save_jackknife_integrals(output_string);
                 
@@ -332,9 +380,10 @@
         TotalTime.Stop();
         
         // Normalize the accumulated results, using the RR counts
-        sumint.normalize(grid->np, par->nofznorm, (Float)tot_pairs, (Float)tot_triples,(Float)tot_quads,1);//(Float)n_triples, (Float)n_quads, 1);
+        sumint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)tot_pairs, (Float)tot_triples,(Float)tot_quads,1);//(Float)n_triples, (Float)n_quads, 1);
         
         int runtime = TotalTime.Elapsed();
+        printf("\n\nINTEGRAL %d OF %d COMPLETE\n",iter_no,tot_iter); 
         fprintf(stderr, "\nTotal process time for %.2e sets of cells and %.2e quads of particles: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", double(used_cell4),double(tot_quads),runtime, runtime/3600,runtime/60%60,runtime%60);
         printf("We tried %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(cell_attempt2),double(cell_attempt3),double(cell_attempt4));
         printf("Of these, we accepted %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(used_cell2),double(used_cell3),double(used_cell4));
@@ -342,7 +391,7 @@
         printf("Of these, we have integral contributions from %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(cnt2),double(cnt3),double(cnt4));
         printf("Cell acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)used_cell2/cell_attempt2,(double)used_cell3/cell_attempt3,(double)used_cell4/cell_attempt4);
         printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
-        printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid->np);
+        printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid1->np);
         
         printf("\nTrial speed: %.2e quads per core per second\n",double(tot_quads)/(runtime*double(par->nthread)));
         printf("Acceptance speed: %.2e quads per core per second\n",double(cnt4)/(runtime*double(par->nthread)));
