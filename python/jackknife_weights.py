@@ -7,7 +7,7 @@ import numpy as np
 
 # PARAMETERS
 if len(sys.argv)!=9:
-    print "Usage: python jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {N_GAL} {NTHREADS} {PERIODIC} {OUTPUT_DIR}"
+    print("Usage: python jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {N_GAL} {NTHREADS} {PERIODIC} {OUTPUT_DIR}")
     sys.exit()
 fname = str(sys.argv[1])
 binfile = str(sys.argv[2])
