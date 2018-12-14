@@ -16,7 +16,7 @@ private:
     Float rmin,rmax,mumin,mumax,dmu; //Ranges in r and mu
     Float *r_high, *r_low; // Max and min of each radial bin
     Float *Ra, *c2, *c3, *c4; // Arrays to accumulate integrals
-    Float *cxj, *c2j, *c3j, *c4j; // Arrays to accumulate jackknife integrals
+    Float *c2j, *c3j, *c4j; // Arrays to accumulate jackknife integrals
     Float *errc4, *errc4j, *errc3, *errc3j, *errc2, *errc2j; // Integral to house the variance in C4, C4j, C3 and C3j;
     Float *EEaA1, *EEaA2; // Array to accumulate the two-independent xi-weighted pair counts
     Float *RRaA1, *RRaA2; // Array to accumulate the two-independent pair count estimates 
@@ -63,7 +63,7 @@ public:
         ec+=posix_memalign((void **) &c2j, PAGE, sizeof(double)*nbin*mbin);
         ec+=posix_memalign((void **) &c3j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &c4j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
-        ec+=posix_memalign((void **) &cxj, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        //ec+=posix_memalign((void **) &cxj, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         
         ec+=posix_memalign((void **) &errc4, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &errc4j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
@@ -130,7 +130,7 @@ public:
         free(c2);
         free(c3);
         free(c4);
-        free(cxj);
+        //free(cxj);
         free(c2j);
         free(c3j);
         free(c4j);
@@ -560,7 +560,7 @@ public:
         }
         
         // Now compute disconnected term:
-        Float EEa1,EEb2,RRa1,RRb2,tmp_int;
+        Float EEa1,EEb2,RRa1,RRb2;
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
                 // Initialize sums for EEa1 and EEa2 for this bin
@@ -568,7 +568,6 @@ public:
                 EEb2=0.;
                 RRa1=0;
                 RRb2=0;
-                tmp_int=0.;
                 // First sum up EEa terms for this bin
                 for(int jk=0;jk<n_jack;jk++){
                     EEa1+=EEaA1[jk*nbin*mbin+i];
@@ -578,11 +577,11 @@ public:
                 }
                 
                 //TODO: Can ONLY compute in post-processing here since different terms needed
-                // Now compute the disconnected term
-                for(int jk=0;jk<n_jack;jk++){
-                    tmp_int+=(EEaA1[jk*nbin*mbin+i]-RRaA1[jk*nbin*mbin+i]/RRa1*EEa1)*(EEaA2[jk*nbin*mbin+j]-RRaA2[jk*nbin*mbin+j]/RRb2*EEb2);
-                }
-                cxj[i*nbin*mbin+j]=tmp_int;
+//                 // Now compute the disconnected term
+//                 for(int jk=0;jk<n_jack;jk++){
+//                     tmp_int+=(EEaA1[jk*nbin*mbin+i]-RRaA1[jk*nbin*mbin+i]/RRa1*EEa1)*(EEaA2[jk*nbin*mbin+j]-RRaA2[jk*nbin*mbin+j]/RRb2*EEb2);
+//                 }
+//                 cxj[i*nbin*mbin+j]=tmp_int;
             }
         }
         
@@ -604,7 +603,7 @@ public:
                     c4[i*nbin*mbin+j]/=Rab4;
                     c3j[i*nbin*mbin+j]/=Rab_jk3;
                     c4j[i*nbin*mbin+j]/=Rab_jk4;
-                    cxj[i*nbin*mbin+j]/=Rab_jk4;
+                    //cxj[i*nbin*mbin+j]/=Rab_jk4;
                     errc4[i*nbin*mbin+j]/=pow(Rab4,2.);
                     errc4j[i*nbin*mbin+j]/=pow(Rab_jk4,2.);
                     errc3[i*nbin*mbin+j]/=pow(Rab3,2.);
@@ -637,8 +636,6 @@ public:
         // Create output files
         
         //TODO: Remove bin_counts?
-        //TODO: Remove EE counts?
-        //TODO: Put EE counts in jackknife integrals instead?
         
         char c2name[1000];
         snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_m%d_%d%d_%s.txt", out_file,nbin, mbin,I1,I2,suffix);
@@ -695,23 +692,6 @@ public:
         fclose(RRFile);
         
         if(save_all==1){
-            // TO REMOVE??
-            //char RR1name[1000];
-            //snprintf(RR1name,sizeof RR1name, "%sCovMatricesAll/RR1_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
-            //char RR2name[1000];
-            //snprintf(RR2name,sizeof RR2name, "%sCovMatricesAll/RR2_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
-        
-            //char EE1name[1000];
-            //snprintf(EE1name,sizeof EE1name, "%sCovMatricesAll/EE1_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
-            //char EE2name[1000];
-            //snprintf(EE2name,sizeof EE2name, "%sCovMatricesAll/EE2_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
-            
-            //FILE * EE1File = fopen(EE1name, "w"); // for EE1 integral
-            //FILE * EE2File = fopen(EE2name,"w"); // for EE2 integral
-            
-            //FILE * RR1File = fopen(RR1name, "w"); // for RR1 integral
-            //FILE * RR2File = fopen(RR2name,"w"); // for RR2 integral
-        
             char binname[1000];
             snprintf(binname,sizeof binname, "%sCovMatricesAll/binct_c4_n%d_m%d_%d%d,%d%d_%s.txt",out_file, nbin,mbin,I1,I2,I3,I4,suffix);
             FILE * BinFile = fopen(binname,"w");
@@ -736,28 +716,11 @@ public:
                 fprintf(BinFile,"\n");
                 fprintf(Bin3File,"\n");
             }
-            
-//             for(int i=0;i<n_jack;i++){
-//                 for(int j=0;j<nbin*mbin;j++){
-//                     //TODO: Do we need to save this?
-//                     fprintf(EE1File,"%le\t",EEaA1[i*nbin*mbin+j]);
-//                     fprintf(EE2File,"%le\t",EEaA2[i*nbin*mbin+j]);
-//                     fprintf(RR1File,"%le\t",RRaA1[i*nbin*mbin+j]);
-//                     fprintf(RR2File,"%le\t",RRaA2[i*nbin*mbin+j]);
-//                 }
-//                 fprintf(EE1File,"\n");
-//                 fprintf(EE2File,"\n");
-//                 fprintf(RR1File,"\n");
-//                 fprintf(RR2File,"\n");
-//             }
         
             fclose(BinFile);
             fclose(Bin2File);
             fclose(Bin3File);
-//             fclose(EE1File);
-//             fclose(EE2File);
-//             fclose(RR1File);
-//             fclose(RR2File);
+            
         }
     }
 
@@ -767,14 +730,16 @@ public:
         * In txt files {c2,c3,c4,RR}_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 and RR_a that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
         */
         // Create output files
+        
+        //TODO: Remove cx files
         char c2name[1000];
         snprintf(c2name, sizeof c2name, "%sCovMatricesJack/c2_n%d_m%d_%d%d_%s.txt", out_file,nbin, mbin,I1,I2,suffix);
         char c3name[1000];
         snprintf(c3name, sizeof c3name, "%sCovMatricesJack/c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin,I2,I1,I3,suffix);
         char c4name[1000];
         snprintf(c4name, sizeof c4name, "%sCovMatricesJack/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
-        char cxname[1000];
-        snprintf(cxname, sizeof cxname, "%sCovMatricesJack/cx_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
+        //char cxname[1000];
+        //snprintf(cxname, sizeof cxname, "%sCovMatricesJack/cx_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
         char c2errname[1000];
         snprintf(c2errname, sizeof c2errname, "%sCovMatricesJack/c2err_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
         char c4errname[1000];
@@ -784,10 +749,25 @@ public:
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
-        FILE * CXFile = fopen(cxname,"w"); // for RR part of integral
+        //FILE * CXFile = fopen(cxname,"w"); // for RR part of integral
         FILE * C4ErrFile = fopen(c4errname,"w"); // for c4 part of integral
         FILE * C3ErrFile = fopen(c3errname,"w"); // for c3 part of integral
         FILE * C2ErrFile = fopen(c2errname,"w"); // for c2 part of integral
+        
+        // TO REMOVE??
+        char RR1name[1000];
+        snprintf(RR1name,sizeof RR1name, "%sCovMatricesJack/RR1_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        char RR2name[1000];
+        snprintf(RR2name,sizeof RR2name, "%sCovMatricesJack/RR2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        char EE1name[1000];
+        snprintf(EE1name,sizeof EE1name, "%sCovMatricesJack/EE1_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        char EE2name[1000];
+        snprintf(EE2name,sizeof EE2name, "%sCovMatricesJack/EE2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        
+        FILE * EE1File = fopen(EE1name, "w"); // for EE1 integral
+        FILE * EE2File = fopen(EE2name,"w"); // for EE2 integral
+        FILE * RR1File = fopen(RR1name, "w"); // for RR1 integral
+        FILE * RR2File = fopen(RR2name,"w"); // for RR2 integral
         
         for (int j=0;j<nbin*mbin;j++){
             fprintf(C2ErrFile,"%le\n",errc2j[j]);
@@ -797,16 +777,31 @@ public:
             for(int j=0;j<nbin*mbin;j++){
                 fprintf(C3File,"%le\t",c3j[i*nbin*mbin+j]);
                 fprintf(C4File,"%le\t",c4j[i*nbin*mbin+j]);
-                fprintf(CXFile,"%le\t",cxj[i*nbin*mbin+j]);
+         //       fprintf(CXFile,"%le\t",cxj[i*nbin*mbin+j]);
                 fprintf(C4ErrFile,"%le\t",errc4j[i*nbin*mbin+j]);
                 fprintf(C3ErrFile,"%le\t",errc3j[i*nbin*mbin+j]);
             }
             fprintf(C3File,"\n"); // new line each end of row
             fprintf(C4File,"\n");
-            fprintf(CXFile,"\n");
+         //   fprintf(CXFile,"\n");
             fprintf(C4ErrFile,"\n");
             fprintf(C3ErrFile,"\n");
         }
+        
+        for(int i=0;i<n_jack;i++){
+            for(int j=0;j<nbin*mbin;j++){
+                //TODO: Do we need to save this?
+                fprintf(EE1File,"%le\t",EEaA1[i*nbin*mbin+j]);
+                fprintf(EE2File,"%le\t",EEaA2[i*nbin*mbin+j]);
+                fprintf(RR1File,"%le\t",RRaA1[i*nbin*mbin+j]);
+                fprintf(RR2File,"%le\t",RRaA2[i*nbin*mbin+j]);
+            }
+            fprintf(EE1File,"\n");
+            fprintf(EE2File,"\n");
+            fprintf(RR1File,"\n");
+            fprintf(RR2File,"\n");
+        }
+        
         fflush(NULL);
         
         // Close open files
@@ -814,10 +809,15 @@ public:
         fclose(C2File);
         fclose(C3File);
         fclose(C4File);
-        fclose(CXFile);
+        //fclose(CXFile);
         fclose(C2ErrFile);
         fclose(C3ErrFile);
         fclose(C4ErrFile);
+        
+        fclose(EE1File);
+        fclose(EE2File);
+        fclose(RR1File);
+        fclose(RR2File);
     }
     
     void compute_Neff(Float n_quads, Float n_triples, Float n_pairs, Float &N_eff, Float &N_eff_jack){
