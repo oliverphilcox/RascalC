@@ -74,4 +74,4 @@ print("Writing to file %s:"%output_file)
 with open(output_file,"w+") as outfile:
     for p in range(len(all_z)):
         outfile.write("%.8f %.8f %.8f %.8f\n" %(all_x[p],all_y[p],all_z[p],all_w[p]))
-print("Output positions written succesfully!")
+print("Output positions (of length %d) written succesfully!"%len(all_z))
