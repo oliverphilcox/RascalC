@@ -27,12 +27,12 @@ else:
     print("Please specify input arguments in the form convert_to_xyz.py {INFILE} {OUTFILE} [{OMEGA_M} {OMEGA_K} {W_DARK_ENERGY}]")
     sys.exit()
 
-print("\n Using input file %s in Ra,Dec,z coordinates"%input_file)
 print("Using cosmological parameters as Omega_m = %.2f, Omega_k = %.2f, w = %.2f" %(omega_m,omega_k,w_dark_energy))
           
 # Load file names
 input_file = str(sys.argv[1])
 output_file = str(sys.argv[2])
+print("\n Using input file %s in Ra,Dec,z coordinates"%input_file)
 
 # Load the wcdm module from Daniel Eisenstein
 sys.path.insert(0, 'wcdm/')
