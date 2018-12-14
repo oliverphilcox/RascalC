@@ -6,8 +6,8 @@ import sys
 import numpy as np
 
 # PARAMETERS
-if len(sys.argv)<8:
-    print "Usage: python jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {N_GAL} {NTHREADS} {PERIODIC}"
+if len(sys.argv)!=9:
+    print "Usage: python jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {N_GAL} {NTHREADS} {PERIODIC} {OUTPUT_DIR}"
     sys.exit()
 fname = str(sys.argv[1])
 binfile = str(sys.argv[2])
@@ -16,6 +16,7 @@ nmu_bins = int(sys.argv[4])
 N_gal = float(sys.argv[5])
 nthreads = int(sys.argv[6])
 periodic = int(sys.argv[7])
+outdir=str(sys.argv[8])
 
 
 ## First read in weights and positions:
@@ -118,14 +119,13 @@ for i,j in enumerate(J_regions):
     w_aA[i]=RR_aA[i]/RR_a # jackknife weighting for bin and region
 
 # Save output files:
-filepath = '../weight_files/'
 import os
-if not os.path.exists(filepath):
-    os.makedirs(filepath)
+if not os.path.exists(outdir):
+    os.makedirs(outdir)
 
 weight_file='jackknife_weights_n%d_m%d_j%d.dat'%(nrbins,nmu_bins,N_jack)
 print("Saving jackknife weight as %s"%weight_file)
-with open(filepath+weight_file,"w+") as weight_file:
+with open(outdir+weight_file,"w+") as weight_file:
     for j_id,jackknife_weight in enumerate(w_aA):
         weight_file.write("%s\t" %J_regions[j_id])
         for i in range(len(jackknife_weight)):
@@ -136,9 +136,9 @@ with open(filepath+weight_file,"w+") as weight_file:
                 weight_file.write("\t");
 RR_a_file = 'binned_pair_counts_n%d_m%d_j%d.dat'%(nrbins,nmu_bins,N_jack)
 print("Saving binned pair counts as %s" %RR_a_file);
-with open(filepath+RR_a_file,"w+") as RR_file:
+with open(outdir+RR_a_file,"w+") as RR_file:
     for i in range(len(RR_a)):
         RR_file.write("%s\n" %RR_a[i])
         
-print("Jackknife weights and binned pair counts written successfully to the 'weight_files/' directory")
+print("Jackknife weights and binned pair counts written successfully to the %s directory"%outdir)
         
