@@ -140,6 +140,7 @@ else:
         
         # First compute contribution from JK region in data1 and all of data2:
         filt=np.where(J==j)
+        print(filt,len(filt))
         if len(filt)>0:
             cross_RR=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,X2,Y2,Z2,weights1=W2,weight_type='pair_product',
                            X2=X[filt],Y2=Y[filt],Z2=Z[filt],weights2=W[filt],periodic=False,verbose=False)
