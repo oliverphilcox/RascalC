@@ -25,7 +25,7 @@ elif len(sys.argv)==3: # use defaults (from the BOSS DR12 2016 clustering paper 
     w_dark_energy = -1.
 else:
     print("Please specify input arguments in the form convert_to_xyz.py {INFILE} {OUTFILE} [{OMEGA_M} {OMEGA_K} {W_DARK_ENERGY}]")
-    abort()
+    sys.exit()
 
 print("\n Using input file %s in Ra,Dec,z coordinates"%input_file)
 print("Using cosmological parameters as Omega_m = %.2f, Omega_k = %.2f, w = %.2f" %(omega_m,omega_k,w_dark_energy))
