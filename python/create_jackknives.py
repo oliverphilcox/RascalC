@@ -6,7 +6,7 @@ import sys
 
 ## PARAMETERS
 if len(sys.argv)<4:
-    print "Please specify input parameters in the form {INPUT_FILE} {OUTPUT_FILE} {HEALPIX_NSIDE}."
+    print("Please specify input parameters in the form {INPUT_FILE} {OUTPUT_FILE} {HEALPIX_NSIDE}.")
     sys.exit()
 infile_name = str(sys.argv[1])
 outfile_name = str(sys.argv[2])
