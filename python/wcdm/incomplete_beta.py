@@ -42,7 +42,7 @@ def beta_cont_frac_gsl(a, b, x):
 
     x = np.array(x, copy=False, ndmin=1)
     if (np.min(x)<0 or np.max(x)>=1):
-    	print("Illegal entry in beta_cont_frac_gsl()\n")
+        print("Illegal entry in beta_cont_frac_gsl()\n")
         import sys
         sys.exit()
     cutoff = 1e-30	#  control the zero cutoff
