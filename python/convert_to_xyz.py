@@ -12,8 +12,8 @@ Output file format has (x,y,z,w) coordinates in Mpc/h units
 """
 
 import os
-
-print("CWD::",os.getcwd())
+dirname=os.path.dirname(os.path,realpath(__file__))
+print(dirname)
 
 import sys
 import numpy as np
@@ -39,7 +39,7 @@ output_file = str(sys.argv[2])
 print("\n Using input file %s in Ra,Dec,z coordinates"%input_file)
 
 # Load the wcdm module from Daniel Eisenstein
-sys.path.insert(0, 'wcdm/')
+sys.path.insert(0, str(dirname)+'wcdm/')
 import wcdm
 
 # Load in data:
