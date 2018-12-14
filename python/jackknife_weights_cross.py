@@ -28,18 +28,22 @@ dtype = np.double
 
 print("Counting lines in file 1 of 2")
 total_lines=0
-for n, line in enumerate(open(fname, 'r')[:10000]):
+for n, line in enumerate(open(fname, 'r')):
     total_lines+=1
 print("Counting lines in file 2 of 2")
 total_lines2=0
-for n, line in enumerate(open(fname2,'r')[:10000]):
+for n, line in enumerate(open(fname2,'r')):
     total_lines2+=1
+
+
+total_lines=10000
+total_lines2=10000
 
 X,Y,Z,W,J=[np.zeros(total_lines) for _ in range(5)]
 X2,Y2,Z2,W2,J2=[np.zeros(total_lines2) for _ in range(5)]
 
 print("\nReading in data from file 1:");
-for n, line in enumerate(open(fname, 'r')[:10000]):
+for n, line in enumerate(open(fname, 'r')):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines))
     split_line=np.array(line.split(" "), dtype=float) 
@@ -48,9 +52,11 @@ for n, line in enumerate(open(fname, 'r')[:10000]):
     Z[n]=split_line[2];
     W[n]=split_line[3];
     J[n]=int(split_line[4]);
+    if n>10000:
+        break;
 
 print("\nReading in data from file 2:");
-for n, line in enumerate(open(fname2, 'r')[:10000]):
+for n, line in enumerate(open(fname2, 'r')):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines2))
     split_line=np.array(line.split(" "), dtype=float) 
@@ -59,6 +65,8 @@ for n, line in enumerate(open(fname2, 'r')[:10000]):
     Z2[n]=split_line[2];
     W2[n]=split_line[3];
     J2[n]=int(split_line[4]);
+    if n>10000:
+        break;
 
 N = len(X) # number of particles
 N2 = len(X2)
