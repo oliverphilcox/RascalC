@@ -133,7 +133,7 @@ def wcdm_time(z, om, w):
     # This requires w<-1 if one is using the SciPy beta function, w<0 if using GSL
     ox = 1-om
     if (np.min(ox)<0):
-    print("Can't evaluate negative dark energies")
+        print("Can't evaluate negative dark energies")
     exit
     xz = ox/(om*(1+z)**(-3.0*w)+ox)
     m = 1.0/(-2.0*w)
@@ -354,7 +354,7 @@ def test():
     print("wcdm(): ", wcdm(1.0,om,-1))
     print("owcdm(): ", owcdm(1.0,om,-1,0)[0])
     print("owcdm(): ", propmotdis(1.0,om,-1,0))
-    print("om: ", om2
+    print("om: ", om2)
     print("wcdm(): ", wcdm(1.0,om2,-1))
 
     print()
