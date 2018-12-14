@@ -24,13 +24,13 @@ dtype = np.double
 
 print("Counting lines in file")
 total_lines=0
-for n, line in enumerate(file(fname, 'r')):
+for n, line in enumerate(open(fname, 'r')):
     total_lines+=1
 
 X,Y,Z,W,J=[np.zeros(total_lines) for _ in range(5)]
 
 print("Reading in data");
-for n, line in enumerate(file(fname, 'r')):
+for n, line in enumerate(open(fname, 'r')):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines))
     split_line=np.array(line.split(" "), dtype=float) 
