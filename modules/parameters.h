@@ -65,10 +65,10 @@ public:
 
 	// The name of the input random particle files
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/DR12Data/random0_DR12v5_CMASS_North_comoving.txt"; // first set of random particles
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/DR12Data/dr12_CMASS_North.txt"; // first set of random particles
 
     char *fname2 = NULL;
-    const char default_fname2[500] = "/mnt/store1/oliverphilcox/DR12Data/random0_DR12v5_LOWZ_North_comoving.txt"; // second set of random particles
+    const char default_fname2[500] = "/mnt/store1/oliverphilcox/DR12Data/dr12_LOWZ_North.txt"; // second set of random particles
     
 	// The name of the correlation function file
 	char *corname = NULL;
