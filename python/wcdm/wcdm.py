@@ -269,7 +269,7 @@ def test():
     x = wcdm(1.0,1.3,-0.4)
     print("WCDM, om=1.3, w=-0.4, z=1: r(z) = ", x, " Err = ",x-wcdm_romberg(1.0,1.3,-0.4) )
 
-    print("\nTesting the owcdm code in the flat limit"
+    print("\nTesting the owcdm code in the flat limit")
     x = owcdm(1.0,0.3,-1)[0]
     print("Non-flat LCDM, om=0.3, ok=0, z=1: r(z) = ", x, " Err = ",x-wcdm_romberg(1.0,0.3,-1))
 
@@ -279,7 +279,7 @@ def test():
     x = owcdm(1.0,0.3,-1.4)[0]
     print("Non-flat WCDM, om=0.3, w=-1.4, ok=0, z=1: r(z) = ", x, " Err = ",x-wcdm_romberg(1.0,0.3,-1.4))
 
-    print("\nSlightly open universes"
+    print("\nSlightly open universes")
     x = owcdm(1.0,0.3,-1,0.05)[0]
     print("Non-flat LCDM, om=0.3, ok=0.05, z=1: r(z) = ", x, " Err = ",x-owcdm_romberg(1.0,0.3,-1,0.05))
 
@@ -292,7 +292,7 @@ def test():
     x = owcdm(1.0,0.3,-1.4,0.05)[0]
     print("Non-flat WCDM, om=0.3, w=-1.4, ok=0.05, z=1: r(z) = ", x, " Err = ",x-owcdm_romberg(1.0,0.3,-1.4,0.05))
 
-    print("\nSlightly closed univeses")
+    print("\nSlightly closed universes")
     x = owcdm(1.0,0.3,-1,-0.05)[0]
     print("Non-flat LCDM, om=0.3, ok=-0.05, z=1: r(z) = ", x, " Err = ",x-owcdm_romberg(1.0,0.3,-1,-0.05) )
 
