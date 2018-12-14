@@ -28,18 +28,18 @@ dtype = np.double
 
 print("Counting lines in file 1 of 2")
 total_lines=0
-for n, line in enumerate(open(fname, 'r')):
+for n, line in enumerate(open(fname, 'r')[:10000]):
     total_lines+=1
 print("Counting lines in file 2 of 2")
 total_lines2=0
-for n, line in enumerate(open(fname2,'r')):
+for n, line in enumerate(open(fname2,'r')[:10000]):
     total_lines2+=1
 
 X,Y,Z,W,J=[np.zeros(total_lines) for _ in range(5)]
 X2,Y2,Z2,W2,J2=[np.zeros(total_lines2) for _ in range(5)]
 
 print("\nReading in data from file 1:");
-for n, line in enumerate(open(fname, 'r')):
+for n, line in enumerate(open(fname, 'r')[:10000]):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines))
     split_line=np.array(line.split(" "), dtype=float) 
@@ -50,7 +50,7 @@ for n, line in enumerate(open(fname, 'r')):
     J[n]=int(split_line[4]);
 
 print("\nReading in data from file 2:");
-for n, line in enumerate(open(fname2, 'r')):
+for n, line in enumerate(open(fname2, 'r')[:10000]):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines2))
     split_line=np.array(line.split(" "), dtype=float) 
