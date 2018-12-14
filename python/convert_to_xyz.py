@@ -39,7 +39,7 @@ output_file = str(sys.argv[2])
 print("\n Using input file %s in Ra,Dec,z coordinates"%input_file)
 
 # Load the wcdm module from Daniel Eisenstein
-sys.path.insert(0, str(dirname)+'wcdm/')
+sys.path.insert(0, str(dirname)+'/wcdm/')
 import wcdm
 
 # Load in data:
