@@ -159,19 +159,19 @@ def owcdm(z, om, w, ok=0.0):
     c = 2.0*m/np.sqrt(om)
     rz = c * (om/ox)**m * incomplete_beta(m,0.5-m,xz,x0)
     if (ok==0):
-    propmotdis = rz
+        propmotdis = rz
     else:
-    # Now make the curvature corrections, up to 10th order in Ok/Om
-    # Stop when the contributions are small
-    for order in range(1,11):
-        m = (1.0+2*order)/(-6.0*w)
-        c *= -(2.0*order-1.0)/(2.0*order)*ok/om
-        delrz = c*(om/ox)**m * incomplete_beta(m,0.5+order-m,xz,x0)
-        rz += delrz
-        if (np.max(np.abs(delrz))<1e-7): break
-    # Compute the proper motion distance
-    if (ok>0): propmotdis = np.sinh(np.sqrt(ok)*rz)/np.sqrt(ok)
-    else: propmotdis = np.sin(np.sqrt(-ok)*rz)/np.sqrt(-ok)
+        # Now make the curvature corrections, up to 10th order in Ok/Om
+        # Stop when the contributions are small
+        for order in range(1,11):
+            m = (1.0+2*order)/(-6.0*w)
+            c *= -(2.0*order-1.0)/(2.0*order)*ok/om
+            delrz = c*(om/ox)**m * incomplete_beta(m,0.5+order-m,xz,x0)
+            rz += delrz
+            if (np.max(np.abs(delrz))<1e-7): break
+        # Compute the proper motion distance
+        if (ok>0): propmotdis = np.sinh(np.sqrt(ok)*rz)/np.sqrt(ok)
+        else: propmotdis = np.sin(np.sqrt(-ok)*rz)/np.sqrt(-ok)
     # Now return the answer
     return rz,propmotdis
 
