@@ -12,7 +12,7 @@ Output file format has (x,y,z,w) coordinates in Mpc/h units
 """
 
 import os
-dirname=os.path.dirname(os.path,realpath(__file__))
+dirname=os.path.dirname(os.path.realpath(__file__))
 print(dirname)
 
 import sys
