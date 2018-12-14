@@ -25,8 +25,8 @@ public:
 	// The radius beyond which the correlation function is set to zero
 	Float xicutoff = 400.0;
     
-	Float nofznorm=1198006; // for first dataset
-	Float nofznorm2=1198006; // for second dataset
+	Float nofznorm=618806; // for first dataset
+	Float nofznorm2=317780; // for second dataset
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
@@ -50,7 +50,7 @@ public:
 	int mbin = 10;
     
     // The number of threads to run on
-	int nthread=4;
+	int nthread=10;
 
 	// The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
@@ -65,10 +65,10 @@ public:
 
 	// The name of the input random particle files
 	char *fname = NULL;
-	const char default_fname[500] = "../random_particles/spherical_particles.txt"; // first set of random particles
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/DR12Data/random0_DR12v5_CMASS_North_comoving.txt"; // first set of random particles
 
     char *fname2 = NULL;
-    const char default_fname2[500] = "../random_particles/spherical_particles.txt"; // second set of random particles
+    const char default_fname2[500] = "/mnt/store1/oliverphilcox/DR12Data/random0_DR12v5_LOWZ_North_comoving.txt"; // second set of random particles
     
 	// The name of the correlation function file
 	char *corname = NULL;
@@ -120,7 +120,7 @@ public:
     bool multi_tracers;
     
     char *out_file = NULL;
-    const char default_out_file[500] = "MultiTracerTest/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/MultiTracerDR12/";
     
 	// Constructor
 	Parameters(int argc, char *argv[]){
