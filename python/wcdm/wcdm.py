@@ -22,8 +22,8 @@ owcdm(z,om,w,ok): Compute the comoving coordinate distance and proper motion dis
     Requires om<1 and ox=1-om-ok>0.
     Use om=0.99999 if you want om=1.
     Requires w<-1/3 if one is using the SciPy beta function, w<0 if using GSL
-     The curvature is treated only perturbatively; it will be fine for |Ok|<0.1,
-     but will start to produce noticeable offsets for Ok ~ Om.
+    The curvature is treated only perturbatively; it will be fine for |Ok|<0.1,
+    but will start to produce noticeable offsets for Ok ~ Om.
 
 coorddist(z, om, w, ok): owcdm() driver for comoving coordinate distance
 propmotdis(z, om, w, ok): owcdm() driver for proper motion distance
@@ -57,10 +57,10 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
