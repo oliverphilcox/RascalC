@@ -11,10 +11,6 @@ Output file format has (x,y,z,w) coordinates in Mpc/h units
 
 """
 
-import os
-dirname=os.path.dirname(os.path.realpath(__file__))
-print(dirname)
-
 import sys
 import numpy as np
 
@@ -31,14 +27,16 @@ else:
     print("Please specify input arguments in the form convert_to_xyz.py {INFILE} {OUTFILE} [{OMEGA_M} {OMEGA_K} {W_DARK_ENERGY}]")
     sys.exit()
 
-print("Using cosmological parameters as Omega_m = %.2f, Omega_k = %.2f, w = %.2f" %(omega_m,omega_k,w_dark_energy))
+print("\nUsing cosmological parameters as Omega_m = %.2f, Omega_k = %.2f, w = %.2f" %(omega_m,omega_k,w_dark_energy))
           
 # Load file names
 input_file = str(sys.argv[1])
 output_file = str(sys.argv[2])
-print("\n Using input file %s in Ra,Dec,z coordinates"%input_file)
+print("\nUsing input file %s in Ra,Dec,z coordinates\n"%input_file)
 
 # Load the wcdm module from Daniel Eisenstein
+import os
+dirname=os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, str(dirname)+'/wcdm/')
 import wcdm
 
@@ -71,9 +69,9 @@ all_z = comoving_radius_Mpc*np.cos(all_theta_rad)
 all_x = comoving_radius_Mpc*np.sin(all_theta_rad)*np.cos(all_phi_rad)
 all_y = comoving_radius_Mpc*np.sin(all_theta_rad)*np.sin(all_phi_rad)
 
-print("Writing to file:")
+print("Writing to file %s:"%output_file)
 # Now write to file:
 with open(output_file,"w+") as outfile:
     for p in range(len(all_z)):
         outfile.write("%.8f %.8f %.8f %.8f\n" %(all_x[p],all_y[p],all_z[p],all_w[p]))
-print("Written positions to file %s successfully"%output_file)
+print("Output positions written succesfully!")
