@@ -35,10 +35,6 @@ total_lines2=0
 for n, line in enumerate(open(fname2,'r')):
     total_lines2+=1
 
-
-total_lines=10000
-total_lines2=10000
-
 X,Y,Z,W,J=[np.zeros(total_lines) for _ in range(5)]
 X2,Y2,Z2,W2,J2=[np.zeros(total_lines2) for _ in range(5)]
 
@@ -46,8 +42,6 @@ print("\nReading in data from file 1:");
 for n, line in enumerate(open(fname, 'r')):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines))
-    if n>10000:
-        break;
     split_line=np.array(line.split(" "), dtype=float) 
     X[n]=split_line[0];
     Y[n]=split_line[1];
@@ -59,8 +53,6 @@ print("\nReading in data from file 2:");
 for n, line in enumerate(open(fname2, 'r')):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines2))
-    if n>10000:
-        break;
     split_line=np.array(line.split(" "), dtype=float) 
     X2[n]=split_line[0];
     Y2[n]=split_line[1];
@@ -120,7 +112,7 @@ if not periodic:
         
         # First compute contribution from JK region in data1 and all of data2:
         filt=np.where(J==j)
-        if len(filt)>0:
+        if len(filt[0])>0:
             cross_RR=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,Ra2,Dec2,com_dist2,weights1=W2,weight_type='pair_product',
                         RA2=Ra[filt],DEC2=Dec[filt],CZ2=com_dist[filt],weights2=W[filt],verbose=False,is_comoving_dist=True)
             # Weight by average particle weighting
@@ -128,7 +120,7 @@ if not periodic:
         
         # Now compute contribution from JK region in data2 and all of data1:
         filt2 = np.where(J2==j)
-        if len(filt2)>0:
+        if len(filt2[0])>0:
             cross_RR=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,Ra,Dec,com_dist,weights1=W,weight_type='pair_product',
                         RA2=Ra2[filt2],DEC2=Dec2[filt2],CZ2=com_dist2[filt2],weights2=W2[filt2],verbose=False,is_comoving_dist=True)
             # Weight by average particle weighting
@@ -149,7 +141,7 @@ else:
         # First compute contribution from JK region in data1 and all of data2:
         filt=np.where(J==j)
         print(filt,len(filt))
-        if len(filt)>0:
+        if len(filt[0])>0:
             cross_RR=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,X2,Y2,Z2,weights1=W2,weight_type='pair_product',
                            X2=X[filt],Y2=Y[filt],Z2=Z[filt],weights2=W[filt],periodic=False,verbose=False)
             # Weight by average particle weighting
@@ -157,7 +149,7 @@ else:
         
         # Now compute contribution from JK region in data2 and all of data1:
         filt2 = np.where(J2==j)
-        if len(filt2)>0:
+        if len(filt2[0])>0:
             cross_RR=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,X,Y,Z,weights1=W,weight_type='pair_product',
                            X2=X2[filt],Y2=Y2[filt],Z2=Z2[filt],weights2=W2[filt],periodic=False,verbose=False)
             # Weight by average particle weighting
