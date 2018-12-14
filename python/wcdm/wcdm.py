@@ -134,7 +134,8 @@ def wcdm_time(z, om, w):
     ox = 1-om
     if (np.min(ox)<0):
         print("Can't evaluate negative dark energies")
-    exit
+        import sys
+        sys.exit()
     xz = ox/(om*(1+z)**(-3.0*w)+ox)
     m = 1.0/(-2.0*w)
     return np.where(ox==0, 2.0/3.0*np.power(1+z,-1.5),
