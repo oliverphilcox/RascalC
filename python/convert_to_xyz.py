@@ -11,6 +11,10 @@ Output file format has (x,y,z,w) coordinates in Mpc/h units
 
 """
 
+import os
+
+print("CWD::",os.getcwd())
+
 import sys
 import numpy as np
 
