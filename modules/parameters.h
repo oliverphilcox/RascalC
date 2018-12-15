@@ -92,7 +92,7 @@ public:
     const char default_jk_weight_file2[500] = "/mnt/store1/oliverphilcox/DR12_weights/weightfiles_lowz/jackknife_weights_n36_m10_j228.dat";
     
     char *jk_weight_file12 = NULL; // w_{aA}^{12} weights
-    const char default_jk_weight_file12[500] = "/mnt/store1/oliverphilcox/DR12_weights/weightfiles_cmass_lowz/jackknife_weights_n36_m10_j331.dat";
+    const char default_jk_weight_file12[500] = "/mnt/store1/oliverphilcox/DR12_weights/weight_files_cmass_lowz/jackknife_weights_n36_m10_j331.dat";
     
     // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
@@ -102,7 +102,7 @@ public:
     const char default_RR_bin_file2[500] = "/mnt/store1/oliverphilcox/DR12_weights/weightfiles_lowz/binned_pair_counts_n36_m10_j228.dat";
     
     char *RR_bin_file12 = NULL; // RR_{aA}^{12} file
-    const char default_RR_bin_file12[500] = "/mnt/store1/oliverphilcox/DR12_weights/weightfiles_cmass_lowz/binned_pair_counts_n36_m10_j331.dat";
+    const char default_RR_bin_file12[500] = "/mnt/store1/oliverphilcox/DR12_weights/weight_files_cmass_lowz/binned_pair_counts_n36_m10_j331.dat";
     
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=5;//10; 
