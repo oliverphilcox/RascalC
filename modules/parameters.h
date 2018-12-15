@@ -31,7 +31,7 @@ public:
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 101;
+	int nside = 301;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
