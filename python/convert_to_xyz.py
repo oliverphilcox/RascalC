@@ -1,10 +1,9 @@
-"""Convenience script to convert an input (Ra,Dec,w) FITS file to comoving (x,y,z) coordinates saved as a .txt file for use with the main C++ code. (Oliver Philcox 2018, using Daniel Eisenstein's 2015 WCDM Coordinate Converter).
+"""Convenience script to convert an input (Ra,Dec,w) FITS or txt file to comoving (x,y,z) coordinates saved as a .txt file for use with the main C++ code. (Oliver Philcox 2018, using Daniel Eisenstein's 2015 WCDM Coordinate Converter).
 Output file format has (x,y,z,w) coordinates in Mpc/h units 
 
     Parameters:
         INFILE = input fits/csv/txt/dat file
         OUTFILE = output .txt or .csv file specifier
-        FILETYPE = specifies the filetype. Must be 'fits'/'txt'/'csv'/'dat'
         ---OPTIONAL---
         OMEGA_M = Matter density (default 0.31)
         OMEGA_K = Curvature density (default 0.0)
@@ -16,16 +15,16 @@ import sys
 import numpy as np
 
 # Read in optional cosmology parameters
-if len(sys.argv)==7:
-    omega_m = float(sys.argv[4])
-    omega_k = float(sys.argv[5])
-    w_dark_energy = float(sys.argv[6])
-elif len(sys.argv)==4: # use defaults (from the BOSS DR12 2016 clustering paper assuming LCDM)
+if len(sys.argv)==6:
+    omega_m = float(sys.argv[3])
+    omega_k = float(sys.argv[4])
+    w_dark_energy = float(sys.argv[5])
+elif len(sys.argv)==3: # use defaults (from the BOSS DR12 2016 clustering paper assuming LCDM)
     omega_m = 0.31
     omega_k = 0.
     w_dark_energy = -1.
 else:
-    print("Please specify input arguments in the form convert_to_xyz.py {INFILE} {OUTFILE} {FILETYPE} [{OMEGA_M} {OMEGA_K} {W_DARK_ENERGY}]")
+    print("Please specify input arguments in the form convert_to_xyz.py {INFILE} {OUTFILE} [{OMEGA_M} {OMEGA_K} {W_DARK_ENERGY}]")
     sys.exit()
 
 print("\nUsing cosmological parameters as Omega_m = %.2f, Omega_k = %.2f, w = %.2f" %(omega_m,omega_k,w_dark_energy))
@@ -43,14 +42,14 @@ sys.path.insert(0, str(dirname)+'/wcdm/')
 import wcdm
 
 # Load in data:
-if filetype=='fits':
+if input_file.lower().endswith('.fits'):
     from astropy.io import fits
     fitsfile=fits.open(input_file)[1]
     all_ra=fitsfile.data['RA']
     all_dec=fitsfile.data['DEC']
     all_z=fitsfile.data['Z']
     all_w=fitsfile.data['WEIGHT_FKP']
-elif ((filetype=='dat')or(filetype=='txt')or(filetype=='csv')):
+elif input_file.lower().endswith(('.txt', '.dat', '.csv')):
     print("Counting lines in file")
     total_lines=0
     for n, line in enumerate(open(input_file, 'r')):
@@ -68,7 +67,7 @@ elif ((filetype=='dat')or(filetype=='txt')or(filetype=='csv')):
         all_z[n]=split_line[2];
         all_w[n]=split_line[3];
 else: 
-    print("Must specify filetype as 'txt', 'csv', 'dat' or 'fits'")
+    print("Input file must be of the form 'txt', 'csv', 'dat' or 'fits'")
     sys.exit()
     
 from astropy.constants import c as c_light
