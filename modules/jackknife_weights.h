@@ -42,6 +42,15 @@ public:
         }
     }
     
+    void rescale(Float n_gal1, Float n_gal2, int n_rand1, int n_rand2){
+        // Rescale the RR pair counts by a factor (N_gal1/N_rand1)*(N_gal2/N_rand2)
+        Float rescale_factor = (n_gal1*n_gal2)/(float(n_rand1)*float(n_rand2));
+        printf("Rescaling RR pair counts by a factor (N_gal_1/N_rand_1)*(N_gal2/N_rand2) = %.1e\n",rescale_factor);
+        for(int i=0;i<nbins;i++){
+            RR_pair_counts[i]*=rescale_factor;
+        }
+    }
+    
 public:
     ~JK_weights() {
         // The destructor
@@ -73,6 +82,7 @@ public:
         FILE *fp2;
         char *jk_file;
         char *RR_file;
+        
         if((index1==1)&&(index2==1)){
             jk_file=par->jk_weight_file;
             RR_file = par->RR_bin_file;

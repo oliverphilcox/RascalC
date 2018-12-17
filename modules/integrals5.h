@@ -523,7 +523,6 @@ public:
     
     void normalize(Float norm1, Float norm2, Float norm3, Float norm4, Float n_pairs, Float n_triples, Float n_quads, bool use_RR){
         // Normalize the accumulated integrals (partly done by the normalising probabilities used from the selected cubes)
-        // np is the number of random particles used, ngal is the number of galaxies in the survey
         // n_pair etc. are the number of PARTICLE pairs etc. attempted (not including rejected cells, but including pairs which don't fall in correct bin ranges)
         // If use_RR=True, we normalize by RR_a, RR_b also
         // To avoid recomputation
