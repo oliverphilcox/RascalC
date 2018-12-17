@@ -2,8 +2,9 @@
 Output file format has (x,y,z,w) coordinates in Mpc/h units 
 
     Parameters:
-        INFILE = input fits file
+        INFILE = input fits/csv/txt/dat file
         OUTFILE = output .txt or .csv file specifier
+        FILETYPE = specifies the filetype. Must be 'fits'/'txt'/'csv'/'dat'
         ---OPTIONAL---
         OMEGA_M = Matter density (default 0.31)
         OMEGA_K = Curvature density (default 0.0)
@@ -15,16 +16,16 @@ import sys
 import numpy as np
 
 # Read in optional cosmology parameters
-if len(sys.argv)==6:
-    omega_m = float(sys.argv[3])
-    omega_k = float(sys.argv[4])
-    w_dark_energy = float(sys.argv[5])
-elif len(sys.argv)==3: # use defaults (from the BOSS DR12 2016 clustering paper assuming LCDM)
+if len(sys.argv)==7:
+    omega_m = float(sys.argv[4])
+    omega_k = float(sys.argv[5])
+    w_dark_energy = float(sys.argv[6])
+elif len(sys.argv)==4: # use defaults (from the BOSS DR12 2016 clustering paper assuming LCDM)
     omega_m = 0.31
     omega_k = 0.
     w_dark_energy = -1.
 else:
-    print("Please specify input arguments in the form convert_to_xyz.py {INFILE} {OUTFILE} [{OMEGA_M} {OMEGA_K} {W_DARK_ENERGY}]")
+    print("Please specify input arguments in the form convert_to_xyz.py {INFILE} {OUTFILE} {FILETYPE} [{OMEGA_M} {OMEGA_K} {W_DARK_ENERGY}]")
     sys.exit()
 
 print("\nUsing cosmological parameters as Omega_m = %.2f, Omega_k = %.2f, w = %.2f" %(omega_m,omega_k,w_dark_energy))
@@ -32,6 +33,7 @@ print("\nUsing cosmological parameters as Omega_m = %.2f, Omega_k = %.2f, w = %.
 # Load file names
 input_file = str(sys.argv[1])
 output_file = str(sys.argv[2])
+filetype = str(sys.argv[3])
 print("\nUsing input file %s in Ra,Dec,z coordinates\n"%input_file)
 
 # Load the wcdm module from Daniel Eisenstein
@@ -41,14 +43,23 @@ sys.path.insert(0, str(dirname)+'/wcdm/')
 import wcdm
 
 # Load in data:
-from astropy.io import fits
-fitsfile=fits.open(input_file)[1]
-
-all_ra=fitsfile.data['RA']
-all_dec=fitsfile.data['DEC']
-all_z=fitsfile.data['Z']
-all_w=fitsfile.data['WEIGHT_FKP']
-
+if filetype=='fits':
+    from astropy.io import fits
+    fitsfile=fits.open(input_file)[1]
+    all_ra=fitsfile.data['RA']
+    all_dec=fitsfile.data['DEC']
+    all_z=fitsfile.data['Z']
+    all_w=fitsfile.data['WEIGHT_FKP']
+elif ((filetype=='dat')or(filetype=='txt')or(filetype=='csv')):
+    infile = np.loadtxt(input_file)
+    all_ra = infile[:,0]
+    all_dec = infile[:,1]
+    all_z = infile[:,2]
+    all_w = infile[:,3]
+else: 
+    print("Must specify filetype as 'txt', 'csv', 'dat' or 'fits'")
+    sys.exit()
+    
 from astropy.constants import c as c_light
 import astropy.units as u
 
