@@ -60,7 +60,6 @@ elif input_file.lower().endswith(('.txt', '.dat', '.csv')):
     for n, line in enumerate(open(input_file, 'r')):
         if n%1000000==0:
             print("Reading line %d of %d" %(n,total_lines))
-        print(line.strip().split("   "))
         split_line=np.array(line.strip().split("   "), dtype=float) 
         all_ra[n]=split_line[0];
         all_dec[n]=split_line[1];
