@@ -62,7 +62,7 @@ elif ((filetype=='dat')or(filetype=='txt')or(filetype=='csv')):
     for n, line in enumerate(open(input_file, 'r')):
         if n%1000000==0:
             print("Reading line %d of %d" %(n,total_lines))
-        split_line=np.array(line.split(" "), dtype=float) 
+        split_line=np.array(line.split("\t"), dtype=float) 
         all_ra[n]=split_line[0];
         all_dec[n]=split_line[1];
         all_z[n]=split_line[2];
