@@ -62,16 +62,11 @@ elif ((filetype=='dat')or(filetype=='txt')or(filetype=='csv')):
     for n, line in enumerate(open(input_file, 'r')):
         if n%1000000==0:
             print("Reading line %d of %d" %(n,total_lines))
-        split_line=np.array(line.split("\t"), dtype=float) 
+        split_line=np.array(line.strip().split("  "), dtype=float) 
         all_ra[n]=split_line[0];
         all_dec[n]=split_line[1];
         all_z[n]=split_line[2];
         all_w[n]=split_line[3];
-    #infile = np.loadtxt(input_file)
-    #all_ra = infile[:,0]
-    #all_dec = infile[:,1]
-    #all_z = infile[:,2]
-    #all_w = infile[:,3]
 else: 
     print("Must specify filetype as 'txt', 'csv', 'dat' or 'fits'")
     sys.exit()
