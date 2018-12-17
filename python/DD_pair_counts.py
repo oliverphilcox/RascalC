@@ -96,7 +96,7 @@ else:
     print("Using periodic input data");
     from Corrfunc.theory.DDsmu import DDsmu
     
-    RR_aA=np.zeros([N_jack,nrbins*nmu_bins]);
+    DD_aA=np.zeros([N_jack,nrbins*nmu_bins]);
 
     # Iterate over jackknife regions
     for i,j in enumerate(J_regions):
@@ -123,5 +123,5 @@ with open(outdir+outfile,"w+") as outfile:
             outfile.write("%s\t" %DD_aA[j_id,i])
         outfile.write("\n");
         
-print("Jackknife weights and binned pair counts written successfully to the %s directory"%outdir)
+print("DD pair counts written successfully to the %s directory"%outdir)
         
