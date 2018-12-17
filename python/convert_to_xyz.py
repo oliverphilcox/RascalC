@@ -32,7 +32,6 @@ print("\nUsing cosmological parameters as Omega_m = %.2f, Omega_k = %.2f, w = %.
 # Load file names
 input_file = str(sys.argv[1])
 output_file = str(sys.argv[2])
-filetype = str(sys.argv[3])
 print("\nUsing input file %s in Ra,Dec,z coordinates\n"%input_file)
 
 # Load the wcdm module from Daniel Eisenstein
@@ -61,6 +60,7 @@ elif input_file.lower().endswith(('.txt', '.dat', '.csv')):
     for n, line in enumerate(open(input_file, 'r')):
         if n%1000000==0:
             print("Reading line %d of %d" %(n,total_lines))
+        print(line.strip().split("  "))
         split_line=np.array(line.strip().split("  "), dtype=float) 
         all_ra[n]=split_line[0];
         all_dec[n]=split_line[1];
