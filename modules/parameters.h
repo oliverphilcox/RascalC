@@ -38,7 +38,7 @@ public:
 
 	// Will be number of particles in a random distribution,
 	// but gets overwritten if reading from a file.
-	int np = -1;
+	int np = -1; // NB: This isn't actually used in the code after the creation of the grid, so we don't need to create a separate variable for the second set of randoms
 
 	// Whether to balance the weights or multiply them by -1
 	int qbalance = 0, qinvert = 0;

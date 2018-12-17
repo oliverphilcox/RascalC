@@ -84,7 +84,6 @@ int main(int argc, char *argv[]) {
         no_fields=2;
     }
     
-    
     // Read in jackknife weights and RR pair counts
     JK_weights all_weights[max_no_functions]; // create empty functions
 
@@ -158,6 +157,13 @@ int main(int argc, char *argv[]) {
         free(orig_p); // Particles are now only stored in grid
         
         fflush(NULL);
+    }
+    
+    // Now rescale weights based on number of particles
+    all_weights[0].rescale(par.nofznorm,par.nofznorm,all_grid[0].np,all_grid[0].np);
+    if(par.multi_tracers==true){
+        all_weights[1].rescale(par.nofznorm2,par.nofznorm2,all_grid[1].np,all_grid[1].np);
+        all_weights[2].rescale(par.nofznorm,par.nofznorm2,all_grid[0].np,all_grid[1].np);
     }
     
     // Now define all possible correlation functions and random draws:
