@@ -31,7 +31,7 @@ public:
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 401;
+	int nside = 101;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
@@ -55,7 +55,7 @@ public:
 	// The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
 	// The location and name of a integrated grid of probabilities to be loaded
-	char *loadname = NULL; //	"ProbListGrid100box10-corfu.dat"
+	char *loadname = NULL; //	
 
 	// The index from which on to invert the sign of the weights
 	int rstart=0;
