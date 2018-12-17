@@ -25,7 +25,7 @@ public:
 	// The radius beyond which the correlation function is set to zero
 	Float xicutoff = 400.0;
     
-	Float nofznorm=0.05044021885884742*32292068; // for first dataset
+	Float nofznorm=0.05044021885884742*6500000; // for first dataset
 	Float nofznorm2=0; // for second dataset
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
@@ -65,7 +65,7 @@ public:
 
 	// The name of the input random particle files
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/CMU/QPM for Oliver/QPM_50X_Randoms/randoms_xyzwj.txt"; // first set of random particles
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/CMU/randoms_10x_CMASS_N_xyzwj.txt"; // first set of random particles
 
     char *fname2 = NULL;
     const char default_fname2[500] = ""; // second set of random particles
