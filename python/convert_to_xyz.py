@@ -51,11 +51,27 @@ if filetype=='fits':
     all_z=fitsfile.data['Z']
     all_w=fitsfile.data['WEIGHT_FKP']
 elif ((filetype=='dat')or(filetype=='txt')or(filetype=='csv')):
-    infile = np.loadtxt(input_file)
-    all_ra = infile[:,0]
-    all_dec = infile[:,1]
-    all_z = infile[:,2]
-    all_w = infile[:,3]
+    print("Counting lines in file")
+    total_lines=0
+    for n, line in enumerate(open(input_file, 'r')):
+        total_lines+=1
+
+    all_ra,all_dec,all_z,all_w=[np.zeros(total_lines) for _ in range(4)]
+
+    print("Reading in data");
+    for n, line in enumerate(open(input_file, 'r')):
+        if n%1000000==0:
+            print("Reading line %d of %d" %(n,total_lines))
+        split_line=np.array(line.split(" "), dtype=float) 
+        all_ra[n]=split_line[0];
+        all_dec[n]=split_line[1];
+        all_z[n]=split_line[2];
+        all_w[n]=split_line[3];
+    #infile = np.loadtxt(input_file)
+    #all_ra = infile[:,0]
+    #all_dec = infile[:,1]
+    #all_z = infile[:,2]
+    #all_w = infile[:,3]
 else: 
     print("Must specify filetype as 'txt', 'csv', 'dat' or 'fits'")
     sys.exit()
