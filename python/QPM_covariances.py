@@ -36,8 +36,8 @@ if False:
     this_time = time.time()-init
     print("\n\nMean of mocks finished after %d seconds (%.2f minutes = %.2f hours)\n\n"%(this_time,this_time/60.,this_time/3600.))
 
-min_QPM = 20
-max_QPM = 50
+min_QPM = 1
+max_QPM = 20
 for index in range(min_QPM,max_QPM+1):
     # Iterate over QPM index
     root_dir_m = '/mnt/store1/oliverphilcox/CMU/QPM for Oliver/QPM_Pairs_Mariana/'
@@ -48,7 +48,7 @@ for index in range(min_QPM,max_QPM+1):
     # Define parameters
     N_gal =this_factor*6500000; 
     xi_file_ind = "/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mock_%d.xi"%(index+1)
-    outfile = "/mnt/store1/oliverphilcox/CMU/QPM_Covariances/Mock_%d/"%(index+1)
+    outfile = "/mnt/store1/oliverphilcox/CMU/QPM_Covariances3/Mock_%d/"%(index+1)
     
     # Run the code with the correct parameters:
     print("RUNNING FOR INDEX %d OF %d\n\n"%(index+1,max_QPM))

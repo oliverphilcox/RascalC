@@ -65,7 +65,7 @@ public:
 
 	// The name of the input random particle files
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/CMU/randoms_10x_CMASS_N_xyzwj.txt"; // first set of random particles
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/CMU/randoms_10x_correct_Om_CMASS_N_xyzwj.txt"; // first set of random particles
 
     char *fname2 = NULL;
     const char default_fname2[500] = ""; // second set of random particles
@@ -86,7 +86,7 @@ public:
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/CMU/weightfiles/jackknife_weights_n36_m10_j169.dat";//169.dat";
+    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/CMU/weightfiles_corrOm/jackknife_weights_n36_m10_j169.dat";//169.dat";
     
     char *jk_weight_file2 = NULL; // w_{aA}^{22} weightsz
     const char default_jk_weight_file2[500] = "";
@@ -96,7 +96,7 @@ public:
     
     // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/CMU/weightfiles/binned_pair_counts_n36_m10_j169.dat";//;169.dat";
+    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/CMU/weightfiles_corrOm/binned_pair_counts_n36_m10_j169.dat";//;169.dat";
     
     char *RR_bin_file2 = NULL; // RR_{aA}^{22} file
     const char default_RR_bin_file2[500] = "";
@@ -105,7 +105,7 @@ public:
     const char default_RR_bin_file12[500] = "";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=10;//10; 
+    int max_loops=20;//10; 
     int N2 = 10;//20;//20; // number of j cells per i cell
     int N3 = 10;//25;//25; // number of k cells per j cell
     int N4 = 20;//50;//50; // number of l cells per k cell
