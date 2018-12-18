@@ -34,22 +34,24 @@ subprocess.run(["./cov","-norm", "%.8f"%N_gal,"-cor",xi_file,"-output",outfile],
 this_time = time.time()-init
 print("\n\nMean of mocks finished after %d seconds (%.2f minutes = %.2f hours)\n\n"%(this_time,this_time/60.,this_time/3600.))
 
-max_QPM = 30
-for index in range(10,max_QPM):
+max_QPM = 20
+for index in range(max_QPM):
     # Iterate over QPM index
     root_dir_m = '/mnt/store1/oliverphilcox/CMU/QPM for Oliver/QPM_Pairs_Mariana/'
     mfile_norms = root_dir_m+'qpm-unrecon-%s-norm.dat'%str(index+1).zfill(4)
     norms_M = np.loadtxt(mfile_norms,usecols=1)
-    factor = norms_M[0]/norms_M[1]
+    this_factor = norms_M[0]/norms_M[1]
     
     # Define parameters
-    N_gal =factor*6500000; 
-    xi_file = "/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mock_%d.xi"%(index+1)
+    N_gal =this_factor*6500000; 
+    xi_file_ind = "/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mock_%d.xi"%(index+1)
     outfile = "/mnt/store1/oliverphilcox/CMU/QPM_Covariances/Mock_%d/"%(index+1)
     
     # Run the code with the correct parameters:
     print("RUNNING FOR INDEX %d OF %d\n\n"%(index+1,max_QPM))
-    subprocess.run(["./cov","-norm", "%.8f"%N_gal,"-cor",xi_file,"-output",outfile],cwd=cwd)
+    subprocess.run(["bash","clean"],cwd=cwd) # clean + recompile for safety
+    subprocess.run(["make"],cwd=cwd)
+    subprocess.run(["./cov","-norm", "%.8f"%N_gal,"-cor",xi_file_ind,"-output",outfile],cwd=cwd)
     
     this_time = time.time()-init
     print("\n\Mock index %d of %d finished after %d seconds (%.2f minutes = %.2f hours)\n\n"%(index+1,max_QPM,this_time,this_time/60.,this_time/3600.))
