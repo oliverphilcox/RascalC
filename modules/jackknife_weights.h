@@ -68,6 +68,9 @@ public:
     //    JK->copy(&weights, &filled_JKs, &RR_pair_counts, n_JK_filled, nbins, &product_weights);
     //}
     
+    // Assignment operator creation
+    JK_weights& operator=(const JK_weights& jk);
+    
     JK_weights(Parameters *par, int index1, int index2){
         
         // This reads in weights for each jackknife region for each bin from file.
@@ -76,7 +79,7 @@ public:
         // index1 and index2 define which random set of particles to use here
         
         nbins = par->nbin*par->mbin; // define number of bins in total
-        char line[100000];
+        char line[1000000];
         n_JK_filled = 0; // line number
         FILE *fp;
         FILE *fp2;
@@ -109,7 +112,7 @@ public:
             
         fprintf(stderr,"\nReading jackknife file '%s' and RR bin count file '%s'\n",jk_file,RR_file);
         // Count lines to construct the correct size
-        while (fgets(line,100000,fp)!=NULL){
+        while (fgets(line,1000000,fp)!=NULL){
             if (line[0]=='#') continue; // comment line
             if (line[0]=='\n') continue;
             n_JK_filled++;
@@ -131,7 +134,7 @@ public:
         int counter; // counts which element in line
         
         // Read in values to file
-        while (fgets(line,100000,fp)!=NULL) {
+        while (fgets(line,1000000,fp)!=NULL) {
             // Select required lines in file
             if (line[0]=='#') continue;
             if (line[0]=='\n') continue;
@@ -173,16 +176,34 @@ public:
         printf("Read in RR pair counts successfully.\n");
         
         // Compute SUM_A(w_aA*w_bA) for all jackknives
+        int partial_bin=0,partial_bin2;
+        Float this_weight;
+        for (int x=0;x<n_JK_filled;x++){
+            printf("Computing product weights for jackknife %d of %d\n",x+1,n_JK_filled);
+            partial_bin2=0;
+            for(int bin_a=0;bin_a<nbins;bin_a++){
+                this_weight=weights[partial_bin+bin_a];
+                for(int bin_b=0;bin_b<nbins;bin_b++){
+                    product_weights[partial_bin2+bin_b]+=this_weight*weights[partial_bin+bin_b];
+                }
+                partial_bin2+=nbins;
+            }
+            partial_bin+=nbins;
+        }
+        
+        /*Float tmp_product;
+        int partial_bin;
         for (int bin_a=0;bin_a<nbins;bin_a++){
             for (int bin_b=0;bin_b<nbins;bin_b++){
-                Float tmp_product=0.;
+                tmp_product=0.;
                 for (int x=0;x<n_JK_filled;x++){ // sum over jackknives
                     tmp_product+=weights[x*nbins+bin_a]*weights[x*nbins+bin_b];
                 product_weights[bin_a*nbins+bin_b]=tmp_product;
                 }
             }
         }
-        
+        */
+        printf("Computed product weights successfully.\n");        
     }
 };
   

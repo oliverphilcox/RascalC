@@ -148,12 +148,48 @@
             
             
             
+    // --------Compute product weights----------------------
+            printf("Computing product weights:\n");
+            Float *product_weights12_12, *product_weights12_23, *product_weights12_34; // arrays to get products of jackknife weights to avoid recomputation
+            int nbins=nbin*mbin;
+            if(par->multi_tracers==false){
+                product_weights12_12=JK12->product_weights;
+                product_weights12_23=JK12->product_weights;
+                product_weights12_34=JK12->product_weights;
+            }
+            else{
+                product_weights12_12 = (Float *)malloc(sizeof(Float)*nbins*nbins);
+                product_weights12_23 = (Float *)malloc(sizeof(Float)*nbins*nbins);
+                product_weights12_34 = (Float *)malloc(sizeof(Float)*nbins*nbins);
+                printf("NOT COMPUTED PRODUCT WEIGHTS PROPERLY YET!");
+                exit(1);
+            }
+            
+            printf("Computed relevant product weights\n");
+            /*
+            // Compute SUM_A(w_aA*w_bA) for all jackknives
+            NB: How do we treat the different numbers of jackknives? And do they index the same things??
+            for (int bin_a=0;bin_a<nbins;bin_a++){
+                for (int bin_b=0;bin_b<nbins;bin_b++){
+                    Float tmp_product12_12=0.,tmp_product12_23=0.,tmp_product12_34=0.;
+                    for (int x=0;x<JK12->n_JK_filled;x++){ // sum over jackknives
+                        tmp_product12_12+=JK12->weights[x*nbins+bin_a]*JK12->weights[x*nbins+bin_b];
+                        tmp_product12_23+=JK12->weights[x*nbins+bin_a]*JK23->weights[x*nbins+bin_b];
+                        tmp_product12_34+=JK12->weights[x*nbins+bin_a]*JK34->weights[x*nbins+bin_b];
+                    product_weights12_12[bin_a*nbins+bin_b]=tmp_product12_12;
+                    product_weights12_23[bin_a*nbins+bin_b]=tmp_product12_23;
+                    product_weights12_34[bin_a*nbins+bin_b]=tmp_product12_34;
+                    }
+                }
+            }*/
+            
     //-----------INITIALIZE OPENMP + CLASSES----------
             std::random_device urandom("/dev/urandom");
             std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
             unsigned long int steps = dist(urandom);        
             gsl_rng_env_setup(); // initialize gsl rng
-            Integrals5 sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // total integral
+            Integrals5 sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4,product_weights12_12,product_weights12_23,product_weights12_34); // total integral
+            printf("Created global integrals class\n");
             
             uint64 tot_pairs=0, tot_triples=0, tot_quads=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
             uint64 cell_attempt2=0,cell_attempt3=0,cell_attempt4=0; // number of j,k,l cells attempted
@@ -168,10 +204,12 @@
             printf("# Max points in one cell in grid 1%d\n",grid1->maxnp);
             fflush(NULL);
             
+            
+            
             TotalTime.Start(); // Start timer
             
     #ifdef OPENMP       
-    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
             { // start parallel loop
             // Decide which thread we are in
             int thread = omp_get_thread_num();
@@ -199,7 +237,8 @@
             integer3 delta2, delta3, delta4, prim_id, sec_id, thi_id;
             Float3 cell_sep2,cell_sep3;
             
-            Integrals5 locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // Accumulates the integral contribution of each thread
+            printf("Creating local integrals class:\n");
+            Integrals5 locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4, product_weights12_12, product_weights12_23, product_weights12_34); // Accumulates the integral contribution of each thread
             
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
             gsl_rng_set(locrng, steps*(thread+1));
@@ -335,13 +374,13 @@
                     if((frob_C4<0.01)&&(frob_C4j<0.01)) convergence_counter++;
                     
                     // Report N_eff for the integrals:
-                    Float N_eff, N_eff_jack;
-                    sumint.compute_Neff((Float)tot_quads, (Float)tot_triples, (Float)tot_pairs, N_eff, N_eff_jack);
+                    //Float N_eff, N_eff_jack;
+                    //sumint.compute_Neff((Float)tot_quads, (Float)tot_triples, (Float)tot_pairs, N_eff, N_eff_jack);
                     
                     if (n_loops!=0){
                         fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
                         fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n",n_loops,frob_C2j, frob_C3j, frob_C4j);
-                        fprintf(stderr,"N_eff estimate: %.3e (C4) %.3e (C4j) \n", N_eff, N_eff_jack);
+                     //   fprintf(stderr,"N_eff estimate: %.3e (C4) %.3e (C4j) \n", N_eff, N_eff_jack);
                     }
                 }
                 

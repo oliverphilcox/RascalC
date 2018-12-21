@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
         }
 
         printf("# Done gridding the particles\n");
-        printf("# %d particles in use, %d with positive weight\n", tmp_grid.np, all_grid[index].np_pos);
+        printf("# %d particles in use, %d with positive weight\n", tmp_grid.np, tmp_grid.np_pos);
         printf("# Weights: Positive particles sum to %f\n", tmp_grid.sumw_pos);
         printf("#          Negative particles sum to %f\n", tmp_grid.sumw_neg);
 
