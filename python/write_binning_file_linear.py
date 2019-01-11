@@ -4,7 +4,7 @@ import sys
 import numpy as np
 
 if len(sys.argv)<5:
-    print "Please specify input parameters in the form {N_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}."
+    print("Please specify input parameters in the form {N_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}.")
     sys.exit()
 nrbins = int(sys.argv[1])
 r_min = float(sys.argv[2])
@@ -17,8 +17,8 @@ print("Using LINEAR binning");
 rbins = np.linspace(r_min,r_max,nrbins+1)
 
 # PRINT binning:
-with file(out_file,'w+') as writefile:
+with open(out_file,'w+') as writefile:
     for i in range(nrbins-1):
         writefile.write("%.8f\t%.8f\n" %(rbins[i],rbins[i+1]))
     writefile.write("%.8f\t%.8f" %(rbins[nrbins-1],rbins[nrbins]))
-print "Binning file '%s' written successfully."%out_file
+print("Binning file '%s' written successfully."%out_file)
