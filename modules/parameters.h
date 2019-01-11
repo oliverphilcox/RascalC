@@ -25,7 +25,7 @@ public:
 	// The radius beyond which the correlation function is set to zero
 	Float xicutoff = 400.0;
     
-	Float nofznorm=327134;//323221;//0.05044021885884742*6500000; // for first dataset
+	Float nofznorm=-1;//323221;//0.05044021885884742*6500000; // for first dataset
 	Float nofznorm2=0; // for second dataset
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
@@ -47,7 +47,7 @@ public:
 	uint64 nmax = 1000000000000;
 
     // The number of mu bins
-	int mbin = 10;
+	int mbin = 24;
     
     // The number of threads to run on
 	int nthread=10;
@@ -72,7 +72,7 @@ public:
     
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mean.xi"; // xi_11 file
+	const char default_corname[500] = "none";//"/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mean.xi"; // xi_11 file
     
     char *corname2 = NULL; // xi_22 file
     const char default_corname2[500] = "";
@@ -82,11 +82,11 @@ public:
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/home/oliverphilcox/COMAJE/python/binfile_linear.csv";
+    const char default_radial_bin_file[500] = "/home/oliverphilcox/COMAJE/python/hybrid_binfile_cut.csv";//binfile_linear.csv";
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/CMU/weightfiles/jackknife_weights_n36_m10_j169.dat";//corrOm/jackknife_weights_n36_m10_j169.dat";//169.dat";
+    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/QPM_weights/jackknife_weights_n39_m24_j169.dat";//corrOm/jackknife_weights_n36_m10_j169.dat";//169.dat";
     
     char *jk_weight_file2 = NULL; // w_{aA}^{22} weightsz
     const char default_jk_weight_file2[500] = "";
@@ -96,7 +96,7 @@ public:
     
     // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/CMU/weightfiles/binned_pair_counts_n36_m10_j169.dat";//weightfiles_corrOm/binned_pair_counts_n36_m10_j169.dat";//;169.dat";
+    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/QPM_weights/binned_pair_counts_n39_m24_j169.dat";//weightfiles_corrOm/binned_pair_counts_n36_m10_j169.dat";//;169.dat";
     
     char *RR_bin_file2 = NULL; // RR_{aA}^{22} file
     const char default_RR_bin_file2[500] = "";
@@ -105,10 +105,10 @@ public:
     const char default_RR_bin_file12[500] = "";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=100;//10; 
+    int max_loops=10;//10; 
     int N2 = 10;//20;//20; // number of j cells per i cell
     int N3 = 20;//25;//25; // number of k cells per j cell
-    int N4 = 40;//50;//50; // number of l cells per k cell
+    int N4 = 20;//50;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
@@ -120,7 +120,7 @@ public:
     bool multi_tracers;
     
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/CMU/QPM_Mean100_HiRes/";
+    const char default_out_file[500] = "none";///mnt/store1/oliverphilcox/CMU/QPM_Mean100_HiRes/";
     
 	// Constructor
 	Parameters(int argc, char *argv[]){
