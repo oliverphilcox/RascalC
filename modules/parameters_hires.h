@@ -25,7 +25,7 @@ public:
 	// The radius beyond which the correlation function is set to zero
 	Float xicutoff = 400.0;
     
-	Float nofznorm=327134;//323221;//0.05044021885884742*6500000; // for first dataset
+	Float nofznorm=323221;//327134;//323221;//0.05044021885884742*6500000; // for first dataset
 	Float nofznorm2=0; // for second dataset
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
@@ -72,7 +72,7 @@ public:
     
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mean.xi"; // xi_11 file
+	const char default_corname[500] = "/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mock_1.xi"; // xi_11 file
     
     char *corname2 = NULL; // xi_22 file
     const char default_corname2[500] = "";
@@ -107,7 +107,7 @@ public:
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=100;//10; 
     int N2 = 10;//20;//20; // number of j cells per i cell
-    int N3 = 20;//25;//25; // number of k cells per j cell
+    int N3 = 10;//25;//25; // number of k cells per j cell
     int N4 = 40;//50;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
@@ -120,7 +120,7 @@ public:
     bool multi_tracers;
     
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/CMU/QPM_Mean100_HiRes/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/CMU/QPM_Mock1_HiRes/";
     
 	// Constructor
 	Parameters(int argc, char *argv[]){
