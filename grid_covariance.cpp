@@ -87,6 +87,7 @@ int main(int argc, char *argv[]) {
     // Read in jackknife weights and RR pair counts
     JK_weights all_weights[max_no_functions]; // create empty functions
 
+    
     //TODO: Remove true
     if(true){ 
         JK_weights tmp(&par,1,1);

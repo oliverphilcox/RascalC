@@ -27,8 +27,8 @@ if True:
         
     # Now run code for the mean of the mocks
     N_gal = np.mean(all_N_gal)
-    xi_file = "/mnt/store1/oliverphilcox/QPM_xi/QPM_mean.xi"
-    outfile = "/mnt/store1/oliverphilcox/QPMCovariance/Mean/"
+    xi_file = "/mnt/store1/oliverphilcox/QPM_xiCoarse/QPM_mean.xi"
+    outfile = "/mnt/store1/oliverphilcox/QPMCovarianceCoarse/Mean/"
         
     print("RUNNING FOR MEAN XI \n\n")
     subprocess.run(["./cov","-norm", "%.8f"%N_gal,"-cor",xi_file,"-output",outfile],cwd=cwd)
@@ -47,8 +47,8 @@ for index in range(min_QPM,max_QPM+1):
     
     # Define parameters
     N_gal =this_factor*6500000; 
-    xi_file_ind = "/mnt/store1/oliverphilcox/QPM_xi/QPM_mock_%d.xi"%(index+1)
-    outfile = "/mnt/store1/oliverphilcox/QPMCovariance/Mock_%d/"%(index+1)
+    xi_file_ind = "/mnt/store1/oliverphilcox/QPM_xiCoarse/QPM_mock_%d.xi"%(index+1)
+    outfile = "/mnt/store1/oliverphilcox/QPMCovarianceCoarse/Mock_%d/"%(index+1)
     
     # Run the code with the correct parameters:
     print("RUNNING FOR INDEX %d OF %d\n\n"%(index+1,max_QPM))
