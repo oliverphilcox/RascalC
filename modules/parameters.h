@@ -82,7 +82,7 @@ public:
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/home/oliverphilcox/COMAJE/python/hybrid_binfile_cut.csv";//binfile_linear.csv";
+    const char default_radial_bin_file[500] = "/home/oliverphilcox/COMAJE/python/hybrid_binfile_coarse_cut.csv";//binfile_linear.csv";
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
@@ -105,10 +105,10 @@ public:
     const char default_RR_bin_file12[500] = "";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=100;//10; 
+    int max_loops=10;//10; 
     int N2 = 10;//20;//20; // number of j cells per i cell
-    int N3 = 20;//25;//25; // number of k cells per j cell
-    int N4 = 20;//50;//50; // number of l cells per k cell
+    int N3 = 10;//25;//25; // number of k cells per j cell
+    int N4 = 10;//50;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;

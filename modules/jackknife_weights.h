@@ -117,7 +117,9 @@ public:
             if (line[0]=='\n') continue;
             n_JK_filled++;
         }
+        printf("here-1");
         printf("\n# Found %d non-empty jackknives in the file\n",n_JK_filled);
+        printf("here0");
         rewind(fp); // restart file
         //TODO: Check this is consistent with expected number of jackknives
         
@@ -127,11 +129,14 @@ public:
         ec+=posix_memalign((void **) &filled_JKs, PAGE, sizeof(int)*n_JK_filled);
         ec+=posix_memalign((void **) &product_weights, PAGE, sizeof(Float)*nbins*nbins);
         ec+=posix_memalign((void **) &RR_pair_counts, PAGE, sizeof(Float)*nbins);
+        printf("here1");
         assert(ec==0);
         
         int index=0; // index for jackknives and bins
         int line_count=0; // line counter
         int counter; // counts which element in line
+        
+        printf("here");
         
         // Read in values to file
         while (fgets(line,1000000,fp)!=NULL) {
@@ -158,6 +163,8 @@ public:
             }
             line_count++;
         }
+        
+        printf("here2");
         
         assert(line_count==n_JK_filled);
         assert(index==nbins*n_JK_filled); // to ensure we get all particles
