@@ -1,7 +1,7 @@
 Pre-Processing
 ===============
 
-We provide a suite of Python scripts to create input files for the RascalC code. These are found in the `python/` directory.
+We provide a suite of Python scripts to create input files for the RascalC code. These are found in the ``python/`` directory.
 
 .. _coord-conversion:
 
@@ -15,8 +15,8 @@ This converts a set of input particles (either random particle or galaxy positio
     
 **Parameters**:
 
-- {INFILE}: Input data file containing {RA,Dec,redshift,weight} coordinates for each particle. This may be specified as a `.fits`, `.csv`, `.txt` or `.dat` datafile. For an input FITS file, the columns 'RA', 'DEC', 'Z' and 'WEIGHT_FKP' are required (as in BOSS DR12 data).
-- {OUTFILE}: Output `.txt`, `.dat` or `.csv` filename.
+- {INFILE}: Input data file containing {RA,Dec,redshift,weight} coordinates for each particle. This may be specified as a ``.fits``, ``.csv``, ``.txt`` or ``.dat`` datafile. For an input FITS file, the columns 'RA', 'DEC', 'Z' and 'WEIGHT_FKP' are required (as in BOSS DR12 data).
+- {OUTFILE}: Output ``.txt``, ``.dat` or ``.csv`` filename.
 - *Optional* {OMEGA_M}: Current matter density, :math:`\Omega_m` (default 0.31)
 - *Optional* {OMEGA_K}: Current curvature density. :math:`\Omega_k` (default 0)
 - *Optional* {W_DARK_ENERGY}: Dark energy equation of state parameter, :math:`w_\Lambda` (default -1)
@@ -33,9 +33,11 @@ This function assigns each particle (either random particles or galxy positions)
     
 **Parameters**:
 
-- {INFILE}: Input data ASCII file of (random/galaxy) Cartesian particle positions with space-separated columns {x,y,z,w}, such as that created by the :ref:`coord-conversion` script. This can be in `.txt`, `.dat` or `.csv` format.
-- {OUTFILE}: Output `.txt`, `.dat` or `.csv` filename.
+- {INFILE}: Input data ASCII file of (random/galaxy) Cartesian particle positions with space-separated columns {x,y,z,w}, such as that created by the :ref:`coord-conversion` script. This can be in ``.txt``, ``.dat`` or ``.csv`` format.
+- {OUTFILE}: Output ``.txt``, ``.dat`` or ``.csv`` filename.
 - {HEALPIX_NSIDE}: HealPix NSIDE parameter which controls the number of pixels used to divide up the sky. For NSIDE=:math:`n`, a total of :math:`12n^2` pixels are used.
+
+.. _particle-subset:
 
 Take Subset of Particles
 -------------------------
@@ -48,7 +50,7 @@ A utility function to reduce the number of particles in an input ASCII file to a
 **Parameters**:
 
 - {INFILE}: Input data ASCII file with particle positions, in {x,y,z,w}, {x,y,z,w,j} or {RA,Dec,redshift,w} format.
-- {OUTFILE}: Outfile `.txt`, `.dat` or `.csv` filename.
+- {OUTFILE}: Outfile ``.txt``, ``.dat`` or ``.csv`` filename.
 - {N_PARTICLES}: Desired number of particles in output file. A random sample of length N_PARTICLES is selected from the input file.
 
 .. _write-binning-file:
@@ -59,7 +61,7 @@ A utility function to create radial binning files used by RascalC. We provide th
 
 - *Linear*: Bins are linearly spaced bins in :math:`(r_\mathrm{min},r_\mathrm{max})`.
 - *Logarithmic*: Bins are evenly spaced in logarithmic space (base :math:`e`) in :math:`(r_\mathrm{min},r_\mathrm{max})`.
-- *Hybrid*: Bins are logarithmically spaced in :math:`(r_\mathrm{min},r_\mathrm{cut-off})`, then linearly spaced in :math:`(r_\mathrm{cut-off},r_\mathrm{max})`.
+- *Hybrid*: Bins are logarithmically spaced in :math:`(r_\mathrm{min},r_\mathrm{cutoff})`, then linearly spaced in :math:`(r_\mathrm{cutoff},r_\mathrm{max})`.
 
 **Usage**::
 
@@ -74,5 +76,5 @@ A utility function to create radial binning files used by RascalC. We provide th
 - {MAX_R}: Maximm bin radius, :math:`r_\mathrm{max}`.
 - {N_LOG_BINS}: Number of logarithmic bins for hybrid binning.
 - {N_LIN_BINS}: Numer of linear bins for hybrid binning.
-- {CUTOFF_R}: Radius at which to switch from logarithmic to linear binning, :math:`r_\mathrm{cut-off}` (for hybrid binning).
-- {OUTPUT_FILE}: Output `.txt`, `.csv` or `.dat` filename.
+- {CUTOFF_R}: Radius at which to switch from logarithmic to linear binning, :math:`r_\mathrm{cutoff}` (for hybrid binning).
+- {OUTPUT_FILE}: Output ``.txt``, ``.csv`` or ``.dat`` filename.
