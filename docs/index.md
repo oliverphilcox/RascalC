@@ -18,7 +18,7 @@ The source code is publicly available on [Github](https://github.com/oliverphilc
 
 
 Overview of RascalC
-=================================
+---------------------
 
 Overview here
 
