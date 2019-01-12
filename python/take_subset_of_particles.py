@@ -6,7 +6,7 @@ import time
 init_time=time.time()
 
 if len(sys.argv)<4:
-    print "Please specify input parameters in the form {INPUT_FILE OUTPUT_FILE N_PARTICLES}."
+    print("Please specify input parameters in the form {INPUT_FILE OUTPUT_FILE N_PARTICLES}.")
     sys.exit()
 infile_name = str(sys.argv[1])
 outfile_name = str(sys.argv[2])

@@ -42,8 +42,9 @@ def beta_cont_frac_gsl(a, b, x):
 
     x = np.array(x, copy=False, ndmin=1)
     if (np.min(x)<0 or np.max(x)>=1):
-    	print "Illegal entry in beta_cont_frac_gsl()\n"
-	exit
+        print("Illegal entry in beta_cont_frac_gsl()\n")
+        import sys
+        sys.exit()
     cutoff = 1e-30	#  control the zero cutoff
 
     # standard initialization for continued fraction 
@@ -54,27 +55,27 @@ def beta_cont_frac_gsl(a, b, x):
     cf = den_term
 
     for k in range(1,200):
-	# first step 
-	coeff = k*(b-k)*x/(((a-1.0)+2*k)*(a+2*k))
-	den_term = 1.0 + coeff*den_term
-	num_term = 1.0 + coeff/num_term
-	den_term[np.where(np.abs(den_term)<cutoff)] = cutoff
-	num_term[np.where(np.abs(num_term)<cutoff)] = cutoff
-	den_term  = 1.0/den_term
-	cf *= den_term*num_term
+        # first step 
+        coeff = k*(b-k)*x/(((a-1.0)+2*k)*(a+2*k))
+        den_term = 1.0 + coeff*den_term
+        num_term = 1.0 + coeff/num_term
+        den_term[np.where(np.abs(den_term)<cutoff)] = cutoff
+        num_term[np.where(np.abs(num_term)<cutoff)] = cutoff
+        den_term  = 1.0/den_term
+        cf *= den_term*num_term
 
-	# second step 
-	coeff = -(a+k)*(a+b+k)*x/((a+2*k)*(a+2*k+1.0))
-	den_term = 1.0 + coeff*den_term
-	num_term = 1.0 + coeff/num_term
-	den_term[np.where(np.abs(den_term)<cutoff)] = cutoff
-	num_term[np.where(np.abs(num_term)<cutoff)] = cutoff
-	den_term = 1.0/den_term
-	cf *= den_term*num_term
+        # second step 
+        coeff = -(a+k)*(a+b+k)*x/((a+2*k)*(a+2*k+1.0))
+        den_term = 1.0 + coeff*den_term
+        num_term = 1.0 + coeff/num_term
+        den_term[np.where(np.abs(den_term)<cutoff)] = cutoff
+        num_term[np.where(np.abs(num_term)<cutoff)] = cutoff
+        den_term = 1.0/den_term
+        cf *= den_term*num_term
 
-	# Are we done?
-	if (np.max(np.abs(den_term*num_term-1))<1e-12): break
-    # End k loop
+        # Are we done?
+        if (np.max(np.abs(den_term*num_term-1))<1e-12): break
+        # End k loop
     # If this ends, we're just accepting the answer even if we haven't converged
 
     # Include the prefactor 

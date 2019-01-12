@@ -22,8 +22,8 @@ owcdm(z,om,w,ok): Compute the comoving coordinate distance and proper motion dis
     Requires om<1 and ox=1-om-ok>0.
     Use om=0.99999 if you want om=1.
     Requires w<-1/3 if one is using the SciPy beta function, w<0 if using GSL
-     The curvature is treated only perturbatively; it will be fine for |Ok|<0.1,
-     but will start to produce noticeable offsets for Ok ~ Om.
+    The curvature is treated only perturbatively; it will be fine for |Ok|<0.1,
+    but will start to produce noticeable offsets for Ok ~ Om.
 
 coorddist(z, om, w, ok): owcdm() driver for comoving coordinate distance
 propmotdis(z, om, w, ok): owcdm() driver for proper motion distance
@@ -57,10 +57,10 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -133,8 +133,9 @@ def wcdm_time(z, om, w):
     # This requires w<-1 if one is using the SciPy beta function, w<0 if using GSL
     ox = 1-om
     if (np.min(ox)<0):
-    print("Can't evaluate negative dark energies")
-    exit
+        print("Can't evaluate negative dark energies")
+        import sys
+        sys.exit()
     xz = ox/(om*(1+z)**(-3.0*w)+ox)
     m = 1.0/(-2.0*w)
     return np.where(ox==0, 2.0/3.0*np.power(1+z,-1.5),
@@ -159,19 +160,19 @@ def owcdm(z, om, w, ok=0.0):
     c = 2.0*m/np.sqrt(om)
     rz = c * (om/ox)**m * incomplete_beta(m,0.5-m,xz,x0)
     if (ok==0):
-    propmotdis = rz
+        propmotdis = rz
     else:
-    # Now make the curvature corrections, up to 10th order in Ok/Om
-    # Stop when the contributions are small
-    for order in range(1,11):
-        m = (1.0+2*order)/(-6.0*w)
-        c *= -(2.0*order-1.0)/(2.0*order)*ok/om
-        delrz = c*(om/ox)**m * incomplete_beta(m,0.5+order-m,xz,x0)
-        rz += delrz
-        if (np.max(np.abs(delrz))<1e-7): break
-    # Compute the proper motion distance
-    if (ok>0): propmotdis = np.sinh(np.sqrt(ok)*rz)/np.sqrt(ok)
-    else: propmotdis = np.sin(np.sqrt(-ok)*rz)/np.sqrt(-ok)
+        # Now make the curvature corrections, up to 10th order in Ok/Om
+        # Stop when the contributions are small
+        for order in range(1,11):
+            m = (1.0+2*order)/(-6.0*w)
+            c *= -(2.0*order-1.0)/(2.0*order)*ok/om
+            delrz = c*(om/ox)**m * incomplete_beta(m,0.5+order-m,xz,x0)
+            rz += delrz
+            if (np.max(np.abs(delrz))<1e-7): break
+        # Compute the proper motion distance
+        if (ok>0): propmotdis = np.sinh(np.sqrt(ok)*rz)/np.sqrt(ok)
+        else: propmotdis = np.sin(np.sqrt(-ok)*rz)/np.sqrt(-ok)
     # Now return the answer
     return rz,propmotdis
 
@@ -269,7 +270,7 @@ def test():
     x = wcdm(1.0,1.3,-0.4)
     print("WCDM, om=1.3, w=-0.4, z=1: r(z) = ", x, " Err = ",x-wcdm_romberg(1.0,1.3,-0.4) )
 
-    print("\nTesting the owcdm code in the flat limit"
+    print("\nTesting the owcdm code in the flat limit")
     x = owcdm(1.0,0.3,-1)[0]
     print("Non-flat LCDM, om=0.3, ok=0, z=1: r(z) = ", x, " Err = ",x-wcdm_romberg(1.0,0.3,-1))
 
@@ -279,7 +280,7 @@ def test():
     x = owcdm(1.0,0.3,-1.4)[0]
     print("Non-flat WCDM, om=0.3, w=-1.4, ok=0, z=1: r(z) = ", x, " Err = ",x-wcdm_romberg(1.0,0.3,-1.4))
 
-    print("\nSlightly open universes"
+    print("\nSlightly open universes")
     x = owcdm(1.0,0.3,-1,0.05)[0]
     print("Non-flat LCDM, om=0.3, ok=0.05, z=1: r(z) = ", x, " Err = ",x-owcdm_romberg(1.0,0.3,-1,0.05))
 
@@ -292,7 +293,7 @@ def test():
     x = owcdm(1.0,0.3,-1.4,0.05)[0]
     print("Non-flat WCDM, om=0.3, w=-1.4, ok=0.05, z=1: r(z) = ", x, " Err = ",x-owcdm_romberg(1.0,0.3,-1.4,0.05))
 
-    print("\nSlightly closed univeses")
+    print("\nSlightly closed universes")
     x = owcdm(1.0,0.3,-1,-0.05)[0]
     print("Non-flat LCDM, om=0.3, ok=-0.05, z=1: r(z) = ", x, " Err = ",x-owcdm_romberg(1.0,0.3,-1,-0.05) )
 
@@ -354,7 +355,7 @@ def test():
     print("wcdm(): ", wcdm(1.0,om,-1))
     print("owcdm(): ", owcdm(1.0,om,-1,0)[0])
     print("owcdm(): ", propmotdis(1.0,om,-1,0))
-    print("om: ", om2
+    print("om: ", om2)
     print("wcdm(): ", wcdm(1.0,om2,-1))
 
     print()
