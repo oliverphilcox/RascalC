@@ -6,7 +6,7 @@
 Welcome to RascalC's documentation!
 ===================================
 
-Hi does this work??
+
 
 .. toctree::
    :maxdepth: 2
