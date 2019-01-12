@@ -35,4 +35,9 @@
 # Datafiles
 *.txt
 *.dat
-*.csv
+#*.csv
+
+# Doc files
+_build
+_static
+_templates
