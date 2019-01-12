@@ -149,7 +149,6 @@
             
             
     // --------Compute product weights----------------------
-            printf("Computing product weights:\n");
             Float *product_weights12_12, *product_weights12_23, *product_weights12_34; // arrays to get products of jackknife weights to avoid recomputation
             int nbins=nbin*mbin;
             if(par->multi_tracers==false){
@@ -189,7 +188,6 @@
             unsigned long int steps = dist(urandom);        
             gsl_rng_env_setup(); // initialize gsl rng
             Integrals5 sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4,product_weights12_12,product_weights12_23,product_weights12_34); // total integral
-            printf("Created global integrals class\n");
             
             uint64 tot_pairs=0, tot_triples=0, tot_quads=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
             uint64 cell_attempt2=0,cell_attempt3=0,cell_attempt4=0; // number of j,k,l cells attempted
@@ -237,7 +235,6 @@
             integer3 delta2, delta3, delta4, prim_id, sec_id, thi_id;
             Float3 cell_sep2,cell_sep3;
             
-            printf("Creating local integrals class:\n");
             Integrals5 locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4, product_weights12_12, product_weights12_23, product_weights12_34); // Accumulates the integral contribution of each thread
             
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread

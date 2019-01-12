@@ -105,7 +105,7 @@ public:
     const char default_RR_bin_file12[500] = "";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=10;//10; 
+    int max_loops=100;//10; 
     int N2 = 10;//20;//20; // number of j cells per i cell
     int N3 = 20;//25;//25; // number of k cells per j cell
     int N4 = 20;//50;//50; // number of l cells per k cell

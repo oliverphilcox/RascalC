@@ -87,10 +87,8 @@ public:
         ec+=posix_memalign((void **) &RRaA2, PAGE, sizeof(double)*nbin*mbin*n_jack);
         
         assert(ec==0);
-        printf("Resetting\n");
         reset();
-        printf("Resetting complete\n");
-
+        
         box=par->perbox;
 
         rmax=par->rmax;
