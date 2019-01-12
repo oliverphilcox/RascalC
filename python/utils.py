@@ -136,3 +136,35 @@ class plotting_tools:
         plt.plot(matrix_class.eigvalJ,label='Jackknife Matrix')
         plt.legend(fontsize=self.FS-4.);
         plt.yscale('log');
+    def plot_diagonal(self,matrix_class,fig=None,use_jackknife=False,legend=False,name=False):
+        if fig==None:
+            fig=plt.figure()
+        ax=fig.gca()
+        if use_jackknife:
+            mat=matrix_class.c_jack_tot; ax.set_ylabel(r'$\mathrm{diag}(\hat{C}^J_{ab})$',fontsize=self.FS)
+            if not name: 
+                name='Jackknife Matrix'
+        else:
+            mat=matrix_class.c_tot; ax.set_ylabel(r'$\mathrm{diag}(\hat{C}_{ab})$',fontsize=self.FS)    
+            if not name:
+                name='Full Matrix'
+        ax.plot(np.diag(mat),label=name); 
+        ax.set_yscale('log'); ax.set_xlabel('Bin ID',fontsize=self.FS); ax.set_xlim([0,len(mat)])
+        if legend:
+            ax.legend(fontsize=self.FS-2)
+        return fig
+        
+def KL_divergence(precision,covariance):
+    """Return the negative log likelihood of the KL divergence between two matrices, one of which is inverted.
+    The matrix known to higher precision should be inverted.
+    i.e. 2KL = Trace(precision*covariance) - log(det(precision)) - log(det(covariance)) - N_bins"""
+    product = np.matmul(precision,covariance);
+    N_bins=len(precision)
+    logdetPrec = np.linalg.slogdet(precision)
+    logdetCov = np.linalg.slogdet(covariance)
+    if logdetPrec[0]!=1.:
+        raise Exception('Undefined determinant for precision matrix')
+    if logdetCov[0]!=1.:
+        raise Exception('Undefined determinant for covariance matrix')
+    KL = 0.5*(np.matrix.trace(product) - logdetPrec[1] - logdetCov[1] - N_bins)
+    return KL

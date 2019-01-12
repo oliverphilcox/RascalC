@@ -179,7 +179,7 @@ public:
         int partial_bin=0,partial_bin2;
         Float this_weight;
         for (int x=0;x<n_JK_filled;x++){
-            printf("Computing product weights for jackknife %d of %d\n",x+1,n_JK_filled);
+            //printf("Computing product weights for jackknife %d of %d\n",x+1,n_JK_filled);
             partial_bin2=0;
             for(int bin_a=0;bin_a<nbins;bin_a++){
                 this_weight=weights[partial_bin+bin_a];
