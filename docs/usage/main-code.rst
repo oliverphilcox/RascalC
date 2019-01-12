@@ -50,17 +50,17 @@ Input parameters for the RascalC code may be specified by passing options on the
 
 **Essential Parameters**:
 
-- ``-def``, ``-default``: Run the code with the default options for all parameters (as specified in the ``modules/parameters.h`` file.
-- ``-in``, ``-in1`` (*fname*): Input ASCII random particle file for the first set of tracer particles. This must be in {x,y,z,w,j} format, as described in :ref:`file-inputs`.
-- ``-binfile``, ``-radial_binfile`` (*radial_bin_file*): Radial binning ASCII file (see :ref:`file-inputs`) specifying upper and lower bounds of each radial bin.
-- ``-cor``, ``-cor1`` (*corname*): Input correlation function estimate for the first set of particles in ASCII format, as specified in :ref:`file-inputs`.
+- ``-def``: Run the code with the default options for all parameters (as specified in the ``modules/parameters.h`` file.
+- ``-in`` (*fname*): Input ASCII random particle file for the first set of tracer particles. This must be in {x,y,z,w,j} format, as described in :ref:`file-inputs`.
+- ``-binfile`` (*radial_bin_file*): Radial binning ASCII file (see :ref:`file-inputs`) specifying upper and lower bounds of each radial bin.
+- ``-cor`` (*corname*): Input correlation function estimate for the first set of particles in ASCII format, as specified in :ref:`file-inputs`.
 - ``-norm`` (*nofznorm*): Total number of galaxies in the first set of tracer particles. This is used to rescale the random particle covariances.
-- ``-jackknife``, ``-jackknife_weights``, ``-jackknife1``, ``-jackknife_weights1`` (*jk_weight_file*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}.dat`` file containing the jackknife weights for each bin (:math:`w_{aA}^{11}`), as created by the :file:`jackknife_weights` scripts.
-- ``-RRbin``, ``-RRbin_file``, ``-RRbin1``, ``RRbin_file1`` (*RR_bin_file*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` ASCII file containing the summed jackknife pair counts in each bin (:math:`RR_{aA}^{11}`), created by the :file:`jackknife_weights` scripts.
+- ``-jackknife`` (*jk_weight_file*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}.dat`` file containing the jackknife weights for each bin (:math:`w_{aA}^{11}`), as created by the :file:`jackknife_weights` scripts.
+- ``-RRbin`` (*RR_bin_file*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` ASCII file containing the summed jackknife pair counts in each bin (:math:`RR_{aA}^{11}`), created by the :file:`jackknife_weights` scripts.
 - ``-output`` (*out_file*): Output directory in which to store covariance matrix estimates. This directory will be created if not already present. **Beware**: the code can produce a large volume of output (:math:`\sim 1` GB for a standard run with one field and :math:`\sim1000` bins). 
 - ``-mbin`` (*mbin*): Number of :math:`\mu` bins used. This must match that used to create the jackknife weights. 
-- ``-nthread``, ``-nthreads`` (*nthread*): Number of parallel processing threads used if code is compiled with OpenMPI.
-- ``-nside``, ``-ngrid``, ``-grid`` (*nside*): Number of cubic cells to use along the longest dimension of the grid encompassing the random particles. See :ref:`particle-grid` note for usage.
+- ``-nthread`` (*nthread*): Number of parallel processing threads used if code is compiled with OpenMPI.
+- ``-nside`` (*nside*): Number of cubic cells to use along the longest dimension of the grid encompassing the random particles. See :ref:`particle-grid` note for usage.
 
 **Additional Multi Field Parameters**:
 
@@ -71,14 +71,15 @@ Input parameters for the RascalC code may be specified by passing options on the
 
 .. todo:: add in correlation function creator script
 
-- ``-jackknife12``, ``-jackknife_weights12`` (*jk_weight_file12*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}.dat`` file containing the jackknife weights for each bin for the combination of random particle sets 1 and 2 (:math:`w_{aA}^{12}`), as created by the :file:`jackknife_weights` scripts.
-- ``-jackknife2``, ``-jackknife_weights2`` (*jk_weight_file12*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}.dat`` file containing the jackknife weights for each bin for the second set of random particles (:math:`w_{aA}^{22}`), as created by the :file:`jackknife_weights` scripts.
-- ``-RRbin12``, ``-RRbin_file12`` (*RR_bin_file12*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` ASCII file containing the summed jackknife pair counts in each bin for the combination of random particle sets 1 and 2 (:math:`RR_{aA}^{12}`), created by the :file:`jackknife_weights` scripts.
-- ``-RRbin2``, ``-RRbin_file2`` (*RR_bin_file2*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` ASCII file containing the summed jackknife pair counts in each bin for the combination of random particle sets 1 and 2 (:math:`RR_{aA}^{22}`), created by the :file:`jackknife_weights` scripts.
+- ``-norm2`` (*nofznorm2*): Total number of galaxies in the second set of tracer particles. This is used to rescale the random particle covariances.
+- ``-jackknife12`` (*jk_weight_file12*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}.dat`` file containing the jackknife weights for each bin for the combination of random particle sets 1 and 2 (:math:`w_{aA}^{12}`), as created by the :file:`jackknife_weights` scripts.
+- ``-jackknife2`` (*jk_weight_file12*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}.dat`` file containing the jackknife weights for each bin for the second set of random particles (:math:`w_{aA}^{22}`), as created by the :file:`jackknife_weights` scripts.
+- ``-RRbin12`` (*RR_bin_file12*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` ASCII file containing the summed jackknife pair counts in each bin for the combination of random particle sets 1 and 2 (:math:`RR_{aA}^{12}`), created by the :file:`jackknife_weights` scripts.
+- ``-RRbin2`` (*RR_bin_file2*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` ASCII file containing the summed jackknife pair counts in each bin for the combination of random particle sets 1 and 2 (:math:`RR_{aA}^{22}`), created by the :file:`jackknife_weights` scripts.
 
 **Precision Parameters**
 
-- ``-maxloops``, ``-loops`` (*max_loops*): This is the number HEDWSDHEJIL See :ref:`covariance-precision` note for usage guidelines. (Default: 10)
+- ``-maxloops`` (*max_loops*): This is the number HEDWSDHEJIL See :ref:`covariance-precision` note for usage guidelines. (Default: 10)
 - (*N2*, *N3*, *N4*): The parameters controlling how many random particles to select at each stage. See :ref:`covariance-precision` note above. (Default: 10)
 
 **Optional Parameters**
@@ -87,20 +88,19 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-mumax`` (*mumax*): Maximum :math:`\mu` binning to use in the analysis. (Default: 1)
 - (*perbox*): Boolean controlling whether we are using a periodic box. (Default: False)
 - ``-boxsize`` (*boxsize*): If creating particles randomly, this is the periodic size of the computational domain. If particles are read from file, this is set dynamically. (Default: 400)
-- ``-rescale``, ``-scale`` (*rescale*): Factor by which to dilate the input positions. Zero or negative values cause this to be set to the boxsize. (Default: 1)
+- ``-rescale`` (*rescale*): Factor by which to dilate the input positions. Zero or negative values cause this to be set to the boxsize. (Default: 1)
 - ``-xicut`` (*xicutoff*): The radius beyond which the correlation functions :math:`\xi(r,\mu)` are set to zero. (Default: 400)
-- ``-rs`` (*rstart*):
-- ``-nmax`` (*nmax*):
-- ``-save``, ``-store`` (*savename*): If *savename* is set, the cell selection probability grid is stored as *savename*. This must end in ``.bin``. (Default: NULL)
+- ``-nmax`` (*nmax*): The maximum number of particles to read in from the random particle files. (Default: 1e12)
+- ``-save`` (*savename*): If *savename* is set, the cell selection probability grid is stored as *savename*. This must end in ``.bin``. (Default: NULL)
 - ``-load`` (*loadname*): If set, load a cell selection probability grid computed in a previous run of RascalC. (Default: NULL) 
 - ``-invert`` (*qinvert*): If this flag is passed to RascalC, all input particle weights are multiplied by -1. (Default: 0)
 - ``-balance`` (*qbalance*): If this flag is passed to RascalC, all negative weights are rescaled such that the total particle weight is 0. (Default: 0)
-- ``-ran``, ``-np`` (*np*, *make_random*): If *make_random*=1, this overrides any input random particle file and creates *np* randomly drawn particles in the cubic box. **NB**: The command line argument automatically sets *make_random* = 1. 
-- (*rstart*): If inverting particle weights, this sets the index from which to start weight inversion. (Default: 0)
+- ``-np`` (*np*, *make_random*): If *make_random*=1, this overrides any input random particle file and creates *np* randomly drawn particles in the cubic box. **NB**: The command line argument automatically sets *make_random* = 1. 
+- ``-rs`` (*rstart*): If inverting particle weights, this sets the index from which to start weight inversion. (Default: 0)
 
 .. todo:: don't let code run with random particle creation and multiple fields. And note this in doc somewhere.
 
-.. todo:: add in N2, N3, N4 as free parameters. Remove some of these limits? Add in nofznorm2 as input. Add rstart, perbox as input.
+.. todo:: Add rstart, perbox as input.
 
 
 .. _code-output:
