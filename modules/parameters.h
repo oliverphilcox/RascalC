@@ -25,20 +25,20 @@ public:
 	// The radius beyond which the correlation function is set to zero
 	Float xicutoff = 400.0;
     
-	Float nofznorm=1198006; // for first dataset
-	Float nofznorm2=1198006; // for second dataset
+	Float nofznorm=-1;//323221;//0.05044021885884742*6500000; // for first dataset
+	Float nofznorm2=0; // for second dataset
 
 	// The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
 	// Don't forget to adjust this if changing boxsize!
-	int nside = 101;
+	int nside = 251;
 
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
 
 	// Will be number of particles in a random distribution,
 	// but gets overwritten if reading from a file.
-	int np = -1;
+	int np = -1; // NB: This isn't actually used in the code after the creation of the grid, so we don't need to create a separate variable for the second set of randoms
 
 	// Whether to balance the weights or multiply them by -1
 	int qbalance = 0, qinvert = 0;
@@ -47,15 +47,15 @@ public:
 	uint64 nmax = 1000000000000;
 
     // The number of mu bins
-	int mbin = 10;
+	int mbin = 24;
     
     // The number of threads to run on
-	int nthread=4;
+	int nthread=10;
 
 	// The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
 	// The location and name of a integrated grid of probabilities to be loaded
-	char *loadname = NULL; //	"ProbListGrid100box10-corfu.dat"
+	char *loadname = NULL; //	
 
 	// The index from which on to invert the sign of the weights
 	int rstart=0;
@@ -65,50 +65,50 @@ public:
 
 	// The name of the input random particle files
 	char *fname = NULL;
-	const char default_fname[500] = "../random_particles/spherical_particles.txt"; // first set of random particles
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/CMU/randoms_10x_correct_Om_CMASS_N_xyzwj.txt"; // first set of random particles
 
     char *fname2 = NULL;
-    const char default_fname2[500] = "../random_particles/spherical_particles.txt"; // second set of random particles
+    const char default_fname2[500] = ""; // second set of random particles
     
 	// The name of the correlation function file
 	char *corname = NULL;
-	const char default_corname[500] = "xi_functions/QPM_Mash.xi"; // xi_11 file
+	const char default_corname[500] = "none";//"/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mean.xi"; // xi_11 file
     
     char *corname2 = NULL; // xi_22 file
-    const char default_corname2[500] = "xi_functions/QPM_Mash.xi";
+    const char default_corname2[500] = "";
     
     char *corname12 = NULL; // xi_12 file
-    const char default_corname12[500] = "xi_functions/QPM_Mash.xi";
+    const char default_corname12[500] = "";
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "python/binfile_linear.csv";
+    const char default_radial_bin_file[500] = "/home/oliverphilcox/COMAJE/python/hybrid_binfile_cut.csv";//binfile_linear.csv";
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n36_m10_j48.dat";//169.dat";
+    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/QPM_weights/jackknife_weights_n39_m24_j169.dat";//corrOm/jackknife_weights_n36_m10_j169.dat";//169.dat";
     
-    char *jk_weight_file2 = NULL; // w_{aA}^{22} weights
-    const char default_jk_weight_file2[500] = "weight_files/jackknife_weights_n36_m10_j48.dat";
+    char *jk_weight_file2 = NULL; // w_{aA}^{22} weightsz
+    const char default_jk_weight_file2[500] = "";
     
     char *jk_weight_file12 = NULL; // w_{aA}^{12} weights
-    const char default_jk_weight_file12[500] = "weight_files/jackknife_weights_n36_m10_j48.dat";
+    const char default_jk_weight_file12[500] = "";
     
     // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n36_m10_j48.dat";//;169.dat";
+    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/QPM_weights/binned_pair_counts_n39_m24_j169.dat";//weightfiles_corrOm/binned_pair_counts_n36_m10_j169.dat";//;169.dat";
     
     char *RR_bin_file2 = NULL; // RR_{aA}^{22} file
-    const char default_RR_bin_file2[500] = "weight_files/binned_pair_counts_n36_m10_j48.dat";
+    const char default_RR_bin_file2[500] = "";
     
     char *RR_bin_file12 = NULL; // RR_{aA}^{12} file
-    const char default_RR_bin_file12[500] = "weight_files/binned_pair_counts_n36_m10_j48.dat";
+    const char default_RR_bin_file12[500] = "";
     
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=5;//10; 
-    int N2 = 3;//20;//20; // number of j cells per i cell
-    int N3 = 3;//25;//25; // number of k cells per j cell
-    int N4 = 3;//50;//50; // number of l cells per k cell
+    int max_loops=100;//10; 
+    int N2 = 10;//20;//20; // number of j cells per i cell
+    int N3 = 20;//25;//25; // number of k cells per j cell
+    int N4 = 20;//50;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
@@ -120,7 +120,7 @@ public:
     bool multi_tracers;
     
     char *out_file = NULL;
-    const char default_out_file[500] = "MultiTracerTest/";
+    const char default_out_file[500] = "none";///mnt/store1/oliverphilcox/CMU/QPM_Mean100_HiRes/";
     
 	// Constructor
 	Parameters(int argc, char *argv[]){
@@ -186,6 +186,8 @@ public:
 	    assert(i==argc);  // For example, we might have omitted the last argument, causing disaster.
 
 	    assert(nside%2!=0); // The probability integrator needs an odd grid size
+	
+	    assert(nofznorm>0); // need some galaxies!
 
 	    assert(mumin>=0); // We take the absolte value of mu
 	    assert(mumax<=1); // mu > 1 makes no sense
@@ -243,8 +245,6 @@ public:
             jk_weight_file12=jk_weight_file;
             jk_weight_file2=jk_weight_file;
         }
-	    
-	    printf("HERE2\n");
 	    
 	    create_directory();
         

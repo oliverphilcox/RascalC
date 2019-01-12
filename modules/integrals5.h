@@ -17,7 +17,7 @@ private:
     Float *r_high, *r_low; // Max and min of each radial bin
     Float *Ra, *c2, *c3, *c4; // Arrays to accumulate integrals
     Float *c2j, *c3j, *c4j; // Arrays to accumulate jackknife integrals
-    Float *errc4, *errc4j, *errc3, *errc3j, *errc2, *errc2j; // Integral to house the variance in C4, C4j, C3 and C3j;
+    //Float *errc4, *errc4j, *errc3, *errc3j, *errc2, *errc2j; // Integral to house the variance in C4, C4j, C3 and C3j;
     Float *EEaA1, *EEaA2; // Array to accumulate the two-independent xi-weighted pair counts
     Float *RRaA1, *RRaA2; // Array to accumulate the two-independent pair count estimates 
     Float *product_weights12_12, *product_weights12_23, *product_weights12_34; // arrays to get products of jackknife weights to avoid recomputation
@@ -28,7 +28,7 @@ private:
     uint64 *binct, *binct3, *binct4; // Arrays to accumulate bin counts
     
 public:
-    Integrals5(Parameters *par, CorrelationFunction *_cf12, CorrelationFunction *_cf13, CorrelationFunction *_cf24, JK_weights *_JK12, JK_weights *_JK23, JK_weights *_JK34, int _I1, int _I2, int _I3, int _I4){
+    Integrals5(Parameters *par, CorrelationFunction *_cf12, CorrelationFunction *_cf13, CorrelationFunction *_cf24, JK_weights *_JK12, JK_weights *_JK23, JK_weights *_JK34, int _I1, int _I2, int _I3, int _I4, Float* _product_weights12_12, Float* _product_weights12_23, Float* _product_weights12_34){
         cf12 = new CorrelationFunction(_cf12);
         cf13 = new CorrelationFunction(_cf13);
         cf24 = new CorrelationFunction(_cf24);
@@ -39,6 +39,9 @@ public:
         I2=_I2;
         I3=_I3;
         I4=_I4;
+        product_weights12_12=_product_weights12_12;
+        product_weights12_23=_product_weights12_23;
+        product_weights12_34=_product_weights12_34;
         
         //TODO: REMOVE
         //cf = new CorrelationFunction(_cf12);
@@ -65,28 +68,27 @@ public:
         ec+=posix_memalign((void **) &c4j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         //ec+=posix_memalign((void **) &cxj, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         
-        ec+=posix_memalign((void **) &errc4, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
-        ec+=posix_memalign((void **) &errc4j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        //ec+=posix_memalign((void **) &errc4, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        //ec+=posix_memalign((void **) &errc4j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         
-        ec+=posix_memalign((void **) &errc3, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
-        ec+=posix_memalign((void **) &errc3j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        //ec+=posix_memalign((void **) &errc3, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
+        //ec+=posix_memalign((void **) &errc3j, PAGE, sizeof(double)*nbin*mbin*nbin*mbin);
         
-        ec+=posix_memalign((void **) &errc2, PAGE, sizeof(double)*nbin*mbin);
-        ec+=posix_memalign((void **) &errc2j, PAGE, sizeof(double)*nbin*mbin);
+        //ec+=posix_memalign((void **) &errc2, PAGE, sizeof(double)*nbin*mbin);
+        //ec+=posix_memalign((void **) &errc2j, PAGE, sizeof(double)*nbin*mbin);
         
         ec+=posix_memalign((void **) &binct, PAGE, sizeof(uint64)*nbin*mbin);
         ec+=posix_memalign((void **) &binct3, PAGE, sizeof(uint64)*nbin*mbin*nbin*mbin);
         ec+=posix_memalign((void **) &binct4, PAGE, sizeof(uint64)*nbin*mbin*nbin*mbin);
-
+        
         ec+=posix_memalign((void **) &EEaA1, PAGE, sizeof(double)*nbin*mbin*n_jack);
         ec+=posix_memalign((void **) &EEaA2, PAGE, sizeof(double)*nbin*mbin*n_jack);
         ec+=posix_memalign((void **) &RRaA1, PAGE, sizeof(double)*nbin*mbin*n_jack);
         ec+=posix_memalign((void **) &RRaA2, PAGE, sizeof(double)*nbin*mbin*n_jack);
         
         assert(ec==0);
-
         reset();
-
+        
         box=par->perbox;
 
         rmax=par->rmax;
@@ -103,25 +105,20 @@ public:
         rad=mbin==1&&dmu==1.;
         
         // Compute product weights for JK weightings:
-        int nbins = JK12->nbins;
-        product_weights12_12 = (Float *)malloc(sizeof(Float)*nbins*nbins);
-        product_weights12_23 = (Float *)malloc(sizeof(Float)*nbins*nbins);
-        product_weights12_34 = (Float *)malloc(sizeof(Float)*nbins*nbins);
-
+        //int nbins = JK12->nbins;
+        
         // Compute SUM_A(w_aA*w_bA) for all jackknives
-        for (int bin_a=0;bin_a<nbins;bin_a++){
-            for (int bin_b=0;bin_b<nbins;bin_b++){
-                Float tmp_product12_12=0.,tmp_product12_23=0.,tmp_product12_34=0.;
-                for (int x=0;x<JK12->n_JK_filled;x++){ // sum over jackknives
-                    tmp_product12_12+=JK12->weights[x*nbins+bin_a]*JK12->weights[x*nbins+bin_b];
-                    tmp_product12_23+=JK12->weights[x*nbins+bin_a]*JK23->weights[x*nbins+bin_b];
-                    tmp_product12_34+=JK12->weights[x*nbins+bin_a]*JK34->weights[x*nbins+bin_b];
-                product_weights12_12[bin_a*nbins+bin_b]=tmp_product12_12;
-                product_weights12_23[bin_a*nbins+bin_b]=tmp_product12_23;
-                product_weights12_34[bin_a*nbins+bin_b]=tmp_product12_34;
-                }
-            }
-        }
+//         int tmp_index=0,tmp_index2;
+//         for (int x=0;x<JK12->n_JK_filled;x++){
+//             tmp_index2=0;
+//             for (int bin_a=0;bin_a<nbins;bin_a++){
+//                 for (int bin_b=0;bin_b<nbins;bin_b++){
+//                     product_weights12_12[tmp_index2+bin_b]+=JK12->weights[tmp_index+bin_a]*JK12->weights[tmp_index+bin_b];
+//                 }
+//                 tmp_index2+=nbins;
+//             }
+//             tmp_index+=nbins;
+//         }
         
     }
 
@@ -134,12 +131,12 @@ public:
         free(c2j);
         free(c3j);
         free(c4j);
-        free(errc2);
-        free(errc2j);
-        free(errc4);
-        free(errc4j);
-        free(errc3j);
-        free(errc3);
+        //free(errc2);
+        //free(errc2j);
+        //free(errc4);
+        //free(errc4j);
+        //free(errc3j);
+        //free(errc3);
         free(binct);
         free(binct3);
         free(binct4);
@@ -147,9 +144,9 @@ public:
         free(EEaA2);
         free(RRaA1);
         free(RRaA2);
-        free(product_weights12_12);
+        /*free(product_weights12_12);
         free(product_weights12_23);
-        free(product_weights12_34);
+        free(product_weights12_34);*/
     }
 
     void reset(){
@@ -158,16 +155,16 @@ public:
             c2[j] = 0;
             c2j[j] = 0;
             binct[j] = 0;
-            errc2[j]=0;
-            errc2j[j]=0;
+            //errc2[j]=0;
+            //errc2j[j]=0;
         }
         for (int j=0; j<nbin*mbin*nbin*mbin; j++) {
             c3[j]=0;
             c4[j]=0;
             c3j[j]=0;
             c4j[j]=0;
-            errc4[j] = 0;
-            errc4j[j] = 0;
+            //errc4[j] = 0;
+            //errc4j[j] = 0;
             binct3[j] = 0;
             binct4[j] = 0;
         }
@@ -239,8 +236,8 @@ public:
                 Ra[tmp_bin]+=rav;
                 c2[tmp_bin]+=c2v;
                 c2j[tmp_bin]+=c2vj;
-                errc2[tmp_bin]+=pow(c2v,2);
-                errc2j[tmp_bin]+=pow(c2vj,2);
+                //errc2[tmp_bin]+=pow(c2v,2);
+                //errc2j[tmp_bin]+=pow(c2vj,2);
                 binct[tmp_bin]++; // only count actual contributions to bin
                 
                 
@@ -316,8 +313,8 @@ public:
             c3[tmp_full_bin]+=c3v;
             c3j[tmp_full_bin]+=c3vj;
             binct3[tmp_full_bin]++;
-            errc3[tmp_full_bin]+=pow(c3v,2.);
-            errc3j[tmp_full_bin]+=pow(c3vj,2.);
+            //errc3[tmp_full_bin]+=pow(c3v,2.);
+            //errc3j[tmp_full_bin]+=pow(c3vj,2.);
         }
     }
      
@@ -371,8 +368,8 @@ public:
             tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c4[tmp_full_bin]+=c4v;
             c4j[tmp_full_bin]+=c4vj;
-            errc4[tmp_full_bin]+=pow(c4v,2.);
-            errc4j[tmp_full_bin]+=pow(c4vj,2.);
+            //errc4[tmp_full_bin]+=pow(c4v,2.);
+            //errc4j[tmp_full_bin]+=pow(c4vj,2.);
             binct4[tmp_full_bin]++;            
         }
     }
@@ -429,8 +426,8 @@ public:
             c2[i]+=ints->c2[i];
             c2j[i]+=ints->c2j[i];
             binct[i]+=ints->binct[i];
-            errc2[i]+=ints->errc2[i];
-            errc2j[i]+=ints->errc2j[i];
+            //errc2[i]+=ints->errc2[i];
+            //errc2j[i]+=ints->errc2j[i];
         }
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
@@ -438,10 +435,10 @@ public:
                 c3j[i*nbin*mbin+j]+=ints->c3j[i*nbin*mbin+j];
                 c4[i*nbin*mbin+j]+=ints->c4[i*nbin*mbin+j];
                 c4j[i*nbin*mbin+j]+=ints->c4j[i*nbin*mbin+j];
-                errc3[i*nbin*mbin+j]+=ints->errc3[i*nbin*mbin+j];
-                errc3j[i*nbin*mbin+j]+=ints->errc3j[i*nbin*mbin+j];
-                errc4[i*nbin*mbin+j]+=ints->errc4[i*nbin*mbin+j];
-                errc4j[i*nbin*mbin+j]+=ints->errc4j[i*nbin*mbin+j];
+                //errc3[i*nbin*mbin+j]+=ints->errc3[i*nbin*mbin+j];
+                //errc3j[i*nbin*mbin+j]+=ints->errc3j[i*nbin*mbin+j];
+                //errc4[i*nbin*mbin+j]+=ints->errc4[i*nbin*mbin+j];
+                //errc4j[i*nbin*mbin+j]+=ints->errc4j[i*nbin*mbin+j];
                 binct3[i*nbin*mbin+j]+=ints->binct3[i*nbin*mbin+j];
                 binct4[i*nbin*mbin+j]+=ints->binct4[i*nbin*mbin+j];
             }
@@ -523,7 +520,6 @@ public:
     
     void normalize(Float norm1, Float norm2, Float norm3, Float norm4, Float n_pairs, Float n_triples, Float n_quads, bool use_RR){
         // Normalize the accumulated integrals (partly done by the normalising probabilities used from the selected cubes)
-        // np is the number of random particles used, ngal is the number of galaxies in the survey
         // n_pair etc. are the number of PARTICLE pairs etc. attempted (not including rejected cells, but including pairs which don't fall in correct bin ranges)
         // If use_RR=True, we normalize by RR_a, RR_b also
         // To avoid recomputation
@@ -545,17 +541,17 @@ public:
             Ra[i]/=(n_pairs*corrf2);
             c2[i]/=(n_pairs*corrf2);
             c2j[i]/=(n_pairs*corrf2);
-            errc2[i]/=(n_pairs*corrf2*corrf2);
-            errc2j[i]/=(n_pairs*corrf2*corrf2);
+            //errc2[i]/=(n_pairs*corrf2*corrf2);
+            //errc2j[i]/=(n_pairs*corrf2*corrf2);
             for(int j=0;j<nbin*mbin;j++){
                 c3[i*nbin*mbin+j]/=(n_triples*corrf3);
                 c4[i*nbin*mbin+j]/=(n_quads*corrf4);
                 c3j[i*nbin*mbin+j]/=(n_triples*corrf3);
                 c4j[i*nbin*mbin+j]/=(n_quads*corrf4);
-                errc3[i*nbin*mbin+j]/=(n_triples*corrf3*corrf3);
-                errc3j[i*nbin*mbin+j]/=(n_triples*corrf3*corrf3);
-                errc4[i*nbin*mbin+j]/=(n_quads*corrf4*corrf4);
-                errc4j[i*nbin*mbin+j]/=(n_quads*corrf4*corrf4);
+                //errc3[i*nbin*mbin+j]/=(n_triples*corrf3*corrf3);
+                //errc3j[i*nbin*mbin+j]/=(n_triples*corrf3*corrf3);
+                //errc4[i*nbin*mbin+j]/=(n_quads*corrf4*corrf4);
+                //errc4j[i*nbin*mbin+j]/=(n_quads*corrf4*corrf4);
             }
         }
         
@@ -592,8 +588,8 @@ public:
                 Float Ra_i = JK12->RR_pair_counts[i]; 
                 c2[i]/=pow(Ra_i,2.); // must normalize by galaxy number here
                 c2j[i]/=pow(Ra_i,2.)*(1.-product_weights12_12[i*nbin*mbin+i]);
-                errc2[i]/=pow(Ra_i,4.);
-                errc2j[i]/=pow(Ra_i,4.)*pow(1.-product_weights12_12[i*nbin*mbin+i],2.);
+                //errc2[i]/=pow(Ra_i,4.);
+                //errc2j[i]/=pow(Ra_i,4.)*pow(1.-product_weights12_12[i*nbin*mbin+i],2.);
                 for(int j=0;j<nbin*mbin;j++){
                     Float Rab3=Ra_i*JK23->RR_pair_counts[j];
                     Float Rab4=Ra_i*JK34->RR_pair_counts[j];
@@ -604,10 +600,10 @@ public:
                     c3j[i*nbin*mbin+j]/=Rab_jk3;
                     c4j[i*nbin*mbin+j]/=Rab_jk4;
                     //cxj[i*nbin*mbin+j]/=Rab_jk4;
-                    errc4[i*nbin*mbin+j]/=pow(Rab4,2.);
-                    errc4j[i*nbin*mbin+j]/=pow(Rab_jk4,2.);
-                    errc3[i*nbin*mbin+j]/=pow(Rab3,2.);
-                    errc3j[i*nbin*mbin+j]/=pow(Rab_jk3,2.);
+                    //errc4[i*nbin*mbin+j]/=pow(Rab4,2.);
+                    //errc4j[i*nbin*mbin+j]/=pow(Rab_jk4,2.);
+                    //errc3[i*nbin*mbin+j]/=pow(Rab3,2.);
+                    //errc3j[i*nbin*mbin+j]/=pow(Rab_jk3,2.);
                     
                 }
             }
@@ -643,39 +639,39 @@ public:
         snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin,I2,I1,I3,suffix);
         char c4name[1000];
         snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
-        char c2errname[1000];
-        snprintf(c2errname, sizeof c2errname, "%sCovMatricesAll/c2err_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
-        char c4errname[1000];
-        snprintf(c4errname, sizeof c4errname, "%sCovMatricesAll/c4err_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
-        char c3errname[1000];
-        snprintf(c3errname, sizeof c3errname, "%sCovMatricesAll/c3err_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2,I1,I3,suffix);
+        //char c2errname[1000];
+        //snprintf(c2errname, sizeof c2errname, "%sCovMatricesAll/c2err_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        //char c4errname[1000];
+        //snprintf(c4errname, sizeof c4errname, "%sCovMatricesAll/c4err_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
+        //char c3errname[1000];
+        //snprintf(c3errname, sizeof c3errname, "%sCovMatricesAll/c3err_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2,I1,I3,suffix);
         char RRname[1000];
         snprintf(RRname, sizeof RRname, "%sCovMatricesAll/RR_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
-        FILE * C4ErrFile = fopen(c4errname,"w"); // for variance of c4 part
-        FILE * C3ErrFile = fopen(c3errname,"w"); // for variance of c3 part
-        FILE * C2ErrFile = fopen(c2errname,"w"); // for variance of c2 part
+        //FILE * C4ErrFile = fopen(c4errname,"w"); // for variance of c4 part
+        //FILE * C3ErrFile = fopen(c3errname,"w"); // for variance of c3 part
+        //FILE * C2ErrFile = fopen(c2errname,"w"); // for variance of c2 part
         FILE * RRFile = fopen(RRname,"w"); // for RR part of integral
         
         for (int j=0;j<nbin*mbin;j++){
             fprintf(C2File,"%le\n",c2[j]);
             fprintf(RRFile,"%le\n",Ra[j]);
-            fprintf(C2ErrFile,"%le\n",errc2[j]);
+            //fprintf(C2ErrFile,"%le\n",errc2[j]);
         }
         
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
                 fprintf(C3File,"%le\t",c3[i*nbin*mbin+j]);
                 fprintf(C4File,"%le\t",c4[i*nbin*mbin+j]);
-                fprintf(C4ErrFile,"%le\t",errc4[i*nbin*mbin+j]);
-                fprintf(C3ErrFile,"%le\t",errc3[i*nbin*mbin+j]);
+                //fprintf(C4ErrFile,"%le\t",errc4[i*nbin*mbin+j]);
+                //fprintf(C3ErrFile,"%le\t",errc3[i*nbin*mbin+j]);
             }
             fprintf(C3File,"\n"); // new line each end of row
             fprintf(C4File,"\n");
-            fprintf(C4ErrFile,"\n");
-            fprintf(C3ErrFile,"\n");
+            //fprintf(C4ErrFile,"\n");
+            //fprintf(C3ErrFile,"\n");
         }
         
         
@@ -686,9 +682,9 @@ public:
         fclose(C2File);
         fclose(C3File);
         fclose(C4File);
-        fclose(C2ErrFile);
-        fclose(C3ErrFile);
-        fclose(C4ErrFile);
+        //fclose(C2ErrFile);
+        //fclose(C3ErrFile);
+        //fclose(C4ErrFile);
         fclose(RRFile);
         
         if(save_all==1){
@@ -740,19 +736,19 @@ public:
         snprintf(c4name, sizeof c4name, "%sCovMatricesJack/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
         //char cxname[1000];
         //snprintf(cxname, sizeof cxname, "%sCovMatricesJack/cx_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
-        char c2errname[1000];
-        snprintf(c2errname, sizeof c2errname, "%sCovMatricesJack/c2err_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
-        char c4errname[1000];
-        snprintf(c4errname, sizeof c4errname, "%sCovMatricesJack/c4err_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
-        char c3errname[1000];
-        snprintf(c3errname, sizeof c3errname, "%sCovMatricesJack/c3err_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2,I1,I3,suffix);
+        //char c2errname[1000];
+        //snprintf(c2errname, sizeof c2errname, "%sCovMatricesJack/c2err_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        //char c4errname[1000];
+        //snprintf(c4errname, sizeof c4errname, "%sCovMatricesJack/c4err_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
+        //char c3errname[1000];
+        //snprintf(c3errname, sizeof c3errname, "%sCovMatricesJack/c3err_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2,I1,I3,suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
         //FILE * CXFile = fopen(cxname,"w"); // for RR part of integral
-        FILE * C4ErrFile = fopen(c4errname,"w"); // for c4 part of integral
-        FILE * C3ErrFile = fopen(c3errname,"w"); // for c3 part of integral
-        FILE * C2ErrFile = fopen(c2errname,"w"); // for c2 part of integral
+        //FILE * C4ErrFile = fopen(c4errname,"w"); // for c4 part of integral
+        //FILE * C3ErrFile = fopen(c3errname,"w"); // for c3 part of integral
+        //FILE * C2ErrFile = fopen(c2errname,"w"); // for c2 part of integral
         
         // TO REMOVE??
         char RR1name[1000];
@@ -770,7 +766,7 @@ public:
         FILE * RR2File = fopen(RR2name,"w"); // for RR2 integral
         
         for (int j=0;j<nbin*mbin;j++){
-            fprintf(C2ErrFile,"%le\n",errc2j[j]);
+            //fprintf(C2ErrFile,"%le\n",errc2j[j]);
             fprintf(C2File,"%le\n",c2j[j]);
         }
         for(int i=0;i<nbin*mbin;i++){
@@ -778,14 +774,14 @@ public:
                 fprintf(C3File,"%le\t",c3j[i*nbin*mbin+j]);
                 fprintf(C4File,"%le\t",c4j[i*nbin*mbin+j]);
          //       fprintf(CXFile,"%le\t",cxj[i*nbin*mbin+j]);
-                fprintf(C4ErrFile,"%le\t",errc4j[i*nbin*mbin+j]);
-                fprintf(C3ErrFile,"%le\t",errc3j[i*nbin*mbin+j]);
+                //fprintf(C4ErrFile,"%le\t",errc4j[i*nbin*mbin+j]);
+                //fprintf(C3ErrFile,"%le\t",errc3j[i*nbin*mbin+j]);
             }
             fprintf(C3File,"\n"); // new line each end of row
             fprintf(C4File,"\n");
          //   fprintf(CXFile,"\n");
-            fprintf(C4ErrFile,"\n");
-            fprintf(C3ErrFile,"\n");
+            //fprintf(C4ErrFile,"\n");
+            //fprintf(C3ErrFile,"\n");
         }
         
         for(int i=0;i<n_jack;i++){
@@ -810,9 +806,9 @@ public:
         fclose(C3File);
         fclose(C4File);
         //fclose(CXFile);
-        fclose(C2ErrFile);
-        fclose(C3ErrFile);
-        fclose(C4ErrFile);
+        //fclose(C2ErrFile);
+        //fclose(C3ErrFile);
+        //fclose(C4ErrFile);
         
         fclose(EE1File);
         fclose(EE2File);
@@ -820,54 +816,54 @@ public:
         fclose(RR2File);
     }
     
-    void compute_Neff(Float n_quads, Float n_triples, Float n_pairs, Float &N_eff, Float &N_eff_jack){
-        // Compute the effective mean N from the data given the number of sets of quads, triples and pairs used. 
-        // n_quads is the number of quads TRIED (whether or not they are accepted)
-        Float N=0., Nj=0.;
-        Float norm=0., normj=0.;
-        
-        for(int i=0;i<nbin*mbin;i++){
-            for(int j=0;j<nbin*mbin;j++){
-                // Read in integral components + normalize by 1/n_quads;
-                Float cij=c4[i*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
-                Float cii=c4[i*nbin*mbin+i]/n_quads+c3[i*nbin*mbin+j]/n_triples;
-                Float cjj=c4[j*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
-                
-                Float cj_ij=c4j[i*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
-                Float cj_ii=c4j[i*nbin*mbin+i]/n_quads+c3[i*nbin*mbin+j]/n_triples;
-                Float cj_jj=c4j[j*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
-                
-                Float err_c = errc4[i*nbin*mbin+j]/n_quads+errc3[i*nbin*mbin+j]/n_triples;
-                Float err_cj = errc4j[i*nbin*mbin+j]/n_quads+errc3j[i*nbin*mbin+j]/n_triples;
-                
-                if(i==j){
-                    cij+=c2[i];
-                    cii+=c2[i];
-                    cjj+=c2[i];
-                    cj_ij+=c2j[i];
-                    cj_ii+=c2j[i];
-                    cj_jj+=c2j[i];
-                    err_c+=errc2[i];
-                    err_cj+=errc2j[i];
-                }
-                
-                // Compute pixel variances - use n_quads as the number of quads here
-                Float var_c = (err_c - pow(cij,2.))/(n_quads-1.);
-                Float var_cj = (err_cj - pow(cj_ij,2.))/(n_quads-1.);
-                
-                // For N4;
-                N+=(pow(cij,2.)+cii*cjj)/var_c;//*c4ij;//*pow(c4ij,2.)
-                norm+=1;//c4ij;//pow(c4ij,2.);
-                
-                // For N4j;
-                Nj+=(pow(cj_ij,2.)+cj_ii*cj_jj)/var_cj;//*c4j_ij;//*pow(cjtot_tmp_ij,2.)
-                normj+=1;//c4j_ij;//pow(cjtot_tmp_ij,2.);
-                
-                }
-        }
-        N_eff = N/norm;
-        N_eff_jack=Nj/normj;
-    }
+//     void compute_Neff(Float n_quads, Float n_triples, Float n_pairs, Float &N_eff, Float &N_eff_jack){
+//         // Compute the effective mean N from the data given the number of sets of quads, triples and pairs used. 
+//         // n_quads is the number of quads TRIED (whether or not they are accepted)
+//         Float N=0., Nj=0.;
+//         Float norm=0., normj=0.;
+//         
+//         for(int i=0;i<nbin*mbin;i++){
+//             for(int j=0;j<nbin*mbin;j++){
+//                 // Read in integral components + normalize by 1/n_quads;
+//                 Float cij=c4[i*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
+//                 Float cii=c4[i*nbin*mbin+i]/n_quads+c3[i*nbin*mbin+j]/n_triples;
+//                 Float cjj=c4[j*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
+//                 
+//                 Float cj_ij=c4j[i*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
+//                 Float cj_ii=c4j[i*nbin*mbin+i]/n_quads+c3[i*nbin*mbin+j]/n_triples;
+//                 Float cj_jj=c4j[j*nbin*mbin+j]/n_quads+c3[i*nbin*mbin+j]/n_triples;
+//                 
+//                 //Float err_c = errc4[i*nbin*mbin+j]/n_quads+errc3[i*nbin*mbin+j]/n_triples;
+//                 //Float err_cj = errc4j[i*nbin*mbin+j]/n_quads+errc3j[i*nbin*mbin+j]/n_triples;
+//                 
+//                 if(i==j){
+//                     cij+=c2[i];
+//                     cii+=c2[i];
+//                     cjj+=c2[i];
+//                     cj_ij+=c2j[i];
+//                     cj_ii+=c2j[i];
+//                     cj_jj+=c2j[i];
+//                     err_c+=errc2[i];
+//                     err_cj+=errc2j[i];
+//                 }
+//                 
+//                 // Compute pixel variances - use n_quads as the number of quads here
+//                 Float var_c = (err_c - pow(cij,2.))/(n_quads-1.);
+//                 Float var_cj = (err_cj - pow(cj_ij,2.))/(n_quads-1.);
+//                 
+//                 // For N4;
+//                 N+=(pow(cij,2.)+cii*cjj)/var_c;//*c4ij;//*pow(c4ij,2.)
+//                 norm+=1;//c4ij;//pow(c4ij,2.);
+//                 
+//                 // For N4j;
+//                 Nj+=(pow(cj_ij,2.)+cj_ii*cj_jj)/var_cj;//*c4j_ij;//*pow(cjtot_tmp_ij,2.)
+//                 normj+=1;//c4j_ij;//pow(cjtot_tmp_ij,2.);
+//                 
+//                 }
+//         }
+//         N_eff = N/norm;
+//         N_eff_jack=Nj/normj;
+//     }
 
 };
 

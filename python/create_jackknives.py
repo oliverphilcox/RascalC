@@ -6,7 +6,7 @@ import sys
 
 ## PARAMETERS
 if len(sys.argv)<4:
-    print "Please specify input parameters in the form {INPUT_FILE} {OUTPUT_FILE} {HEALPIX_NSIDE}."
+    print("Please specify input parameters in the form {INPUT_FILE} {OUTPUT_FILE} {HEALPIX_NSIDE}.")
     sys.exit()
 infile_name = str(sys.argv[1])
 outfile_name = str(sys.argv[2])
@@ -31,7 +31,7 @@ with open(infile_name) as infile:
                 print(" %d%% done: Reading line %s of %s" %(percent_count,l,total_lines))
                 percent_count+=1
             split_line=line.split()
-            pix=long(hp.vec2pix(NSIDE,float(split_line[0]),float(split_line[1]),float(split_line[2]),nest=NEST))
+            pix=int(hp.vec2pix(NSIDE,float(split_line[0]),float(split_line[1]),float(split_line[2]),nest=NEST))
             outfile.write(line[:-1]+" "+str(pix)+"\n")
 end=time.time()-init
 print('Task completed in %.2f seconds' %end) 
