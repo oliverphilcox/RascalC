@@ -13,7 +13,7 @@ subprocess.run(["make"],cwd=cwd)
 
 
 # First compute all N_gal values:
-if True:
+if False:
     all_N_gal = np.zeros(99)
     
     for index in range(99):
@@ -36,8 +36,8 @@ if True:
     this_time = time.time()-init
     print("\n\nMean of mocks finished after %d seconds (%.2f minutes = %.2f hours)\n\n"%(this_time,this_time/60.,this_time/3600.))
 
-min_QPM = 0
-max_QPM = 10
+min_QPM = 20
+max_QPM = 30
 for index in range(min_QPM,max_QPM+1):
     # Iterate over QPM index
     root_dir_m = '/mnt/store1/oliverphilcox/CMU/QPM for Oliver/QPM_Pairs_Mariana/'
