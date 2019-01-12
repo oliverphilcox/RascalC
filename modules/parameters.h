@@ -128,40 +128,44 @@ public:
 	    if (argc==1) usage();
 	    int i=1;
 	    while (i<argc) {
-		     if (!strcmp(argv[i],"-boxsize")||!strcmp(argv[i],"-box")){
+            if (!strcmp(argv[i],"-boxsize")){
                  // set cubic boxsize by default
                 Float tmp_box=atof(argv[++i]);
                 rect_boxsize = {tmp_box,tmp_box,tmp_box};
                 }
-        else if (!strcmp(argv[i],"-maxloops")||!strcmp(argv[i],"-loops")) max_loops = atof(argv[++i]);
-        else if (!strcmp(argv[i],"-rescale")||!strcmp(argv[i],"-scale")) rescale = atof(argv[++i]);
+        else if (!strcmp(argv[i],"-maxloops")) max_loops = atof(argv[++i]);
+        else if (!strcmp(argv[i],"-rescale")) rescale = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-mumax")) mumax = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-mumin")) mumin = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-xicut")) xicutoff = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-norm")) nofznorm = atof(argv[++i]);
-		else if (!strcmp(argv[i],"-nside")||!strcmp(argv[i],"-ngrid")||!strcmp(argv[i],"-grid")) nside = atoi(argv[++i]);
-		else if (!strcmp(argv[i],"-in")||!strcmp(argv[i],"-in1")) fname = argv[++i];
+		else if (!strcmp(argv[i],"-norm2")) nofznorm2 = atof(argv[++i]);
+        else if (!strcmp(argv[i],"-nside")) nside = atoi(argv[++i]);
+		else if (!strcmp(argv[i],"-in")) fname = argv[++i];
         else if (!strcmp(argv[i],"-in2")) fname2 = argv[++i];
-		else if (!strcmp(argv[i],"-cor")||!strcmp(argv[i],"-cor1")) corname = argv[++i];
+		else if (!strcmp(argv[i],"-cor")) corname = argv[++i];
 		else if (!strcmp(argv[i],"-cor12")) corname12 = argv[++i];
 		else if (!strcmp(argv[i],"-cor2")) corname2 = argv[++i];
         else if (!strcmp(argv[i],"-rs")) rstart = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-nmax")) nmax = atoll(argv[++i]);
-		else if (!strcmp(argv[i],"-nthread")||!strcmp(argv[i],"-nthreads")) nthread = atoi(argv[++i]);
+		else if (!strcmp(argv[i],"-nthread")) nthread = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
-		else if (!strcmp(argv[i],"-save")||!strcmp(argv[i],"-store")) savename = argv[++i];
+		else if (!strcmp(argv[i],"-save")) savename = argv[++i];
 		else if (!strcmp(argv[i],"-load")) loadname = argv[++i];
 		else if (!strcmp(argv[i],"-balance")) qbalance = 1;
 		else if (!strcmp(argv[i],"-invert")) qinvert = 1;
         else if (!strcmp(argv[i],"-output")) out_file = argv[++i];
-        else if (!strcmp(argv[i],"-binfile")||!strcmp(argv[i],"-radial_binfile")) radial_bin_file=argv[++i];
-        else if (!strcmp(argv[i],"-jackknife")||!strcmp(argv[i],"-jackknife_weights")||!strcmp(argv[i],"-jackknife1")||!strcmp(argv[i],"-jackknife_weights1")) jk_weight_file=argv[++i];
-        else if (!strcmp(argv[i],"-jackknife12")||!strcmp(argv[i],"-jackknife_weights12")) jk_weight_file12=argv[++i];
-        else if (!strcmp(argv[i],"-jackknife2")||!strcmp(argv[i],"-jackknife_weights2")) jk_weight_file2=argv[++i];
-        else if (!strcmp(argv[i],"-RRbin")||!strcmp(argv[i],"-RRbin_file")||!strcmp(argv[i],"-RRbin1")||!strcmp(argv[i],"-RRbin_file1")) RR_bin_file=argv[++i];
-		else if (!strcmp(argv[i],"-RRbin12")||!strcmp(argv[i],"-RRbin_file12")) RR_bin_file12=argv[++i];
-		else if (!strcmp(argv[i],"-RRbin2")||!strcmp(argv[i],"-RRbin_file2")) RR_bin_file2=argv[++i];
-        else if (!strcmp(argv[i],"-ran")||!strcmp(argv[i],"-np")) {
+        else if (!strcmp(argv[i],"-binfile")) radial_bin_file=argv[++i];
+        else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
+        else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
+        else if (!strcmp(argv[i],"-jackknife2")) jk_weight_file2=argv[++i];
+        else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
+		else if (!strcmp(argv[i],"-RRbin12")) RR_bin_file12=argv[++i];
+		else if (!strcmp(argv[i],"-RRbin2")) RR_bin_file2=argv[++i];
+        else if (!strcmp(argv[i],"-N2")) N2=atof(argv[++i]);
+        else if (!strcmp(argv[i],"-N3")) N3=atof(argv[++i]);
+        else if (!strcmp(argv[i],"-N4")) N4=atof(argv[++i]);
+        else if (!strcmp(argv[i],"-np")) {
 			double tmp;
 			if (sscanf(argv[++i],"%lf", &tmp)!=1) {
 			    fprintf(stderr, "Failed to read number in %s %s\n",
@@ -171,7 +175,7 @@ public:
 			np = tmp;
 			make_random=1;
 		    }
-		else if (!strcmp(argv[i],"-def")||!strcmp(argv[i],"-default")) { fname = NULL; }
+		else if (!strcmp(argv[i],"-def")) { fname = NULL; }
 		else {
 		    fprintf(stderr, "Don't recognize %s\n", argv[i]);
 		    usage();
@@ -282,42 +286,56 @@ public:
 	}
 private:
 	void usage() {
-	    fprintf(stderr, "\nUsage for grid_covariance:\n");
-	    fprintf(stderr, "   -box <boxsize> : If creating particles randomly, this is the periodic size of the cubic computational domain.  Default 400. If reading from file, this is reset dynamically creating a cuboidal box.\n");
-	    fprintf(stderr, "   -scale <rescale>: How much to dilate the input positions by.  Default 1.\n");
-	    fprintf(stderr, "             Zero or negative value causes =boxsize, rescaling unit cube to full periodicity\n");
-	    fprintf(stderr, "   -xicut <xicutoff>: The radius beyond which xi is set to zero.  Default 400.\n");
-	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 250.\n");
-	    fprintf(stderr, "             Recommend having several grid cells per rmax. There are {nside} cells along the longest dimension of the periodic box.\n");
-	    fprintf(stderr, "   -in <file>: The input random particle file for particle-set 1 (space-separated x,y,z,w).\n");
-	    fprintf(stderr, "   -in <file>: (Optional) The input random particle file for particle-set 2 (space-separated x,y,z,w).\n");
-        fprintf(stderr, "   -ran <np>: Ignore any file and use np random perioidic points instead.\n");
-	    fprintf(stderr, "   -norm <nofznorm>: Number of galaxies in the survey for the first tracer set. Used to normalize n(z).\n");
-	    fprintf(stderr, "   -norm2 <nofznorm>: (Optional) Number of galaxies in the survey for the second tracer set. Used to normalize n(z).\n");
+	    fprintf(stderr, "\nUsage for grid_covariance:\n\n");
         fprintf(stderr, "   -def: This allows one to accept the defaults without giving other entries.\n");
-	    fprintf(stderr, "\n");
+	    fprintf(stderr, "   -in <file>: The input random particle file for particle-set 1 (space-separated x,y,z,w).\n");
+        fprintf(stderr, "   -binfile <filename>: File containing the desired radial bins\n");
         fprintf(stderr, "   -cor <file>: File location of input xi_1 correlation function file.\n");
+	    fprintf(stderr, "   -norm <nofznorm>: Number of galaxies in the survey for the first tracer set.\n");
+        fprintf(stderr, "   -jackknife <filename>: File containing the {1,1} jackknife weights (normally computed from Corrfunc)\n");
+        fprintf(stderr, "   -RRbin <filename>: File containing the {1,1} jackknife RR bin counts (computed from Corrfunc)\n");
+        fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");   
+        fprintf(stderr, "   -mbin:  The number of mu bins (spaced linearly).\n");
+	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 250.\n");
+	    fprintf(stderr, "          Recommend having several grid cells per rmax.\n");
+        fprintf(stderr, "          There are {nside} cells along the longest dimension of the periodic box.\n");
+	    fprintf(stderr, "   -nthread <nthread>: The number of CPU threads ot use for parallelization.\n");
+        fprintf(stderr, "\n");
+        
+	    fprintf(stderr, "   -in2 <file>: (Optional) The input random particle file for particle-set 2 (space-separated x,y,z,w).\n");
 	    fprintf(stderr, "   -cor12 <file>: (Optional) File location of input xi_{12} cross-correlation function file.\n");
 	    fprintf(stderr, "   -cor2 <file>: (Optional) File location of input xi_2 correlation function file.\n");
-        fprintf(stderr, "   -mbin:  The number of mu bins (spaced linearly).\n");
-        fprintf(stderr, "   -mumin / -mumax: Minimum / maximum mu binning to use.\n");
+	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Number of galaxies in the survey for the second tracer set.\n");
+        fprintf(stderr, "   -jackknife12 <filename>: (Optional) File containing the {1,2} jackknife weights (normally computed from Corrfunc)\n");
+        fprintf(stderr, "   -jackknife2 <filename>: (Optional) File containing the {2,2} jackknife weights (normally computed from Corrfunc)\n");
+        fprintf(stderr, "   -RRbin12 <filename>: (Optional) File containing the {1,2} jackknife RR bin counts (computed from Corrfunc)\n");
+	    fprintf(stderr, "   -RRbin2 <filename>: (Optional) File containing the {2,2} jackknife RR bin counts (computed from Corrfunc)\n");
+        fprintf(stderr, "\n");
+        
+        fprintf(stderr, "   -maxloops: Maximum number of integral loops\n");
+        fprintf(stderr, "   -N2: Number of secondary particles to choose per primary particle\n");
+        fprintf(stderr, "   -N3: Number of tertiary particles to choose per secondary particle\n");
+        fprintf(stderr, "   -N4: Number of quaternary particles to choose per tertiary particle\n");
+        fprintf(stderr, "\n");
+        
+        fprintf(stderr, "   -mumin : Minimum mu binning to use.\n");
+        fprintf(stderr, "   -mumax : Maximum mu binning to use.\n");
+        fprintf(stderr, "   -boxsize <boxsize> : If creating particles randomly, this is the periodic size of the cubic computational domain.\n");
+        fprintf(stderr, "           Default 400. If reading from file, this is reset dynamically creating a cuboidal box.\n");
+	    fprintf(stderr, "   -rescale <rescale>: How much to dilate the input positions by.  Default 1.\n");
+        fprintf(stderr, "            Zero or negative value causes =boxsize, rescaling unit cube to full periodicity\n");
+	    fprintf(stderr, "   -xicut <xicutoff>: The radius beyond which xi is set to zero.  Default 400.\n");
+        fprintf(stderr, "   -nmax <nmax>: The maximum number of particles to read in from the random particle files. Default 1000000000000\n");
+	    fprintf(stderr, "   -save <filename>: Triggers option to store probability grid. <filename> has to end on \".bin\"\n");
+	    fprintf(stderr, "      For advanced use, there is an option store the grid of probabilities used for sampling.\n");
+	    fprintf(stderr, "      The file can then be reloaded on subsequent runs\n");
+	    fprintf(stderr, "   -load <filename>: Triggers option to load the probability grid\n");
+	    fprintf(stderr, "   -invert: Multiply all the weights by -1.\n");
+	    fprintf(stderr, "   -balance: Rescale the negative weights so that the total weight is zero.\n");
+        fprintf(stderr, "   -np <np>: Ignore any file and use np random perioidic points instead.\n");
+        fprintf(stderr, "   -rs <rstart>:  If inverting particle weights, this sets the index from which to start weight inversion. Default 0\n");
 	    fprintf(stderr, "\n");
-	    fprintf(stderr, "For advanced use, there is an option store the grid of probabilities used for sampling.\n");
-	    fprintf(stderr, "    -save <filename>: Triggers option to store probability grid. <filename> has to end on \".bin\"\n");
-	    fprintf(stderr, "The file can then be reloaded on subsequent runs\n");
-	    fprintf(stderr, "    -load <filename>: Triggers option to load the probability grid\n");
-        fprintf(stderr, "    -binfile <filename>: File containing the desired radial bins\n");
-        fprintf(stderr, "    -weights <filename>: File containing the {1,1} jackknife weights (normally computed from Corrfunc\n)");
-        fprintf(stderr, "    -weights12 <filename>: (Optional) File containing the {1,2} jackknife weights (normally computed from Corrfunc\n)");
-        fprintf(stderr, "    -weights2 <filename>: (Optional) File containing the {2,2} jackknife weights (normally computed from Corrfunc\n)");
-        fprintf(stderr, "    -RRbin_file <filename>: File containing the {1,1} jackknife RR bin counts (computed from Corrfunc\n)");
-        fprintf(stderr, "    -RRbin_file12 <filename>: (Optional) File containing the {1,2} jackknife RR bin counts (computed from Corrfunc\n)");
-	    fprintf(stderr, "    -RRbin_file2 <filename>: (Optional) File containing the {2,2} jackknife RR bin counts (computed from Corrfunc\n)");
-	    fprintf(stderr, "    -balance: Rescale the negative weights so that the total weight is zero.\n");
-	    fprintf(stderr, "    -invert: Multiply all the weights by -1.\n");
-        fprintf(stderr, "    -loops: Maximum number of integral loops\n");
-        fprintf(stderr, "    -output: (Pre-existing) directory to save output covariance matrices into\n");   
-
+	    fprintf(stderr, "\n");
 
 	    exit(1);
 	}
