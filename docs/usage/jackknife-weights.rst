@@ -9,11 +9,11 @@ Usage
 ~~~~~~~
 For a single field::
 
-    python python/jackknife_weights {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} OUTPUT_DIR}
+    python python/jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} OUTPUT_DIR}
 
 For two fields::
 
-    python python/jackknife {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {MU_MAX} {N_MU_BINS} {N_GAL_1} {N_GAL_2} {NTHREADS} {PERIODIC} {OUTPUT_DIR}
+    python python/jackknife_weights_cross.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {MU_MAX} {N_MU_BINS} {N_GAL_1} {N_GAL_2} {NTHREADS} {PERIODIC} {OUTPUT_DIR}
 
 .. todo:: does this find all required weights for multiple tracers or just the cross-weights? 
 .. todo:: remove Ngal from here?

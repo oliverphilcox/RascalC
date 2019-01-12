@@ -82,7 +82,7 @@ public:
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/home/oliverphilcox/COMAJE/python/hybrid_binfile_coarse_cut.csv";//binfile_linear.csv";
+    const char default_radial_bin_file[500] = "/home/oliverphilcox/COMAJE/python/hybrid_binfile_cut.csv";//binfile_linear.csv";
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
@@ -284,10 +284,10 @@ private:
 	void usage() {
 	    fprintf(stderr, "\nUsage for grid_covariance:\n");
 	    fprintf(stderr, "   -box <boxsize> : If creating particles randomly, this is the periodic size of the cubic computational domain.  Default 400. If reading from file, this is reset dynamically creating a cuboidal box.\n");
-	    fprintf(stderr, "   -scale <rescale>: How much to dilate the input positions by.  Default 0.\n");
+	    fprintf(stderr, "   -scale <rescale>: How much to dilate the input positions by.  Default 1.\n");
 	    fprintf(stderr, "             Zero or negative value causes =boxsize, rescaling unit cube to full periodicity\n");
-	    fprintf(stderr, "   -xicut <xicutoff>: The radius beyond which xi is set to zero.  Default 1000.\n");
-	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 50.\n");
+	    fprintf(stderr, "   -xicut <xicutoff>: The radius beyond which xi is set to zero.  Default 400.\n");
+	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 250.\n");
 	    fprintf(stderr, "             Recommend having several grid cells per rmax. There are {nside} cells along the longest dimension of the periodic box.\n");
 	    fprintf(stderr, "   -in <file>: The input random particle file for particle-set 1 (space-separated x,y,z,w).\n");
 	    fprintf(stderr, "   -in <file>: (Optional) The input random particle file for particle-set 2 (space-separated x,y,z,w).\n");
@@ -334,6 +334,17 @@ private:
 	    if (mkdir(cname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0){
             }
         if (mkdir(cjname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)!=0){
+        }
+        // Check if this was successful:
+        struct stat info;
+
+        if( stat( cname, &info ) != 0 ){
+            printf( "\nCreation of directory %s failed\n", cname);
+            exit(1);
+        }
+        if(stat(cjname,&info)!=0){
+            printf("\nCreation of directory %s fiailed\n",cjname);
+            exit(1);
         }
     }
 	    
