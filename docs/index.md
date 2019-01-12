@@ -9,6 +9,12 @@ RascalC Documentation
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   
+   pre-processing
+   main-code
+   utilities
+
+
 
 RascalC is a code primarily written in C++ to estimate covariance matrices from galaxy correlation functions. Given an input set of random particle locations and a correlation function, RascalC produces an estimate of the associated covariance for a given binning strategy, with non-Gaussianities approximated by a 'shot-noise-rescaling' parameter. It can also be used to compute cross-covariances between different correlation functions.
 
