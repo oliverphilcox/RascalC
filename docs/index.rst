@@ -22,6 +22,7 @@ The source code is publicly available on `Github <https://github.com/oliverphilc
    usage/main-code
    usage/post-processing
 
+For any queries regarding the code please contact `Oliver Philcox  <mailto:ohep2@alumni.cam.ac.uk>`_. 
 
 
 .. Indices and tables

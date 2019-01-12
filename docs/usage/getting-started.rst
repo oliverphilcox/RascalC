@@ -10,7 +10,7 @@ In order to compute these matrices there are 4 steps:
 2. :doc:`jackknife-weights`: 
     Before the main C++ code is run, we compute the weights for each jackknife region, by computing jackknife-specific RR pair counts using `Corrfunc <https://corrfunc.readthedocs.io>`_. This is run via a Python script.
 3. :doc:`main-code`:
-    The main C++ code computing the individual covariance matrix terms using Monte Carlo integration. For multiple input correlation functions, this computes all relevant terms for the six non-trivial cross-covariance matrices. The covariances are saved as `.txt` files which can be reconstructed in Python.
+    The main C++ code computing the individual covariance matrix terms using Monte Carlo integration. For multiple input correlation functions, this computes all relevant terms for the six non-trivial cross-covariance matrices. The covariances are saved as ``.txt`` files which can be reconstructed in Python.
 4. :doc:`post-processing`: (*Optional*)
     A suite of codes in Python are provided to reconstruct and save the output covariance matrices. In addition, we provide modules to compute precision matrix estimates and effective mock numbers as well as plotting routines.
 
@@ -44,6 +44,6 @@ The required input files and formats are described below. Note that several of t
 - *(Internally Created)* **Jackknife Weights and Random Particle Counts**:
     - These specify the weights of each jackknife region for each bin and the random particle counts for each jackknife. 
     - These must be created using the :doc:`jackknife-weights` script.
-    - They are saved in `.dat` files with the name `jackknife_weights_n{N}_m{M}_j{J}.dat` and `binned_pair_counts_n{N}_m{M}_j{J}.dat` where N and M specify the number of radial and angular bins respectively and J gives the number of non-empty jackknife regions.
+    - They are saved in ``.dat`` files with the name ``jackknife_weights_n{N}_m{M}_j{J}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` where N and M specify the number of radial and angular bins respectively and J gives the number of non-empty jackknife regions.
     
 .. todo:: add support for multi-tracer jackknife weights
