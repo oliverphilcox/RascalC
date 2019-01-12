@@ -43,6 +43,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'recommonmark',
+    'sphinx.ext.todo',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -164,3 +165,4 @@ texinfo_documents = [
 
 
 # -- Extension configuration -------------------------------------------------
+todo_include_todos=True
