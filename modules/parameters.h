@@ -7,55 +7,119 @@ class Parameters{
 
 public:
 	// Important variables to set!  Here are the defaults:
-	// The periodicity of the position-space cube.
-	Float boxsize = 400;
+	
+    //---------- ESSENTIAL PARAMETERS -----------------
     
-    // The periodicity of the position-space cuboid in 3D. 
-    Float3 rect_boxsize = {400,400,400};
+    // The name of the input random particle files (first set)
+	char *fname = NULL;
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/CMU/randoms_10x_correct_Om_CMASS_N_xyzwj.txt"; 
     
-	// The particles will be read from the unit cube, but then scaled by boxsize.
-	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
-
-	// The maximum mu of the largest bin.
-	Float mumax = 1.0;
-
-	// The minimum mu of the smallest bin.
-	Float mumin = 0.0;
-
-	// The radius beyond which the correlation function is set to zero
-	Float xicutoff = 400.0;
+    // Name of the radial binning .csv file
+    char *radial_bin_file = NULL;
+    const char default_radial_bin_file[500] = "/home/oliverphilcox/COMAJE/python/hybrid_binfile_cut.csv";
     
-	Float nofznorm=-1;//323221;//0.05044021885884742*6500000; // for first dataset
-	Float nofznorm2=0; // for second dataset
-
-	// The grid size, which should be tuned to match boxsize and rmax. 
-	// This uses the maximum width of the cuboidal box.
-	// Don't forget to adjust this if changing boxsize!
-	int nside = 251;
-
-	// If set, we'll just throw random periodic points instead of reading the file
-	int make_random = 0;
-
-	// Will be number of particles in a random distribution,
-	// but gets overwritten if reading from a file.
-	int np = -1; // NB: This isn't actually used in the code after the creation of the grid, so we don't need to create a separate variable for the second set of randoms
-
-	// Whether to balance the weights or multiply them by -1
-	int qbalance = 0, qinvert = 0;
-
-	// The maximum number of points to read
-	uint64 nmax = 1000000000000;
-
-    // The number of mu bins
+    // The name of the correlation function file for the first set of particles
+	char *corname = NULL;
+	const char default_corname[500] = "none";//"/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mean.xi";
+    
+    // Number of galaxies in first dataset
+    Float nofznorm=-1;//323221;
+    
+    // Name of the jackknife weight file
+    char *jk_weight_file = NULL; // w_{aA}^{11} weights
+    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/QPM_weights/jackknife_weights_n39_m24_j169.dat";
+    
+     // Name of the RR bin file
+    char *RR_bin_file = NULL; // RR_{aA}^{11} file
+    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/QPM_weights/binned_pair_counts_n39_m24_j169.dat";
+    
+    // Output directory 
+    char *out_file = NULL;
+    const char default_out_file[500] = "none";///mnt/store1/oliverphilcox/CMU/QPM_Mean100_HiRes/";
+    
+	// The number of mu bins
 	int mbin = 24;
     
     // The number of threads to run on
 	int nthread=10;
 
-	// The location and name of a integrated grid of probabilities to be saved
+    // The grid size, which should be tuned to match boxsize and rmax. 
+	// This uses the maximum width of the cuboidal box.
+	int nside = 251;
+
+    //------------------ MULTI FIELD PARAMETERS ----------------------------
+    
+    // Second set of random particles
+    char *fname2 = NULL;
+    const char default_fname2[500] = ""; 
+    
+    // Correlation functions
+    char *corname2 = NULL; // xi_22 file
+    const char default_corname2[500] = "";
+    
+    char *corname12 = NULL; // xi_12 file
+    const char default_corname12[500] = "";
+    
+    // Number of galaxies in second dataset
+    Float nofznorm2=0; // 
+    
+    // Jackknife weight files
+    char *jk_weight_file12 = NULL; // w_{aA}^{12} weights
+    const char default_jk_weight_file12[500] = "";
+    
+    char *jk_weight_file2 = NULL; // w_{aA}^{22} weights
+    const char default_jk_weight_file2[500] = "";
+    
+    // Summed pair count files 
+    char *RR_bin_file12 = NULL; // RR_{aA}^{12} file
+    const char default_RR_bin_file12[500] = "";
+    
+    char *RR_bin_file2 = NULL; // RR_{aA}^{22} file
+    const char default_RR_bin_file2[500] = "";
+    
+    //---------- PRECISION PARAMETERS ---------------------------------------
+	
+    // Maximum number of iterations to compute the C_ab integrals over
+    int max_loops=10;
+    
+    // Number of random cells to draw at each stage
+    int N2 = 10; // number of j cells per i cell
+    int N3 = 10; // number of k cells per j cell
+    int N4 = 10; // number of l cells per k cell
+    
+    //-------- OTHER PARAMETERS ----------------------------------------------
+    
+	// The minimum mu of the smallest bin.
+	Float mumin = 0.0;
+
+	// The maximum mu of the largest bin.
+	Float mumax = 1.0;
+    
+    // The periodicity of the position-space cube.
+	Float boxsize = 400;
+    
+	// The particles will be read from the unit cube, but then scaled by boxsize.
+	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
+
+	// The radius beyond which the correlation function is set to zero
+	Float xicutoff = 400.0;
+    
+	// The maximum number of points to read
+	uint64 nmax = 1000000000000;
+	
+    // The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
-	// The location and name of a integrated grid of probabilities to be loaded
+    // The location and name of a integrated grid of probabilities to be loaded
 	char *loadname = NULL; //	
+	
+	// Whether to balance the weights or multiply them by -1
+	int qinvert = 0, qbalance = 0;
+    
+	// If set, we'll just throw random periodic points instead of reading the file
+	int make_random = 0;
+
+	// Will be number of particles in a random distribution, but gets overwritten if reading from a file.
+	int np = -1; // NB: This is only used for grid creation so we don't need a separate variable for the second set of randoms
 
 	// The index from which on to invert the sign of the weights
 	int rstart=0;
@@ -63,52 +127,12 @@ public:
 	// Whether or not we are using a periodic box
 	bool perbox=false;
 
-	// The name of the input random particle files
-	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/CMU/randoms_10x_correct_Om_CMASS_N_xyzwj.txt"; // first set of random particles
-
-    char *fname2 = NULL;
-    const char default_fname2[500] = ""; // second set of random particles
+	//---------------- INTERNAL PARAMETERS -----------------------------------
+    // (no more user defined parameters below this line)
     
-	// The name of the correlation function file
-	char *corname = NULL;
-	const char default_corname[500] = "none";//"/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mean.xi"; // xi_11 file
+	// The periodicity of the position-space cuboid in 3D. 
+    Float3 rect_boxsize = {boxsize,boxsize,boxsize}; // this is overwritten on particle read-in
     
-    char *corname2 = NULL; // xi_22 file
-    const char default_corname2[500] = "";
-    
-    char *corname12 = NULL; // xi_12 file
-    const char default_corname12[500] = "";
-    
-    // Name of the radial binning .csv file
-    char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/home/oliverphilcox/COMAJE/python/hybrid_binfile_cut.csv";//binfile_linear.csv";
-    
-    // Name of the jackknife weight file
-    char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/QPM_weights/jackknife_weights_n39_m24_j169.dat";//corrOm/jackknife_weights_n36_m10_j169.dat";//169.dat";
-    
-    char *jk_weight_file2 = NULL; // w_{aA}^{22} weightsz
-    const char default_jk_weight_file2[500] = "";
-    
-    char *jk_weight_file12 = NULL; // w_{aA}^{12} weights
-    const char default_jk_weight_file12[500] = "";
-    
-    // Name of the RR bin file
-    char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/QPM_weights/binned_pair_counts_n39_m24_j169.dat";//weightfiles_corrOm/binned_pair_counts_n36_m10_j169.dat";//;169.dat";
-    
-    char *RR_bin_file2 = NULL; // RR_{aA}^{22} file
-    const char default_RR_bin_file2[500] = "";
-    
-    char *RR_bin_file12 = NULL; // RR_{aA}^{12} file
-    const char default_RR_bin_file12[500] = "";
-    
-    // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=10;//10; 
-    int N2 = 10;//20;//20; // number of j cells per i cell
-    int N3 = 10;//25;//25; // number of k cells per j cell
-    int N4 = 10;//50;//50; // number of l cells per k cell
     
     // Radial binning parameters (will be set from file)
     int nbin=0;
@@ -119,10 +143,7 @@ public:
     // Variable to decide if we are using multiple tracers:
     bool multi_tracers;
     
-    char *out_file = NULL;
-    const char default_out_file[500] = "none";///mnt/store1/oliverphilcox/CMU/QPM_Mean100_HiRes/";
-    
-	// Constructor
+    // Constructor
 	Parameters(int argc, char *argv[]){
         
 	    if (argc==1) usage();
@@ -253,8 +274,7 @@ public:
 	    create_directory();
         
 	    // Read in the radial binning
-	    //TODO: Initialize nbin, rmin, rmax somewhere - not an input
-        read_radial_binning(radial_bin_file);
+	    read_radial_binning(radial_bin_file);
         printf("Read in %d radial bins in range (%.0f, %.0f) successfully.\n",nbin,rmin,rmax);
         
 	    assert(box_min>0.0);
@@ -367,7 +387,7 @@ private:
     }
 	    
 
-    void read_radial_binning(char* binfile_name){//, int nbin, Float min_r, Float max_r){
+    void read_radial_binning(char* binfile_name){
         // Read the radial binning file and determine the number of bins
         char line[100000];
     
