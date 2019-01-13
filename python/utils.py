@@ -15,7 +15,7 @@ class CovarianceMatrix:
         - :attr:`m` (int): Number of angular bins (inherited from :class:`Parameters` class)
         - :attr:`n_indiv` (int): Number of individual matrix estimates (inherited from :class:`Parameters` class)
         - :attr:`a` (float): Shot-noise rescaling parameter (inherited from :class:`Parameters` class)
-        - :attr:`r_bins` (str): Radial binning filename (inherited from :class:`Parameters` class)
+        - :attr:`r_bins` (np.ndarray): Radial binning lower and upper limits (inherited from :class:`Parameters` class)
         - :attr:`weights_file` (str): Jackknife weights filename. Generally of the form ``jackknife_weights_n{}_m{}_j{}.dat`` (inherited from :class:`Parameters` class)
         - :attr:`RR_file` (str): Summed RR pair counts filename. Generally of the form ``RR_pair_counts_n{}_m{}_j{}.dat`` (inherited from :class:`Parameters` class)
         - :attr:`c_tot` (np.ndarray): Full covariance matrix (created on initialization)
@@ -107,7 +107,7 @@ class CovarianceMatrix:
             cov+=self._compute_disconnected(root=root)
         
         # Return symmetrized object
-        return (c_tot+c_tot.T)/2.
+        return (cov+cov.T)/2.
     
     def _compute_disconnected(self,root='full'):
         """ Internal function to compute the disconnected contribution to the jackknife integral.
@@ -227,7 +227,9 @@ class CovarianceMatrix:
         return reduced_matrix        
         
     def compute_D_est(self,matrix_type='full'):
-        """ Compute the estimated :math:`\hat{D}` matrix as defined in O'Connell & Eisenstein 2018.
+        """ 
+        
+        Compute the estimated :math:`\hat{D}` matrix as defined in O'Connell & Eisenstein 2018.
         This is computed as :math:`\frac{ N-1 }{ N }\left(-I +\frac{ 1 }{ N }\sum_i C^{-1}_{[i]}C_i\right)` for the :math:`i`th of :math:`N` covariance matrix estimate :math:`C_i` , where :math:`C_{[i]}` excludes :math:`C_i`. This sets either the :attr:`D_est` or the :attr:`D_est_jack` attribute.
         
         Args:
@@ -244,7 +246,7 @@ class CovarianceMatrix:
         # Read in individual matrices
         c_mats=[]
         for i in range(self.n_indiv):
-            c_mats.append(self.read_all_matrices(root=str(i),matrix_type=matrix_type))
+            c_mats.append(self.read_matrices(root=str(i),matrix_type=matrix_type))
         nn = len(c_mats)
         
         # Compute summand term
@@ -327,7 +329,7 @@ class Parameters:
         - :attr:`m` (int): Number of angular bins
         - :attr:`n_indiv` (int): Number of individual matrix estimates
         - :attr:`a` (float): Shot-noise rescaling parameter
-        - :attr:`r_bins` (str): Radial binning filename
+        - :attr:`r_bins` (np.ndarray): Radial binning upper and lower bins [array dimension (2xn)]
         - :attr:`weights_file` (str): Jackknife weights filename. Generally of the form ``jackknife_weights_n{}_m{}_j{}.dat``
         - :attr:`RR_file` (str): Summed RR pair counts filename. Generally of the form ``RR_pair_counts_n{}_m{}_j{}.dat``
         
