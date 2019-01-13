@@ -111,6 +111,7 @@ Code Output
 In the specified output directory, RascalC creates two directories; ``CovMatricesAll/`` and ``CovMatricesJack`` containing total and jackknife covariance matrix estimates respectively. These contain multiple estimates of the each part of the total matrix and should be reconstructed using the :doc:`post-processing` scripts.
 
 The full output files take the following form (for N radial bins, M radial bins and J non-zero jackknife regions, with FIELDS specifying the utilized tracer fields):
+
  - ``c{X}_n{N}_m{M}_j{J}_{FIELDS}_{I}.txt``: I-th estimate of the X-point covariance matrix estimates, i.e. :math:`C_{X,ab}` The summed covariance matrix has the suffix 'full'. 
  - ``RR_n{N}_m{M}_{FIELDS}_{I}.txt``: I-th estimate of the (non-jackknife) :math:`RR_{ab}^{XY}` pair counts which can be compared with Corrfunc.
  - ``binct_c{X}_n{N}_m{M}_{FIELDS}.txt``: Total used counts per bin for the X-point covariance matrix.
