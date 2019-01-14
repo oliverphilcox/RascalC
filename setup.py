@@ -8,6 +8,6 @@ setup(name='RascalC_utils',
       author="Oliver Philcox, Ross O'Connell, Daniel Eisenstein, Alex Wiegand",
       author_email='ohep2@alumni.cam.ac.uk',
       url='https://rascalc.readthedocs.io/',
-      packages=['python.utils'],
+      packages=['utils'],
      )
 
