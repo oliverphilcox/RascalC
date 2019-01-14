@@ -1,10 +1,10 @@
 Metadata-Version: 1.0
 Name: RascalC-utils
-Version: 1.0
-Summary: Approximate Covariance Matrices for Large Scale Structure Correlation Functions
-Home-page: https://rascalc.readthedocs.io/
+Version: 0.1
+Summary: Approximate Covariance Matrices for Large-Scale-Structure correlation functions
+Home-page: http://github.com/oliverphilcox/RascalC
 Author: Oliver Philcox, Ross O'Connell, Daniel Eisenstein, Alex Wiegand
 Author-email: ohep2@alumni.cam.ac.uk
-License: UNKNOWN
+License: MIT
 Description: UNKNOWN
 Platform: UNKNOWN
