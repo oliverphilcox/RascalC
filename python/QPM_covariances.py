@@ -27,8 +27,8 @@ if True:
         
     # Now run code for the mean of the mocks
     N_gal = np.mean(all_N_gal)
-    xi_file = "/mnt/store1/oliverphilcox/QPM_xiFine/QPM_mean.xi"
-    outfile = "/mnt/store1/oliverphilcox/QPMCovarianceFine/HiResMean/"
+    xi_file = "/mnt/store1/oliverphilcox/QPM_xi/QPM_mean.xi"
+    outfile = "/mnt/store1/oliverphilcox/QPMCovarianceCanon/HiResMean/"
         
     print("RUNNING FOR MEAN XI \n\n")
     subprocess.run(["./cov","-norm", "%.8f"%N_gal,"-cor",xi_file,"-output",outfile],cwd=cwd)
@@ -36,9 +36,7 @@ if True:
     this_time = time.time()-init
     print("\n\nMean of mocks finished after %d seconds (%.2f minutes = %.2f hours)\n\n"%(this_time,this_time/60.,this_time/3600.))
 
-import sys
-sys.exit()
-
+import sys; sys.exit()
 min_QPM = 0
 max_QPM = 1
 for index in range(min_QPM,max_QPM):
@@ -46,12 +44,14 @@ for index in range(min_QPM,max_QPM):
     root_dir_m = '/mnt/store1/oliverphilcox/CMU/QPM for Oliver/QPM_Pairs_Mariana/'
     mfile_norms = root_dir_m+'qpm-unrecon-%s-norm.dat'%str(index+1).zfill(4)
     norms_M = np.loadtxt(mfile_norms,usecols=1)
-    this_factor = norms_M[0]/norms_M[1]
+    
+    print("Fixing N_gal to mean value")
+    factor=norms_M[0]/norms_M[1]
     
     # Define parameters
-    N_gal =this_factor*6500000; 
-    xi_file_ind = "/mnt/store1/oliverphilcox/QPM_xiFine/QPM_mock_%d.xi"%(index+1)
-    outfile = "/mnt/store1/oliverphilcox/QPMCovarianceFine/HiResMock_%d/"%(index+1)
+    N_gal = N_gal #this_factor*6500000; 
+    xi_file_ind = "/mnt/store1/oliverphilcox/QPM_xi/QPM_mock_%d.xi"%(index+1)
+    outfile = "/mnt/store1/oliverphilcox/QPMCovarianceCanon/HiResMock_%d/"%(index+1)
     
     # Run the code with the correct parameters:
     print("RUNNING FOR INDEX %d OF %d\n\n"%(index+1,max_QPM))
