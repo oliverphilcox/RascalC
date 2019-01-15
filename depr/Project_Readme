@@ -1,0 +1,143 @@
+// Read-me for the COMAJE (COvariance MAtrix Jackknife Estimator) code developed by Alex Wiegand, Oliver Philcox, Ross O'Connell & Daniel Eisenstein
+
+----------- SYSTEM REQUIREMENTS ---------
+
+- Python >=2.7
+- HEALPix installation with Healpy Python wrapper (https://healpix.jpl.nasa.gov/) [if creating jackknife regions from healpix]
+- Corrfunc installation with Python wrapper (https://corrfunc.readthedocs.io)
+- C++ compiler
+- OPENMP for parallelization (https://www.open-mpi.org/)
+- GSL libraries for random number generation (https://www.gnu.org/software/gsl/)
+
+
+----------- FILETYPES -------------------
+
+// Random Particles
+
+- This is an ascii file with each particle on a new row. Columns (separated by tabs) are x, y, z, w, j for comoving-space position coordinates {x,y,z} in the desired units. w is the weight of the particle and j is the designated jackknife region (e.g. as defined by a HEALPix parametrization).
+
+- If jackknife regions are not specified, (i.e. the input file has {x,y,z,w} columns only) this can be added by the create_jackknives python script.
+
+e.g. test_particles.txt
+
+
+// Binning files
+
+- This is an ascii file specifying the radial bins used. Each bin occupies a separate line, specifying the minimum and maximum radius of the bin on each line, separated by tabs.
+e.g.
+100.    150.
+150.    200.
+
+- A linear/log/hybrid radial binning file can be created by the write_binning_file_{linear,log,hybrid}.py script.
+
+e.g. binfile.csv
+
+
+// Random particle counts
+
+- An ascii file containing a list of the weighted random pair counts (i.e. pair count multiplied by average pair weight) for each covariance matrix bin. This is from the jackknife estimator, summed over the jackknife regions (equal to the standard estimate for the unrestricted jackknife).
+
+- Each weighted pair count (a floating point number) is on a separate line with the collapsed indexing scheme INDEX = {R_BIN}*{TOTAL_MU_BINS} + {MU_BIN}. This is used for both Corrfunc and the grid_covariance code.
+
+- NB: Any comment lines starting with '#' are ignored by the C++ code.
+
+- There are {TOTAL_R_BINS}*{TOTAL_MU_BINS} lines in total
+
+e.g. binned_pair_counts_n{}_m{}_j{}.dat
+
+// Jackknife weights
+
+- An ascii file containing a list of weights attached to each non-empty jackknife and each bin, defined as RR_{aA}/RR_{a}.
+
+- Each row is a tab-separated list of floating-point weights for each bin for a given jackknife region. The first entry on each row specifies the integer index of the jackknife region.
+
+- NB: Any comment lines starting with '#' are ignored by the C++ code.
+
+- The number of rows is equal to the number of non-empty jackknife regions in use and there are N_BINS+1 columns.
+
+- e.g.:
+16  0.1 0.5 0.4
+would specify weightings of 0.1, 0.5 and 0.4 to bins 1-3 in jackknife 16.
+
+- This is created by the jackknife_weights.py Python script and is an input to the grid_covariance file.
+
+e.g. jackknife_weights_n{}_m{}_j{}.dat
+
+
+---------- UTILITY FUNCTIONS -------------
+These are all located in the python/ directory.
+
+// create_jackknives
+
+- Python script to add assign random particles to jackknives. This takes an input ascii file with columns x, y, z, w (separated by tabs) for comoving positions {x,y,z} and weights w, and adds a jackknife region specifier based on the HEALPix ring pixellation with a given NSIDE value.
+
+- Usage:
+    python create_jackknives.py {INFILE} {OUTFILE} {N_SIDE}
+for input ascii file INFILE (in the current directory), output ascii file OUTFILE and N particles.
+
+- The output file can then be used for the rest of the analysis.
+
+- NB: This uses 12*N_SIDE^2 jackknife regions, many of which will be empty and assigns an additional label to each particle with the jackknife number.
+
+
+// take_subset_of_particles
+
+- Python script to select a random subset of particles from the input random particle file. 
+
+- Usage:
+    python take_subset_of_particles.py {INFILE} {OUTFILE} {N}
+for input ascii file INFILE (in the current directory), output ascii file OUTFILE and N particles.
+
+- The output file is of the correct format to use in the rest of the analysis.
+
+
+// write_binning_file scripts
+
+- Python scripts to create an ascii file containing the radial bins used in the covariance matrix for use with Corrfunc. (Angular bins are specified separately).
+
+- Scripts are provided for three types of binning in r-space: linear, log and hybrid log-linear (log up to some cut-off scale, then linear).
+
+- NB: Bins are provided in base-e here.
+
+- Usage: 
+    python write_binning_file_linear.py {N_BINS} {MIN_R} {MAX_R} {OUTFILE}
+    python write_binning_file_log.py {N_BINS} {MIN_R} {MAX_R} {OUTFILE}
+
+for N_BINS radial bins in the range MIN_R to MAX_R which is saved as OUTFILE.
+
+    python write_binning_file_hybrid.py {N_LOG_BINS} {N_LIN_BINS} {MIN_R} {CUTOFF_R} {MAX_R} {OUTFILE}
+    
+for N_LOG_BINS bins in (MIN_R, CUTOFF_R) radial range and N_LIN_BINS bins in (CUTOFF_R, MAX_R) radial range, saved as OUTFILE.
+    
+
+----------- BASIC USAGE -----------------
+
+// Compute jackknife weights:
+
+- This is done via the jackknife_weights.py Python script. 
+
+- We use the Corrfunc code to compute pair counts between jackknives, using weighting appropriate for the unrestricted jackknife. For a given jackknife A, we assign half weight to pairs straddling the jackknife and full weight to those completely contained within the jackknife. This is simply computed by finding the pair count from the cross-correlation of the particles in the jackknife subset and particles in the full region.
+
+- This uses a predetermined radial binning strategy in a given input file and the angular binning is determined as an input.
+
+- Weights are saved to the '../weight_files/' subdirectory of the working directory. Two files are created:
+        binned_pair_counts_n{N_R}_m{N_MU}_j{N_J}.dat
+        jackknife_weights_n{N_R}_m{N_MU}_j{N_J}.dat
+where N_R, N_MU and N_J specify the number of radial, mu and jackknife bins used. The binned_pair_counts file contains jackknife estimates of the RR pair counts for each bin (summed over all jackknife regions) and the jacknife_weights file contains the w_{aA} weights for each bin and jackknife. See file format descriptions above.
+
+- NB: This can be run for either periodic or non-periodic datasets. If periodic, the pair-separation angle theta (used in mu=cos(theta)) is measured from the Z axis, else it is measured from the radial direction. If the periodic flag is used here, the C++ code must be compiled with the -DPERIODIC flag.
+
+- Usage:
+    python jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {N_GAL} {NTHREADS} {PERIODIC}
+for some input file of random particles, BIN_FILE specifying the radial binning (e.g. from the write_binning_file script), maximum mu value MU_MAX with a total of N_MU_BINS mu bins. N_GAL is the total number of galaxies in the survey region (needed for normalization from the number of random particles). NTHREADS is the number of parallel threads to run on. PERIODIC = 0 implies non-periodic. PERIODIC = 1 implies periodic.
+
+
+// C++ Code
+
+- To run with default options compile the .cpp files in the grid_covariance directory using make and run e.g. ./cov -def
+
+- Full usage options can be examined by running ./cov with no additional arguments.
+
+- Compile with -DPERIODIC flag if periodic RR pair count inputs are used.
+
+- OUTPUT:
