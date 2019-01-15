@@ -1,17 +1,13 @@
  // This class computes the contributions to the C_ab integral iterating over cells and particles. It is a heavily modified version of code by Alex Wiegand.
 
-    #ifndef COMPUTE_INTEGRAL3_H
-    #define COMPUTE_INTEGRAL3_H
+    #ifndef COMPUTE_INTEGRAL_H
+    #define COMPUTE_INTEGRAL_H
 
-    #include "integrals5.h"
+    #include "integrals.h"
 
-    class compute_integral3{
+    class compute_integral{
         
     private:
-        //Grid *grid;
-        //CorrelationFunction *cf;
-        //JK_weights *JK;
-        //RandomDraws2 *rd;
         uint64 cnt2=0,cnt3=0,cnt4=0;
         int nbin, mbin; 
         
@@ -91,7 +87,7 @@
             else if ((Ia==2)&&(Ib==2)) return &all_cf[1];
             else return &all_cf[2];
         }
-        RandomDraws2* which_rd(RandomDraws2 all_rd[], int Ia, int Ib){
+        RandomDraws* which_rd(RandomDraws all_rd[], int Ia, int Ib){
             // Returns the relevant correlation function for two input field indices
             if((Ia==1)&(Ib==1)) return &all_rd[0];
             else if ((Ia==2)&&(Ib==2)) return &all_rd[1];
@@ -112,7 +108,7 @@
         }
         
     public:    
-        compute_integral3(Grid all_grid[], Parameters *par, JK_weights all_JK[], CorrelationFunction all_cf[], RandomDraws2 all_rd[], int I1, int I2, int I3, int I4, int iter_no){
+        compute_integral3(Grid all_grid[], Parameters *par, JK_weights all_JK[], CorrelationFunction all_cf[], RandomDraws all_rd[], int I1, int I2, int I3, int I4, int iter_no){
             // MAIN FUNCTION TO COMPUTE INTEGRALS
             
             int tot_iter=1; // total number of iterations
@@ -130,8 +126,8 @@
             CorrelationFunction *cf24 = which_cf(all_cf,I2,I4);
             
             // Define relevant random draw classes:
-            RandomDraws2 *rd13 = which_rd(all_rd,I1,I3);
-            RandomDraws2 *rd24 = which_rd(all_rd,I2,I4);
+            RandomDraws *rd13 = which_rd(all_rd,I1,I3);
+            RandomDraws *rd24 = which_rd(all_rd,I2,I4);
             
             // Define relevant jackknife JK_weights
             JK_weights *JK12 = which_JK(all_JK,I1,I2);
@@ -165,29 +161,13 @@
             }
             
             printf("Computed relevant product weights\n");
-            /*
-            // Compute SUM_A(w_aA*w_bA) for all jackknives
-            NB: How do we treat the different numbers of jackknives? And do they index the same things??
-            for (int bin_a=0;bin_a<nbins;bin_a++){
-                for (int bin_b=0;bin_b<nbins;bin_b++){
-                    Float tmp_product12_12=0.,tmp_product12_23=0.,tmp_product12_34=0.;
-                    for (int x=0;x<JK12->n_JK_filled;x++){ // sum over jackknives
-                        tmp_product12_12+=JK12->weights[x*nbins+bin_a]*JK12->weights[x*nbins+bin_b];
-                        tmp_product12_23+=JK12->weights[x*nbins+bin_a]*JK23->weights[x*nbins+bin_b];
-                        tmp_product12_34+=JK12->weights[x*nbins+bin_a]*JK34->weights[x*nbins+bin_b];
-                    product_weights12_12[bin_a*nbins+bin_b]=tmp_product12_12;
-                    product_weights12_23[bin_a*nbins+bin_b]=tmp_product12_23;
-                    product_weights12_34[bin_a*nbins+bin_b]=tmp_product12_34;
-                    }
-                }
-            }*/
             
     //-----------INITIALIZE OPENMP + CLASSES----------
             std::random_device urandom("/dev/urandom");
             std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
             unsigned long int steps = dist(urandom);        
             gsl_rng_env_setup(); // initialize gsl rng
-            Integrals5 sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4,product_weights12_12,product_weights12_23,product_weights12_34); // total integral
+            Integrals sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4,product_weights12_12,product_weights12_23,product_weights12_34); // total integral
             
             uint64 tot_pairs=0, tot_triples=0, tot_quads=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
             uint64 cell_attempt2=0,cell_attempt3=0,cell_attempt4=0; // number of j,k,l cells attempted
@@ -235,7 +215,7 @@
             integer3 delta2, delta3, delta4, prim_id, sec_id, thi_id;
             Float3 cell_sep2,cell_sep3;
             
-            Integrals5 locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4, product_weights12_12, product_weights12_23, product_weights12_34); // Accumulates the integral contribution of each thread
+            Integrals locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4, product_weights12_12, product_weights12_23, product_weights12_34); // Accumulates the integral contribution of each thread
             
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
             gsl_rng_set(locrng, steps*(thread+1));
@@ -266,7 +246,6 @@
                     printtime++;
                     continue;
                     }
-                    
                     
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid1->nf;n1++){
@@ -370,14 +349,9 @@
                     sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j);
                     if((frob_C4<0.01)&&(frob_C4j<0.01)) convergence_counter++;
                     
-                    // Report N_eff for the integrals:
-                    //Float N_eff, N_eff_jack;
-                    //sumint.compute_Neff((Float)tot_quads, (Float)tot_triples, (Float)tot_pairs, N_eff, N_eff_jack);
-                    
                     if (n_loops!=0){
                         fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
                         fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n",n_loops,frob_C2j, frob_C3j, frob_C4j);
-                     //   fprintf(stderr,"N_eff estimate: %.3e (C4) %.3e (C4j) \n", N_eff, N_eff_jack);
                     }
                 }
                 
@@ -388,7 +362,7 @@
                 char output_string[50];
                 sprintf(output_string,"%d", n_loops);
                 
-                locint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads, 1); // do normalize by RR here
+                locint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads);
                 locint.save_integrals(output_string,0);
                 locint.save_jackknife_integrals(output_string);
                 
@@ -402,13 +376,10 @@
             
             // Free up allocated memory at end of process
             free(prim_list);
-            //gsl_rng_free(locrng);
             free(xi_ik);
             free(bin_ij);
             free(w_ij);
             free(w_ijk);
-            
-            
             
     } // end OPENMP loop
 
@@ -416,7 +387,7 @@
         TotalTime.Stop();
         
         // Normalize the accumulated results, using the RR counts
-        sumint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)tot_pairs, (Float)tot_triples,(Float)tot_quads,1);//(Float)n_triples, (Float)n_quads, 1);
+        sumint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)tot_pairs, (Float)tot_triples,(Float)tot_quads);
         
         int runtime = TotalTime.Elapsed();
         printf("\n\nINTEGRAL %d OF %d COMPLETE\n",iter_no,tot_iter); 
@@ -442,8 +413,7 @@
         fflush(NULL);
         return;
         }
-        
-        
+                
     };
             
 #endif 

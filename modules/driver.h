@@ -60,7 +60,7 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
     while (fgets(line,1000,fp)!=NULL&&j<n) {
         if (line[0]=='#') continue;
         if (line[0]=='\n') continue;
-        stat=sscanf(line, "%lf %lf %lf %lf %lf", tmp, tmp+1, tmp+2, tmp+3, tmp+4);// %lf %lf", tmp, tmp+1, tmp+2, tmp+3, tmp+4, tmp+5, tmp+6);
+        stat=sscanf(line, "%lf %lf %lf %lf %lf", tmp, tmp+1, tmp+2, tmp+3, tmp+4);
 
         if (stat<4) {
         	fprintf(stderr,"Particle %d has bad format\n", j); // Not enough coordinates
@@ -90,7 +90,6 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 		p[j].JK=-1;
         
         for (int x=0;x<tmp_n_JK;x++){
-            //printf("tmp_JK: %d filled JK:%d\n",tmp_JK,JK->filled_JKs[x]);
             if (tmp_filled_JK[x]==tmp_JK) p[j].JK=x;
         }
         assert(p[j].JK!=-1); // ensure we find jackknife index		    

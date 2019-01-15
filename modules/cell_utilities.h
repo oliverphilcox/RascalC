@@ -42,7 +42,7 @@ class Cell {
     int start;	// The starting index of the particle list
     int np;
     int np1; // number of particles in cell in random-partition 1
-    int np2;
+    int np2; // number of particles in cell in random-partition 2
 };
 
 

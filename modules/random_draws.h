@@ -3,14 +3,11 @@
 #include "parameters.h"
 #include <gsl/gsl_sf_dawson.h>
 
-#ifndef RANDOM_DRAWS2_H
-#define RANDOM_DRAWS2_H
+#ifndef RANDOM_DRAWS_H
+#define RANDOM_DRAWS_H
 
 
-
-
-
-class RandomDraws2{
+class RandomDraws{
 
 	// Class that handles the selection of neighbouring boxes
 
@@ -60,11 +57,11 @@ public:
         
         
     public:
-	    RandomDraws2(){
+	    RandomDraws(){
             //empty constructor            
         }
         
-        RandomDraws2(CorrelationFunction *fun,Parameters *par,const double *xin, long np){ 
+        RandomDraws(CorrelationFunction *fun,Parameters *par,const double *xin, long np){ 
 
 		long n=np;
 		corr=fun;
@@ -152,7 +149,7 @@ public:
 		}
 
 
-~RandomDraws2() {
+~RandomDraws() {
 		ransampl_free( ws );
 		ransampl_free( cube );
 		free(x);
