@@ -162,7 +162,7 @@
                 // Now compute products
                 int partial_bin=0,partial_bin2;
                 Float this_weight;
-                for (int x=0;x<n_JK_filled;x++){
+                for (int x=0;x<JK12->n_JK_filled;x++){
                     partial_bins2=0.;
                     for(int bin_a=0; bin_a<nbins;bin_a++){
                         this_weight = JK12->weights[partial_bin+bin_a];
@@ -185,7 +185,7 @@
                 // Now compute products
                 int partial_bin=0,partial_bin2;
                 Float this_weights;
-                for (int x=0;x<n_JK_filled;x++){
+                for (int x=0;x<JK12->n_JK_filled;x++){
                     partial_bins2 = 0.
                     for(int bin_a=0;bin_a<nbins;bin_a++){
                         this_weight = JK12->weights[partial_bin+bin_a];
