@@ -2,6 +2,7 @@
 #include "parameters.h"
 #include "correlation_function.h"
 #include "cell_utilities.h"
+#include "jackknife_weights.h"
 
 #ifndef INTEGRALS_H
 #define INTEGRALS_H
@@ -9,7 +10,7 @@
 class Integrals{
 public:
     CorrelationFunction *cf12, *cf13, *cf24;
-    JK_weights *JK, *JK12, *JK23, *JK34;
+    JK_weights *JK12, *JK23, *JK34;
     
 private:
     int nbin, mbin, n_jack;
