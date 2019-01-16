@@ -178,7 +178,7 @@ with open(outdir+outfile,"w+") as outfile:
         outfile.write("%.8e "%r)
     outfile.write("\n")
     for mu in mean_mus:
-        outfile.write("%.8e "mu)
+        outfile.write("%.8e "%mu)
     for i in range(nrbins):
         for j in range(nmu_bins):
             outfile.write("%.8e "%xi_reshape[i,j])
