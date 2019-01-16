@@ -1,24 +1,27 @@
-## Script to compute estimate of the single correlation function xi(r,mu) for an entire survey via the Landay-Szelay estimator for a single set of random particles.
+## Script to compute estimate of the correlation functions xi(r,mu) for an entire survey via the Landay-Szelay estimator for two sets of random particles.
 ## If the periodic flag is set, we assume a periodic simulation and measure mu from the Z-axis.
+## This creates three correlation functions - for field 1 x field 1, field 1 x field 2, field 2 x field 2.
 
 import sys
 import numpy as np
 
 # PARAMETERS
-if len(sys.argv)!=9:
-    if len(sys.argv)!=10:
-        print("Usage: python DD_pair_counts.py {GALAXY_FILE} {RANDOM_FILE} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts}]")
+if len(sys.argv)!=11:
+    if len(sys.argv)!=14:
+        print("Usage: python DD_pair_counts.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1} {RANDOM_FILE_2} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts_11} {RR_counts_12} {RR_counts_22}]")
         sys.exit()
-Dname = str(sys.argv[1])
-Rname = str(sys.argv[2])
-binfile = str(sys.argv[3])
-mu_max = float(sys.argv[4])
-nmu_bins = int(sys.argv[5])
-nthreads = int(sys.argv[6])
-periodic = int(sys.argv[7])
-outdir=str(sys.argv[8])
+Dname1 = str(sys.argv[1])
+Dname2 = str(sys.argv[2])
+Rname1 = str(sys.argv[3])
+Rname2 = str(sys.argv[4])
+binfile = str(sys.argv[5])
+mu_max = float(sys.argv[6])
+nmu_bins = int(sys.argv[7])
+nthreads = int(sys.argv[8])
+periodic = int(sys.argv[9])
+outdir=str(sys.argv[10])
 
-if len(sys.argv)==10:
+if len(sys.argv)==1:
     print("Using pre-defined RR counts")
     RRname=str(sys.argv[9])
 else:
@@ -53,7 +56,7 @@ for n, line in enumerate(open(Dname, 'r')):
 
 dX,dY,dZ,dW=[np.zeros(total_lines) for _ in range(4)]
 
-print("Reading in galaxy data");
+print("Reading in random data");
 for n, line in enumerate(open(Dname, 'r')):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines))
