@@ -139,7 +139,7 @@ def compute_xi(random1,data1,N_gal,N_rand,random2=None,data2=None,N_gal2=None,N_
         else:
             print("Computing RR pair counts")
             if cross_term:
-               tmpRR=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra,r_Dec,com_dist,weights1=rW,
+               tmpRR=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra,r_Dec,r_com_dist,weights1=rW,
                                  RA2=r_Ra2,DEC2 = r_Dec2, CZ2 = r_com_dist2, weights2 = rW2, weight_type='pair_product',verbose=verbose,is_comoving_dist=True) 
             else:
                 tmpRR=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,r_Ra,r_Dec,r_com_dist,weights1=rW,weight_type='pair_product',verbose=verbose,is_comoving_dist=True)
