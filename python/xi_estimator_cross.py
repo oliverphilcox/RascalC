@@ -44,13 +44,13 @@ def reader(filename):
     X,Y,Z,W=[np.zeros(total_lines) for _ in range(4)]
     
     for n, line in enumerate(open(filename, 'r')):
-    if n%1000000==0:
-        print("Reading line %d of %d from file %s" %(n,total_lines,filename))
-    split_line=np.array(line.split(" "), dtype=float) 
-    X[n]=split_line[0];
-    Y[n]=split_line[1];
-    Z[n]=split_line[2];
-    W[n]=split_line[3];
+        if n%1000000==0:
+            print("Reading line %d of %d from file %s" %(n,total_lines,filename))
+        split_line=np.array(line.split(" "), dtype=float) 
+        X[n]=split_line[0];
+        Y[n]=split_line[1];
+        Z[n]=split_line[2];
+        W[n]=split_line[3];
 
     return X,Y,Z,W
 
@@ -87,23 +87,23 @@ print('%s radial bins are used in this file.' %nrbins)
 
 ## Coordinate transformations
 def coord_transform(x,y,z):
-            # Convert the X,Y,Z coordinates into Ra,Dec,comoving_distance (for use in corrfunc)
-            # Shamelessly stolen from astropy
-            xsq = x ** 2.
-            ysq = y ** 2.
-            zsq = z ** 2.
+    # Convert the X,Y,Z coordinates into Ra,Dec,comoving_distance (for use in corrfunc)
+    # Shamelessly stolen from astropy
+    xsq = x ** 2.
+    ysq = y ** 2.
+    zsq = z ** 2.
 
-            com_dist = (xsq + ysq + zsq) ** 0.5
-            s = (xsq + ysq) ** 0.5 
+    com_dist = (xsq + ysq + zsq) ** 0.5
+    s = (xsq + ysq) ** 0.5 
 
-            if np.isscalar(x) and np.isscalar(y) and np.isscalar(z):
-                Ra = math.atan2(y, x)*180./np.pi
-                Dec = math.atan2(z, s)*180./np.pi
-            else:
-                Ra = np.arctan2(y, x)*180./np.pi+180.
-                Dec = np.arctan2(z, s)*180./np.pi
+    if np.isscalar(x) and np.isscalar(y) and np.isscalar(z):
+        Ra = math.atan2(y, x)*180./np.pi
+        Dec = math.atan2(z, s)*180./np.pi
+    else:
+        Ra = np.arctan2(y, x)*180./np.pi+180.
+        Dec = np.arctan2(z, s)*180./np.pi
 
-            return com_dist, Ra, Dec
+    return com_dist, Ra, Dec
 
 def compute_xi(random1,data1,N_gal,N_rand,random2=None,data2=None,N_gal2=None,N_rand2=None,cross_term=False,RRname="",verbose=False):
     """ Compute the Xi estimate for a given pair of fields. If cross_term=True, we use both fields. If RRname is non-empty we use this instead of recomputing RR pair counts."""
