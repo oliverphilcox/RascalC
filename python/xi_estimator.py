@@ -7,7 +7,7 @@ import numpy as np
 # PARAMETERS
 if len(sys.argv)!=9:
     if len(sys.argv)!=10:
-        print("Usage: python DD_pair_counts.py {GALAXY_FILE} {RANDOM_FILE} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts}]")
+        print("Usage: python xi_estimator.py {GALAXY_FILE} {RANDOM_FILE} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts}]")
         sys.exit()
 Dname = str(sys.argv[1])
 Rname = str(sys.argv[2])
@@ -108,6 +108,9 @@ if not periodic:
 
     from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
     
+    import time
+    init=time.time()
+    
     # Now compute RR counts
     if len(RRname)!=0:
         RR_counts = np.loadtxt(RRname) # read pre-computed RR counts
@@ -117,22 +120,27 @@ if not periodic:
         print("Computing RR pair counts")
         tmpRR=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,r_Ra,r_Dec,r_com_dist,weights1=rW,weight_type='pair_product',verbose=False,is_comoving_dist=True)
         RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']
-    
+        print("Finished after %d seconds"%(time.time()-init))
     # Now compute DR counts
     print("Computing DR pair counts")
     tmpDR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,weights1=dW,weight_type='pair_product',
                         RA2=r_Ra, DEC2=r_Dec, CZ2 = r_com_dist, weights2 = rW, verbose=False,is_comoving_dist=True)
     DR_counts = tmpDR[:]['npairs']*tmpDR[:]['weightavg']
+    print("Finished after %d seconds"%(time.time()-init))
     
     # Now compute DD counts
     print("Compute DD pair counts")
     tmpDD=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,weights1=dW,weight_type='pair_product',verbose=False,is_comoving_dist=True)
     DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']
+    print("Finished after %d seconds"%(time.time()-init))
     
 else:
     # Compute RR counts for the periodic case (measuring mu from the Z-axis)
     print("Using periodic input data");
     from Corrfunc.theory.DDsmu import DDsmu
+    
+    import time
+    init = time.time()
     
     # Now compute RR counts
     if len(RRname)!=0:
@@ -141,19 +149,22 @@ else:
             raise Exception("Incorrect number of bins in RR file. Either provide the relevant file or recompute RR pair counts.")
     else:
         print("Computing RR pair counts")
-        tmpRR=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,rX,rY,rZ,weights1=rW,weight_type='pair_product',verbose=False,is_comoving_dist=True)
+        tmpRR=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,rX,rY,rZ,weights1=rW,weight_type='pair_product',verbose=True,periodic=True)
         RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']
+        print("Finished after %d seconds"%(time.time()-init))
     
     # Now compute DR counts
     print("Computing DR pair counts")
     tmpDR = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,weight_type='pair_product',
-                        X2=rX, Y2=rY, Z2 = rZ, weights2 = rW, verbose=False,is_comoving_dist=True)
+                        X2=rX, Y2=rY, Z2 = rZ, weights2 = rW, verbose=True,periodic=True)
     DR_counts = tmpDR[:]['npairs']*tmpDR[:]['weightavg']
+    print("Finished after %d seconds"%(time.time()-init))
     
     # Now compute DD counts
     print("Compute DD pair counts")
-    tmpDD=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,weight_type='pair_product',verbose=False,is_comoving_dist=True)
+    tmpDD=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,weight_type='pair_product',verbose=True,periodic=True)
     DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']
+    print("Finished after %d seconds"%(time.time()-init))
     
 from Corrfunc.utils import convert_3d_counts_to_cf
 
@@ -171,9 +182,9 @@ if not os.path.exists(outdir):
 # Define mu centers
 mean_mus = np.linspace(0.5/nmu_bins,1-0.5/nmu_bins,nmu_bins)
 
-outfile='xi_n%d_m%d_11.dat'%(nrbins,nmu_bins)
-print("Saving correlation function as %s"%outfile)
-with open(outdir+outfile,"w+") as outfile:
+outname='xi_n%d_m%d_11.dat'%(nrbins,nmu_bins)
+print("Saving correlation function")
+with open(outdir+outname,"w+") as outfile:
     for r in mean_bins:
         outfile.write("%.8e "%r)
     outfile.write("\n")
@@ -184,5 +195,5 @@ with open(outdir+outfile,"w+") as outfile:
             outfile.write("%.8e "%xi_reshape[i,j])
         outfile.write("\n")
         
-print("Correlation function written successfully to the %s directory"%outdir)
+print("Correlation function written successfully to %s"%(outdir+outname))
         

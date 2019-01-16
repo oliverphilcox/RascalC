@@ -154,7 +154,7 @@ else:
             print(filt,len(filt))
             if len(filt[0])>0:
                 cross_RR=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,X2,Y2,Z2,weights1=W2,weight_type='pair_product',
-                            X2=X[filt],Y2=Y[filt],Z2=Z[filt],weights2=W[filt],periodic=False,verbose=False)
+                            X2=X[filt],Y2=Y[filt],Z2=Z[filt],weights2=W[filt],periodic=True,verbose=False)
                 # Weight by average particle weighting
                 RR_aA[i]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
             
@@ -163,7 +163,7 @@ else:
                 filt2 = np.where(J2==j)
                 if len(filt2[0])>0:
                     cross_RR=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,X,Y,Z,weights1=W,weight_type='pair_product',
-                                X2=X2[filt],Y2=Y2[filt],Z2=Z2[filt],weights2=W2[filt],periodic=False,verbose=False)
+                                X2=X2[filt],Y2=Y2[filt],Z2=Z2[filt],weights2=W2[filt],periodic=True,verbose=False)
                     # Weight by average particle weighting
                     RR_aA[i]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
             return RR_aA
