@@ -63,11 +63,6 @@ public:
     
     JK_weights(){};
     
-    //JK_weights(JK_weights* JK){
-    //    // Constructor to copy an existing file:
-    //    JK->copy(&weights, &filled_JKs, &RR_pair_counts, n_JK_filled, nbins, &product_weights);
-    //}
-    
     // Assignment operator creation
     JK_weights& operator=(const JK_weights& jk);
     
@@ -193,18 +188,6 @@ public:
             partial_bin+=nbins;
         }
         
-        /*Float tmp_product;
-        int partial_bin;
-        for (int bin_a=0;bin_a<nbins;bin_a++){
-            for (int bin_b=0;bin_b<nbins;bin_b++){
-                tmp_product=0.;
-                for (int x=0;x<n_JK_filled;x++){ // sum over jackknives
-                    tmp_product+=weights[x*nbins+bin_a]*weights[x*nbins+bin_b];
-                product_weights[bin_a*nbins+bin_b]=tmp_product;
-                }
-            }
-        }
-        */
         printf("Computed product weights successfully.\n");        
     }
 };

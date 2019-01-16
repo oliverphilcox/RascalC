@@ -80,7 +80,6 @@ int main(int argc, char *argv[]) {
     JK_weights all_weights[max_no_functions]; // create empty functions
 
     
-    //TODO: Remove true
     JK_weights tmp(&par,1,1);
     all_weights[0].copy(&tmp); // save into global memory
     
