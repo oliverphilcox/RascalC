@@ -221,7 +221,7 @@ def compute_xi(random1,data1,N_gal,N_rand,random2=None,data2=None,N_gal2=None,N_
     if cross_term:
         xi_function = convert_3d_counts_to_cf(N_gal,N_gal2,N_rand,N_rand2,DD_counts,D1R2_counts,D2R1_counts,RR_counts)
     else:
-        xi_function = convert_3d_counts_to_cf(N_gal,N_gal,n_rand,N_rand,DD_counts,DR_counts,DR_counts,RR_counts)
+        xi_function = convert_3d_counts_to_cf(N_gal,N_gal,N_rand,N_rand,DD_counts,DR_counts,DR_counts,RR_counts)
         
     return xi_function.reshape(nrbins,nmu_bins)
 
