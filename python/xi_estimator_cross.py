@@ -231,7 +231,7 @@ def compute_xi(random1,data1,N_gal,N_rand,random2=None,data2=None,N_gal2=None,N_
 print("\nCOMPUTING xi_11 CORRELATION\n")
 xi_11=compute_xi(random1,data1,N_gal1,N_rand1,cross_term=False,RRname=RRname11,verbose=False)
 print("\nCOMPUTING xi_12 CORRELATION\n")
-xi_12=compute_xi(random1,data1,N_gal1,N_rand1,random2,data2,N_gal2,n_rand2,cross_term=True,RRname=RRname12,verbose=False)
+xi_12=compute_xi(random1,data1,N_gal1,N_rand1,random2,data2,N_gal2,N_rand2,cross_term=True,RRname=RRname12,verbose=False)
 print("\nCOMPUTING xi_22 CORRELATION\n")
 xi_22=compute_xi(random2,data2,N_gal2,N_rand2,cross_term=False,RRname=RRname22,verbose=False)
 
