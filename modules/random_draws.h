@@ -27,7 +27,7 @@ public:
 		ransampl_ws* cube;
 
     public: 
-        void copy(RandomDraws2 *rd){
+        void copy(RandomDraws *rd){
             // Copy a random draws object and allocate the sampler.
             // NB: We don't redefine corr here as it is unused post-initialization
             
