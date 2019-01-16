@@ -307,7 +307,7 @@ private:
         // bin_a, bin_b specify the binning.
         // product_weights is a (flattened) matrix of Sum_A(w_aA * w_bA) for the relevant jackknife weights
         
-        int nbins = JK->nbins;
+        int nbins = JK_XY->nbins;
         
         // Compute q_ij^A q_kl^A term
         int first_weight = 0;
