@@ -23,9 +23,9 @@ outdir=str(sys.argv[10])
 
 if len(sys.argv)==14:
     print("Using pre-defined RR counts")
-    RRname11=str(sys.argv[9])
-    RRname12=str(sys.argv[10])
-    RRname22=str(sys.argv[11])
+    RRname11=str(sys.argv[11])
+    RRname12=str(sys.argv[12])
+    RRname22=str(sys.argv[13])
 else:
     RRname11=""
     RRname12=""
@@ -248,13 +248,14 @@ if not os.path.exists(outdir):
 
 for index in range(3):
     outname='xi_n%d_m%d_%s.dat'%(nrbins,nmu_bins,suffices[index])
-    print("Saving %d-th correlation function to %s"%(i+1,outdir+outname))
+    print("Saving %d-th correlation function to %s"%(index+1,outdir+outname))
     with open(outdir+outname,"w+") as outfile:
         for r in mean_bins:
             outfile.write("%.8e "%r)
         outfile.write("\n")
         for mu in mean_mus:
             outfile.write("%.8e "%mu)
+        outfile.write("\n")
         for i in range(nrbins):
             for j in range(nmu_bins):
                 outfile.write("%.8e "%xi_files[index][i,j])
