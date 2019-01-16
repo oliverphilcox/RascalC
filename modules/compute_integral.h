@@ -108,7 +108,7 @@
         }
         
     public:    
-        compute_integral3(Grid all_grid[], Parameters *par, JK_weights all_JK[], CorrelationFunction all_cf[], RandomDraws all_rd[], int I1, int I2, int I3, int I4, int iter_no){
+        compute_integral(Grid all_grid[], Parameters *par, JK_weights all_JK[], CorrelationFunction all_cf[], RandomDraws all_rd[], int I1, int I2, int I3, int I4, int iter_no){
             // MAIN FUNCTION TO COMPUTE INTEGRALS
             
             int tot_iter=1; // total number of iterations
@@ -147,17 +147,55 @@
     // --------Compute product weights----------------------
             Float *product_weights12_12, *product_weights12_23, *product_weights12_34; // arrays to get products of jackknife weights to avoid recomputation
             int nbins=nbin*mbin;
-            if(par->multi_tracers==false){
-                product_weights12_12=JK12->product_weights;
-                product_weights12_23=JK12->product_weights;
-                product_weights12_34=JK12->product_weights;
-            }
+            
+            product_weights12_12 = JK12->product_weights;
+            
+            // ------ w_12*w_34 weight:: -------            
+            // Read in product weights if already computed
+            if(((I1==I3)&(I2==I4))||((I1==I4)&(I2==I3))) product_weights12_34 = JK12->product_weights;
+            // Otherwise compute weights from scratch
             else{
-                product_weights12_12 = (Float *)malloc(sizeof(Float)*nbins*nbins);
-                product_weights12_23 = (Float *)malloc(sizeof(Float)*nbins*nbins);
-                product_weights12_34 = (Float *)malloc(sizeof(Float)*nbins*nbins);
-                printf("NOT COMPUTED PRODUCT WEIGHTS PROPERLY YET!");
-                exit(1);
+                // Allocate memory first:
+                int ec=0;
+                ec+=posix_memalign((void **) &product_weights12_34, PAGE, sizeof(Float)*nbins*nbins);
+                assert(ec==0);
+                // Now compute products
+                int partial_bin=0,partial_bin2;
+                Float this_weight;
+                for (int x=0;x<n_JK_filled;x++){
+                    partial_bins2=0.;
+                    for(int bin_a=0; bin_a<nbins;bin_a++){
+                        this_weight = JK12->weights[partial_bin+bin_a];
+                        for(int bin_b=0;bin_b<nbins;bin_b++){
+                            product_weights12_34[partial_bin2+bin_b]+=this_weight*JK34->weights[partial_bin+bin_b];
+                        }
+                        partial_bin2+=nbins;
+                    }
+                    partial_bin+=nbins;
+                }
+            }
+            // ---- w_12*w_23 weight:: ------------
+            // Read in product weights if already computed
+            if(I1==I3) product_weights12_23 = JK12->product_weights;
+            else{
+                // Allocate memory first
+                int ec=0;
+                ec+=posix_memalign((void **) &product_weights12_23, PAGE, sizeof(Float)*nbins*nbins);
+                assert(ec==0);
+                // Now compute products
+                int partial_bin=0,partial_bin2;
+                Float this_weights;
+                for (int x=0;x<n_JK_filled;x++){
+                    partial_bins2 = 0.
+                    for(int bin_a=0;bin_a<nbins;bin_a++){
+                        this_weight = JK12->weights[partial_bin+bin_a];
+                        for(int bin_b=0;bin_b<nbins;bin_b++){
+                            product_weights12_23[partial_bin2+bin_b]+=this_weights*JK23->weights[partial_bin+bin_b];
+                        }
+                        partial_bin2+=nbins;
+                    }
+                    partial_bin+=nbins;
+                }
             }
             
             printf("Computed relevant product weights\n");
@@ -181,8 +219,6 @@
             printf("# All 1st grid points in use: %d\n",grid1->np);
             printf("# Max points in one cell in grid 1%d\n",grid1->maxnp);
             fflush(NULL);
-            
-            
             
             TotalTime.Start(); // Start timer
             
@@ -220,7 +256,7 @@
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
             gsl_rng_set(locrng, steps*(thread+1));
             
-            // Assign memory
+            // Assign memory for intermediate steps
             int ec=0;
             ec+=posix_memalign((void **) &prim_list, PAGE, sizeof(Particle)*mnp);
             ec+=posix_memalign((void **) &prim_ids, PAGE, sizeof(int)*mnp);
@@ -241,8 +277,8 @@
                 loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;  
                 
                 // End loops early if convergence has been acheived
-                if (convergence_counter==5){ 
-                    if (printtime==0) printf("\n0.1 percent convergence acheived in C4 50 times, exiting.\n");
+                if (convergence_counter==10){ 
+                    if (printtime==0) printf("1 percent convergence acheived in C4 10 times, exiting.\n");
                     printtime++;
                     continue;
                     }
@@ -250,11 +286,13 @@
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid1->nf;n1++){
                     
+                    // Print time left
                     if((float(n1)/float(grid1->nf)*100)>=percent_counter){
                         printf("Integral %d of %d, run %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n",iter_no,tot_iter,1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),thread, n1+1,grid1->nf,percent_counter);
                         percent_counter+=5.;
                     }
                     
+                    // Pick first particle
                     prim_id_1D = grid1-> filled[n1]; // 1d ID for cell i 
                     prim_id = grid1->cell_id_from_1d(prim_id_1D); // define first cell
                     pln = particle_list(prim_id_1D, prim_list, prim_ids, grid1); // update list of particles and number of particles
@@ -337,12 +375,11 @@
     #pragma omp critical // only one processor can access at once
             {
                  
-                if (n_loops%par->nthread==0){ // Print every nthread loops
+                if ((n_loops+1)%par->nthread==0){ // Print every nthread loops
                     TotalTime.Stop(); // interrupt timing to access .Elapsed()
                     int current_runtime = TotalTime.Elapsed();
-                    int remaining_time = current_runtime/(n_loops/par->nthread+1)*(par->max_loops/par->nthread-n_loops/par->nthread);  // estimated remaining time
-                    //TODO: Fix this calculation
-                    fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
+                    int remaining_time = current_runtime/((n_loops+1)/par->nthread)*(par->max_loops/par->nthread-(n_loops+1)/par->nthread);  // estimated remaining time
+                    fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops+1,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
                     
                     TotalTime.Start(); // Restart the timer
                     Float frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j;

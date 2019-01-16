@@ -7,16 +7,17 @@ Two codes are supplied; one using a single set of tracer particles and the other
 
 Usage
 ~~~~~~~
-For a single field::
+For a single field analysis::
 
     python python/jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} OUTPUT_DIR}
 
-For two fields::
+For an analysis using two distinct fields::
 
-    python python/jackknife_weights_cross.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {MU_MAX} {N_MU_BINS} {N_GAL_1} {N_GAL_2} {NTHREADS} {PERIODIC} {OUTPUT_DIR}
+    python python/jackknife_weights_cross.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR}
+    
+**NB**: The two field script computes all three combinations of weights between the two random fields, thus has a runtime :math:`\sim` 3 times that of ``jackknife_weights.py``. Running these together in one script ensures that we have the same number of jackknives for all fields. Also, the two fields must be distinct, else there are issues with double counting. 
 
-.. todo:: does this find all required weights for multiple tracers or just the cross-weights? 
-.. todo:: remove Ngal from here?
+.. todo:: check RascalC read-in procedure with all weights 
     
 **Input Parameters**
 
@@ -24,7 +25,6 @@ For two fields::
 - {BIN_FILE}: ASCII file specifying the radial bins, as described in :ref:`file-inputs`. This can be user-defined or created by the :ref:`write-binning-file` scripts.
 - {MU_MAX}: Maximum :math:`\mu = \cos\theta` used in the angular binning.
 - {N_MU_BINS}: Number of angular bins used in the range :math:`[0,\mu]`.
-- {N_GAL_1}, {N_GAL_2}: Number of galaxies in the dataset 1 and 2 (for normalization).
 - {NTHREADS}: Number of CPU threads to use for pair counting parallelization.
 - {PERIODIC}: Whether the input dataset has periodic boundary conditions (0 = non-periodic, 1 = periodic). See note below.
 - {OUTPUT_DIR}: Directory in which to house the jackknife weights and pair counts. This will be created if not in existence.
@@ -42,8 +42,6 @@ The code can be run for datasets created with either periodic or non-periodic bo
 Output files
 ~~~~~~~~~~~~~
 
-This code creates ASCII files containing the jackknife weights for each bin and the RR pair counts. The output files have the format ``jackknife_weights_n{N}_m{M}_j{J}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` where N and M specify the number of radial and angular bins respectively and J gives the number of non-empty jackknives.
+This code creates ASCII files containing the jackknife weights for each bin and the RR pair counts. The output files have the format ``jackknife_weights_n{N}_m{M}_j{J}_{INDEX}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` where N and M specify the number of radial and angular bins respectively and J gives the number of non-empty jackknives. INDEX specifies which fields are being used i.e. INDEX = 12 implies the :math:`w_{aA}^{12}` and :math:`RR_a^{12}` quantities.
 
 The binned pair counts is a list of weighted pair counts for each bin, summed over all jackknife regions, in the form :math:`RR_a^{J,XY} = \sum_B RR_{aB}^{XY}`. The jackknife weights file lists the weights :math:`w_{aA}^{XY}` for each bin and jackknife region. The :math:`j`-th row contains the (tab-separated) weights for each bin using the :math:`j`-th jackknife. The first value in each row is the jackknife number, and the bins are ordered using the collapsed binning :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` for a total of :math:`n_\mu` angular bins.  
-
-.. todo:: add support for multiple tracer particles + bundle up into one single code

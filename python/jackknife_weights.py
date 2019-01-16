@@ -91,7 +91,7 @@ if not periodic:
         cross_RR=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,Ra,Dec,com_dist,weights1=W,weight_type='pair_product',
                     RA2=Ra[filt],DEC2=Dec[filt],CZ2=com_dist[filt],weights2=W[filt],verbose=False,is_comoving_dist=True)
         # Weight by average particle weighting
-        RR_aA[i]=cross_RR[:]['npairs']*cross_RR[:]['weightavg']#*(N_gal/N)**2.
+        RR_aA[i]=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
         
 else:
     # Compute RR counts for the periodic case (measuring mu from the Z-axis)
@@ -108,7 +108,7 @@ else:
         cross_RR=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,X,Y,Z,weights1=W,weight_type='pair_product',
                     X2=X[filt],Y2=Y[filt],Z2=Z[filt],weights2=W[filt],periodic=False,verbose=False)
         # Weight by average particle weighting
-        RR_aA[i]=cross_RR[:]['npairs']*cross_RR[:]['weightavg']#*(N_gal/N)**2.
+        RR_aA[i]=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
     
 
 # Now compute weights from pair counts
@@ -122,7 +122,7 @@ import os
 if not os.path.exists(outdir):
     os.makedirs(outdir)
 
-weight_file='jackknife_weights_n%d_m%d_j%d.dat'%(nrbins,nmu_bins,N_jack)
+weight_file='jackknife_weights_n%d_m%d_j%d_11.dat'%(nrbins,nmu_bins,N_jack)
 print("Saving jackknife weight as %s"%weight_file)
 with open(outdir+weight_file,"w+") as weight_file:
     for j_id,jackknife_weight in enumerate(w_aA):
@@ -133,7 +133,7 @@ with open(outdir+weight_file,"w+") as weight_file:
                 weight_file.write("\n");
             else:
                 weight_file.write("\t");
-RR_a_file = 'binned_pair_counts_n%d_m%d_j%d.dat'%(nrbins,nmu_bins,N_jack)
+RR_a_file = 'binned_pair_counts_n%d_m%d_j%d_11.dat'%(nrbins,nmu_bins,N_jack)
 print("Saving binned pair counts as %s" %RR_a_file);
 with open(outdir+RR_a_file,"w+") as RR_file:
     for i in range(len(RR_a)):

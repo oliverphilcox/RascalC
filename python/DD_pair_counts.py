@@ -16,7 +16,6 @@ nthreads = int(sys.argv[5])
 periodic = int(sys.argv[6])
 outdir=str(sys.argv[7])
 
-
 ## First read in weights and positions:
 dtype = np.double 
 
