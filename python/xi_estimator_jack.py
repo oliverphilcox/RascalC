@@ -177,7 +177,7 @@ if not periodic:
     print("Finished after %d seconds"%(time.time()-init))
     
 else:
-    # Compute RR counts for the periodic case (measuring mu from the Z-axis)
+    # Compute xi for the periodic case (measuring mu from the Z-axis)
     print("Using periodic input data");
     from Corrfunc.theory.DDsmu import DDsmu
     
