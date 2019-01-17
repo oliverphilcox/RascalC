@@ -432,7 +432,7 @@ if not os.path.exists(outdir):
     os.makedirs(outdir)
 
 for index in range(3):
-    outname='xi_n%d_m%d_%s.dat'%(nrbins,nmu_bins,suffices[index])
+    outname='xi_jack_n%d_m%d_%s.dat'%(nrbins,nmu_bins,suffices[index])
     print("Saving %s correlation function to %s"%(suffices[index],outdir+outname))
     with open(outdir+outname,"w+") as outfile:
         for r in mean_bins:
