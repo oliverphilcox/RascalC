@@ -23,7 +23,7 @@ outdir=str(sys.argv[10])
 
 if len(sys.argv)==14:
     print("Using pre-defined RR counts")
-    RRname11=str(sys.argv[11])
+    RRname11=str(sys.argv[11])  
     RRname12=str(sys.argv[12])
     RRname22=str(sys.argv[13])
 else:
@@ -185,7 +185,7 @@ def compute_xi(random1,data1,N_gal,N_rand,random2=None,data2=None,N_gal2=None,N_
             print("Computing RR pair counts")
             if cross_term:
                 tmpRR=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,rX,rY,rZ,weights1=rW,
-                            X2=rX2,Y2=rY2,Z2=rZ2,W2=rW2, verbose=verbose,periodic=True)
+                            X2=rX2,Y2=rY2,Z2=rZ2,weights2=rW2, verbose=verbose,periodic=True)
             else:
                 tmpRR=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,rX,rY,rZ,weights1=rW,weight_type='pair_product',verbose=verbose,periodic=True)
             RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']
@@ -248,7 +248,7 @@ if not os.path.exists(outdir):
 
 for index in range(3):
     outname='xi_n%d_m%d_%s.dat'%(nrbins,nmu_bins,suffices[index])
-    print("Saving %d-th correlation function to %s"%(index+1,outdir+outname))
+    print("Saving %s correlation function to %s"%(suffices[index],outdir+outname))
     with open(outdir+outname,"w+") as outfile:
         for r in mean_bins:
             outfile.write("%.8e "%r)

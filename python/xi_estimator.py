@@ -190,10 +190,14 @@ with open(outdir+outname,"w+") as outfile:
     outfile.write("\n")
     for mu in mean_mus:
         outfile.write("%.8e "%mu)
+    outfile.write("\n");
     for i in range(nrbins):
         for j in range(nmu_bins):
             outfile.write("%.8e "%xi_reshape[i,j])
         outfile.write("\n")
         
 print("Correlation function written successfully to %s"%(outdir+outname))
-        
+
+print("TESTING - SAVE ALL")
+np.savez(outdir+'all_xi.npz',RR=RR_counts,DR=DR_counts,DD=DD_counts,xi=xi_reshape)
+print("Saved pair counts to %s"%(outdir+'all_xi.npz'))
