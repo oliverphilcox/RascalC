@@ -190,7 +190,7 @@ else:
         RRfile = np.loadtxt(RRname) # read pre-computed RR counts
         if len(RRfile[0,:])!=(1+nrbins*nmu_bins):
             raise Exception("Incorrect number of bins in RR file. Either provide the relevant file or recompute RR pair counts for each unrestricted jackknife.")
-        if len(RR_counts[:,0])!=N_jack):
+        if len(RR_counts[:,0])!=N_jack:
             raise Exception("Incorrect number of jackknives in RR file. Either provide the relevant file or recompute RR pair counts for each unrestricted jackknife.")
         for jk in range(N_jack):
             RR_counts[jk,:] = RRfile[jk,1:] # first index is jackknife number usually
