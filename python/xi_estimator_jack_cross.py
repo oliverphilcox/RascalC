@@ -244,13 +244,14 @@ def compute_xi(random1,data1,random2=None,data2=None,cross_term=False,RRname="",
                                             weight_type='pair_product',RA2=d_Ra2[filt],DEC2=d_Dec2[filt],CZ2=d_com_dist2[filt],
                                             weights2=dW2[filt],verbose=verbose,is_comoving_dist=True)
                     DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
-                filt = np.where(dJ==j):
+                filt = np.where(dJ==j)
+                if len(filt[0])>0:
                     cross_DD = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra[filt],d_Dec[filt],d_com_dist[filt],weights1=dW[filt],
                                             weight_type='pair_product',RA2=d_Ra2,DEC2=d_Dec2,CZ2=d_com_dist2,
                                             weights2=dW2,verbose=verbose,is_comoving_dist=True)
                     DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
             else:
-                filt = np.where(dJ==j):
+                filt = np.where(dJ==j)
                 if len(filt[0])>0:
                     cross_DD = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,weights1=dW,
                                             weight_type='pair_product',RA2=d_Ra[filt],DEC2=d_Dec[filt],CZ2=d_com_dist[filt],
@@ -367,19 +368,20 @@ def compute_xi(random1,data1,random2=None,data2=None,cross_term=False,RRname="",
         DD_counts = np.zeros_like(RR_counts)
         for i,j in enumerate(J_regions):
             if cross_term:
-                filt = np.where(dJ2==j):
+                filt = np.where(dJ2==j)
                 if len(filt[0])>0:
                     cross_DD = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,
                                             weight_type='pair_product',X2=dX2[filt],Y2=dY2[filt],Z2=dZ2[filt],
                                             weights2=dW2[filt],verbose=verbose,periodic=True)
                     DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
-                filt = np.where(dJ==j):
+                filt = np.where(dJ==j)
+                if len(filt[0])>0:
                     cross_DD = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX[filt],dY[filt],dZ[filt],weights1=dW[filt],
                                             weight_type='pair_product',X2=dX2,Y2=dY2,Z2=dZ2,
                                             weights2=dW2,verbose=verbose,periodic=True)
                     DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
             else:
-                filt = np.where(dJ==j):
+                filt = np.where(dJ==j)
                 if len(filt[0])>0:
                     cross_DD = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,
                                             weight_type='pair_product',X2=dX[filt],Y2=dY[filt],Z2=dZ[filt],
