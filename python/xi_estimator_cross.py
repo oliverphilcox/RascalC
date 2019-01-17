@@ -215,18 +215,18 @@ def compute_xi(random1,data1,N_gal,N_rand,random2=None,data2=None,N_gal2=None,N_
         print("Finished after %d seconds"%(time.time()-init))
         
     # Compute normalizations
-    N_RR = np.sum(tmpRR[:]['weightavg'])
-    N_DD = np.sum(tmpDD[:]['weightavg'])
+    N_RR = np.sum(RR_counts)
+    N_DD = np.sum(DD_counts)
         
     ## Now compute correlation function
     if cross_term:
-        N_D1R2 = np.sum(tmpD1R2[:]['weightavg'])
-        N_D2R1 = np.sum(tmpD2R1[:]['weightavg'])
+        N_D1R2 = np.sum(D1R2_counts)
+        N_D2R1 = np.sum(D2R1_counts)
         
         # Now use Landay-Szelay estimator:
         xi_function = DD_counts/RR_counts*N_RR/N_DD - D1R2_counts/RR_counts*N_RR/N_D1R2 - D2R1_counts/RR_counts*N_RR/N_D2R1 + 1.
     else:
-        N_DR = np.sum(tmpDR[:]['weightavg'])
+        N_DR = np.sum(DR_counts)
         
         # Now use Landay-Szelay estimator:
         xi_function = DD_counts/RR_counts*N_RR/N_DD - 2.*DR_counts/RR_counts*N_RR/N_DR + 1.

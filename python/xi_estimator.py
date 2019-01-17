@@ -169,9 +169,9 @@ else:
 ## Now compute correlation function
 
 # First find normalizations (weighted by pair-weights here)
-N_DD = np.sum(tmpDD[:]['weightavg'])
-N_DR = np.sum(tmpDR[:]['weightavg'])
-N_RR = np.sum(tmpRR[:]['weightavg'])
+N_DD = np.sum(DD_counts)
+N_DR = np.sum(DR_counts)
+N_RR = np.sum(RR_counts)
 
 # Now use Landay-Szelay estimator:
 xi_function = DD_counts/RR_counts*N_RR/N_DD - 2.*DR_counts/RR_counts*N_RR/N_DR + 1.
