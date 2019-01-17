@@ -215,18 +215,18 @@ else:
         # Compute pair counts between data jackknife and random survey
         filt = np.where(dJ==j)
         if len(filt[0])>0:
-            cross_DR = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX[filt],dY[filt],dZ[filt],
+            cross_DR1 = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX[filt],dY[filt],dZ[filt],
                                    weights1=dW[filt],weight_type='pair_product', X2=rX, Y2=rY, 
                                    Z2 = rZ, weights2 = rW, verbose=False,periodic=True)
-            DR_counts[i,:] += cross_DR[:]['npairs']*cross_DR[:]['weightavg']
+            DR_counts[i,:] += cross_DR1[:]['npairs']*cross_DR1[:]['weightavg']
         
         # Compute pair coutnts between random jackknife and data survey
         filt = np.where(rJ==j)
         if len(filt[0])>0:
-            cross_DR = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,
+            cross_DR2 = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,
                                    weights1=dW,weight_type='pair_product', X2=rX[filt], Y2=rY[filt], 
                                    Z2 = rZ[filt], weights2 = rW[filt], verbose=False,periodic=True)
-            DR_counts[i,:] += cross_DR[:]['npairs']*cross_DR[:]['weightavg']
+            DR_counts[i,:] += cross_DR2[:]['npairs']*cross_DR2[:]['weightavg']
     print("Finished DR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DD counts
@@ -242,14 +242,15 @@ else:
             DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
     print("Finished after %d seconds"%(time.time()-init))
     
-from Corrfunc.utils import convert_3d_counts_to_cf
 
 # Now compute correlation function
 xi_function = np.zeros_like(RR_counts)
 for j in range(N_jack):
-    print("CHECK N_GAL NORMALIZATION IN XI_JACK")
-    xi_function[j] = convert_3d_counts_to_cf(N_gal,N_gal,N_rand,N_rand,DD_counts[j],
-                                             DR_counts[j],DR_counts[j],RR_counts[j])
+    N_DD = np.sum(DD_counts[j])
+    N_RR = np.sum(RR_counts[j])
+    N_DR = np.sum(DR_counts[j])
+    
+    xi_function[j] = DD_counts[j]/RR_counts[j]*N_RR/N_DD - 2.*DR_counts[j]/RR_counts[j]*N_RR/N_DR + 1.
 
 # Save output files:
 import os
