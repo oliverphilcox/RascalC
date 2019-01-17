@@ -202,3 +202,7 @@ with open(outdir+outname,"w+") as outfile:
         outfile.write("\n")
         
 print("Correlation function written successfully to %s"%(outdir+outname))
+
+print("TESTING - SAVE ALL")
+np.savez(outdir+'all_xi.npz',RR=RR_counts,DR=DR_counts,DD=DD_counts,xi=xi_function)
+print("Saved pair counts to %s"%(outdir+'all_xi.npz'))

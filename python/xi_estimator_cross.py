@@ -269,4 +269,3 @@ for index in range(3):
             outfile.write("\n")
             
 print("All correlation functions computed successfully.")
-            
