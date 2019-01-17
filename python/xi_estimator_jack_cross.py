@@ -88,7 +88,7 @@ with open(binfile) as f:
 nrbins = i + 1
 all_bins = np.loadtxt(binfile)
 mean_bins=0.5*(all_bins[:,0]+all_bins[:,1])
-print('%s radial bins are used in this file in the range [%d,%d].' %(nrbins,all_bins[0,0],all_bins[-1,1])
+print('%s radial bins are used in this file in the range [%d,%d].' %(nrbins,all_bins[0,0],all_bins[-1,1]))
 
 ## Coordinate transformations
 def coord_transform(x,y,z):
