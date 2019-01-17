@@ -119,7 +119,7 @@ if not periodic:
     else:
         print("Computing RR pair counts")
         tmpRR=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,r_Ra,r_Dec,r_com_dist,weights1=rW,weight_type='pair_product',verbose=False,is_comoving_dist=True)
-        RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']
+        RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg'] # sum of weights over bin
         print("Finished after %d seconds"%(time.time()-init))
     # Now compute DR counts
     print("Computing DR pair counts")
@@ -150,7 +150,7 @@ else:
     else:
         print("Computing RR pair counts")
         tmpRR=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,rX,rY,rZ,weights1=rW,weight_type='pair_product',verbose=True,periodic=True)
-        RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']
+        RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg'] # sum of weights over bin
         print("Finished after %d seconds"%(time.time()-init))
     
     # Now compute DR counts
@@ -166,10 +166,15 @@ else:
     DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']
     print("Finished after %d seconds"%(time.time()-init))
     
-from Corrfunc.utils import convert_3d_counts_to_cf
+## Now compute correlation function
 
-# Now compute correlation function
-xi_function = convert_3d_counts_to_cf(N_gal,N_gal,N_rand,N_rand,DD_counts,DR_counts,DR_counts,RR_counts)
+# First find normalizations (weighted by pair-weights here)
+N_DD = np.sum(tmpDD[:]['weightavg'])
+N_DR = np.sum(tmpDR[:]['weightavg'])
+N_RR = np.sum(tmpRR[:]['weightavg'])
+
+# Now use Landay-Szelay estimator:
+xi_function = DD_counts/RR_counts*N_RR/N_DD - 2.*DR_counts/RR_counts*N_RR/N_DR + 1.
 
 # Now reshape correlation function and save to file.
 xi_reshape = xi_function.reshape(nrbins,nmu_bins)
@@ -197,7 +202,3 @@ with open(outdir+outname,"w+") as outfile:
         outfile.write("\n")
         
 print("Correlation function written successfully to %s"%(outdir+outname))
-
-print("TESTING - SAVE ALL")
-np.savez(outdir+'all_xi.npz',RR=RR_counts,DR=DR_counts,DD=DD_counts,xi=xi_reshape)
-print("Saved pair counts to %s"%(outdir+'all_xi.npz'))

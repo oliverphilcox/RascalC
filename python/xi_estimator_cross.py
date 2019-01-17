@@ -214,17 +214,24 @@ def compute_xi(random1,data1,N_gal,N_rand,random2=None,data2=None,N_gal2=None,N_
         DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']
         print("Finished after %d seconds"%(time.time()-init))
         
-    # Now reconstruct xi function:
-    from Corrfunc.utils import convert_3d_counts_to_cf
-
-    # Now compute correlation function
-    if cross_term:
-        xi_function = convert_3d_counts_to_cf(N_gal,N_gal2,N_rand,N_rand2,DD_counts,D1R2_counts,D2R1_counts,RR_counts)
-    else:
-        xi_function = convert_3d_counts_to_cf(N_gal,N_gal,N_rand,N_rand,DD_counts,DR_counts,DR_counts,RR_counts)
+    # Compute normalizations
+    N_RR = np.sum(tmpRR[:]['weightavg'])
+    N_DD = np.sum(tmpDD[:]['weightavg'])
         
-    return xi_function.reshape(nrbins,nmu_bins)
+    ## Now compute correlation function
+    if cross_term:
+        N_D1R2 = np.sum(tmpD1R2[:]['weightavg'])
+        N_D2R1 = np.sum(tmpD2R1[:]['weightavg'])
+        
+        # Now use Landay-Szelay estimator:
+        xi_function = DD_counts/RR_counts*N_RR/N_DD - D1R2_counts/RR_counts*N_RR/N_D1R2 - D2R1_counts/RR_counts*N_RR/N_D2R1 + 1.
+    else:
+        N_DR = np.sum(tmpDR[:]['weightavg'])
+        
+        # Now use Landay-Szelay estimator:
+        xi_function = DD_counts/RR_counts*N_RR/N_DD - 2.*DR_counts/RR_counts*N_RR/N_DR + 1.
 
+    return xi_function.reshape(nrbins,nmu_bins)
 
 ## Now compute correlation functions.
 
