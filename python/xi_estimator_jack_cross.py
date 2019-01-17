@@ -155,7 +155,7 @@ def compute_xi(random1,data1,random2=None,data2=None,cross_term=False,RRname="",
                 # Compute pair counts between jackknife region and entire survey regions
                 print("Computing RR pair counts for non-empty jackknife %d of %d"%(i+1,N_jack))
                 if cross_term:
-                    filt = np.where(rJ==j):
+                    filt = np.where(rJ==j)
                     if len(filt[0])>0:
                         cross_RR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra2,r_Dec2,r_com_dist2,weights1=rW2,
                                                 weight_type='pair_product',RA2=r_Ra[filt],DEC2=r_Dec[filt],CZ2=r_com_dist[filt],
@@ -168,7 +168,7 @@ def compute_xi(random1,data1,random2=None,data2=None,cross_term=False,RRname="",
                                            weights2=rW2[filt],verbose=verbose,is_comoving_dist=True)
                         RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
                 else:
-                    filt = np.where(rJ==j):
+                    filt = np.where(rJ==j)
                     if len(filt[0])>0:
                         cross_RR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra,r_Dec,r_com_dist,weights1=rW,
                                                 weight_type='pair_product',RA2=r_Ra[filt],DEC2=r_Dec[filt],CZ2=r_com_dist[filt],
@@ -238,7 +238,7 @@ def compute_xi(random1,data1,random2=None,data2=None,cross_term=False,RRname="",
         DD_counts = np.zeros_like(RR_counts)
         for i,j in enumerate(J_regions):
             if cross_term:
-                filt = np.where(dJ2==j):
+                filt = np.where(dJ2==j)
                 if len(filt[0])>0:
                     cross_DD = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,weights1=dW,
                                             weight_type='pair_product',RA2=d_Ra2[filt],DEC2=d_Dec2[filt],CZ2=d_com_dist2[filt],
@@ -286,7 +286,7 @@ def compute_xi(random1,data1,random2=None,data2=None,cross_term=False,RRname="",
                 # Compute pair counts between jackknife region and entire survey regions
                 print("Computing RR pair counts for non-empty jackknife %d of %d"%(i+1,N_jack))
                 if cross_term:
-                    filt = np.where(rJ==j):
+                    filt = np.where(rJ==j)
                     if len(filt[0])>0:
                         cross_RR = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,rX2,rY2,rZ2,weights1=rW2,
                                                 weight_type='pair_product',X2=rX[filt],Y2=rY[filt],Z2=rZ[filt],
@@ -299,7 +299,7 @@ def compute_xi(random1,data1,random2=None,data2=None,cross_term=False,RRname="",
                                            weights2=rW2[filt],verbose=verbose,periodic=True)
                         RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
                 else:
-                    filt = np.where(rJ==j):
+                    filt = np.where(rJ==j)
                     if len(filt[0])>0:
                         cross_RR = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,rX,rY,rZ,weights1=rW,
                                                 weight_type='pair_product',X2=rX[filt],Y2=rY[filt],Z2=rZ[filt],
