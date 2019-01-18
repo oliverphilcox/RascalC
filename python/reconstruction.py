@@ -42,7 +42,9 @@ RRs=np.zeros([2,2,n*m])
 diff1s,diff2s,JK_weights=[np.zeros([2,2,J,n*m]) for _ in range(3)]
 c3s,c3js=[np.zeros([2,2,2,n*m,n*m]) for _ in range(2)]
 c4s,c4js=[np.zeros([2,2,2,2,n*m,n*m]) for _ in range(2)]
-    
+  
+raise Exception("Remove symmetry factors for single-field case")
+  
 for ii in range(len(I1)):
     index4="%d%d,%d%d"%(I1[ii],I2[ii],I3[ii],I4[ii])
     index3="%d,%d%d"%(I2[ii],I1[ii],I3[ii])
@@ -164,8 +166,8 @@ else:
         t3=1.-np.matmul(JK_weights[j1,j2].T,JK_weights[j3,j4])
         cxj=t1/(t2*t3)
         
-        full=c4s[j1,j2,j3,j4]+a*(d_xw*c3s[j1,j2,j3]+d_xz*c3s[j1,j2,j4])+a2*(d_yw*c3s[j2,j1,j3]+d_yz*c3s[j2,j1,j4])+a*a2*(d_xw*d_yz+d_xz*d_yw)*c2s[j1,j2]
-        jack=c4js[j1,j2,j3,j4]+a*(d_xw*c3js[j1,j2,j3]+d_xz*c3js[j1,j2,j4])+a2*(d_yw*c3js[j2,j1,j3]+d_yz*c3js[j2,j1,j4])+a*a2*(d_xw*d_yz+d_xz*d_yw)*c2js[j1,j2]+cxj
+        full=c4s[j1,j2,j3,j4]+0.25*a*(d_xw*c3s[j1,j2,j3]+d_xz*c3s[j1,j2,j4])+0.25*a2*(d_yw*c3s[j2,j1,j3]+d_yz*c3s[j2,j1,j4])+0.5*a*a2*(d_xw*d_yz+d_xz*d_yw)*c2s[j1,j2]
+        jack=c4js[j1,j2,j3,j4]+0.25*a*(d_xw*c3js[j1,j2,j3]+d_xz*c3js[j1,j2,j4])+0.25*a2*(d_yw*c3js[j2,j1,j3]+d_yz*c3js[j2,j1,j4])+0.5*a*a2*(d_xw*d_yz+d_xz*d_yw)*c2js[j1,j2]+cxj
         return full,jack
     
     c_tot = np.zeros([2,2,2,2,n*m,n*m])

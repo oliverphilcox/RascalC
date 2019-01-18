@@ -22,7 +22,7 @@ private:
     Float *RRaA1, *RRaA2; // Array to accumulate the two-independent pair count estimates 
     Float *product_weights12_12, *product_weights12_23, *product_weights12_34; // arrays to get products of jackknife weights to avoid recomputation
     char* out_file;
-    bool box,rad; // Flags to decide whether we have a periodic box and if we have a radial correlation function only
+    bool box,rad; // Flags to decide whether we have a periodic box + if we have a radial correlation function only
     int I1, I2, I3, I4; // indices for which fields to use for each particle
     
     uint64 *binct, *binct3, *binct4; // Arrays to accumulate bin counts
@@ -81,7 +81,7 @@ public:
 
         mumax=par->mumax;
         mumin=par->mumin;
-
+        
         r_high = par->radial_bins_high;
         r_low = par->radial_bins_low;
         
@@ -182,7 +182,7 @@ public:
                 JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pi.JK),int(pj.JK),tmp_bin,tmp_bin,JK12,JK12, product_weights12_12);
             
                 // Now compute the integral:
-                c2v = 2.*tmp_weight*tmp_weight*(1.+tmp_xi) / prob; // c2 contribution
+                c2v = tmp_weight*tmp_weight*(1.+tmp_xi) / prob; // c2 contribution
                 c2vj = c2v*JK_weight;
                 rav = tmp_weight / prob; // RR_a contribution
                 
@@ -248,8 +248,8 @@ public:
             // Compute jackknife weight tensor:
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pj.JK),int(pk.JK),bin_ij[i],tmp_bin, JK12, JK23, product_weights12_23);
             
-            // Now compute the integral (using symmetry factor of 4);
-            c3v = 4.*tmp_weight*pj.w/prob*xi_ik_tmp;
+            // Now compute the integral;
+            c3v = tmp_weight*pj.w/prob*xi_ik_tmp;
             c3vj = c3v*JK_weight;
             
             // Add to local counts
@@ -289,7 +289,7 @@ public:
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin, JK12, JK34, product_weights12_34);
             
             // Now compute the integral;
-            c4v = tmp_weight/prob*2*xi_ik[i]*xi_jl;//
+            c4v = tmp_weight/prob*2*xi_ik[i]*xi_jl; 
             c4vj = c4v*JK_weight;
             
             // Add to local counts
