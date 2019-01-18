@@ -157,7 +157,7 @@ def compute_xi(random1,data1,random2=None,data2=None,cross_term=False,RRname="",
                     if len(filt[0])>0:
                         cross_RR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra2,r_Dec2,r_com_dist2,weights1=rW2,
                                                 weight_type='pair_product',RA2=r_Ra[filt],DEC2=r_Dec[filt],CZ2=r_com_dist[filt],
-                                                weights2=rW2[filt],verbose=verbose,is_comoving_dist=True)
+                                                weights2=rW[filt],verbose=verbose,is_comoving_dist=True)
                         RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
                     filt = np.where(rJ2==j)
                     if len(filt[0])>0:
@@ -288,7 +288,7 @@ def compute_xi(random1,data1,random2=None,data2=None,cross_term=False,RRname="",
                     if len(filt[0])>0:
                         cross_RR = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,rX2,rY2,rZ2,weights1=rW2,
                                                 weight_type='pair_product',X2=rX[filt],Y2=rY[filt],Z2=rZ[filt],
-                                                weights2=rW2[filt],verbose=verbose,periodic=True)
+                                                weights2=rW[filt],verbose=verbose,periodic=True)
                         RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
                     filt = np.where(rJ2==j)
                     if len(filt[0])>0:
