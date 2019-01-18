@@ -391,7 +391,9 @@ def compute_xi(random1,data1,random2=None,data2=None,cross_term=False,RRname="",
     # Compute normalizations
     N_RR = np.sum(RR_counts,axis=1)
     N_DD = np.sum(DD_counts,axis=1)
-        
+       
+    xi_function = np.zeros_like(RR_counts)
+       
     ## Now compute correlation function
     if cross_term:
         N_D1R2 = np.sum(D1R2_counts,axis=1)
