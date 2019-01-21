@@ -12,34 +12,34 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "../random_particles/randoms_10x_correct_Om_CMASS_N_xyzwj.txt"; 
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/CMU/randoms_10x_correct_Om_CMASS_N_xyzwj.txt"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "python/hybrid_binfile_cut.csv";
+    const char default_radial_bin_file[500] = "/home/oliverphilcox/COMAJE/python/hybrid_binfile_cut.csv";
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "xi_functions/QPM_mock_1.xi";//"/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mean.xi";
+	const char default_corname[500] = "none";//"/mnt/store1/oliverphilcox/CMU/xi_functions_QPM/QPM_Mariana_mean.xi";
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
-    const char default_radial_bin_file_cf[500] = "python/hybrid_binfile_full.csv";
+    const char default_radial_bin_file_cf[500] = "/home/oliverphilcox/COMAJE/python/hybrid_binfile_full.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm=100000;//323221;
+    Float nofznorm=-1;//323221;
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "weight_files/jackknife_weights_n39_m24_j169.dat";
+    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/QPM_weights/jackknife_weights_n39_m24_j169.dat";
     
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "weight_files/binned_pair_counts_n39_m24_j169.dat";
+    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/QPM_weights/binned_pair_counts_n39_m24_j169.dat";
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "empty_dir";///mnt/store1/oliverphilcox/CMU/QPM_Mean100_HiRes/";
+    const char default_out_file[500] = "none";///mnt/store1/oliverphilcox/CMU/QPM_Mean100_HiRes/";
     
 	// The number of mu bins
 	int mbin = 24;
@@ -48,7 +48,7 @@ public:
     int mbin_cf = 24;
     
     // The number of threads to run on
-	int nthread=4;
+	int nthread=10;
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
@@ -87,10 +87,10 @@ public:
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=4;
+    int max_loops=100;
     
     // Number of random cells to draw at each stage
-    int N2 = 3; // number of j cells per i cell
+    int N2 = 10; // number of j cells per i cell
     int N3 = 20; // number of k cells per j cell
     int N4 = 20; // number of l cells per k cell
     
@@ -101,9 +101,6 @@ public:
 
 	// The maximum mu of the largest bin.
 	Float mumax = 1.0;
-    
-    // Number of loops over which to refine the correlation function
-    int cf_loops = 1;
     
     // The periodicity of the position-space cube.
 	Float boxsize = 400;
@@ -148,7 +145,7 @@ public:
     int nbin=0,nbin_cf=0;
     Float rmin, rmax, rmin_cf,rmax_cf;
     Float * radial_bins_low, * radial_bins_low_cf;
-    Float * radial_bins_high, * radial_bins_high_cf;
+    Float * radial_bins_high, * radial_bins_low_cf;
     
     // Variable to decide if we are using multiple tracers:
     bool multi_tracers;
@@ -168,7 +165,6 @@ public:
         else if (!strcmp(argv[i],"-rescale")) rescale = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-mumax")) mumax = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-mumin")) mumin = atof(argv[++i]);
-        else if (!strcmp(argv[i],"-cf_loops")) cf_loops = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-xicut")) xicutoff = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-norm")) nofznorm = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-norm2")) nofznorm2 = atof(argv[++i]);
@@ -328,13 +324,11 @@ private:
 	    fprintf(stderr, "   -in <file>: The input random particle file for particle-set 1 (space-separated x,y,z,w).\n");
         fprintf(stderr, "   -binfile <filename>: File containing the desired radial bins\n");
         fprintf(stderr, "   -cor <file>: File location of input xi_1 correlation function file.\n");
-	    fprintf(stderr, "   -binfile_cf <filename>: File containing the desired radial bins for the correlation function.\n");
-        fprintf(stderr, "   -norm <nofznorm>: Number of galaxies in the survey for the first tracer set.\n");
+	    fprintf(stderr, "   -norm <nofznorm>: Number of galaxies in the survey for the first tracer set.\n");
         fprintf(stderr, "   -jackknife <filename>: File containing the {1,1} jackknife weights (normally computed from Corrfunc)\n");
         fprintf(stderr, "   -RRbin <filename>: File containing the {1,1} jackknife RR bin counts (computed from Corrfunc)\n");
         fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");   
         fprintf(stderr, "   -mbin:  The number of mu bins (spaced linearly).\n");
-	    fprintf(stderr, "   -mbin_cf:  The number of mu bins in the correlation function (spaced linearly).\n");
 	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 250.\n");
 	    fprintf(stderr, "          Recommend having several grid cells per rmax.\n");
         fprintf(stderr, "          There are {nside} cells along the longest dimension of the periodic box.\n");
@@ -359,7 +353,6 @@ private:
         
         fprintf(stderr, "   -mumin : Minimum mu binning to use.\n");
         fprintf(stderr, "   -mumax : Maximum mu binning to use.\n");
-        fprintf(stderr, "   -cf_loops: Number of iterations over which to refine the correlation functions.\n");
         fprintf(stderr, "   -boxsize <boxsize> : If creating particles randomly, this is the periodic size of the cubic computational domain.\n");
         fprintf(stderr, "           Default 400. If reading from file, this is reset dynamically creating a cuboidal box.\n");
 	    fprintf(stderr, "   -rescale <rescale>: How much to dilate the input positions by.  Default 1.\n");
