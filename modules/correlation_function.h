@@ -289,6 +289,39 @@ class CorrelationFunction{
         interpolate();
 
     }
+    
+    CorrelationFunction(Float* xi_array, Float * r_array, Float* mu_array, int nbin, int mbin){
+        // Construct from input array
+    
+        xsize=nbin;
+        ysize=mbin;
+        rmin=r_array[0];
+        rmax=r_array[nbin-1];
+        mumin=mu_array[0];
+        mumax=mu_array[mbin-1];
+        mudim=mu_array[1]-mu_array[0];
+        
+        // Allocate memory
+        x = (double *)malloc(sizeof(double)*xsize);
+        y = (double *)malloc(sizeof(double)*ysize);
+        z = (double *)malloc(sizeof(double)*xsize*ysize);
+        
+        // Read in x,y,z grids
+        int ct=0;
+        for(int i=0;i<xsize;i++){
+            x[i]=r_array[i];
+            for(int j=0;j<ysize;j++){
+                z[ct]=xi_array[ct]*pow(x[i],2.); // also multiply by r^2
+                ct++;
+            }
+        }
+        assert(ct==nbin*mbin);
+        
+        for(int j=0;j<ysize;j++) y[j]=mu_array[j];
+        
+        // activate the interpolator function here
+        interpolate();    
+    }
 
     ~CorrelationFunction() {
         // Destructor

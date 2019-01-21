@@ -32,4 +32,4 @@ $(AUNTIE):	$(AOBJS)
 #default: grid_covariance
 
 clean:
-	rm grid_covariance
+	rm grid_covariance 

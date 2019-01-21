@@ -154,8 +154,6 @@ public:
             line_count++;
         }
         
-        printf("here2");
-        
         assert(line_count==n_JK_filled);
         assert(index==nbins*n_JK_filled); // to ensure we get all particles
         

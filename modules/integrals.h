@@ -22,12 +22,14 @@ private:
     Float *RRaA1, *RRaA2; // Array to accumulate the two-independent pair count estimates 
     Float *product_weights12_12, *product_weights12_23, *product_weights12_34; // arrays to get products of jackknife weights to avoid recomputation
     char* out_file;
-    bool box,rad; // Flags to decide whether we have a periodic box + if we have a radial correlation function only
+    bool box,rad=0; // Flags to decide whether we have a periodic box + if we have a radial correlation function only
     int I1, I2, I3, I4; // indices for which fields to use for each particle
     
     uint64 *binct, *binct3, *binct4; // Arrays to accumulate bin counts
     
 public:
+    Integrals(){};
+    
     Integrals(Parameters *par, CorrelationFunction *_cf12, CorrelationFunction *_cf13, CorrelationFunction *_cf24, JK_weights *_JK12, JK_weights *_JK23, JK_weights *_JK34, int _I1, int _I2, int _I3, int _I4, Float* _product_weights12_12, Float* _product_weights12_23, Float* _product_weights12_34){
         cf12 = new CorrelationFunction(_cf12);
         cf13 = new CorrelationFunction(_cf13);
@@ -326,6 +328,7 @@ private:
         
     }
         
+public:
     void cleanup_l(Float3 p1,Float3 p2,Float& norm,Float& mu){
         Float3 pos=p1-p2;
         norm = pos.norm();

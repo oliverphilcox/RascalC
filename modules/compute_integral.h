@@ -11,7 +11,8 @@
         uint64 cnt2=0,cnt3=0,cnt4=0;
         int nbin, mbin; 
         
-    private:
+        
+    public:
         int particle_list(int id_1D, Particle* &part_list, int* &id_list, Grid *grid){
             // function updates a list of particles for a 1-dimensional ID. Output is number of particles in list.
             
@@ -26,6 +27,7 @@
         return no_particles;
         }
         
+    private:
         int draw_particle(integer3 id_3D, Particle &particle, int &pid, integer3 shift, Grid *grid, int &n_particles, gsl_rng* locrng, int &n_particles1, int &n_particles2){
             // Draw a random particle from a cell given the cell ID.
             // This updates the particle and particle ID and returns 1 if error.
@@ -45,6 +47,7 @@
             return 0;
         }
         
+    public:
         int draw_particle_without_class(integer3 id_3D, Particle &particle, int &pid, integer3 shift, Grid *grid, int &n_particles, gsl_rng* locrng){
             // Draw a random particle from a cell given the cell ID.
             // This updates the particle and particle ID and returns 1 if error.
@@ -62,16 +65,17 @@
             return 0;
         }
         
-        void check_threads(Parameters *par){
-            // Set up OPENMP and define which threads ot use
+    public:
+        void check_threads(Parameters *par,int print){
+            // Set up OPENMP and define which threads to use
     #ifdef OPENMP
             cpu_set_t mask[par->nthread+1];
             int tnum=0;
             sched_getaffinity(0, sizeof(cpu_set_t), &mask[par->nthread]);
-            fprintf(stderr, " CPUs used are: ");
+            if(print==1) fprintf(stderr, " CPUs used are: ");
             for(int ii=0;ii<64;ii++){
                 if(CPU_ISSET(ii, &mask[par->nthread])){
-                    fprintf(stderr,"%d ", ii);
+                    if(print==1) fprintf(stderr,"%d ", ii);
                     CPU_ZERO(&mask[tnum]);
                     CPU_SET(ii,&mask[tnum]);
                     tnum++;
@@ -81,6 +85,7 @@
     #endif
         }
         
+    private:
         CorrelationFunction* which_cf(CorrelationFunction all_cf[], int Ia, int Ib){
             // Returns the relevant correlation function for two input field indices
             if((Ia==1)&(Ib==1)) return &all_cf[0];
@@ -108,6 +113,8 @@
         }
         
     public:    
+        compute_integral(){};
+        
         compute_integral(Grid all_grid[], Parameters *par, JK_weights all_JK[], CorrelationFunction all_cf[], RandomDraws all_rd[], int I1, int I2, int I3, int I4, int iter_no){
             // MAIN FUNCTION TO COMPUTE INTEGRALS
             
@@ -211,7 +218,7 @@
             uint64 cell_attempt2=0,cell_attempt3=0,cell_attempt4=0; // number of j,k,l cells attempted
             uint64 used_cell2=0,used_cell3=0,used_cell4=0; // number of used j,k,l cells
             
-            check_threads(par); // Define which threads we use
+            check_threads(par,1); // Define which threads we use
         
             initial.Stop();
             fprintf(stderr, "Init time: %g s\n",initial.Elapsed());
@@ -266,7 +273,7 @@
             ec+=posix_memalign((void **) &w_ijk, PAGE, sizeof(Float)*mnp);
             assert(ec==0);
             
-            uint64 loc_used_pairs, loc_used_triples, loc_used_quads; // local counts of used pairs/triples/quads
+            uint64 loc_used_pairs,loc_used_triples, loc_used_quads; // local counts of used pairs/triples/quads
             
     //-----------START FIRST LOOP-----------
     #ifdef OPENMP

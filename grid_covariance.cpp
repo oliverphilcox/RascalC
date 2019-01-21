@@ -61,6 +61,7 @@ STimer TotalTime;
 
 
 #include "modules/compute_integral.h"
+#include "modules/rescale_correlation.h"
 
 // ================================ main() =============================
 
@@ -172,6 +173,11 @@ int main(int argc, char *argv[]) {
         all_rd[2].copy(&rd12);
     }
     
+    // Rescale correlation functions
+    rescale_correlation rescale(&par);
+    rescale.refine_wrapper(&par, all_grid, all_cf, all_rd, max_no_functions);
+    
+    // Compute integrals
     compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,1,1,1,1); // final digit is iteration number
 
     if(par.multi_tracers==true){
