@@ -4,6 +4,8 @@ Covariance Matrix Estimation
 Overview
 ----------
 
+.. todo:: update to add new parameters for refining in parameters.h
+
 This is the main section of RascalC, where a covariance matrix estimates are computed via Monte Carlo integration from a given set of input particles. Depending on the number of input fields the code will compute either components for a single covariance matrix or all required components for 6 cross-covariance matrices. 
 
 **NB**: Before running this code, the jackknife weights and binned pair counts must be computed 
