@@ -3,6 +3,8 @@ API for Reconstruction and Visualization Module
 
 These Python functions are provided for reconstructing the covariance matrix object, performing basic analysis routines and plotting.
 
+.. todo:: Get this working with automodule
+
 .. automodule:: utils
 
 :class:`Parameters` Class

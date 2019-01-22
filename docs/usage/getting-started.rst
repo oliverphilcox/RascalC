@@ -10,7 +10,7 @@ In order to compute these matrices there are 5 steps:
 2. :doc:`jackknife-weights`: 
     Before the main C++ code is run, we compute the weights for each jackknife region, by computing jackknife-specific RR pair counts using `Corrfunc <https://corrfunc.readthedocs.io>`_. This is run via a Python script.
 3. :doc:`correlation-functions` (*Optional*): 
-    This provides functions to compute the jackknife correlation functions :math:`\hat\xi^{J}(r,\mu)` for one or two input fields (using Corrfunc), which are later used to calibrate the shot-noise rescaling parameter(s). In addition, we provide routines to compute the overall survey correlation functions. These may also be defined by the user instead.
+    This provides functions to compute the jackknife correlation functions :math:`\xi^{J}(r,\mu)` for one or two input fields (using Corrfunc), which are later used to calibrate the shot-noise rescaling parameter(s). In addition, we provide routines to compute the overall survey correlation functions. These may also be defined by the user instead.
 4. :doc:`main-code`:
     The main C++ code computing the individual covariance matrix terms using Monte Carlo integration. For multiple input correlation functions, this computes all relevant terms for the six non-trivial cross-covariance matrices. The covariances are saved as ``.txt`` files which can be reconstructed in Python.
 5. :doc:`post-processing`: (*Optional*)

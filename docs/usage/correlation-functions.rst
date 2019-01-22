@@ -7,7 +7,7 @@ The scripts described below are wrappers of the `Corrfunc <https://corrfunc.read
 
 .. _full-correlations:
 
-Full Matrix Correlations (:math:`\xi(r,\mu)`)
+Full Matrix Correlations :math:`\xi(r,\mu)`
 ----------------------------------------------
 
 
@@ -28,8 +28,8 @@ For an analysis using two distinct fields::
     
 .. _jackknife-correlations:
 
-Jackknife Matrix Correlations (:math:`\xi^J(r,\mu)`)
------------------------------------------------------
+Jackknife Matrix Correlations :math:`\xi^J(r,\mu)`
+----------------------------------------------------
 
 **Usage**
 
