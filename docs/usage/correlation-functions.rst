@@ -10,7 +10,9 @@ The scripts described below are wrappers of the `Corrfunc <https://corrfunc.read
 Full Matrix Correlations :math:`\xi(r,\mu)`
 ----------------------------------------------
 
-To compute the covariance matrix estimates :math:`\hat{C}_{ab}` we require some estimate of the correlation function. Here, we compute the full-survey correlation function with a specified binning using Corrfunc. We provide routines for both 1- and 2-field scenarios (computing the fields :math:`\{\xi^{XX}(r,\mu), \xi^{XY}(r,\mu), \xi^{YY}(r,\mu)\}` in the latter case). This uses both the galaxies and random particle files, and requires a correlation function binning file, such as created by :ref:`write-binning-file`. The estimations are computed via the Landy-Szelay estimator using :math:`\xi^{XY}_a(r,\mu) = (DD_a^{XY} - DR_a^{XY} - DR_a^{YX} + RR_a{XY})/RR_a^{XY}` for bin :math:`a`, fields :math:`X, Y` with DD/DR/RR specifying data-data / data-random / random-random pair counts.
+To compute the covariance matrix estimates :math:`\hat{C}_{ab}` we require some estimate of the correlation function. Here, we compute the full-survey correlation function with a specified binning using Corrfunc. We provide routines for both 1- and 2-field scenarios (computing the fields :math:`\{\xi^{XX}(r,\mu), \xi^{XY}(r,\mu), \xi^{YY}(r,\mu)\}` in the latter case). This uses both the galaxies and random particle files, and requires a correlation function binning file, such as created by :ref:`write-binning-file`. The estimations are computed via the Landy-Szalay estimator using :math:`\xi^{XY}_a = (DD_a^{XY} - DR_a^{XY} - DR_a^{YX} + RR_a^{XY})/RR_a^{XY}` for bin :math:`a`, fields :math:`X, Y` with DD/DR/RR specifying data-data / data-random / random-random pair counts. 
+
+.. todo:: add note on xi interpolation / refining
 
 *Periodicity*: This script can be run for periodic or aperiodic input data; this corresponds to measuring :math:`\mu` from the :math:`z` or radial axis respectively. If the data is periodic (e.g. from a cosmological box simulation) the -DPERIODIC flag should be set on compilation of the full C++ code in :doc:`main-code`.
 
@@ -43,11 +45,18 @@ For an analysis using two distinct fields::
 
 **Output Files**
 
+ASCII files are created specifying the correlation function in the file-format given in :ref:`file-inputs`. The filename has the format ``xi_n{N}_m{M}_{INDEX}.dat``, where N and M specify the number of radial and angular bins respectively. INDEX specifies the correlation function type, where 11 = field 1 auto-correlation, 22 = field 2 auto-correlation, 12 = cross-correlation of fields 1 and 2. The first and second lines of the ``.dat`` file list the radial and angular bin centers, then each subsequent line lists the :math:`\xi(r,\mu)` estimate, with the column specifying the :math:`\mu` bin and the row specifying the :math:`r` bin.
+
     
 .. _jackknife-correlations:
 
 Jackknife Matrix Correlations :math:`\xi^J(r,\mu)`
 ----------------------------------------------------
+
+For later comparison of the jackknife covariance matrix estimate with the data, we require the jackknife covariance matrix, which is derived from the correlation function estimates in each unrestricted jackknife. The scripts below are provided to compute these using Corrfunc. For jackknife :math:`J` and fields :math:`\{X,Y\}`, we compute the pair counts :math:`FG^{XY}_a` in bin :math:`a` (where :math:`F,G\in[D,R]` for data and random fields D and R), from a cross-pair counts between particles in jackknife :math:`A` of :math:`F^X` and the entire of field :math:`G^Y`. These are added to the pair counts from the cross of particles in jackknife :math:`A` of field :math:`G^Y` with the entire of field :math:`F^X` if the fields are distinct. This allows us to compute all :math:`n_\mathrm{jack}` correlation functions :math:`\xi^{XY}_A(r,\mu)` via the Landy-Szalay estimator :math:`\xi^{XY}_{aA} = (DD_{aA}^{XY} - DR_{aA}^{XY} - DR_{aA}^{YX} + RR_{aA}^{XY})/RR_{aA}^{XY}` for bin :math:`a`
+
+**NB**: The binning file used here should be the same as that used for the *covariance matrix* **not** the full correlation function, to allow comparison with the :math:`C^J_{ab}` estimate.
+
 
 **Usage**
 
