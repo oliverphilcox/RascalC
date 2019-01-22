@@ -31,6 +31,10 @@ The required input files and formats are described below. Note that several of t
     - {RA,Dec,redshift} coordinates can be converted to {x,y,z} positions using the :ref:`coord-conversion` script.
     - HealPix jackknives can be added using the :ref:`create-jackknives` script.
     - *Format*: An ASCII file with each particle defined on a new row, and tab-separated columns indicating the {x,y,z,w,j} coordinates.
+- **Galaxy Position File(s)**:
+    - This lists the locations and weights of galaxies in a specific survey, in the same manner as the random particles.
+    - This is only required to compute the correlation functions in the :doc:`correlation-functions` scripts.
+    - *Format*: See above.
 - **Covariance Matrix Binning File**:
     - This specifies the radial binning in the output covariance matrix.
     - For each bin we specify the minimum and maximum radii in comoving Mpc/h units.
@@ -39,7 +43,7 @@ The required input files and formats are described below. Note that several of t
 - **Correlation Function Binning File**:
     - File specifying the radial binning used in the input correlation function.
     - The lowest bin must extend to zero for this, and the highest bin should be at least as large as the maximum covariance matrix bin.
-    - *Format*: As above.
+    - *Format*: See above.
 - **Correlation Function(s)**:
     - This specifies the input correlation function estimates to be used by RascalC. 
     - For two sets of tracer particles, we require three correlation functions; two auto-correlations and a cross-correlation.
