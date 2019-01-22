@@ -1,4 +1,5 @@
- Correlation Functions
+
+Correlation Functions
 =======================
 
 The scripts described below are wrappers of the `Corrfunc <https://corrfunc.readthedocs.io>`_ code (Sinha & Garrison 2017), used to create full-survey and jackknife correlation functions. The former are used in the computation of the Gaussian covariance matrices, and the latter allow for determination of the shot-noise rescaling parameter. If the correlation function is required to be computed in a different manner, user-input correlation functions can simply replace the output of these codes, with the file-types described in :ref:`file-inputs`.
@@ -6,13 +7,11 @@ The scripts described below are wrappers of the `Corrfunc <https://corrfunc.read
 
 .. _full-correlations:
 
-Full Matrix :math:`\xi(r,\mu)`
--------------------------------
+Full Matrix Correlations (:math:`\xi(r,\mu)`)
+----------------------------------------------
 
 
-
-Usage
-~~~~~~~
+**Usage**
 
 For a single field analysis::
 
@@ -24,17 +23,15 @@ For an analysis using two distinct fields::
     python python/XXXX
     
 
-Output Files
-~~~~~~~~~~~~~
+**Output Files**
 
     
 .. _jackknife-correlations:
 
-Jackknife Matrix :math:`\xi^J(r,\mu)`
---------------------------------------
+Jackknife Matrix Correlations (:math:`\xi^J(r,\mu)`)
+-----------------------------------------------------
 
-Usage
-~~~~~~
+**Usage**
 
 For a single field analysis::
 
@@ -45,9 +42,8 @@ For an analysis using two distinct fields::
     
     python python/XXXX
 
-
-Output Files
-~~~~~~~~~~~~~
+    
+**Output Files**
 
 
 .. 
