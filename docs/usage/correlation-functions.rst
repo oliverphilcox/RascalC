@@ -40,7 +40,7 @@ For an analysis using two distinct fields::
 - {NTHREADS}: Number of CPU threads to use for pair counting parallelization.
 - {PERIODIC}: Whether the input dataset has periodic boundary conditions (0 = non-periodic, 1 = periodic). See note below.
 - {OUTPUT_DIR}: Directory in which to house the correlation functions. This will be created if not in existence.
-- *Optional* {RR_counts}, {RR_counts_XY}: Pre-computed RR pair counts (for the single field and between fields X and Y respectively). These should be in the format described in :ref:`file-inputs`, and must use the same number of radial and angular bins as specified above. If not specified, these are recomputed by the code. 
+- *Optional* {RR_counts}, {RR_counts_XY}: Pre-computed RR pair counts (for the single field and between fields X and Y respectively). These should be in the format described in :ref:`file-inputs`, and must use the same number of radial and angular bins as specified above. If not specified, these are recomputed by the code. Since the full correlation function typically uses a different binning to the output covariance matrix, we typically cannot use the pair counts computed in :doc:`jackknife-weights` and must recompute them.
 
 
 **Output Files**
@@ -66,7 +66,7 @@ For a single field analysis::
 
 For an analysis using two distinct fields::
     
-    python python/xi_estimator_jack_cross.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1} {RANDOM_FILE_2} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts_11} {RR_counts_12} {RR_counts_22}]
+    python python/xi_estimator_jack_cross.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1} {RANDOM_FILE_2} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_jackknife_counts_11} {RR_jackknife_counts_12} {RR_jackknife_counts_22}]
 
     
 This computes estimates of the auto- and cross-correlations for all unrestricted jackknife regions. Since there are three distinct correlations for each, the run-time is increased by a factor of 3.
@@ -77,7 +77,7 @@ Following computation of :math:`\xi^J_{aA}` we can estimate the single-survey ja
 
 **Input Parameters**
 
-See the input parameters for the :ref:`full-correlations` script.
+See the input parameters for the :ref:`full-correlations` script. In addition, the {RR_jackknife_counts_XY} quantities are the :math:`RR_{aA}^{XY}` pair counts which can be specified to avoid recomputation. These have been previously output by the :doc:`jackknife-weights` code as ``jackknife_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` (using the correct covariance-matrix binning) hence can be used here for a significant speed boost.
 
 **Output Files**
 

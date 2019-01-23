@@ -214,6 +214,19 @@ for index in range(3):
     with open(outdir+RR_a_file,"w+") as RR_file:
         for i in range(len(all_pairs[index])):
             RR_file.write("%s\n" %all_pairs[index][i])
+    
+    RR_aA_file = 'jackknife_pair_counts_n%d_m%d_j%d_%s.dat'%(nrbins,nmu_bins,N_jack,all_indices[index])
+    print("Saving jackknife pair counts as %s"%RR_aA_file)
+    with open(outdir+RR_aA_file,"w+") as jackRR_file:
+        for j_id,jackknife_weight in enumerate(all_weights[index]):
+            jackRR_file.write("%d\t" %J_regions[j_id])
+            for i in range(len(jackknife_weight)):
+                jackRR_file.write("%.8e" %RR_aA[i])
+                if i == len(RR_aA)-1:
+                    jackRR_file.write("\n");
+                else:
+                    jackRR_file.write("\t");
+
         
 print("Jackknife weights and binned pair counts written successfully to the %s directory"%outdir)
         
