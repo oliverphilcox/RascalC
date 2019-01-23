@@ -44,6 +44,11 @@ N = len(X) # number of particles
 J_regions = np.unique(J) # jackknife regions in use
 N_jack = len(J_regions) # number of non-empty jackknife regions
 
+print(J_regions);
+print(N_jack);
+import sys
+sys.exit();
+
 print("Number of random particles %.1e"%N)
 
 ## Determine number of radial bins in binning file:

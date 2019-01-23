@@ -71,7 +71,7 @@ For an analysis using two distinct fields::
     
 This computes estimates of the auto- and cross-correlations for all unrestricted jackknife regions. Since there are three distinct correlations for each, the run-time is increased by a factor of 3.
 
-Following computation of :math:`\xi^J_{aA}` we can estimate the single-survey jackknife covariance matrix via :math:`C^J_{ab,\mathrm{data}} = \sum_A (\xi^J_{aA}-\bar{\xi}^J_a)(\xi^J_{bA}-\bar{\xi}^J_b) / (N_\mathrm{jack}-1)`. This is done internally in the **ADD REF** code.
+Following computation of :math:`\xi^J_{aA}` we can estimate the single-survey jackknife covariance matrix via :math:`C^J_{ab,\mathrm{data}} = \sum_A w_{aA}w_{bA}(\xi^J_{aA}-\bar{\xi}^J_a)(\xi^J_{bA}-\bar{\xi}^J_b) / (1-\sum_B w_{aB}w_{bB})`. This is done internally in the **ADD REF** code.
 
 .. todo:: add reference to data jackknife covariance code,
 

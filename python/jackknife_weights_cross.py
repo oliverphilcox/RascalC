@@ -195,6 +195,7 @@ if not os.path.exists(outdir):
 
 all_weights = [w_aA_11,w_aA_12,w_aA_22]
 all_pairs = [RR_a_11,RR_a_12,RR_a_22]
+all_counts = [RR_aA_11,RR_aA_12,RR_aA_22]
 all_indices = ['11','12','22']
 
 for index in range(3):
@@ -218,11 +219,11 @@ for index in range(3):
     RR_aA_file = 'jackknife_pair_counts_n%d_m%d_j%d_%s.dat'%(nrbins,nmu_bins,N_jack,all_indices[index])
     print("Saving jackknife pair counts as %s"%RR_aA_file)
     with open(outdir+RR_aA_file,"w+") as jackRR_file:
-        for j_id,jackknife_weight in enumerate(all_weights[index]):
+        for j_id,pair_count in enumerate(all_counts[index]):
             jackRR_file.write("%d\t" %J_regions[j_id])
-            for i in range(len(jackknife_weight)):
-                jackRR_file.write("%.8e" %RR_aA[i])
-                if i == len(RR_aA)-1:
+            for i in range(len(pair_count)):
+                jackRR_file.write("%.8e" %pair_count[i])
+                if i == len(pair_count)-1:
                     jackRR_file.write("\n");
                 else:
                     jackRR_file.write("\t");
