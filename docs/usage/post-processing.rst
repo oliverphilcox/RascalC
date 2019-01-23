@@ -3,6 +3,9 @@ API for Reconstruction and Visualization Module
 
 These Python functions are provided for reconstructing the covariance matrix object, performing basic analysis routines and plotting.
 
+
+.. todo:: include the multi-field reconstruction codes + estimate of the jackknife data covariance.
+
 .. todo:: Get this working with automodule
 
 .. automodule:: utils
