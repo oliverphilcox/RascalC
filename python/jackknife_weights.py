@@ -126,9 +126,9 @@ weight_file='jackknife_weights_n%d_m%d_j%d_11.dat'%(nrbins,nmu_bins,N_jack)
 print("Saving jackknife weight as %s"%weight_file)
 with open(outdir+weight_file,"w+") as weight_file:
     for j_id,jackknife_weight in enumerate(w_aA):
-        weight_file.write("%s\t" %J_regions[j_id])
+        weight_file.write("%d\t" %J_regions[j_id])
         for i in range(len(jackknife_weight)):
-            weight_file.write("%s" %jackknife_weight[i])
+            weight_file.write("%.8e" %jackknife_weight[i])
             if i == len(jackknife_weight)-1:
                 weight_file.write("\n");
             else:
@@ -137,7 +137,19 @@ RR_a_file = 'binned_pair_counts_n%d_m%d_j%d_11.dat'%(nrbins,nmu_bins,N_jack)
 print("Saving binned pair counts as %s" %RR_a_file);
 with open(outdir+RR_a_file,"w+") as RR_file:
     for i in range(len(RR_a)):
-        RR_file.write("%s\n" %RR_a[i])
+        RR_file.write("%.8e\n" %RR_a[i])
         
-print("Jackknife weights and binned pair counts written successfully to the %s directory"%outdir)
+RR_aA_file = 'jackknife_pair_counts_n%d_m%d_j%d_11.dat'%(nrbins,nmu_bins,N_jack)
+print("Saving jackknife pair counts as %s"%RR_aA_file)
+with open(outdir+RR_aA_file,"w+") as jackRR_file:
+    for j_id,jackknife_weight in enumerate(w_aA):
+        jackRR_file.write("%d\t" %J_regions[j_id])
+        for i in range(len(RR_aA)):
+            jackRR_file.write("%.8e" %RR_aA[i])
+            if i == len(RR_aA)-1:
+                jackRR_file.write("\n");
+            else:
+                jackRR_file.write("\t");
+        
+print("Jackknife weights and pair counts written successfully to the %s directory"%outdir)
         
