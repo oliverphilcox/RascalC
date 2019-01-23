@@ -21,7 +21,7 @@ RascalC requires the following packages:
 - `Gnu Scientific Library (GSL) <https://www.gnu.org/software/gsl/doc/html/index.html>`_: Any recent version
 - `Corrfunc <https://corrfunc.readthedocs.io>`_: 2.0 or later
 
-Corrfunc can be installed using `pip install corrfunc` and is used for efficient pair counting.
+Corrfunc can be installed using ``pip install corrfunc`` and is used for efficient pair counting.
 
 For the Python pre- and post-processing we require:
 

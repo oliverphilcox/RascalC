@@ -142,11 +142,11 @@ with open(outdir+RR_a_file,"w+") as RR_file:
 RR_aA_file = 'jackknife_pair_counts_n%d_m%d_j%d_11.dat'%(nrbins,nmu_bins,N_jack)
 print("Saving jackknife pair counts as %s"%RR_aA_file)
 with open(outdir+RR_aA_file,"w+") as jackRR_file:
-    for j_id,jackknife_weight in enumerate(w_aA):
+    for j_id,pair_count in enumerate(RR_aA):
         jackRR_file.write("%d\t" %J_regions[j_id])
-        for i in range(len(RR_aA)):
-            jackRR_file.write("%.8e" %RR_aA[i])
-            if i == len(RR_aA)-1:
+        for i in range(len(pair_count)):
+            jackRR_file.write("%.8e" %pair_count[i])
+            if i == len(pair_count)-1:
                 jackRR_file.write("\n");
             else:
                 jackRR_file.write("\t");

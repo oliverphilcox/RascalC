@@ -55,8 +55,8 @@ The required input files and formats are described below. Note that several of t
 .. todo:: add jackknife correlation function filetype
 
 - *(Internally Created)* **Jackknife Weights and Random Particle Counts**:
-    - These specify the weights of each jackknife region for each bin and the random particle counts for each jackknife. 
+    - These specify the weights of each jackknife region for each bin and the random particle counts both for each jackknife, and for the entire survey. 
     - These must be created using the :doc:`jackknife-weights` script.
-    - They are saved in ``.dat`` files with the name ``jackknife_weights_n{N}_m{M}_j{J}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` where N and M specify the number of radial and angular bins respectively and J gives the number of non-empty jackknife regions.
+    - They are saved in ``.dat`` files with the name ``jackknife_weights_n{N}_m{M}_j{J}.dat``, ``jackknife_pair_counts_n{N}_m{M}_j{J}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` where N and M specify the number of radial and angular bins respectively and J gives the number of non-empty jackknife regions.
     
 .. todo:: add support for multi-tracer jackknife weights
