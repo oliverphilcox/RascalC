@@ -2,7 +2,7 @@
 ## We output the data and theory jackknife covariance matrices, in addition to full theory covariance matrices and (quadratic-bias corrected) precision matrices. The effective number of samples, N_eff, is also computed.
 
 import numpy as np
-import sys
+import sys,os
 
 # PARAMETERS
 if len(sys.argv)!=7:
@@ -15,6 +15,10 @@ file_root = str(sys.argv[3])
 m = int(sys.argv[4])
 n_samples = int(sys.argv[5])
 outdir = str(sys.argv[6])
+
+# Create output directory
+if not os.path.exists(outdir):
+    os.makedirs(outdir)
 
 # Load jackknife xi estimates from data
 print("Loading correlation function jackknife estimates from %s"%jackknife_file)
@@ -116,14 +120,11 @@ from scipy.optimize import fmin
 alpha_best = fmin(neg_log_L1,1.)
 print("Optimization complete - optimal rescaling parameter is %.6f"%alpha_best)
 
-# Now save to file
-np.save(outdir+'alpha_estimate.npy',alpha_best)
-
 # Compute jackknife and full covariance matrices
 jack_cov = c4+c3*alpha_best+c2*alpha_best**2.
 jack_prec = Psi(alpha_best)
 c2f,c3f,c4f=load_matrices('full',jack=False)
-full_cov = c4f+c3f*alpha_best+c2f*alpha_best
+full_cov = c4f+c3f*alpha_best+c2f*alpha_best**2.
 
 # Compute full precision matrix
 print("Computing the full precision matrix estimate:")
@@ -153,7 +154,8 @@ N_eff_D = (n_bins+1.)/D_value+1.
 print("Total N_eff Estimate: %.4e"%N_eff_D)        
 
 output_name = outdir+'Rescaled_Covariance_Matrices_n%d_m%d_j%d.npz'%(n,m,n_jack)
-np.savez(output_name,jackknife_theory_covariance=jack_cov,full_theory_covariance=full_cov,jackknife_data_covariance=data_cov,shot_noise_rescaling=alpha_best,
-         jackknife_theory_precision=jack_prec,full_theory_precision=full_prec,N_eff=N_eff_D,full_theory_D_matrix=full_D_est)
+np.savez(output_name,jackknife_theory_covariance=jack_cov,full_theory_covariance=full_cov,jackknife_data_covariance=data_cov,
+         shot_noise_rescaling=alpha_best,jackknife_theory_precision=jack_prec,full_theory_precision=full_prec,N_eff=N_eff_D,
+         full_theory_D_matrix=full_D_est,individual_theory_covariances=partial_cov)
 
 print("Saved output covariance matrices as %s"%output_name)

@@ -81,7 +81,7 @@ Input parameters for the RascalC code may be specified by passing options on the
 
 **Precision Parameters**
 
-- ``-maxloops`` (*max_loops*): This is the number HEDWSDHEJIL See :ref:`covariance-precision` note for usage guidelines. (Default: 10)
+- ``-maxloops`` (*max_loops*): This is the number of matrix subsamples to compute. See :ref:`covariance-precision` note for usage guidelines. (Default: 10)
 - (*N2*, *N3*, *N4*): The parameters controlling how many random particles to select at each stage. See :ref:`covariance-precision` note above. (Default: 10)
 
 **Optional Parameters**
