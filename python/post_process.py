@@ -1,5 +1,5 @@
-## Script to estimate the shot noise rescaling parameter using the jackknife covariance matrix of a single survey.
-## This saves the optimal shot noise parameter and saves the full (non-jackknife) theoretical covariance matrices. In addition, we save data and theoretical jackknife covariance matrices
+## Script to post-process the single-field integrals computed by the C++ code. This computes the shot-noise rescaling parameter, alpha, from a data derived covariance matrix.
+## We output the data and theory jackknife covariance matrices, in addition to full theory covariance matrices and (quadratic-bias corrected) precision matrices. The effective number of samples, N_eff, is also computed.
 
 import numpy as np
 import sys
@@ -31,7 +31,7 @@ weights = np.loadtxt(weight_file)[:,1:]
 
 # First exclude any dodgy jackknife regions
 good_jk=np.unique(np.where(np.isfinite(xi_jack))[0])
-print("Using %d out of %d jackknives"%(n_jack,len(good_jk)))
+print("Using %d out of %d jackknives"%(len(good_jk),n_jack))
 xi_jack = xi_jack[good_jk]
 weights = weights[good_jk]
 
@@ -66,12 +66,13 @@ def load_matrices(index,jack=True):
         w_aA2 = RRaA2/np.sum(RRaA2,axis=0)
         diff1 = EEaA1-w_aA1*EEaA1.sum(axis=0)
         diff2 = EEaA2-w_aA2*EEaA2.sum(axis=0)
-        RRaRRb=np.matmul(np.asmatrix(RR).T,np.asmatrix(RR))
-        fact=np.eye(n_bins)-np.matmul(np.asmatrix(weights).T,np.asmatrix(weights))
+        RRaRRb = np.matmul(np.asmatrix(RR).T,np.asmatrix(RR))
+        fact = np.ones_like(c4)-np.matmul(np.asmatrix(weights).T,np.asmatrix(weights))
         cx = np.asarray(np.matmul(diff1.T,diff2)/np.matmul(fact,RRaRRb))
         c4+=cx
     
-    return c2,c3,c4
+    # Now symmetrize and return matrices
+    return c2,0.5*(c3+c3.T),0.5*(c4+c4.T)
 
 # Load in full jackknife theoretical matrices
 print("Loading best estimate of jackknife covariance matrix")
@@ -80,7 +81,7 @@ c2,c3,c4=load_matrices('full')
 # Load in partial jackknife theoretical matrices
 c2s,c3s,c4s=[],[],[]
 for i in range(n_samples):
-    print("Loading subsample %d of %d"%(i+1,n_samples))
+    print("Loading jackknife subsample %d of %d"%(i+1,n_samples))
     c2,c3,c4=load_matrices(i)
     c2s.append(c2)
     c3s.append(c3)
@@ -113,15 +114,46 @@ def neg_log_L1(alpha):
 print("Optimizing for the shot-noise rescaling parameter")
 from scipy.optimize import fmin
 alpha_best = fmin(neg_log_L1,1.)
-print("Optimization complete")
+print("Optimization complete - optimal rescaling parameter is %.6f"%alpha_best)
 
 # Now save to file
 np.save(outdir+'alpha_estimate.npy',alpha_best)
 
+# Compute jackknife and full covariance matrices
 jack_cov = c4+c3*alpha_best+c2*alpha_best**2.
+jack_prec = Psi(alpha_best)
 c2f,c3f,c4f=load_matrices('full',jack=False)
 full_cov = c4f+c3f*alpha_best+c2f*alpha_best
 
+# Compute full precision matrix
+print("Computing the full precision matrix estimate:")
+# Load in partial jackknife theoretical matrices
+c2fs,c3fs,c4fs=[],[],[]
+for i in range(n_samples):
+    print("Loading full subsample %d of %d"%(i+1,n_samples))
+    c2,c3,c4=load_matrices(i,jack=False)
+    c2fs.append(c2)
+    c3fs.append(c3)
+    c4fs.append(c4)
+partial_cov=[]
+for i in range(n_samples):
+    partial_cov.append(alpha_best**2.*c2fs[i]+alpha_best*c3fs[i]+c4fs[i])
+tmp=0.
+for i in range(n_samples):
+    c_excl_i = np.mean(partial_cov[:i]+partial_cov[i+1:],axis=0)
+    tmp+=np.matmul(np.linalg.inv(c_excl_i),partial_cov[i])
+full_D_est=(n_samples-1.)/n_samples * (-1.*np.eye(n_bins) + tmp/n_samples)
+full_prec = np.matmul(np.eye(n_bins)-full_D_est,np.linalg.inv(full_cov))
+print("Full precision matrix estimate computed")    
+
+# Now compute effective N:
+slogdetD=np.linalg.slogdet(full_D_est)
+D_value = slogdetD[0]*np.exp(slogdetD[1]/n_bins)
+N_eff_D = (n_bins+1.)/D_value+1.
+print("Total N_eff Estimate: %.4e"%N_eff_D)        
+
 output_name = outdir+'Rescaled_Covariance_Matrices_n%d_m%d_j%d.npz'%(n,m,n_jack)
-np.savez(output_name,jackknife_theory=jack_cov,full_theory=full_cov,jackknife_data=data_cov,shot_noise_rescaling=alpha_best)
-print("Saved output covariance matrices as %s",output_name)
+np.savez(output_name,jackknife_theory_covariance=jack_cov,full_theory_covariance=full_cov,jackknife_data_covariance=data_cov,shot_noise_rescaling=alpha_best,
+         jackknife_theory_precision=jack_prec,full_theory_precision=full_prec,N_eff=N_eff_D,full_theory_D_matrix=full_D_est)
+
+print("Saved output covariance matrices as %s"%output_name)

@@ -54,9 +54,9 @@ for ii in range(len(I1)):
     # Define input files
     file_root_all=root_dir+'CovMatricesAll/'
     file_root_jack=root_dir+'CovMatricesJack/'
-    rr_true_file =root_dir+'weight_files/binned_pair_counts_n%d_m%d_j%d.dat'%(n,m,J)
+    rr_true_file =root_dir+'weight_files/binned_pair_counts_n%d_m%d_j%d_%s.dat'%(n,m,J,index2)
     rr_file=file_root_all+'RR_n%d_m%d_%s_full.txt'%(n,m,index2)
-    weights_file = root_dir+'weight_files/jackknife_weights_n%d_m%d_j%d.dat'%(n,m,J)
+    weights_file = root_dir+'weight_files/jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,J,index2)
     counts_file = root_dir+'CovMatricesAll/total_counts_n%d_m%d_%s.txt'%(n,m,index4)
 
     # Load total number of counts
@@ -80,7 +80,7 @@ for ii in range(len(I1)):
     binct4=(binct4+binct4.T)/2.
 
     # Load full integrals
-    c2=np.diag(np.loadtxt(file_root_jack+'c2_n%d_m%d_%s_full.txt' %(n,m,index2)))
+    c2=np.diag(np.loadtxt(file_root_all+'c2_n%d_m%d_%s_full.txt' %(n,m,index2)))
     c3=np.loadtxt(file_root_all+'c3_n%d_m%d_%s_full.txt' %(n,m,index3))
     c4=np.loadtxt(file_root_all+'c4_n%d_m%d_%s_full.txt' %(n,m,index4))
     errc4=np.loadtxt(file_root_all+'c4err_n%d_m%d_%s_full.txt' %(n,m,index4))
