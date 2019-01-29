@@ -8,11 +8,11 @@ These scripts post-process the single- or multi-field integrals computed by the 
 Single-Field Reconstruction
 ------------------------------
 
-This reconstructs output covariance matrices for a single field. Before running this script, covariance matrix estimates must be produced using the :doc:`main-code` code. The shot-noise rescaling parameters are computed by comparing the theoretical jackknife covariance matrix :math:`\hat{C}^{J}_{ab}(\alpha)` with that computed from the data itself, using individual unrestricted jackknife estimates :math:`\hat{\xi}^J_{aA}`. We define the data jackknife covariance matrix as :math:`C^{\mathrm{data}}_{ab} = \sum_A w_{aA}w_{bA}\left(\hat\xi^J_{aA} - \bar{\xi}_a\right)\left(\hat\xi^J_{bA}-\bar\xi_b\right) / \left(1-\sum_B w_aB w_bB\right)`, where :math:`\bar\xi_a` is the mean correlation function in bin :math:`a`. We compute :math:`\alpha` via minimizing the likelihood function :math:`-\log\mathcal{L}_1(\alpha) = \mathrm{trace}(\Psi^J(\alpha)C^\mathrm{data}) - \log\mathrm{det}\Psi^J(\alpha)+\mathrm{const}.` using the (bias-corrected) precision matrix :math:`\Psi(\alpha)`.
+This reconstructs output covariance matrices for a single field. Before running this script, covariance matrix estimates must be produced using the :doc:`main-code` code. The shot-noise rescaling parameters are computed by comparing the theoretical jackknife covariance matrix :math:`\hat{C}^{J}_{ab}(\alpha)` with that computed from the data itself, using individual unrestricted jackknife estimates :math:`\hat{\xi}^J_{aA}`. We define the data jackknife covariance matrix as :math:`C^{\mathrm{data}}_{ab} = \sum_A w_{aA}w_{bA}\left(\hat\xi^J_{aA} - \bar{\xi}_a\right)\left(\hat\xi^J_{bA}-\bar\xi_b\right) / \left(1-\sum_B w_{aB} w_{bB}\right)`, where :math:`\bar\xi_a` is the mean correlation function in bin :math:`a`. We compute :math:`\alpha` via minimizing the likelihood function :math:`-\log\mathcal{L}_1(\alpha) = \mathrm{trace}(\Psi^J(\alpha)C^\mathrm{data}) - \log\mathrm{det}\Psi^J(\alpha)+\mathrm{const}.` using the (bias-corrected) precision matrix :math:`\Psi(\alpha)`.
 
 **Usage**::
     
-    python python/shot_noise_rescaling.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}
+    python python/post-process.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}
 
 **Input Parameters**
 
@@ -25,7 +25,18 @@ This reconstructs output covariance matrices for a single field. Before running 
 
 **Output**
 
-This script creates a single compressed Python file ``Rescaled_Covariance_Matrices_n{N}_m{M}_j{J}.npz`` as an output in the given output directory. 
+This script creates a single compressed Python file ``Rescaled_Covariance_Matrices_n{N}_m{M}_j{J}.npz`` as an output in the given output directory. All matrices follow the collapsed bin indexing :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` for a total of :math:`n_\mu` angular bins and have dimension :math:`n_\mathrm{bins}\times n_\mathrm{bins}` for a total of :math:`n_\mathrm{bins}` bins. Precision matrices are computed using the quadratic bias elimination method of `O'Connell & Eisenstein 2018 <https://arxiv.org/abs/1808.05978>`_. All matrices are output using the optimal shot-noise rescaling parameter.  
+
+The output file has the following entries:
+- :attr:`shot_noise_rescaling` (Float): Optimal value of the shot-noise rescaling parameter, :math:`\alpha^*`, from the :math:`\mathcal{L}_1` maximization. 
+- :attr:`jackknife_theory_covariance` (np.ndarray): Theoretical jackknife covariance matrix estimate :math:`\hat{C}^J_{ab}(\alpha^*)`.
+- :attr:`full_theory_covariance` (np.ndarray): Theoretical full covariance matrix estimate :math:`\hat{C}_{ab}(\alpha^*)`.
+- :attr:`jackknife_data_covariance` (np.ndarray): Data-derived jackknife covariance matrix :math:`\hat{C}^\mathrm{data}_{ab}`, computed from the individual unrestricted jackknife correlation function estimates.
+- :attr:`jackknife_theory_precision` (np.ndarray): Associated precision matrix to the theoretical jackknife covariance matrix estimate, :math:`\Psi_{ab}^J(\alpha^*)`. 
+- :attr:`full_theory_precision` (np.ndarray): Associated precision matrix to the theoretical full covariance matrix estimate, :math:`\Psi_{ab}(\alpha^*)`.
+- :attr:`individual_theory_covariances` (list): List of individual (and independent) full theoretical covariance matrix estimates. These are used to compute :math:`\tilde{D}_{ab}` and comprise N_SUBSAMPLES estimates.
+- :attr:`full_theory_D_matrix` (np.ndarray): Quadratic bias correction :math:`\tilde{D}_{ab}` matrix for the full theoretical covariance matrix, as described in `O'Connell & Eisenstein 2018 <https://arxiv.org/abs/1808.05978>`_.
+- :attr:`N_eff` (Float): Effective number of mocks in the output full covariance matrix, :math:`N_\mathrm{eff}`, computed from :math:`\tilde{D}_{ab}`.
 
 
 .. _post-processinng-multi:
