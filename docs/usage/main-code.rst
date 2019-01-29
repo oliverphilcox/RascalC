@@ -30,7 +30,7 @@ The precision of covariance matrix estimators can be user-controlled in the Rasc
 4. For each :math:`k` particle, we pick :math:`N_4` :math:`l` particles at random, according to some selection rule. Here we compute the 4-point contribution to the covariance matrix.
 
 By setting the parameters :math:`(N_\mathrm{loops},N_2, N_3, N_4)` we can control the precision of each matrix component. Standard values of :math:`N_2\sim N_3\sim N_4 \sim 10` normally work well. Each loop of the code produces an independent estimate of the full covariance matrix, which can be used to create accurate inverse matrices and effective number of mock calculations. The covariance converges relatively fast, so setting :math:`N_\mathrm{loops}` 
-to a few times the number of cores should work well.
+to a few times the number of cores should work well. Values of :math:`N_\mathrm{loops}\gtrsim 100` should be avoided to stop file sizes and reconstruction times becoming large.
 
 Usage
 ------
