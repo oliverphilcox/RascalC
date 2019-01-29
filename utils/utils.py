@@ -372,7 +372,7 @@ class plotting_tools:
             - FS (int): :mod:`matplotlib` fontsize
         """
         self.FS=FS
-    def _general_plotter(self,matrix,bin_min=None,bin_max=None,title=None):
+    def _general_plotter(self,matrix,bin_min=None,bin_max=None,title=""):
         """General plotting tool for matrices used by other routines in the class. This is based on the :mod:`matplotlib` :func:`matshow` routine.   
         
         Args:
@@ -394,7 +394,8 @@ class plotting_tools:
         plt.gca().xaxis.tick_bottom()
         plt.xlim([bin_min,bin_max])
         plt.ylim([bin_max,bin_min])
-        plt.title(title,fontsize=self.FS+4)
+        if len(title)>0:
+            plt.title(title,fontsize=self.FS+4)
         plt.colorbar();
         return figure
     def plot_covariance(self,matrix_class,bin_min=None,bin_max=None,matrix_type='full',title=""):
