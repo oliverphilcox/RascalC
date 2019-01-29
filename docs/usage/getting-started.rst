@@ -3,7 +3,7 @@ Getting Started
 
 RascalC computes covariance matrix estimates from a given correlation function and set of random particles. The required input files are described :ref:`below <file-inputs>`.
 
-In order to compute these matrices there are 5 steps:
+In order to compute these matrices there are several steps:
 
 1. :doc:`pre-processing` (*Optional*):
     We provide a suite of utility functions to convert input files to the correct forms used by RascalC. This includes conversion from (Ra,Dec,redshift) to (x,y,z) coordinate space, creation of binfiles and assignment of HealPix jackknife regions to particles. Alternatively, this step can be skipped if the input files are already of the correct format.
@@ -13,10 +13,12 @@ In order to compute these matrices there are 5 steps:
     This provides functions to compute the jackknife correlation functions :math:`\xi^{J}(r,\mu)` for one or two input fields (using Corrfunc), which are later used to calibrate the shot-noise rescaling parameter(s). In addition, we provide routines to compute the overall survey correlation functions. These may also be defined by the user instead.
 4. :doc:`main-code`:
     The main C++ code computing the individual covariance matrix terms using Monte Carlo integration. For multiple input correlation functions, this computes all relevant terms for the six non-trivial cross-covariance matrices. The covariances are saved as ``.txt`` files which can be reconstructed in Python.
-5. :doc:`post-processing`: (*Optional*)
-    A suite of codes in Python are provided to reconstruct and save the output covariance matrices. In addition, we provide modules to compute precision matrix estimates and effective mock numbers as well as plotting routines.
+5. :doc:`post-processing`: 
+    This Python script computes the shot-noise rescaling parameter(s) and reconstructs output covariance matrices from the jackknive correlation function estimates produced in :doc:`correlation-functions`. A single ``.npz`` file is created including the output covariance and precision matrices as well as the effective number of mocks :math:`N_\mathrm{eff}`.
+6. :doc:`visualization`: (*Optional*)
+    We provide a Python module for reconstruction and visualization of the output covariance matrices. This performs similar routines to the :doc:`post-processing` codes, but allows for greater user interactivity, as well as plotting regimes.
 
-.. todo:: add in shot-noise rescaling codes and post-processing multi-field scripts.
+.. todo:: add in post-processing multi-field scripts.
     
 .. _file-inputs:
 
@@ -44,19 +46,20 @@ The required input files and formats are described below. Note that several of t
     - File specifying the radial binning used in the input correlation function.
     - The lowest bin must extend to zero for this, and the highest bin should be at least as large as the maximum covariance matrix bin.
     - *Format*: See above.
-- **Correlation Function(s)**:
+- *(Usually created internally)* **Correlation Function(s)**:
     - This specifies the input correlation function estimates to be used by RascalC. 
     - For two sets of tracer particles, we require three correlation functions; two auto-correlations and a cross-correlation.
     - These can be user input or created with Corrfunc using the :ref:`full-correlations` codes.
     - Estimates of :math:`\xi(r,\mu)` must be given for a grid of values of :math:`(r,\mu)`, which must extend close to zero for :math:`r` with the bins as specified in the correlation function binning file.
     - *Format*: An ASCII file with space separated values. Line 1 lists the radial coordinates of the bin centers and line 2 lists the angular coordinates. Successive lines list the correlation function estimates :math:`\xi(r,\mu)`, with the column indicating the :math:`\mu` bin center and the row indicating the :math:`r` bin center.
-    
-    
-.. todo:: add jackknife correlation function filetype
-
-- *(Internally Created)* **Jackknife Weights and Random Particle Counts**:
+- *(Usually created internally)* **Jackknife Coorelation Functions**:
+    - This specifies the input correlation function estimates for each *unrestricted* jackknife, :math:`\xi^J_{A}(r,\mu)`. 
+    - For two sets of tracer particles, we require three correlation functions; two auto-correlations and a cross-correlation.
+    - This is conventionally created with Corrfunc using the :ref:`jackknife-correlations` codes, but may be user input if desired.
+    - The radial and angular binning should match that desired for the output covariance matrix.
+    - *Format*: An ASCII file with space separated values. Lines 1 and 2 list the radial and angular bin centers (as for the full correlation function). Each succeeding line gives the entire correlation function estimate for a given jackknife. The rows indicate the jackknife and the columns specify the collapsed bin, using the indexing :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` for a total of :math:`n_\mu` angular bins (unlike for the full correlation function). 
+- *(Usually created internally)* **Jackknife Weights and Random Particle Counts**:
     - These specify the weights of each jackknife region for each bin and the random particle counts both for each jackknife, and for the entire survey. 
-    - These must be created using the :doc:`jackknife-weights` script.
-    - They are saved in ``.dat`` files with the name ``jackknife_weights_n{N}_m{M}_j{J}.dat``, ``jackknife_pair_counts_n{N}_m{M}_j{J}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}.dat`` where N and M specify the number of radial and angular bins respectively and J gives the number of non-empty jackknife regions.
+    - These should be created using the :doc:`jackknife-weights` script.
+    - They are saved in ``.dat`` files with the name ``jackknife_weights_n{N}_m{M}_j{J}_{INDEX}.dat``, ``jackknife_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` where N and M specify the number of radial and angular bins respectively and J gives the number of non-empty jackknife regions. INDEX specifies which fields are being used (e.g. 12 specifies the cross-weights between fields 1 and 2).
     
-.. todo:: add support for multi-tracer jackknife weights
