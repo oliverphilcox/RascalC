@@ -8,6 +8,24 @@ These scripts post-process the single- or multi-field integrals computed by the 
 Single-Field Reconstruction
 ------------------------------
 
+This reconstructs output covariance matrices for a single field. Before running this script, covariance matrix estimates must be produced using the :doc:`main-code` code. The shot-noise rescaling parameters are computed by comparing the theoretical jackknife covariance matrix :math:`\hat{C}^{J}_{ab}(\alpha)` with that computed from the data itself, using individual unrestricted jackknife estimates :math:`\hat{\xi}^J_{aA}`. We define the data jackknife covariance matrix as :math:`C^{\mathrm{data}}_{ab} = \sum_A w_{aA}w_{bA}\left(\hat\xi^J_{aA} - \bar{\xi}_a\right)\left(\hat\xi^J_{bA}-\bar\xi_b\right) / \left(1-\sum_B w_aB w_bB\right)`, where :math:`\bar\xi_a` is the mean correlation function in bin :math:`a`. We compute :math:`\alpha` via minimizing the likelihood function :math:`-\log\mathcal{L}_1(\alpha) = \mathrm{trace}(\Psi^J(\alpha)C^\mathrm{data}) - \log\mathrm{det}\Psi^J(\alpha)+\mathrm{const}.` using the (bias-corrected) precision matrix :math:`\Psi(\alpha)`.
+
+**Usage**::
+    
+    python python/shot_noise_rescaling.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}
+
+**Input Parameters**
+
+- {XI_JACKKNIFE_FILE}: Input ASCII file containing the correlation function estimates :math:`\xi^J_A(r,\mu)` for each jackknife region, as created by the :ref:`jackknife-correlations` script. This has the format specified in :ref:`file-inputs`.
+- {WEIGHTS_DIR}: Directory containing the jackknife weights and pair counts, as created by the :doc:`jackknife-weights` script. This must contain ``jackknife_weights_n{N}_m{M}_j{J}_{INDEX}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` using the relevant covariance matrix binning scheme.
+- {COVARIANCE_DIR}: Directory containing the covariance matrix ``.txt`` files output by the :doc:`main-code` C++ code. This directory should contain the subdirectories ``CovMatricesAll`` and ``CovMatricesJack`` containing the relevant analysis products.
+- {N_MU_BINS}: Number of angular (:math:`\mu`) bins used in the analysis.
+- {N_SUBSAMPLES}: Number of individual matrix subsamples computed in the C++ code. This is the :math:`N_\mathrm{loops}` parameter used in the :ref:`main-code` code. Individual matrix estimates are used to remove quadratic bias from the precision matrix estimates and compute the effective number of degrees of freedom :math:`N_\mathrm{eff}`.
+- {OUTPUT_DIR}: Directroy in which to save the analysis products. This will be created if not present.
+
+**Output**
+
+This script creates a single compressed Python file ``Rescaled_Covariance_Matrices_n{N}_m{M}_j{J}.npz`` as an output in the given output directory. 
 
 
 .. _post-processinng-multi:

@@ -16,7 +16,7 @@ This converts a set of input particles (either random particle or galaxy positio
 **Parameters**:
 
 - {INFILE}: Input data file containing {RA,Dec,redshift,weight} coordinates for each particle. This may be specified as a ``.fits``, ``.csv``, ``.txt`` or ``.dat`` datafile. For an input FITS file, the columns 'RA', 'DEC', 'Z' and 'WEIGHT_FKP' are required (as in BOSS DR12 data).
-- {OUTFILE}: Output ``.txt``, ``.dat` or ``.csv`` filename.
+- {OUTFILE}: Output ``.txt``, ``.dat`` or ``.csv`` filename.
 - *Optional* {OMEGA_M}: Current matter density, :math:`\Omega_m` (default 0.31)
 - *Optional* {OMEGA_K}: Current curvature density. :math:`\Omega_k` (default 0)
 - *Optional* {W_DARK_ENERGY}: Dark energy equation of state parameter, :math:`w_\Lambda` (default -1)
