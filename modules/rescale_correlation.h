@@ -288,8 +288,6 @@ public:
         // Now write to cf function
         new_cf = new CorrelationFunction(new_xi_array, r_centers, mu_centers, nbin, mbin);
         
-        printf("%.2e\n",new_cf->xi(17,0.7));
-        
         return new_cf;
     }               
     

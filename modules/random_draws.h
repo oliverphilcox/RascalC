@@ -43,7 +43,7 @@ public:
             
             // Read in x, xcube arrays:
             for(int i=0;i<x_size;i++) x[i]=rd->x[i];
-            for(int i=0;i<xcube_size;i++) xcube[i]=rd->x[i];
+            for(int i=0;i<xcube_size;i++) xcube[i]=rd->xcube[i];
             
             // Set up actual samplers
             ws = ransampl_alloc(x_size);
@@ -129,8 +129,6 @@ public:
 		nsidecube = 2 * maxsep + 1;
 		long nn=0;
 
-        printf("Currently using xi(r) sampling for j-k cells\n");
-        printf("Using 1/r^2 sampling for i-j and k-l cells\n");
         compute_r2_prob(&xcube,&nn,nsidecube,boxside);
 
 		// Set up actual sampler
