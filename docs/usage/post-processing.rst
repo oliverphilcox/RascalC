@@ -28,6 +28,7 @@ This reconstructs output covariance matrices for a single field. Before running 
 This script creates a single compressed Python file ``Rescaled_Covariance_Matrices_n{N}_m{M}_j{J}.npz`` as an output in the given output directory. All matrices follow the collapsed bin indexing :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` for a total of :math:`n_\mu` angular bins and have dimension :math:`n_\mathrm{bins}\times n_\mathrm{bins}` for a total of :math:`n_\mathrm{bins}` bins. Precision matrices are computed using the quadratic bias elimination method of `O'Connell & Eisenstein 2018 <https://arxiv.org/abs/1808.05978>`_. All matrices are output using the optimal shot-noise rescaling parameter.  
 
 The output file has the following entries:
+
 - :attr:`shot_noise_rescaling` (Float): Optimal value of the shot-noise rescaling parameter, :math:`\alpha^*`, from the :math:`\mathcal{L}_1` maximization. 
 - :attr:`jackknife_theory_covariance` (np.ndarray): Theoretical jackknife covariance matrix estimate :math:`\hat{C}^J_{ab}(\alpha^*)`.
 - :attr:`full_theory_covariance` (np.ndarray): Theoretical full covariance matrix estimate :math:`\hat{C}_{ab}(\alpha^*)`.
