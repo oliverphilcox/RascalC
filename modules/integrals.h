@@ -471,25 +471,6 @@ public:
             }
         }
         
-        // Now compute disconnected term:
-        Float EEa1,EEb2,RRa1,RRb2;
-        for(int i=0;i<nbin*mbin;i++){
-            for(int j=0;j<nbin*mbin;j++){
-                // Initialize sums for EEa1 and EEa2 for this bin
-                EEa1=0.;
-                EEb2=0.;
-                RRa1=0;
-                RRb2=0;
-                // First sum up EEa terms for this bin
-                for(int jk=0;jk<n_jack;jk++){
-                    EEa1+=EEaA1[jk*nbin*mbin+i];
-                    EEb2+=EEaA2[jk*nbin*mbin+j];
-                    RRa1+=RRaA1[jk*nbin*mbin+i];
-                    RRb2+=RRaA2[jk*nbin*mbin+j];
-                }
-            }
-        }
-        
         // Further normalize by RR counts from corrfunc
         for(int i=0; i<nbin*mbin;i++){
             Float Ra_i = JK12->RR_pair_counts[i]; 

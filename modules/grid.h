@@ -88,7 +88,7 @@ class Grid {
         np2=g->np2;
         nside_cuboid = g->nside_cuboid;
         np_pos = g->np_pos;
-        norm = g-> norm;
+        norm = g->norm;
         nf=g->nf;
         maxnp=g->maxnp;
         sumw_pos=g->sumw_pos;
@@ -217,7 +217,7 @@ class Grid {
 
         // compute normalization
         norm = Float(np)/nofznorm;
-        
+
         free(cell);
         
         return;

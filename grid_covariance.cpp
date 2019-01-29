@@ -177,6 +177,9 @@ int main(int argc, char *argv[]) {
     rescale_correlation rescale(&par);
     rescale.refine_wrapper(&par, all_grid, all_cf, all_rd, max_no_functions);
     
+    printf("\nUsing xi(r) sampling for i-k and j-l cells\n");
+    printf("Using 1/r^2 sampling for i-j cells\n");
+    
     // Compute integrals
     compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,1,1,1,1); // final digit is iteration number
 
