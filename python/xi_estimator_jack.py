@@ -6,47 +6,78 @@ import sys
 import numpy as np
 
 # PARAMETERS
-if len(sys.argv)!=9:
-    if len(sys.argv)!=10:
-        print("Usage: python xi_estimator.py {GALAXY_FILE} {RANDOM_FILE} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_jackknife_counts}]")
+if len(sys.argv)!=10:
+    if len(sys.argv)!=11:
+        print("Usage: python xi_estimator.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_jackknife_counts}]")
         sys.exit()
 Dname = str(sys.argv[1])
-Rname = str(sys.argv[2])
-binfile = str(sys.argv[3])
-mu_max = float(sys.argv[4])
-nmu_bins = int(sys.argv[5])
-nthreads = int(sys.argv[6])
-periodic = int(sys.argv[7])
-outdir=str(sys.argv[8])
+RnameDR = str(sys.argv[2])
+RnameRR = str(sys.argv[3])
+binfile = str(sys.argv[4])
+mu_max = float(sys.argv[5])
+nmu_bins = int(sys.argv[6])
+nthreads = int(sys.argv[7])
+periodic = int(sys.argv[8])
+outdir=str(sys.argv[9])
 
-if len(sys.argv)==10:
+if len(sys.argv)==11:
     print("Using pre-defined RR counts")
-    RRname=str(sys.argv[9])
+    RRname=str(sys.argv[10])
 else:
     RRname=""
 
 ## First read in weights and positions:
 dtype = np.double 
 
-print("Counting lines in random file")
+# Read first set of randoms
+print("Counting lines in RR random file")
 total_lines=0
-for n, line in enumerate(open(Rname, 'r')):
+for n, line in enumerate(open(RnameRR, 'r')):
     total_lines+=1
 
-rX,rY,rZ,rW,rJ=[np.zeros(total_lines) for _ in range(5)]
+rX_RR,rY_RR,rZ_RR,rW_RR,rJ_RR=[np.zeros(total_lines) for _ in range(5)]
 
-print("Reading in random data");
-for n, line in enumerate(open(Rname, 'r')):
+print("Reading in RR random data");
+for n, line in enumerate(open(RnameRR, 'r')):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines))
     split_line=np.array(line.split(" "), dtype=float) 
-    rX[n]=split_line[0];
-    rY[n]=split_line[1];
-    rZ[n]=split_line[2];
-    rW[n]=split_line[3];
-    rJ[n]=int(split_line[4]);
+    rX_RR[n]=split_line[0];
+    rY_RR[n]=split_line[1];
+    rZ_RR[n]=split_line[2];
+    rW_RR[n]=split_line[3];
+    rJ_RR[n]=split_line[4];
 
-N_rand = len(rX) # number of particles
+N_randRR = len(rX_RR) # number of particles
+
+if RnameDR!=RnameRR:
+    # only read in DR file if distinct:
+    print("Counting lines in DR random file")
+    total_lines=0
+    for n, line in enumerate(open(RnameDR, 'r')):
+        total_lines+=1
+
+    rX_DR,rY_DR,rZ_DR,rW_DR,rJ_DR=[np.zeros(total_lines) for _ in range(5)]
+
+    print("Reading in DR random data");
+    for n, line in enumerate(open(RnameDR, 'r')):
+        if n%1000000==0:
+            print("Reading line %d of %d" %(n,total_lines))
+        split_line=np.array(line.split(" "), dtype=float) 
+        rX_DR[n]=split_line[0];
+        rY_DR[n]=split_line[1];
+        rZ_DR[n]=split_line[2];
+        rW_DR[n]=split_line[3];
+        rJ_DR[n]=split_line[4];
+        
+    N_randDR = len(rX_DR) # number of particles
+else:
+    rX_DR=rX_RR
+    rY_DR=rY_RR
+    rZ_DR=rZ_RR
+    rW_DR=rW_RR
+    rJ_DR=rJ_RR
+    N_randDR=N_randRR
 
 print("Counting lines in galaxy file")
 total_lines=0
@@ -68,11 +99,11 @@ for n, line in enumerate(open(Dname, 'r')):
 
 N_gal = len(dX) # number of particles
 
-print("Number of random particles %.1e"%N_rand)
-print("Number of galaxies particles %.1e"%N_gal)
+print("Number of random particles %.1e (DR) %.1e (RR)"%(N_randDR, N_randRR)
+print("Number of galaxy particles %.1e"%N_gal)
 
 # Determine number of jackknifes
-J_regions = np.unique(np.concatenate([rJ,dJ]))
+J_regions = np.unique(np.concatenate([rJ_RR,rJ_DR,dJ]))
 N_jack = len(J_regions)
 
 print("Using %d non-empty jackknife regions"%N_jack)
@@ -110,7 +141,8 @@ if not periodic:
         return com_dist, Ra, Dec
 
     # Convert coordinates to spherical coordinates
-    r_com_dist,r_Ra,r_Dec = coord_transform(rX,rY,rZ);
+    r_com_dist_DR,r_Ra_DR,r_Dec_DR = coord_transform(rX_DR,rY_DR,rZ_DR);
+    r_com_dist_RR,r_Ra_RR,r_Dec_RR = coord_transform(rX_RR,rY_RR,rZ_RR);
     d_com_dist,d_Ra,d_Dec = coord_transform(dX,dY,dZ);
 
     from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
@@ -132,12 +164,12 @@ if not periodic:
         # Compute RR pair counts
         for i,j in enumerate(J_regions):
             # Compute pair counts between jackknife region and entire survey regions
-            filt = np.where(rJ==j)
+            filt = np.where(rJ_RR==j)
             print("Computing RR pair counts for non-empty jackknife %d of %d"%(i+1,N_jack))
             if len(filt[0])>0:
-                cross_RR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra,r_Dec,r_com_dist,weights1=rW,
-                                      weight_type='pair_product',RA2=r_Ra[filt],DEC2=r_Dec[filt],CZ2=r_com_dist[filt],
-                                      weights2=rW[filt],verbose=False,is_comoving_dist=True)
+                cross_RR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra_RR,r_Dec_RR,r_com_dist_RR,weights1=rW_RR,
+                                      weight_type='pair_product',RA2=r_Ra_RR[filt],DEC2=r_Dec_RR[filt],CZ2=r_com_dist_RR[filt],
+                                      weights2=rW_RR[filt],verbose=False,is_comoving_dist=True)
                 RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
     print("Finished RR pair counts after %d seconds"%(time.time()-init))
     
@@ -150,16 +182,16 @@ if not periodic:
         filt = np.where(dJ==j)
         if len(filt[0])>0:
             cross_DR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra[filt],d_Dec[filt],d_com_dist[filt],
-                                   weights1=dW[filt],weight_type='pair_product', RA2=r_Ra, DEC2=r_Dec, 
-                                   CZ2 = r_com_dist, weights2 = rW, verbose=False,is_comoving_dist=True)
+                                   weights1=dW[filt],weight_type='pair_product', RA2=r_Ra_DR, DEC2=r_Dec_DR, 
+                                   CZ2 = r_com_dist_DR, weights2 = rW_DR, verbose=False,is_comoving_dist=True)
             DR_counts[i,:] += cross_DR[:]['npairs']*cross_DR[:]['weightavg']
         
         # Compute pair coutnts between random jackknife and data survey
-        filt = np.where(rJ==j)
+        filt = np.where(rJ_DR==j)
         if len(filt[0])>0:
             cross_DR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,
-                                   weights1=dW,weight_type='pair_product', RA2=r_Ra[filt], DEC2=r_Dec[filt], 
-                                   CZ2 = r_com_dist[filt], weights2 = rW[filt], verbose=False,is_comoving_dist=True)
+                                   weights1=dW,weight_type='pair_product', RA2=r_Ra_DR[filt], DEC2=r_Dec_DR[filt], 
+                                   CZ2 = r_com_dist_DR[filt], weights2 = rW_DR[filt], verbose=False,is_comoving_dist=True)
             DR_counts[i,:] += cross_DR[:]['npairs']*cross_DR[:]['weightavg']
     print("Finished DR pair counts after %d seconds"%(time.time()-init))
     
@@ -198,12 +230,12 @@ else:
         # Compute RR pair counts
         for i,j in enumerate(J_regions):
             # Compute pair counts between jackknife region and entire survey regions
-            filt = np.where(rJ==j)
+            filt = np.where(rJ_RR==j)
             print("Computing RR pair counts for non-empty jackknife %d of %d"%(i+1,N_jack))
             if len(filt[0])>0:
-                cross_RR = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,rX,rY,rZ,weights1=rW,
-                                      weight_type='pair_product',X2=rX[filt],Y2=rY[filt],Z2=rZ[filt],
-                                      weights2=rW[filt],verbose=False,periodic=True)
+                cross_RR = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,rX_RR,rY_RR,rZ_RR,weights1=rW_RR,
+                                      weight_type='pair_product',X2=rX_RR[filt],Y2=rY_RR[filt],Z2=rZ_RR[filt],
+                                      weights2=rW_RR[filt],verbose=False,periodic=True)
                 RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
     print("Finished RR pair counts after %d seconds"%(time.time()-init))
     
@@ -216,16 +248,16 @@ else:
         filt = np.where(dJ==j)
         if len(filt[0])>0:
             cross_DR1 = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX[filt],dY[filt],dZ[filt],
-                                   weights1=dW[filt],weight_type='pair_product', X2=rX, Y2=rY, 
-                                   Z2 = rZ, weights2 = rW, verbose=False,periodic=True)
+                                   weights1=dW[filt],weight_type='pair_product', X2=rX_DR, Y2=rY_DR, 
+                                   Z2 = rZ_DR, weights2 = rW_DR, verbose=False,periodic=True)
             DR_counts[i,:] += cross_DR1[:]['npairs']*cross_DR1[:]['weightavg']
         
         # Compute pair coutnts between random jackknife and data survey
-        filt = np.where(rJ==j)
+        filt = np.where(rJ_DR==j)
         if len(filt[0])>0:
             cross_DR2 = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,
-                                   weights1=dW,weight_type='pair_product', X2=rX[filt], Y2=rY[filt], 
-                                   Z2 = rZ[filt], weights2 = rW[filt], verbose=False,periodic=True)
+                                   weights1=dW,weight_type='pair_product', X2=rX_DR[filt], Y2=rY_DR[filt], 
+                                   Z2 = rZ_DR[filt], weights2 = rW_DR[filt], verbose=False,periodic=True)
             DR_counts[i,:] += cross_DR2[:]['npairs']*cross_DR2[:]['weightavg']
     print("Finished DR pair counts after %d seconds"%(time.time()-init))
     
