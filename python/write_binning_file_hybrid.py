@@ -9,6 +9,7 @@ if len(sys.argv)<7:
 n_log_bins = int(sys.argv[1])
 n_lin_bins = int(sys.argv[2])
 r_min = float(sys.argv[3])
+assert r_min>0,'Minimum r must be greater than zero to take logarithm'
 r_cut = float(sys.argv[4])
 r_max = float(sys.argv[5])
 out_file = str(sys.argv[6])

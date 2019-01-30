@@ -17,6 +17,7 @@ The source code is publicly available on `Github <https://github.com/oliverphilc
    
    usage/installation
    usage/getting-started
+   usage/tutorial
    usage/pre-processing
    usage/jackknife-weights
    usage/correlation-functions

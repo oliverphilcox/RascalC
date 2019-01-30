@@ -16,6 +16,9 @@ print("Using LINEAR binning");
 # Define radial bins
 rbins = np.linspace(r_min,r_max,nrbins+1)
 
+if rbins[0]<=1e-4:
+    rbins[0]=1e-4 # for stability
+
 # PRINT binning:
 with open(out_file,'w+') as writefile:
     for i in range(nrbins-1):

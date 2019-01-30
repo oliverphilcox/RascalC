@@ -8,6 +8,7 @@ if len(sys.argv)<5:
     sys.exit()
 nrbins = int(sys.argv[1])
 r_min = float(sys.argv[2])
+assert r_min>0,'Minimum r must be greater than zero to take logarithm'
 r_max = float(sys.argv[3])
 out_file = str(sys.argv[4])
 
