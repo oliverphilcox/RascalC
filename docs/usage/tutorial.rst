@@ -95,7 +95,10 @@ This uses Corrfunc to perform pair counting and computes :math:`\xi(r,\mu)` via 
 
 Do stuff::
 
-    python python/xi_estimator_jack.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1_DR} {RANDOM_FILE_1_RR} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts_11} {RR_counts_12} {RR_counts_22}]
+    python python/xi_estimator_jack.py qpm_galaxies.xyzwj qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj radial_binning_cov.csv 1. 12 10 0 xi_jack/ weights/jackknife_pair_counts_n36_m12_j169_11.dat
 
 *(See :ref:`jackknife-correlations`)*
+
+.. todo:: stop reading in RRs if we don't need them!!
+
 

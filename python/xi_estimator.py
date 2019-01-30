@@ -30,28 +30,7 @@ else:
 dtype = np.double 
 
 # Read first set of randoms
-print("Counting lines in RR random file")
-total_lines=0
-for n, line in enumerate(open(RnameRR, 'r')):
-    total_lines+=1
-
-rX_RR,rY_RR,rZ_RR,rW_RR=[np.zeros(total_lines) for _ in range(4)]
-
-print("Reading in RR random data");
-for n, line in enumerate(open(RnameRR, 'r')):
-    if n%1000000==0:
-        print("Reading line %d of %d" %(n,total_lines))
-    split_line=np.array(line.split(" "), dtype=float) 
-    rX_RR[n]=split_line[0];
-    rY_RR[n]=split_line[1];
-    rZ_RR[n]=split_line[2];
-    rW_RR[n]=split_line[3];
-
-N_randRR = len(rX_RR) # number of particles
-
-if RnameDR!=RnameRR:
-    # only read in DR file if distinct:
-    print("Counting lines in DR random file")
+print("Counting lines in DR random file")
     total_lines=0
     for n, line in enumerate(open(RnameDR, 'r')):
         total_lines+=1
@@ -69,12 +48,38 @@ if RnameDR!=RnameRR:
         rW_DR[n]=split_line[3];
         
     N_randDR = len(rX_DR) # number of particles
+
+if len(RRname)==0:
+    # Read in RR random file    
+    if RnameDR!=RnameRR:
+        print("Counting lines in RR random file")
+        total_lines=0
+        for n, line in enumerate(open(RnameRR, 'r')):
+            total_lines+=1
+
+        rX_RR,rY_RR,rZ_RR,rW_RR=[np.zeros(total_lines) for _ in range(4)]
+
+        print("Reading in RR random data");
+        for n, line in enumerate(open(RnameRR, 'r')):
+            if n%1000000==0:
+                print("Reading line %d of %d" %(n,total_lines))
+            split_line=np.array(line.split(" "), dtype=float) 
+            rX_RR[n]=split_line[0];
+            rY_RR[n]=split_line[1];
+            rZ_RR[n]=split_line[2];
+            rW_RR[n]=split_line[3];
+
+        N_randRR = len(rX_RR) 
+    else:
+        rX_RR=rX_DR
+        rY_RR=rY_DR
+        rZ_RR=rZ_DR
+        rW_RR=rW_DR
+        N_randRR=N_randDR
 else:
-    rX_DR=rX_RR
-    rY_DR=rY_RR
-    rZ_DR=rZ_RR
-    rW_DR=rW_RR
-    N_randDR=N_randRR
+    # empty placeholders
+    rX_RR,rY_RR,rZ_RR,rW_RR=[],[],[],[]
+    N_randRR=0
 
 print("Counting lines in galaxy file")
 total_lines=0
@@ -134,7 +139,6 @@ if not periodic:
 
     # Convert coordinates to spherical coordinates
     r_com_dist_DR,r_Ra_DR,r_Dec_DR = coord_transform(rX_DR,rY_DR,rZ_DR);
-    r_com_dist_RR,r_Ra_RR,r_Dec_RR = coord_transform(rX_RR,rY_RR,rZ_RR);
     d_com_dist,d_Ra,d_Dec = coord_transform(dX,dY,dZ);
 
     from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
@@ -148,6 +152,7 @@ if not periodic:
         if len(RR_counts)!=nrbins*nmu_bins:
             raise Exception("Incorrect number of bins in RR file. Either provide the relevant file or recompute RR pair counts.")
     else:
+        r_com_dist_RR,r_Ra_RR,r_Dec_RR = coord_transform(rX_RR,rY_RR,rZ_RR);
         print("Computing RR pair counts")
         tmpRR=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,r_Ra_RR,r_Dec_RR,r_com_dist_RR,weights1=rW_RR,weight_type='pair_product',verbose=False,is_comoving_dist=True)
         RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg'] # sum of weights over bin

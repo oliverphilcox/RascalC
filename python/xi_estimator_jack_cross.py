@@ -56,29 +56,39 @@ def reader(filename):
         J[n]=int(split_line[4]);
     return X,Y,Z,W,J
 
-## Read random files
-random1_DR = reader(Rname1_DR)
-random2_DR = reader(Rname2_DR)
-if Rname1_DR!=Rname1_RR:
-    random1_RR = reader(Rname1_RR)
-else:
-    random1_RR = random1_DR
-if Rname2_DR!=Rname2_RR:
-    random2_RR = reader(Rname2_RR)
-else:
-    random2_RR = random2_DR
-
 ## Read galaxy files
 data1 = reader(Dname1)
 data2 = reader(Dname2)
 
+## Read DR random files
+random1_DR = reader(Rname1_DR)
+random2_DR = reader(Rname2_DR)
+
 # Total particle numbers
-N_rand1_RR = len(random1_RR[0])
-N_rand2_RR = len(random2_RR[0]) 
 N_rand1_DR = len(random1_DR[0])
-N_rand2_DR = len(random2_DR[0])
+N_rand2_DR = len(random2_DR[0]) 
 N_gal1 = len(data1[0])
 N_gal2 = len(data2[0])
+
+# Read RR random files
+if len(RRname11)==0:
+    # if RR counts are not provided
+    if Rname1_DR!=Rname1_RR:
+        random1_RR = reader(Rname1_RR)
+    else:
+        random1_RR = random1_DR
+    if Rname2_DR!=Rname2_RR:
+        random2_RR = reader(Rname2_RR)
+    else:
+        random2_RR = random2_DR
+    N_rand1_RR = len(random1_RR[0])
+    N_rand2_RR = len(random2_RR[0]) 
+else:
+    # empty placeholders
+    random1_RR = []
+    random2_RR = []
+    N_rand1_RR = 0
+    N_rand2_RR = 0 
 
 print("Number of random particles in field 1: %.1e (DR) %.1e (RR)"%(N_rand1_DR,N_rand1_RR))
 print("Number of galaxies particles in field 1: %.1e"%N_gal1)
@@ -87,7 +97,11 @@ print("Number of galaxies particles in field 2: %.1e"%N_gal2)
 
 
 # Determine number of jackknifes
-J_regions = np.unique(np.concatenate([random1_RR[4],random1_DR[4],random2_RR[4],random2_DR[4],data1[4],data2[4]]))
+if len(RRname11)==0:
+    J_regions = np.unique(np.concatenate([random1_RR[4],random1_DR[4],random2_RR[4],random2_DR[4],data1[4],data2[4]]))
+else:
+    J_regions = np.unique(np.concatenate([random1_DR[4],random2_DR[4],data1[4],data2[4]]))
+    
 N_jack = len(J_regions)
 
 print("Using %d non-empty jackknife regions"%N_jack)
@@ -127,11 +141,13 @@ def compute_xi(random1_RR,random1_DR,data1,random2_RR=None,random2_DR=None,data2
         
     # Read in fields
     rX_DR,rY_DR,rZ_DR,rW_DR,rJ_DR = random1_DR
-    rX_RR,rY_RR,rZ_RR,rW_RR,rJ_RR = random1_RR
+    if len(random1_RR)>0:
+        rX_RR,rY_RR,rZ_RR,rW_RR,rJ_RR = random1_RR
     dX,dY,dZ,dW,dJ = data1
     if cross_term:
         rX2_DR,rY2_DR,rZ2_DR,rW2_DR,rJ2_DR = random2_DR
-        rX2_RR,rY2_RR,rZ2_RR,rW2_RR,rJ2_RR = random2_RR
+        if len(random2_RR)>0:
+            rX2_RR,rY2_RR,rZ2_RR,rW2_RR,rJ2_RR = random2_RR
         dX2,dY2,dZ2,dW2,dJ2 = data2
         
     import time
@@ -143,11 +159,9 @@ def compute_xi(random1_RR,random1_DR,data1,random2_RR=None,random2_DR=None,data2
         
         # Convert coordinates to spherical coordinates
         r_com_dist_DR,r_Ra_DR,r_Dec_DR = coord_transform(rX_DR,rY_DR,rZ_DR);
-        r_com_dist_RR,r_Ra_RR,r_Dec_RR = coord_transform(rX_RR,rY_RR,rZ_RR);
         d_com_dist,d_Ra,d_Dec = coord_transform(dX,dY,dZ);
         if cross_term:
             r_com_dist2_DR,r_Ra2_DR,r_Dec2_DR = coord_transform(rX2_DR,rY2_DR,rZ2_DR);
-            r_com_dist2_RR,r_Ra2_RR,r_Dec2_RR = coord_transform(rX2_RR,rY2_RR,rZ2_RR);
             d_com_dist2,d_Ra2,d_Dec2 = coord_transform(dX2,dY2,dZ2);
 
         from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
@@ -165,6 +179,9 @@ def compute_xi(random1_RR,random1_DR,data1,random2_RR=None,random2_DR=None,data2
                 RR_counts[jk,:] = RRfile[jk,1:] # first index is jackknife number usually
         else:
             # Compute RR pair counts
+            r_com_dist_RR,r_Ra_RR,r_Dec_RR = coord_transform(rX_RR,rY_RR,rZ_RR);
+            if cross_term:
+                r_com_dist2_RR,r_Ra2_RR,r_Dec2_RR = coord_transform(rX2_RR,rY2_RR,rZ2_RR);
             for i,j in enumerate(J_regions):
                 # Compute pair counts between jackknife region and entire survey regions
                 print("Computing RR pair counts for non-empty jackknife %d of %d"%(i+1,N_jack))

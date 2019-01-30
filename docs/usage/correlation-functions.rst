@@ -36,7 +36,7 @@ For an analysis using two distinct fields::
 
 - {GALAXY_FILE}, {GALAXY_FILE_1}, {GALAXY_FILE_2}: Input ASCII file containing galaxy positions and weights in {x,y,z,weight,jackknife_ID} format such as that created with the :doc:`pre-processing` scripts.  (Jackknives are not used in this script and may be omitted). This should be in ``.csv``, ``.txt`` or ``.dat`` format with space-separated columns.
 - {RANDOM_FILE_DR}, {RANDOM_FILE_1_DR}, {RANDOM_FILE_2_DR}: Input ASCII file containing random particle positions and weights to be used for DR pair counting (with filetype as for the galaxy files).
-- {RANDOM_FILE_RR}, {RANDOM_FILE_1_RR}, {RANDOM_FILE_2_RR}: Input ASCII file containing random particle positions and weights to be used for RR pair counting (with filetype as for the galaxy files).
+- {RANDOM_FILE_RR}, {RANDOM_FILE_1_RR}, {RANDOM_FILE_2_RR}: Input ASCII file containing random particle positions and weights to be used for RR pair counting (with filetype as for the galaxy files). **NB**: If pre-computed RR pair counts are specified the RR random files are not used by the code.
 - {RADIAL_BIN_FILE}: ASCII file specifying the radial bins for :math:`\xi(r,\mu)`, as described in :ref:`file-inputs`. This can be user-defined or created by the :ref:`write-binning-file` scripts.  **NB**: This bin-file specifies the bins for the *correlation function*, which may be distinct from the *covariance-matrix* bins. In particular, the lowest bin should extend to :math:`r = 0`.
 - {MU_MAX}: Maximum :math:`\mu = \cos\theta` used in the angular binning.
 - {N_MU_BINS}: Number of angular bins used in the range :math:`[0,\mu]`.
@@ -64,7 +64,7 @@ For later comparison of the jackknife covariance matrix estimate with the data, 
 
 For a single field analysis::
 
-    python python/xi_estimator_jack.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1_DR} {RANDOM_FILE_1_RR} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts_11} {RR_counts_12} {RR_counts_22}]
+    python python/xi_estimator_jack.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_jackknife_counts}]
 
 
 For an analysis using two distinct fields::
