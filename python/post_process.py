@@ -41,8 +41,8 @@ weights = weights[good_jk]
 
 # Compute data covariance matrix
 print("Computing data covariance matrix")
-mean_xi = np.mean(xi_jack,axis=0)
-tmp = weights*(xi_jack-np.mean(xi_jack,axis=0))
+mean_xi = np.sum(xi_jack*weights,axis=0)/np.sum(weights,axis=0)
+tmp = weights*(xi_jack-mean_xi)
 data_cov = np.matmul(tmp.T,tmp)
 denom = np.matmul(weights.T,weights)
 data_cov /= (np.ones_like(denom)-denom)
@@ -117,7 +117,7 @@ def neg_log_L1(alpha):
 # Now optimize for shot-noise rescaling parameter alpha
 print("Optimizing for the shot-noise rescaling parameter")
 from scipy.optimize import fmin
-alpha_best = fmin(neg_log_L1,1.)
+alpha_best = fmin(neg_log_L1,1.5)
 print("Optimization complete - optimal rescaling parameter is %.6f"%alpha_best)
 
 # Compute jackknife and full covariance matrices

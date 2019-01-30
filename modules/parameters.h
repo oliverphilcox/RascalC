@@ -20,11 +20,11 @@ public:
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/Mock1QPM/xi/xi_n59_m24_11.dat";
+	const char default_corname[500] = "/mnt/store1/oliverphilcox/Mock1QPM/xi_fine/xi_n200_m120_11.dat";
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
-    const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Mock1QPM/hybrid_binfile_full.csv";
+    const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Mock1QPM/xi_binning.csv";
     
     // Number of galaxies in first dataset
     Float nofznorm=642051;
@@ -39,7 +39,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM/FineBinning/";
     
 	// The number of mu bins
 	int mbin = 24;
@@ -87,7 +87,7 @@ public:
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=100;
+    int max_loops=20;
     
     // Number of random cells to draw at each stage
     int N2 = 10; // number of j cells per i cell
