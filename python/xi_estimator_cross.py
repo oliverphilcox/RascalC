@@ -56,29 +56,39 @@ def reader(filename):
 
     return X,Y,Z,W
 
-## Read random files
-random1_DR = reader(Rname1_DR)
-random2_DR = reader(Rname2_DR)
-if Rname1_DR!=Rname1_RR:
-    random1_RR = reader(Rname1_RR)
-else:
-    random1_RR = random1_DR
-if Rname2_DR!=Rname2_RR:
-    random2_RR = reader(Rname2_RR)
-else:
-    random2_RR = random2_DR
-    
 ## Read galaxy files
 data1 = reader(Dname1)
 data2 = reader(Dname2)
 
+## Read DR random files
+random1_DR = reader(Rname1_DR)
+random2_DR = reader(Rname2_DR)
+
 # Total particle numbers
-N_rand1_RR = len(random1_RR[0])
-N_rand2_RR = len(random2_RR[0]) 
 N_rand1_DR = len(random1_DR[0])
 N_rand2_DR = len(random2_DR[0]) 
 N_gal1 = len(data1[0])
 N_gal2 = len(data2[0])
+
+# Read RR random files
+if len(RRname11)==0:
+    # if RR counts are not provided
+    if Rname1_DR!=Rname1_RR:
+        random1_RR = reader(Rname1_RR)
+    else:
+        random1_RR = random1_DR
+    if Rname2_DR!=Rname2_RR:
+        random2_RR = reader(Rname2_RR)
+    else:
+        random2_RR = random2_DR
+    N_rand1_RR = len(random1_RR[0])
+    N_rand2_RR = len(random2_RR[0]) 
+else:
+    # empty placeholders
+    random1_RR = []
+    random2_RR = []
+    N_rand1_RR = 0
+    N_rand2_RR = 0 
 
 print("Number of random particles in field 1: %.1e (DR) %.1e (RR)"%(N_rand1_DR,N_rand1_RR))
 print("Number of galaxies particles in field 1: %.1e"%N_gal1)
@@ -122,11 +132,14 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
         
     # Read in fields
     rX_DR,rY_DR,rZ_DR,rW_DR = random1_DR
-    rX_RR,rY_RR,rZ_RR,rW_RR = random1_RR
+    if len(random1_RR)>0:
+        # if these files have been read in
+        rX_RR,rY_RR,rZ_RR,rW_RR = random1_RR
     dX,dY,dZ,dW = data1
     if cross_term:
         rX2_DR,rY2_DR,rZ2_DR,rW2_DR = random2_DR
-        rX2_RR,rY2_RR,rZ2_RR,rW2_RR = random2_RR
+        if len(random2_RR)>0:
+            rX2_RR,rY2_RR,rZ2_RR,rW2_RR = random2_RR
         dX2,dY2,dZ2,dW2 = data2
         
     import time
@@ -138,11 +151,9 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
         
         # Convert coordinates to spherical coordinates
         r_com_dist_DR,r_Ra_DR,r_Dec_DR = coord_transform(rX_DR,rY_DR,rZ_DR);
-        r_com_dist_RR,r_Ra_RR,r_Dec_RR = coord_transform(rX_RR,rY_RR,rZ_RR);
         d_com_dist,d_Ra,d_Dec = coord_transform(dX,dY,dZ);
         if cross_term:
             r_com_dist2_DR,r_Ra2_DR,r_Dec2_DR = coord_transform(rX2_DR,rY2_DR,rZ2_DR);
-            r_com_dist2_RR,r_Ra2_RR,r_Dec2_RR = coord_transform(rX2_RR,rY2_RR,rZ2_RR);
             d_com_dist2,d_Ra2,d_Dec2 = coord_transform(dX2,dY2,dZ2);
 
         from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
@@ -153,9 +164,11 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
             if len(RR_counts)!=nrbins*nmu_bins:
                 raise Exception("Incorrect number of bins in RR file. Either provide the relevant file or recompute RR pair counts.")
         else:
+            r_com_dist_RR,r_Ra_RR,r_Dec_RR = coord_transform(rX_RR,rY_RR,rZ_RR);
             print("Computing RR pair counts")
             if cross_term:
-               tmpRR=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra_RR,r_Dec_RR,r_com_dist_RR,weights1=rW_RR,
+                r_com_dist2_RR,r_Ra2_RR,r_Dec2_RR = coord_transform(rX2_RR,rY2_RR,rZ2_RR);
+                tmpRR=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra_RR,r_Dec_RR,r_com_dist_RR,weights1=rW_RR,
                                  RA2=r_Ra2_RR,DEC2 = r_Dec2_RR, CZ2 = r_com_dist2_RR, weights2 = rW2_RR, weight_type='pair_product',verbose=verbose,is_comoving_dist=True) 
             else:
                 tmpRR=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,r_Ra_RR,r_Dec_RR,r_com_dist_RR,weights1=rW_RR,weight_type='pair_product',verbose=verbose,is_comoving_dist=True)

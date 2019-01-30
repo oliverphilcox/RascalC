@@ -30,54 +30,60 @@ else:
 dtype = np.double 
 
 # Read first set of randoms
-print("Counting lines in RR random file")
+print("Counting lines in DR random file")
 total_lines=0
-for n, line in enumerate(open(RnameRR, 'r')):
+for n, line in enumerate(open(RnameDR, 'r')):
     total_lines+=1
 
-rX_RR,rY_RR,rZ_RR,rW_RR,rJ_RR=[np.zeros(total_lines) for _ in range(5)]
+rX_DR,rY_DR,rZ_DR,rW_DR,rJ_DR=[np.zeros(total_lines) for _ in range(5)]
 
-print("Reading in RR random data");
-for n, line in enumerate(open(RnameRR, 'r')):
+print("Reading in DR random data");
+for n, line in enumerate(open(RnameDR, 'r')):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines))
     split_line=np.array(line.split(" "), dtype=float) 
-    rX_RR[n]=split_line[0];
-    rY_RR[n]=split_line[1];
-    rZ_RR[n]=split_line[2];
-    rW_RR[n]=split_line[3];
-    rJ_RR[n]=split_line[4];
+    rX_DR[n]=split_line[0];
+    rY_DR[n]=split_line[1];
+    rZ_DR[n]=split_line[2];
+    rW_DR[n]=split_line[3];
+    rJ_DR[n]=split_line[4];
 
-N_randRR = len(rX_RR) # number of particles
+N_randDR = len(rX_DR) # number of particles
 
-if RnameDR!=RnameRR:
-    # only read in DR file if distinct:
-    print("Counting lines in DR random file")
-    total_lines=0
-    for n, line in enumerate(open(RnameDR, 'r')):
-        total_lines+=1
+if len(RRname)==0:
+    if RnameRR!=RnameDR:
+        # only read in RR file if distinct from DR and needed by the code:
+        print("Counting lines in RR random file")
+        total_lines=0
+        for n, line in enumerate(open(RnameRR, 'r')):
+            total_lines+=1
 
-    rX_DR,rY_DR,rZ_DR,rW_DR,rJ_DR=[np.zeros(total_lines) for _ in range(5)]
+        rX_RR,rY_RR,rZ_RR,rW_RR,rJ_RR=[np.zeros(total_lines) for _ in range(5)]
 
-    print("Reading in DR random data");
-    for n, line in enumerate(open(RnameDR, 'r')):
-        if n%1000000==0:
-            print("Reading line %d of %d" %(n,total_lines))
-        split_line=np.array(line.split(" "), dtype=float) 
-        rX_DR[n]=split_line[0];
-        rY_DR[n]=split_line[1];
-        rZ_DR[n]=split_line[2];
-        rW_DR[n]=split_line[3];
-        rJ_DR[n]=split_line[4];
-        
-    N_randDR = len(rX_DR) # number of particles
+        print("Reading in RR random data");
+        for n, line in enumerate(open(RnameRR, 'r')):
+            if n%1000000==0:
+                print("Reading line %d of %d" %(n,total_lines))
+            split_line=np.array(line.split(" "), dtype=float) 
+            rX_RR[n]=split_line[0];
+            rY_RR[n]=split_line[1];
+            rZ_RR[n]=split_line[2];
+            rW_RR[n]=split_line[3];
+            rJ_RR[n]=split_line[4];
+            
+        N_randRR = len(rX_RR) # number of particles
+    else:
+        # just copy if its the same
+        rX_RR=rX_DR
+        rY_RR=rY_DR
+        rZ_RR=rZ_DR
+        rW_RR=rW_DR
+        rJ_RR=rJ_DR
+        N_randRR=N_randDR
 else:
-    rX_DR=rX_RR
-    rY_DR=rY_RR
-    rZ_DR=rZ_RR
-    rW_DR=rW_RR
-    rJ_DR=rJ_RR
-    N_randDR=N_randRR
+    # empty placeholders
+    rX_RR,rY_RR,rZ_RR,rW_RR,rJ_RR=[],[],[],[],[]
+    N_randRR=0
 
 print("Counting lines in galaxy file")
 total_lines=0
@@ -99,11 +105,15 @@ for n, line in enumerate(open(Dname, 'r')):
 
 N_gal = len(dX) # number of particles
 
-print("Number of random particles %.1e (DR) %.1e (RR)"%(N_randDR, N_randRR)
+print("Number of random particles %.1e (DR) %.1e (RR)"%(N_randDR, N_randRR))
 print("Number of galaxy particles %.1e"%N_gal)
 
 # Determine number of jackknifes
-J_regions = np.unique(np.concatenate([rJ_RR,rJ_DR,dJ]))
+if len(RRname)==0:
+    J_regions = np.unique(np.concatenate([rJ_RR,rJ_DR,dJ]))
+else:
+    J_regions = np.unique(np.concatenate([rJ_DR,dJ]))
+
 N_jack = len(J_regions)
 
 print("Using %d non-empty jackknife regions"%N_jack)
@@ -142,7 +152,6 @@ if not periodic:
 
     # Convert coordinates to spherical coordinates
     r_com_dist_DR,r_Ra_DR,r_Dec_DR = coord_transform(rX_DR,rY_DR,rZ_DR);
-    r_com_dist_RR,r_Ra_RR,r_Dec_RR = coord_transform(rX_RR,rY_RR,rZ_RR);
     d_com_dist,d_Ra,d_Dec = coord_transform(dX,dY,dZ);
 
     from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
@@ -161,6 +170,7 @@ if not periodic:
         for jk in range(N_jack):
             RR_counts[jk,:] = RRfile[jk,1:] # first index is jackknife number usually
     else:
+        r_com_dist_RR,r_Ra_RR,r_Dec_RR = coord_transform(rX_RR,rY_RR,rZ_RR);
         # Compute RR pair counts
         for i,j in enumerate(J_regions):
             # Compute pair counts between jackknife region and entire survey regions
