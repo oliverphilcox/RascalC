@@ -20,7 +20,7 @@ First, we'll convert these into Cartesian (x,y,z,weight) coordinates, using :mat
     python python/convert_to_xyz.py mock_galaxy_DR12_CMASS_N_QPM_0001.txt qpm_galaxies.xyz 0.31 0. -1
     python python/convert_to_xyz.py mock_random_DR12_CMASS_N_50x1.txt qpm_randoms_50x.xyz 0.31 0. -1
     
-*(See :ref:`coord-conversion`)*.
+(See :ref:`coord-conversion`).
     
 These are saved as ``qpm_galaxies.xyz`` and ``qpm_randoms_50x.xyz`` in (x,y,z,weight) format.
 
@@ -29,7 +29,7 @@ Now let's add some jackknives to these files. We'll use HEALPIX NSIDE=8 jackknif
     python python/create_jackknives.py qpm_galaxies.xyz qpm_galaxies.xyzwj 8
     python python/create_jackknives.py qpm_randoms_50x.xyz qpm_randoms_50x.xyzwj 8
 
-*(See :ref:`create-jackknives`)*.
+(See :ref:`create-jackknives`).
 
 These are saved as ``qpm_galaxies.xyzwj`` and ``qpm_randoms_50x.xyzwj`` in (x,y,z,weight,jackknife-id) format, and we're using 169 non-empty jackknives here.
 
@@ -37,7 +37,7 @@ We've got 50x the number of random particles as galaxies here which seems a litt
 
     python python/take_subset_of_particles.py qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj 6420510
     
-*(See :ref:`particle-subset`)*.
+(See :ref:`particle-subset`).
     
 Great! Now we have a random particle file with 10x randoms, and all files are in the correct format. 
 
@@ -48,7 +48,7 @@ For the covariance matrix, we'll use a linear binning file with :math:`\Delta r 
     python python/write_binning_file_linear.py 36 20 200 radial_binning_cov.csv
     python python/write_binning_file_linear.py 200 0 200 radial_binning_corr.csv
     
-*(See :ref:`write-binning-file`)*.
+(See :ref:`write-binning-file`).
 
 Here we're using 36 radial bins for the covariance matrix. Let's have a look at the covariance binning file::
 
@@ -73,7 +73,7 @@ Here we'll use 12 angular bins with :math:`\mu\in[0,1]` and recall that this dat
 
     python python/jackknife_weights.py qpm_randoms_10x.xyzwj radial_binning_cov.csv 1. 12 10 0 weights/
 
-*(See :doc:`jackknife-weights`)*.
+(See :doc:`jackknife-weights`).
 
 This computes pair counts for each pair of random particles in the survey (using Corrfunc), so may take a while...
 
@@ -87,7 +87,7 @@ In addition, we'll use 120 :math:`\mu` bins in :math:`[0,1]` and set the code to
 
     python python/xi_estimator.py qpm_galaxies.xyzwj qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj radial_binning_corr.csv 1. 120 10 0 xi/
     
-*(See :ref:`full-correlations`)*
+(See :ref:`full-correlations`).
 
 This uses Corrfunc to perform pair counting and computes :math:`\xi(r,\mu)` via the Landy-Szalay estimator. Here we're using 10x randoms to compute the RR pair counts and 50x randoms to compute the DR pair counts. The output is saved as ``xi/xi_n200_m120_11.dat`` in the format specified in :ref:`file-inputs`.
 
@@ -97,8 +97,6 @@ Do stuff::
 
     python python/xi_estimator_jack.py qpm_galaxies.xyzwj qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj radial_binning_cov.csv 1. 12 10 0 xi_jack/ weights/jackknife_pair_counts_n36_m12_j169_11.dat
 
-*(See :ref:`jackknife-correlations`)*
-
-.. todo:: stop reading in RRs if we don't need them!!
+(See :ref:`jackknife-correlations`).
 
 
