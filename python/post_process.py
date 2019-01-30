@@ -93,6 +93,7 @@ for i in range(n_samples):
 
 # Compute inverted matrix
 def Psi(alpha):
+    """Compute precision matrix from covariance matrix, removing quadratic order bias terms."""
     c_tot = c2*alpha**2.+c3*alpha+c4
     partial_cov=[]
     for i in range(n_samples):
