@@ -12,6 +12,8 @@ Full Matrix Correlations :math:`\xi(r,\mu)`
 
 To compute the covariance matrix estimates :math:`\hat{C}_{ab}` we require some estimate of the correlation function. Here, we compute the full-survey correlation function with a specified binning using Corrfunc. We provide routines for both 1- and 2-field scenarios (computing the fields :math:`\{\xi^{XX}(r,\mu), \xi^{XY}(r,\mu), \xi^{YY}(r,\mu)\}` in the latter case). This uses both the galaxies and random particle files, and requires a correlation function binning file, such as created by :ref:`write-binning-file`. The estimations are computed via the Landy-Szalay estimator using :math:`\xi^{XY}_a = (DD_a^{XY} - DR_a^{XY} - DR_a^{YX} + RR_a^{XY})/RR_a^{XY}` for bin :math:`a`, fields :math:`X, Y` with DD/DR/RR specifying data-data / data-random / random-random pair counts. 
 
+The scripts take two sets of random particle files; one to compute :math:`DR` counts and one to compute :math:`RR` counts. This allows for a larger number of randoms to be used for :math:`RR` counts, as is often useful.
+
 .. todo:: add note on xi interpolation / refining
 
 *Periodicity*: This script can be run for periodic or aperiodic input data; this corresponds to measuring :math:`\mu` from the :math:`z` or radial axis respectively. If the data is periodic (e.g. from a cosmological box simulation) the -DPERIODIC flag should be set on compilation of the full C++ code in :doc:`main-code`.
@@ -20,12 +22,12 @@ To compute the covariance matrix estimates :math:`\hat{C}_{ab}` we require some 
 
 For a single field analysis::
 
-    python python/xi_estimator.py {GALAXY_FILE} {RANDOM_FILE} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts}]
+    python python/xi_estimator.py {GALAXY_FILE} {RANDOM_FILE} {RADIAL_BIN_FILE_DR} {RADIAL_BIN_FILE_RR} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts}]
     
 
 For an analysis using two distinct fields::
     
-    python python/xi_estimator_cross.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1} {RANDOM_FILE_2} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts_11} {RR_counts_12} {RR_counts_22}]
+    python python/xi_estimator_cross.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1_DR} {RANDOM_FILE_1_RR} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts_11} {RR_counts_12} {RR_counts_22}]
 
 **NB**: The two field script computes all three distinct (cross-)correlations between the two fields, thus has a runtime :math:`\sim` 3 times that of ``xi_estimator.py``. The two fields should be distinct to avoid issues with double counting. 
 
@@ -33,7 +35,8 @@ For an analysis using two distinct fields::
 **Input Parameters**
 
 - {GALAXY_FILE}, {GALAXY_FILE_1}, {GALAXY_FILE_2}: Input ASCII file containing galaxy positions and weights in {x,y,z,weight,jackknife_ID} format such as that created with the :doc:`pre-processing` scripts.  (Jackknives are not used in this script and may be omitted). This should be in ``.csv``, ``.txt`` or ``.dat`` format with space-separated columns.
-- {RANDOM_FILE}, {RANDOM_FILE_1}, {RANDOM_FILE_2}: Input ASCII file containing random particle positions and weights, as for the galaxy files.
+- {RANDOM_FILE_DR}, {RANDOM_FILE_1_DR}, {RANDOM_FILE_2_DR}: Input ASCII file containing random particle positions and weights to be used for DR pair counting (with filetype as for the galaxy files).
+- {RANDOM_FILE_RR}, {RANDOM_FILE_1_RR}, {RANDOM_FILE_2_RR}: Input ASCII file containing random particle positions and weights to be used for RR pair counting (with filetype as for the galaxy files).
 - {RADIAL_BIN_FILE}: ASCII file specifying the radial bins for :math:`\xi(r,\mu)`, as described in :ref:`file-inputs`. This can be user-defined or created by the :ref:`write-binning-file` scripts.  **NB**: This bin-file specifies the bins for the *correlation function*, which may be distinct from the *covariance-matrix* bins. In particular, the lowest bin should extend to :math:`r = 0`.
 - {MU_MAX}: Maximum :math:`\mu = \cos\theta` used in the angular binning.
 - {N_MU_BINS}: Number of angular bins used in the range :math:`[0,\mu]`.
@@ -53,7 +56,7 @@ ASCII files are created specifying the correlation function in the file-format g
 Jackknife Matrix Correlations :math:`\xi^J(r,\mu)`
 ----------------------------------------------------
 
-For later comparison of the jackknife covariance matrix estimate with the data, we require the jackknife covariance matrix, which is derived from the correlation function estimates in each unrestricted jackknife. The scripts below are provided to compute these using Corrfunc. For jackknife :math:`J` and fields :math:`\{X,Y\}`, we compute the pair counts :math:`FG^{XY}_a` in bin :math:`a` (where :math:`F,G\in[D,R]` for data and random fields D and R), from a cross-pair counts between particles in jackknife :math:`A` of :math:`F^X` and the entire of field :math:`G^Y`. These are added to the pair counts from the cross of particles in jackknife :math:`A` of field :math:`G^Y` with the entire of field :math:`F^X` if the fields are distinct. This allows us to compute all :math:`n_\mathrm{jack}` correlation functions :math:`\xi^{XY}_A(r,\mu)` via the Landy-Szalay estimator :math:`\xi^{XY}_{aA} = (DD_{aA}^{XY} - DR_{aA}^{XY} - DR_{aA}^{YX} + RR_{aA}^{XY})/RR_{aA}^{XY}` for bin :math:`a`
+For later comparison of the jackknife covariance matrix estimate with the data, we require the jackknife covariance matrix, which is derived from the correlation function estimates in each unrestricted jackknife. The scripts below are provided to compute these using Corrfunc. For jackknife :math:`J` and fields :math:`\{X,Y\}`, we compute the pair counts :math:`FG^{XY}_a` in bin :math:`a` (where :math:`F,G\in[D,R]` for data and random fields D and R), from a cross-pair counts between particles in jackknife :math:`A` of :math:`F^X` and the entire of field :math:`G^Y`. These are added to the pair counts from the cross of particles in jackknife :math:`A` of field :math:`G^Y` with the entire of field :math:`F^X` if the fields are distinct. This allows us to compute all :math:`n_\mathrm{jack}` correlation functions :math:`\xi^{XY}_A(r,\mu)` via the Landy-Szalay estimator :math:`\xi^{XY}_{aA} = (DD_{aA}^{XY} - DR_{aA}^{XY} - DR_{aA}^{YX} + RR_{aA}^{XY})/RR_{aA}^{XY}` for bin :math:`a`. As before, the code takes two random particle fields of each type, allowing different sized random fields to be used for DR and RR pair counting.
 
 **NB**: The binning file used here should be the same as that used for the *covariance matrix* **not** the full correlation function, to allow comparison with the :math:`C^J_{ab}` estimate.
 
@@ -61,12 +64,12 @@ For later comparison of the jackknife covariance matrix estimate with the data, 
 
 For a single field analysis::
 
-    python python/xi_estimator_jack.py {GALAXY_FILE} {RANDOM_FILE} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_jackknife_counts}]
+    python python/xi_estimator_jack.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1_DR} {RANDOM_FILE_1_RR} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts_11} {RR_counts_12} {RR_counts_22}]
 
 
 For an analysis using two distinct fields::
     
-    python python/xi_estimator_jack_cross.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1} {RANDOM_FILE_2} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_jackknife_counts_11} {RR_jackknife_counts_12} {RR_jackknife_counts_22}]
+    python python/xi_estimator_jack_cross.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1_DR} {RANDOM_FILE_1_RR} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_jackknife_counts_11} {RR_jackknife_counts_12} {RR_jackknife_counts_22}]
 
     
 This computes estimates of the auto- and cross-correlations for all unrestricted jackknife regions. Since there are three distinct correlations for each, the run-time is increased by a factor of 3.
