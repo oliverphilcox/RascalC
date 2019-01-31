@@ -178,11 +178,15 @@ Here we're using 10 loops (to get 10 independent estimates of the covariance mat
     bash clean
     make
  
-The first line simply cleans the pre-existing ``./cov`` file, if present and the second compiles ``grid_covariance.cpp`` using the Makefile (using the g++ compiler by default). If we were using periodic data we'd need to set the ``-DPERIODIC`` flag in the Makefile before running this step. Similarly, we could remove the ``-DOPENMP`` flag to run single threaded. The code is then run with the default parameters;::
+The first line simply cleans the pre-existing ``./cov`` file, if present and the second compiles ``grid_covariance.cpp`` using the Makefile (using the g++ compiler by default). If we were using periodic data we'd need to set the ``-DPERIODIC`` flag in the Makefile before running this step. Similarly, we could remove the ``-DOPENMP`` flag to run single threaded. The code is then run with the default parameters;
+
+.. code-block:: bash
 
     ./cov -def
     
-Alternatively, we could simply pass these arguments on the command line (after the code is compiled). (**NB**: We can get a summary of the inputs by simply running ``./cov`` with no parameters)::
+Alternatively, we could simply pass these arguments on the command line (after the code is compiled). (**NB**: We can get a summary of the inputs by simply running ``./cov`` with no parameters)
+
+.. code-block:: bash
 
     ./cov -in qpm_randoms_10x.xyzwj -binfile radial_binning_cov.csv -cor xi/xi_n200_m120_11.dat -binfile_cf radial_binning_corr.csv -norm 642051 -jackknife weights/jackknife_pair_counts_n36_m12_j169_11.dat -RRbin weights/binned_pair_counts_n36_m12_j169_11.dat -output ./ -mbin 12 -mbin_cf 120 -nside 251 -maxloops 10 -N2 20 -N3 40 -N4 80
     
