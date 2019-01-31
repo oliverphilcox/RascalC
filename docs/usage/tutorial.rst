@@ -109,7 +109,9 @@ Now let's compute the jackknnife correlation function estimates for each bin, :m
 
 Now that all of the inputs have been computed, we can run the main C++ code to compute the theoretical covariance matrix terms. 
 
-There's two ways to run the code here; firstly we could edit parameters in the ``modules/parameters.h`` file, to tell the code where to find the relevant inputs. Here are the important lines::
+There's two ways to run the code here; firstly we could edit parameters in the ``modules/parameters.h`` file, to tell the code where to find the relevant inputs. Here are the important lines
+
+.. code-block:: c++
 
     ....
     
