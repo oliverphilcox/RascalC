@@ -91,9 +91,9 @@ In addition, we'll use 120 :math:`\mu` bins in :math:`[0,1]` and set the code to
     
 (See :ref:`full-correlations`).
 
-This uses Corrfunc to perform pair counting and computes :math:`\xi(r,\mu)` via the Landy-Szalay estimator. Here we're using 10x randoms to compute the RR pair counts and 50x randoms to compute the DR pair counts. The output is saved as ``xi/xi_n200_m120_11.dat`` in the format specified in :ref:`file-inputs`. We'll use this full correlation function to compute the theoretical covariance matrix later on.
+This uses Corrfunc to perform pair counting and computes :math:`\xi_a` for each bin, :math:`a`, via the Landy-Szalay estimator. Here we're using 10x randoms to compute the RR pair counts and 50x randoms to compute the DR pair counts. The output is saved as ``xi/xi_n200_m120_11.dat`` in the format specified in :ref:`file-inputs`. We'll use this full correlation function to compute the theoretical covariance matrix later on.
 
-Now let's compute the jackknnife correlation function estimates, :math:`\xi^J_A(r,\mu)`. These are the individual correlation functions obtained from each unrestricted jackknife, and we can use them to create a data jackknife covariance matrix which we can compare to theory. This is run in a similar way to before, but we must now use the *covariance matrix* radial binning file, since we use these to directly compute a covariance. Here, we'll use 10x randoms for RR counts and 50x randoms for DR counts, but we can skip some of the work by loading in the jackknife pair counts computed by the :doc:`jackknife-weights` script (in the same binning as here), which avoids recomputing RR counts. (The input 10x random file isn't loaded in this case).::
+Now let's compute the jackknnife correlation function estimates for each bin, :math:`\xi^J_{aA}`. These are the individual correlation functions obtained from each unrestricted jackknife, and we can use them to create a data jackknife covariance matrix which we can compare to theory. This is run in a similar way to before, but we must now use the *covariance matrix* radial binning file, since we use these to directly compute a covariance. Here, we'll use 10x randoms for RR counts and 50x randoms for DR counts, but we can skip some of the work by loading in the jackknife pair counts computed by the :doc:`jackknife-weights` script (in the same binning as here), which avoids recomputing RR counts. (The input 10x random file isn't loaded in this case).::
 
     python python/xi_estimator_jack.py qpm_galaxies.xyzwj qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj radial_binning_cov.csv 1. 12 10 0 xi_jack/ weights/jackknife_pair_counts_n36_m12_j169_11.dat
 
@@ -111,7 +111,7 @@ Now that all of the inputs have been computed, we can run the main C++ code to c
 
 There's two ways to run the code here; firstly we could edit parameters in the ``modules/parameters.h`` file, to tell the code where to find the relevant inputs. Here are the important lines::
 
-    ...
+    ....
     
     //---------- ESSENTIAL PARAMETERS -----------------
     
@@ -159,7 +159,7 @@ There's two ways to run the code here; firstly we could edit parameters in the `
     // This uses the maximum width of the cuboidal box.
     int nside = 251;
 
-    ...
+    ....
     
     //---------- PRECISION PARAMETERS ---------------------------------------
         
@@ -171,7 +171,7 @@ There's two ways to run the code here; firstly we could edit parameters in the `
     int N3 = 40; // number of k cells per j cell
     int N4 = 80; // number of l cells per k cell
     
-    ...
+    ....
     
 Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Now, we'll compile the code;::
     
@@ -188,14 +188,15 @@ Alternatively, we could simply pass these arguments on the command line (after t
     
 It's often just easier to edit the ``modules/parameter.h`` file, but the latter approach allows us to change parameters without recompiling the code.
 
-This runs in :math:`\sim`5 hours on 10 cores here, giving output matrix components saved in the ``CovMatricesFull`` and ``CovMatricesJack`` directories as ``.txt`` files. We'll now reconstruct these.
+This runs in around 5 hours on 10 cores here, giving output matrix components saved in the ``CovMatricesFull`` and ``CovMatricesJack`` directories as ``.txt`` files. We'll now reconstruct these.
+
 
 5) Post-Processing
 -------------------
 
 Although the C++ code computes all the relevant parts of the covariance matrices, it doesn't perform any reconstruction, since this is much more easily performed in Python. Post-processing is used to compute the optimal value of the shot-noise rescaling parameter :math:`\alpha` (by comparing the data-derived and theoretical covariance matrices), as well as construct the output covariance and precision matrices.
 
-For a single field analysis, this is run as follows, specifying the jackknife correlation functions, output covariance term directory and weights::
+For a single field analysis, this is run as follows, specifying the jackknife correlation functions, output covariance term directory and weights. Since we used :math:`N_\mathrm{loops}=10` above, we'll set this as the number of subsamples here::
 
     python python/post_process.py xi_jack/xi_jack_n36_m12_j169_11.dat weights/ ./ 12 10 ./
 
