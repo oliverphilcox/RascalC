@@ -1,7 +1,7 @@
 Post-Processing & Reconstruction
 =================================
 
-These scripts post-process the single- or multi-field integrals computed by the C++ code. This computes the shot-noise rescaling parameter(s), :math:`alpha_i`, from data derived covariance matrices (from individual jackknife correlation functions computed in the :ref:`jackknife-correlations` script). A variety of analysis products are output as an ``.npz`` file, as described below.
+These scripts post-process the single- or multi-field integrals computed by the C++ code. This computes the shot-noise rescaling parameter(s), :math:`\alpha_i`, from data derived covariance matrices (from individual jackknife correlation functions computed in the :ref:`jackknife-correlations` script). A variety of analysis products are output as an ``.npz`` file, as described below.
 
 .. _post-processing-single:
 
@@ -42,10 +42,23 @@ The output file has the following entries:
 - :attr:`N_eff` (Float): Effective number of mocks in the output full covariance matrix, :math:`N_\mathrm{eff}`, computed from :math:`\tilde{D}_{ab}`.
 
 
-.. _post-processinng-multi:
+.. _post-processing-multi:
 
 Multi-Field Reconstruction
 -----------------------------
 
-.. todo:: include the multi-field reconstruction codes + estimate of the jackknife data covariance.
+Analogous to the above, this code performs reconstruction of the covariance matrices, :math:`C_{ab}^{XY,ZW}` for two field cases, using the relevant jackknife correlation functions :math:`\xi^{J,XY}_{aA}` and covariance matrix components. Here, we estimate the shot-noise parameters :math:`\alpha_1` and :math:`\alpha_2` purely from the (11,11) and (22,22) autocovariance matrices, as these give the strongest constraints. 
 
+**Usage**::
+ 
+    python python/post_process_multi.py {XI_JACKKNIFE_FILE_11} {XI_JACKKNIFE_FILE_12} {XI_JACKKNIFE_FILE_22} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}
+
+Input parameters are as before, with the addition of :math:`\xi^{J,12}_{aA}` and :math:`\xi^{J,22}_{aA}` files.
+
+**Output**
+
+As above, we create a single compressed Python file for the output analysis products, now labelled ``Rescaled_Multi_Field_Covariance_Matrices_n{N}_m{M}_j{J}.npz``, which contains output matrices for all combinations of the two fields. This could be a large file. This file has the same columns as the single field case, but now :attr:`shot_noise_rescaling` becomes a length-2 array :math:`(\alpha_1^*,\alpha_2^*)`. All other products are are arrays of matrices (shape :math:`2\times2\times2\times2\times n_\mathrm{bins} \times n_\mathrm{bins}`) which are specified by 4 input parameters, corresponding to the desired X, Y, Z, W fields in :math:`C^{XY,ZW}`. This uses Pythonic indexing from 0 to label the input fields. For example, we can access the :math:`\Psi^{11,21}_{ab}` precision matrix by loading the relevant column and specifying the index [0,0,1,0] e.g. to load this matrix we simply use::
+
+    >>> dat=np.load("Rescaled_Multi_Field_Covariance_Matrices_n36_m12_j169.npz") # load the full data file
+    >>> full_precision = dat['full_theory_precision'] # load the precision matrix
+    >>> psi_1121 = full_precision[0,0,1,0] # specify the (11,21) component
