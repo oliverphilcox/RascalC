@@ -5,6 +5,7 @@ These scripts post-process the single- or multi-field integrals computed by the 
 
 .. _post-processing-single:
 
+
 Single-Field Reconstruction
 ------------------------------
 
@@ -43,6 +44,7 @@ The output file has the following entries:
 
 
 .. _post-processing-multi:
+
 
 Multi-Field Reconstruction
 -----------------------------
