@@ -64,6 +64,7 @@ Here we're using 36 radial bins for the covariance matrix. Let's have a look at 
     
 This all looks as expected.
 
+
 2) Jackknife Weights
 ----------------------
 
@@ -79,6 +80,7 @@ This computes pair counts for each pair of random particles in the survey (using
 
 The outputs are saved as ``weights/jackknife_weights_n36_m12_j169_11.dat``, ``weights/jackknife_pair_counts_n36_m12_j169_11.dat`` and ``weights/binned_pair_counts_n36_m12_j169_11.dat`` containing the weights :math:`w_{aA}`, bin-counts :math:`RR_{aA}` and summed bin counts :math:`RR_a` respectively.
 
+
 3) Correlation Functions
 -------------------------
 
@@ -89,14 +91,106 @@ In addition, we'll use 120 :math:`\mu` bins in :math:`[0,1]` and set the code to
     
 (See :ref:`full-correlations`).
 
-This uses Corrfunc to perform pair counting and computes :math:`\xi(r,\mu)` via the Landy-Szalay estimator. Here we're using 10x randoms to compute the RR pair counts and 50x randoms to compute the DR pair counts. The output is saved as ``xi/xi_n200_m120_11.dat`` in the format specified in :ref:`file-inputs`.
+This uses Corrfunc to perform pair counting and computes :math:`\xi(r,\mu)` via the Landy-Szalay estimator. Here we're using 10x randoms to compute the RR pair counts and 50x randoms to compute the DR pair counts. The output is saved as ``xi/xi_n200_m120_11.dat`` in the format specified in :ref:`file-inputs`. We'll use this full correlation function to compute the theoretical covariance matrix later on.
 
-
-
-Do stuff::
+Now let's compute the jackknnife correlation function estimates, :math:`\xi^J_A(r,\mu)`. These are the individual correlation functions obtained from each unrestricted jackknife, and we can use them to create a data jackknife covariance matrix which we can compare to theory. This is run in a similar way to before, but we must now use the *covariance matrix* radial binning file, since we use these to directly compute a covariance. Here, we'll use 10x randoms for RR counts and 50x randoms for DR counts, but we can skip some of the work by loading in the jackknife pair counts computed by the :doc:`jackknife-weights` script (in the same binning as here), which avoids recomputing RR counts. (The input 10x random file isn't loaded in this case).::
 
     python python/xi_estimator_jack.py qpm_galaxies.xyzwj qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj radial_binning_cov.csv 1. 12 10 0 xi_jack/ weights/jackknife_pair_counts_n36_m12_j169_11.dat
 
 (See :ref:`jackknife-correlations`).
 
+**NB**: This may take a little while to compute, depending on the number of randoms and galaxies used. The output jackknife correlation functions are saved as ``xi_jack/xi_jack_n36_m12_j169_11.dat`` in the format specified in :ref:`file-inputs`. These will be automatically read later on.
 
+
+4) Computing the Covariance Matrix
+------------------------------------
+
+(See :doc:`main-code`).
+
+Now that all of the inputs have been computed, we can run the main C++ code to compute the theoretical covariance matrix terms. 
+
+There's two ways to run the code here; firstly we could edit parameters in the ``modules/parameters.h`` file, to tell the code where to find the relevant inputs. Here are the important lines::
+
+    ...
+    
+    //---------- ESSENTIAL PARAMETERS -----------------
+    
+    // The name of the input random particle files (first set)
+    char *fname = NULL;
+    const char default_fname[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/qpm_randoms_10x.xyzwj"; 
+    
+    // Name of the radial binning .csv file
+    char *radial_bin_file = NULL;
+    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/radial_binning_cov.csv";
+    
+    // The name of the correlation function file for the first set of particles
+    char *corname = NULL;
+    const char default_corname[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/xi/xi_n200_m120_11.dat";
+    
+    // Name of the correlation function radial binning .csv file
+    char *radial_bin_file_cf = NULL;
+    const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/radial_binning_corr.csv";
+    
+    // Number of galaxies in first dataset
+    Float nofznorm=642051;
+    
+    // Name of the jackknife weight file
+    char *jk_weight_file = NULL; // w_{aA}^{11} weights
+    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/weights/jackknife_weights_n36_m12_j169_11.dat";
+    
+    // Name of the RR bin file
+    char *RR_bin_file = NULL; // RR_{aA}^{11} file
+    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/weights/binned_pair_counts_n36_m12_j169_11.dat";
+    
+    // Output directory 
+    char *out_file = NULL;
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/";
+    
+    // The number of mu bins
+    int mbin = 12;
+    
+    // The number of mu bins in the correlation function
+    int mbin_cf = 120;
+    
+    // The number of threads to run on
+    int nthread=10;
+
+    // The grid size, which should be tuned to match boxsize and rmax. 
+    // This uses the maximum width of the cuboidal box.
+    int nside = 251;
+
+    ...
+    
+    //---------- PRECISION PARAMETERS ---------------------------------------
+        
+    // Maximum number of iterations to compute the C_ab integrals over
+    int max_loops=10;
+    
+    // Number of random cells to draw at each stage
+    int N2 = 20; // number of j cells per i cell
+    int N3 = 40; // number of k cells per j cell
+    int N4 = 80; // number of l cells per k cell
+    
+    ...
+    
+Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Now, we'll compile the code;::
+    
+    bash clean
+    make
+ 
+The first line simply cleans the pre-existing ``./cov`` file, if present and the second compiles ``grid_covariance.cpp`` using the Makefile (using the g++ compiler by default). If we were using periodic data we'd need to set the ``-DPERIODIC`` flag in the Makefile before running this step. Similarly, we could remove the ``-DOPENMP`` flag to run single threaded. The code is then run with the default parameters;::
+
+    ./cov -def
+    
+Alternatively, we could simply pass these arguments on the command line (after the code is compiled). (**NB**: We can get a summary of the inputs by simply running ``./cov`` with no parameters)::
+
+    ./cov -in qpm_randoms_10x.xyzwj -binfile radial_binning_cov.csv -cor xi/xi_n200_m120_11.dat -binfile_cf radial_binning_corr.csv -norm 642051 -jackknife weights/jackknife_pair_counts_n36_m12_j169_11.dat -RRbin weights/binned_pair_counts_n36_m12_j169_11.dat -output ./ -mbin 12 -mbin_cf 120 -nside 251 -maxloops 10 -N2 20 -N3 40 -N4 80
+    
+It's often just easier to edit the ``modules/parameter.h`` file, but the latter approach allows us to change parameters without recompiling the code.
+
+This runs in :math:`\sim`5 hours on 10 cores here, giving output matrix components saved in the ``CovMatricesFull`` and ``CovMatricesJack`` directories as ``.txt`` files. We'll now reconstruct these.
+
+5) Reconstruction
+------------------
+
+Although the C++ code computes all the relevant parts of the covariance matrices, it doesn't perform any reconstruction, since this is much more easily performed in Python. 
