@@ -173,7 +173,7 @@ for i,index in enumerate(indices):
     # Now optimize for shot-noise rescaling parameter alpha
     print("Optimizing for the shot-noise rescaling parameter alpha_%d"%(i+1))
     from scipy.optimize import fmin
-    optimal_alpha = fmin(neg_log_L1,1.5)
+    optimal_alpha = fmin(neg_log_L1,1.)
     print("Optimization complete for field %d - optimal rescaling parameter is alpha_%d = %.6f"%(i+1,i+1,optimal_alpha))
     
     alpha_best[i]=optimal_alpha
@@ -198,11 +198,6 @@ def matrix_readin(suffix='full'):
         index4="%d%d,%d%d"%(I1[ii],I2[ii],I3[ii],I4[ii])
         index3="%d,%d%d"%(I2[ii],I1[ii],I3[ii])
         index2="%d%d"%(I1[ii],I2[ii])
-        
-        print("REMOVE THIS")
-        index2="11"
-        index3="1,11"
-        index4="11,11"
         
         j1,j2,j3,j4=I1[ii]-1,I2[ii]-1,I3[ii]-1,I4[ii]-1 # internal indexing
 

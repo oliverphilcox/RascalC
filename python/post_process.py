@@ -118,7 +118,7 @@ def neg_log_L1(alpha):
 # Now optimize for shot-noise rescaling parameter alpha
 print("Optimizing for the shot-noise rescaling parameter")
 from scipy.optimize import fmin
-alpha_best = fmin(neg_log_L1,1.5)
+alpha_best = fmin(neg_log_L1,1.)
 print("Optimization complete - optimal rescaling parameter is %.6f"%alpha_best)
 
 # Compute jackknife and full covariance matrices

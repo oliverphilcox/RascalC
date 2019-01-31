@@ -190,7 +190,28 @@ It's often just easier to edit the ``modules/parameter.h`` file, but the latter 
 
 This runs in :math:`\sim`5 hours on 10 cores here, giving output matrix components saved in the ``CovMatricesFull`` and ``CovMatricesJack`` directories as ``.txt`` files. We'll now reconstruct these.
 
-5) Reconstruction
-------------------
+5) Post-Processing
+-------------------
 
-Although the C++ code computes all the relevant parts of the covariance matrices, it doesn't perform any reconstruction, since this is much more easily performed in Python. 
+Although the C++ code computes all the relevant parts of the covariance matrices, it doesn't perform any reconstruction, since this is much more easily performed in Python. Post-processing is used to compute the optimal value of the shot-noise rescaling parameter :math:`\alpha` (by comparing the data-derived and theoretical covariance matrices), as well as construct the output covariance and precision matrices.
+
+For a single field analysis, this is run as follows, specifying the jackknife correlation functions, output covariance term directory and weights::
+
+    python python/post_process.py xi_jack/xi_jack_n36_m12_j169_11.dat weights/ ./ 12 10 ./
+
+(See :ref:`post-processing-single`).
+    
+The output is a single compressed Python ``.npz`` file which contains the following analysis products:
+    - Optimal shot-noise rescaling parameter :math:`\alpha^*`
+    - Full theory covariance matrix :math:`C_{ab}(\alpha^*)`
+    - Jackknife theory covariance matrix :math:`C^J_{ab}(\alpha^*)`
+    - Jackknife data covariance matrix :math:`C^{J,\mathrm{data}}_{ab}
+    - Full (quadratic bias corrected) precision matrix :math:`\Psi_{ab}(\alpha^*)`
+    - Jackknife (quadratic bias corrected) precision matrix :math:`\Psi^J_{ab}(\alpha^*)`
+    - Full quadratic bias :math:`\hat{D}_{ab}` matrix
+    - Effective number of mocks :math:`N_\mathrm{eff}`
+    - Individual full covariance matrix estimates :math:`C_{ab}^{(i)}(\alpha^*)`
+    
+This completes the analysis!
+
+.. todo:: link API for visualization??
