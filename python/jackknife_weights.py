@@ -41,6 +41,7 @@ for n, line in enumerate(open(fname, 'r')):
 
 #J = np.array(J,dtype=int) # convert jackknives to integers
 N = len(X) # number of particles
+weight_sum = np.sum(W)#  normalization by summed weights
 J_regions = np.unique(J) # jackknife regions in use
 N_jack = len(J_regions) # number of non-empty jackknife regions
 
@@ -140,12 +141,14 @@ with open(outdir+RR_a_file,"w+") as RR_file:
         RR_file.write("%.8e\n" %RR_a[i])
         
 RR_aA_file = 'jackknife_pair_counts_n%d_m%d_j%d_11.dat'%(nrbins,nmu_bins,N_jack)
-print("Saving jackknife pair counts as %s"%RR_aA_file)
+print("Saving normalized jackknife pair counts as %s"%RR_aA_file)
 with open(outdir+RR_aA_file,"w+") as jackRR_file:
     for j_id,pair_count in enumerate(RR_aA):
-        jackRR_file.write("%d\t" %J_regions[j_id])
+        this_jk = J_regions[j_id]
+        norm = weight_sum*np.sum(W[J==this_jk])
+        jackRR_file.write("%d\t" %this_jk)
         for i in range(len(pair_count)):
-            jackRR_file.write("%.8e" %pair_count[i])
+            jackRR_file.write("%.8e" %(pair_count[i]/norm))
             if i == len(pair_count)-1:
                 jackRR_file.write("\n");
             else:

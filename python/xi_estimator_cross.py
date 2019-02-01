@@ -36,12 +36,15 @@ else:
 ## First read in weights and positions:
 dtype = np.double 
 
-def reader(filename):
+def reader(filename,only_length=False):
     """Read in input file"""
     print("Counting lines in file %s"%filename)
     total_lines=0
     for n,line in enumerate(open(filename,"r")):
         total_lines+=1
+    
+    if only_length:
+        return total_line
     
     X,Y,Z,W=[np.zeros(total_lines) for _ in range(4)]
     
@@ -87,8 +90,8 @@ else:
     # empty placeholders
     random1_RR = []
     random2_RR = []
-    N_rand1_RR = 0
-    N_rand2_RR = 0 
+    N_rand1_RR = reader(Rname1_RR,only_length=True)
+    N_rand2_RR = reader(Rname2_RR,only_length=True)
 
 print("Number of random particles in field 1: %.1e (DR) %.1e (RR)"%(N_rand1_DR,N_rand1_RR))
 print("Number of galaxies particles in field 1: %.1e"%N_gal1)
@@ -127,7 +130,7 @@ def coord_transform(x,y,z):
 
     return com_dist, Ra, Dec
 
-def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_DR=None,data2=None,N_gal2=None,N_rand2=None,cross_term=False,RRname="",verbose=False):
+def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR=None,random2_DR=None,data2=None,N_gal2=None,N_rand2_RR=None,N_rand2_DR=None,cross_term=False,RRname="",verbose=False):
     """ Compute the Xi estimate for a given pair of fields. If cross_term=True, we use both fields. If RRname is non-empty we use this instead of recomputing RR pair counts."""
         
     # Read in fields
@@ -161,6 +164,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
         # Now compute RR counts
         if len(RRname)!=0:
             RR_counts = np.loadtxt(RRname) # read pre-computed RR counts
+            RR_counts/=(N_rand_RR-1.)*N_rand_RR
             if len(RR_counts)!=nrbins*nmu_bins:
                 raise Exception("Incorrect number of bins in RR file. Either provide the relevant file or recompute RR pair counts.")
         else:
@@ -170,9 +174,10 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
                 r_com_dist2_RR,r_Ra2_RR,r_Dec2_RR = coord_transform(rX2_RR,rY2_RR,rZ2_RR);
                 tmpRR=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra_RR,r_Dec_RR,r_com_dist_RR,weights1=rW_RR,
                                  RA2=r_Ra2_RR,DEC2 = r_Dec2_RR, CZ2 = r_com_dist2_RR, weights2 = rW2_RR, weight_type='pair_product',verbose=verbose,is_comoving_dist=True) 
+                RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']/ (np.sum(rW_RR)*np.sum(rW2_RR))
             else:
                 tmpRR=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,r_Ra_RR,r_Dec_RR,r_com_dist_RR,weights1=rW_RR,weight_type='pair_product',verbose=verbose,is_comoving_dist=True)
-            RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']
+                RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']/ (np.sum(rW_RR)**2.)
         print("Finished after %d seconds"%(time.time()-init))
         
         # Now compute DR counts
@@ -182,12 +187,12 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
                                 RA2=r_Ra2_DR, DEC2=r_Dec2_DR, CZ2 = r_com_dist2_DR, weights2 = rW2_DR, verbose=verbose,is_comoving_dist=True)
             tmpD2R1 = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra2,d_Dec2,d_com_dist2,weights1=dW2,weight_type='pair_product',
                                 RA2=r_Ra_DR, DEC2=r_Dec_DR, CZ2 = r_com_dist_DR, weights2 = rW_DR, verbose=verbose,is_comoving_dist=True)
-            D1R2_counts = tmpD1R2[:]['npairs']*tmpD1R2[:]['weightavg']
-            D2R1_counts = tmpD2R1[:]['npairs']*tmpD2R1[:]['weightavg']
+            D1R2_counts = tmpD1R2[:]['npairs']*tmpD1R2[:]['weightavg']/(np.sum(rW2_DR)*np.sum(dW))
+            D2R1_counts = tmpD2R1[:]['npairs']*tmpD2R1[:]['weightavg']/(np.sum(dW2)*np.sum(rW_DR))
         else:
             tmpDR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,weights1=dW,weight_type='pair_product',
                                 RA2=r_Ra_DR, DEC2=r_Dec_DR, CZ2 = r_com_dist_DR, weights2 = rW_DR, verbose=verbose,is_comoving_dist=True)
-            DR_counts = tmpDR[:]['npairs']*tmpDR[:]['weightavg']
+            DR_counts = tmpDR[:]['npairs']*tmpDR[:]['weightavg']/(np.sum(rW_DR)*np.sum(dW))
         print("Finished after %d seconds"%(time.time()-init))
         
         # Now compute DD counts
@@ -195,9 +200,10 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
         if cross_term:
             tmpDD=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,weights1=dW,
                               RA2=d_Ra2, DEC2=d_Dec2, CZ2=d_com_dist2, weights2=dW2, weight_type='pair_product',verbose=verbose,is_comoving_dist=True)
+            DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']/(np.sum(dW)*np.sum(dW2))
         else:
             tmpDD=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,weights1=dW,weight_type='pair_product',verbose=verbose,is_comoving_dist=True)
-        DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']
+            DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']/(np.sum(dW)**2.)
         print("Finished after %d seconds"%(time.time()-init))
         
     else:
@@ -208,6 +214,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
         # Now compute RR counts
         if len(RRname)!=0:
             RR_counts = np.loadtxt(RRname) # read pre-computed RR counts
+            RR_counts/=N_rand_RR*(N_rand_RR-1.)
             if len(RR_counts)!=nrbins*nmu_bins:
                 raise Exception("Incorrect number of bins in RR file. Either provide the relevant file or recompute RR pair counts.")
         else:
@@ -215,9 +222,10 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
             if cross_term:
                 tmpRR=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,rX_RR,rY_RR,rZ_RR,weights1=rW_RR,
                             X2=rX2_RR,Y2=rY2_RR,Z2=rZ2_RR,weights2=rW2_RR, verbose=verbose,periodic=True)
+                RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']/(np.sum(rW_RR)*np.sum(rW2_RR))
             else:
                 tmpRR=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,rX_RR,rY_RR,rZ_RR,weights1=rW_RR,weight_type='pair_product',verbose=verbose,periodic=True)
-            RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']
+                RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']/(np.sum(rW_RR)**2.)
             print("Finished after %d seconds"%(time.time()-init))
             
         # Now compute DR counts
@@ -227,12 +235,12 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
                             X2=rX2_DR, Y2=rY2_DR, Z2 = rZ2_DR, weights2 = rW2_DR, verbose=verbose,periodic=True)
             tmpD2R1 = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX2,dY2,dZ2,weights1=dW2,weight_type='pair_product',
                             X2=rX_DR, Y2=rY_DR, Z2 = rZ_DR, weights2 = rW_DR, verbose=verbose,periodic=True)
-            D1R2_counts = tmpD1R2[:]['npairs']*tmpD1R2[:]['weightavg']
-            D2R1_counts = tmpD2R1[:]['npairs']*tmpD2R1[:]['weightavg']
+            D1R2_counts = tmpD1R2[:]['npairs']*tmpD1R2[:]['weightavg']/(np.sum(dW)*np.sum(rW2_DR))
+            D2R1_counts = tmpD2R1[:]['npairs']*tmpD2R1[:]['weightavg']/(np.sum(dW2)*np.sum(rW_DR))
         else:
             tmpDR = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,weight_type='pair_product',
                             X2=rX_DR, Y2=rY_DR, Z2 = rZ_DR, weights2 = rW_DR, verbose=verbose,periodic=True)
-            DR_counts = tmpDR[:]['npairs']*tmpDR[:]['weightavg']
+            DR_counts = tmpDR[:]['npairs']*tmpDR[:]['weightavg']/(np.sum(dW)*np.sum(rW_DR))
         print("Finished after %d seconds"%(time.time()-init))
         
         # Now compute DD counts
@@ -240,36 +248,25 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand,random2_RR=None,random2_
         if cross_term:
             tmpDD=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,
                         X2=dX2,Y2=dY2,Z2=dZ2,weights2=dW2,weight_type='pair_product',verbose=verbose,periodic=True)
-        DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']
+        DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']/(np.sum(dW)**2.)
         print("Finished after %d seconds"%(time.time()-init))
         
-    # Compute normalizations
-    N_RR = np.sum(RR_counts)
-    N_DD = np.sum(DD_counts)
-        
-    ## Now compute correlation function
+    # Now use Landay-Szelay estimator:
     if cross_term:
-        N_D1R2 = np.sum(D1R2_counts)
-        N_D2R1 = np.sum(D2R1_counts)
-        
-        # Now use Landay-Szelay estimator:
-        xi_function = DD_counts/RR_counts*N_RR/N_DD - D1R2_counts/RR_counts*N_RR/N_D1R2 - D2R1_counts/RR_counts*N_RR/N_D2R1 + 1.
+        xi_function = DD_counts/RR_counts - D1R2_counts/RR_counts - D2R1_counts/RR_counts + 1.
     else:
-        N_DR = np.sum(DR_counts)
-        
-        # Now use Landay-Szelay estimator:
-        xi_function = DD_counts/RR_counts*N_RR/N_DD - 2.*DR_counts/RR_counts*N_RR/N_DR + 1.
+        xi_function = DD_counts/RR_counts - 2.*DR_counts/RR_counts + 1.
 
     return xi_function.reshape(nrbins,nmu_bins)
 
 ## Now compute correlation functions.
 
 print("\nCOMPUTING xi_11 CORRELATION\n")
-xi_11=compute_xi(random1_RR,random1_DR,data1,N_gal1,N_rand1,cross_term=False,RRname=RRname11,verbose=False)
+xi_11=compute_xi(random1_RR,random1_DR,data1,N_gal1,N_rand1_RR,N_rand1_DR,cross_term=False,RRname=RRname11,verbose=False)
 print("\nCOMPUTING xi_12 CORRELATION\n")
-xi_12=compute_xi(random1_RR,random1_DR,data1_DR,N_gal1,N_rand1,random2_RR,random2_DR,data2,N_gal2,N_rand2,cross_term=True,RRname=RRname12,verbose=False)
+xi_12=compute_xi(random1_RR,random1_DR,data1_DR,N_gal1,N_rand1_RR,N_rand1_DR,random2_RR,random2_DR,data2,N_gal2,N_rand2_RR, N_rand2_DR,cross_term=True,RRname=RRname12,verbose=False)
 print("\nCOMPUTING xi_22 CORRELATION\n")
-xi_22=compute_xi(random2_RR,random2_DR,data2,N_gal2,N_rand2,cross_term=False,RRname=RRname22,verbose=False)
+xi_22=compute_xi(random2_RR,random2_DR,data2,N_gal2,N_rand2_RR, N_rand2_DR,cross_term=False,RRname=RRname22,verbose=False)
 
 # Define mu centers
 mean_mus = np.linspace(0.5/nmu_bins,1-0.5/nmu_bins,nmu_bins)
@@ -298,3 +295,7 @@ for index in range(3):
             outfile.write("\n")
             
 print("All correlation functions computed successfully.")
+
+print("NB: Sum of galaxy 1 weights is %.8e"%np.sum(data1[3]))
+
+print("NB: Sum of galaxy 2 weights is %.8e"%np.sum(data2[3]))

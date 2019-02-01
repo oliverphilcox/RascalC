@@ -83,7 +83,10 @@ if len(RRname)==0:
 else:
     # empty placeholders
     rX_RR,rY_RR,rZ_RR,rW_RR,rJ_RR=[],[],[],[],[]
+    print("Counting lines in RR random file")
     N_randRR=0
+    for n, line in enumerate(open(RnameRR, 'r')):
+        N_randRR+=1
 
 print("Counting lines in galaxy file")
 total_lines=0
@@ -169,6 +172,7 @@ if not periodic:
             raise Exception("Incorrect number of jackknives in RR file. Either provide the relevant file or recompute RR pair counts for each unrestricted jackknife.")
         for jk in range(N_jack):
             RR_counts[jk,:] = RRfile[jk,1:] # first index is jackknife number usually
+            # NB: these are already normalized
     else:
         r_com_dist_RR,r_Ra_RR,r_Dec_RR = coord_transform(rX_RR,rY_RR,rZ_RR);
         # Compute RR pair counts
@@ -181,6 +185,7 @@ if not periodic:
                                       weight_type='pair_product',RA2=r_Ra_RR[filt],DEC2=r_Dec_RR[filt],CZ2=r_com_dist_RR[filt],
                                       weights2=rW_RR[filt],verbose=False,is_comoving_dist=True)
                 RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
+                RR_counts[i,:]/= np.sum(rW_RR)*np.sum(rW_RR[filt]) # normalize by total number of pairs possible
     print("Finished RR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DR counts
@@ -197,12 +202,13 @@ if not periodic:
             DR_counts[i,:] += cross_DR[:]['npairs']*cross_DR[:]['weightavg']
         
         # Compute pair coutnts between random jackknife and data survey
-        filt = np.where(rJ_DR==j)
-        if len(filt[0])>0:
+        filt2 = np.where(rJ_DR==j)
+        if len(filt2[0])>0:
             cross_DR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,
-                                   weights1=dW,weight_type='pair_product', RA2=r_Ra_DR[filt], DEC2=r_Dec_DR[filt], 
-                                   CZ2 = r_com_dist_DR[filt], weights2 = rW_DR[filt], verbose=False,is_comoving_dist=True)
+                                   weights1=dW,weight_type='pair_product', RA2=r_Ra_DR[filt2], DEC2=r_Dec_DR[filt2], 
+                                   CZ2 = r_com_dist_DR[filt2], weights2 = rW_DR[filt2], verbose=False,is_comoving_dist=True)
             DR_counts[i,:] += cross_DR[:]['npairs']*cross_DR[:]['weightavg']
+        DR_counts[i,:]/= np.sum(rW_DR)*np.sum(dW[filt])+np.sum(dW)*np.sum(rW_DR[filt2])
     print("Finished DR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DD counts
@@ -216,6 +222,7 @@ if not periodic:
                                     weight_type='pair_product',RA2=d_Ra[filt],DEC2=d_Dec[filt],CZ2=d_com_dist[filt],
                                     weights2=dW[filt],verbose=False,is_comoving_dist=True)
             DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
+            DD_counts[i,:]/=np.sum(dW)*np.sum(dW[filt])
     print("Finished after %d seconds"%(time.time()-init))
     
 else:
@@ -236,6 +243,7 @@ else:
             raise Exception("Incorrect number of jackknives in RR file. Either provide the relevant file or recompute RR pair counts for each unrestricted jackknife.")
         for jk in range(N_jack):
             RR_counts[jk,:] = RRfile[jk,1:] # first index is jackknife number usually
+            # NB: these are already normalized 
     else:
         # Compute RR pair counts
         for i,j in enumerate(J_regions):
@@ -247,6 +255,7 @@ else:
                                       weight_type='pair_product',X2=rX_RR[filt],Y2=rY_RR[filt],Z2=rZ_RR[filt],
                                       weights2=rW_RR[filt],verbose=False,periodic=True)
                 RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
+                RR_counts[i,:]/=np.sum(rW_RR)*np.sum(rW_RR[filt])
     print("Finished RR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DR counts
@@ -263,12 +272,13 @@ else:
             DR_counts[i,:] += cross_DR1[:]['npairs']*cross_DR1[:]['weightavg']
         
         # Compute pair coutnts between random jackknife and data survey
-        filt = np.where(rJ_DR==j)
-        if len(filt[0])>0:
+        filt2 = np.where(rJ_DR==j)
+        if len(filt2[0])>0:
             cross_DR2 = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,
-                                   weights1=dW,weight_type='pair_product', X2=rX_DR[filt], Y2=rY_DR[filt], 
-                                   Z2 = rZ_DR[filt], weights2 = rW_DR[filt], verbose=False,periodic=True)
+                                   weights1=dW,weight_type='pair_product', X2=rX_DR[filt2], Y2=rY_DR[filt2], 
+                                   Z2 = rZ_DR[filt2], weights2 = rW_DR[filt2], verbose=False,periodic=True)
             DR_counts[i,:] += cross_DR2[:]['npairs']*cross_DR2[:]['weightavg']
+        DR_counts[i,:]/=np.sum(rW_DR)*np.sum(dW[filt])+np.sum(rW_DR[filt2])*np.sum(dW)
     print("Finished DR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DD counts
@@ -282,17 +292,14 @@ else:
                                     weight_type='pair_product',X2=dX[filt],Y2=dY[filt],Z2=dZ[filt],
                                     weights2=dW[filt],verbose=False,periodic=True)
             DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
+            DD_counts[i,:]/=np.sum(dW)*np.sum(dW[filt])
     print("Finished after %d seconds"%(time.time()-init))
     
 
 # Now compute correlation function
 xi_function = np.zeros_like(RR_counts)
 for j in range(N_jack):
-    N_DD = np.sum(DD_counts[j])
-    N_RR = np.sum(RR_counts[j])
-    N_DR = np.sum(DR_counts[j])
-    
-    xi_function[j] = DD_counts[j]/RR_counts[j]*N_RR/N_DD - 2.*DR_counts[j]/RR_counts[j]*N_RR/N_DR + 1.
+    xi_function[j] = DD_counts[j]/RR_counts[j] - 2.*DR_counts[j]/RR_counts[j] + 1.
 
 # Save output files:
 import os
@@ -317,3 +324,5 @@ with open(outdir+outname,"w+") as outfile:
         outfile.write("\n")
         
 print("Correlation function written successfully to %s"%(outdir+outname))
+
+print("NB: Sum of galaxy weights is %.8e"%np.sum(dW))

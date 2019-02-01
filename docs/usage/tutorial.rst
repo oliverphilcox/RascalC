@@ -91,7 +91,7 @@ In addition, we'll use 120 :math:`\mu` bins in :math:`[0,1]` and set the code to
     
 (See :ref:`full-correlations`).
 
-This uses Corrfunc to perform pair counting and computes :math:`\xi_a` for each bin, :math:`a`, via the Landy-Szalay estimator. Here we're using 10x randoms to compute the RR pair counts and 50x randoms to compute the DR pair counts. The output is saved as ``xi/xi_n200_m120_11.dat`` in the format specified in :ref:`file-inputs`. We'll use this full correlation function to compute the theoretical covariance matrix later on.
+This uses Corrfunc to perform pair counting and computes :math:`\xi_a` for each bin, :math:`a`, via the Landy-Szalay estimator. Here we're using 10x randoms to compute the RR pair counts and 50x randoms to compute the DR pair counts. The output is saved as ``xi/xi_n200_m120_11.dat`` in the format specified in :ref:`file-inputs`. We'll use this full correlation function to compute the theoretical covariance matrix later on. In addition, at the end of the code, we're told that the sum of the galaxy weights is :math:`1.07636096\times 10^5`; this is an important quantity that we'll need later on.
 
 Now let's compute the jackknnife correlation function estimates for each bin, :math:`\xi^J_{aA}`. These are the individual correlation functions obtained from each unrestricted jackknife, and we can use them to create a data jackknife covariance matrix which we can compare to theory. This is run in a similar way to before, but we must now use the *covariance matrix* radial binning file, since we use these to directly compute a covariance. Here, we'll use 10x randoms for RR counts and 50x randoms for DR counts, but we can skip some of the work by loading in the jackknife pair counts computed by the :doc:`jackknife-weights` script (in the same binning as here), which avoids recomputing RR counts. (The input 10x random file isn't loaded in this case).::
 
@@ -134,7 +134,7 @@ There's two ways to run the code here; firstly we could edit parameters in the `
     const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/radial_binning_corr.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm=642051;
+    Float nofznorm=1.07636096e+05;
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
@@ -175,7 +175,7 @@ There's two ways to run the code here; firstly we could edit parameters in the `
     
     ....
     
-Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Now, we'll compile the code;::
+Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Note that the ``nofznorm`` parameter is set to the summed galaxy weights we found before. Now, we'll compile the code;::
     
     bash clean
     make
@@ -190,7 +190,7 @@ Alternatively, we could simply pass these arguments on the command line (after t
 
 .. code-block:: bash
 
-    ./cov -in qpm_randoms_10x.xyzwj -binfile radial_binning_cov.csv -cor xi/xi_n200_m120_11.dat -binfile_cf radial_binning_corr.csv -norm 642051 -jackknife weights/jackknife_pair_counts_n36_m12_j169_11.dat -RRbin weights/binned_pair_counts_n36_m12_j169_11.dat -output ./ -mbin 12 -mbin_cf 120 -nside 251 -maxloops 10 -N2 20 -N3 40 -N4 80
+    ./cov -in qpm_randoms_10x.xyzwj -binfile radial_binning_cov.csv -cor xi/xi_n200_m120_11.dat -binfile_cf radial_binning_corr.csv -norm 1.07636096e+05 -jackknife weights/jackknife_pair_counts_n36_m12_j169_11.dat -RRbin weights/binned_pair_counts_n36_m12_j169_11.dat -output ./ -mbin 12 -mbin_cf 120 -nside 251 -maxloops 10 -N2 20 -N3 40 -N4 80
     
 It's often just easier to edit the ``modules/parameter.h`` file, but the latter approach allows us to change parameters without recompiling the code.
 

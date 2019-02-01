@@ -30,8 +30,6 @@
 // In order to not print the output matrices
 #define NOPRINT
 
-
-//#undef PERIODIC
 #define PAGE 4096     // To force some memory alignment.
 
 typedef unsigned long long int uint64;
@@ -53,7 +51,6 @@ typedef double3 Float3;
 
 // Get the correlation function into the integrator
 CorrelationFunction * RandomDraws::corr;
-
 
 STimer TotalTime;
 
@@ -149,10 +146,10 @@ int main(int argc, char *argv[]) {
     }
     
     // Now rescale weights based on number of particles
-    all_weights[0].rescale(par.nofznorm,par.nofznorm,all_grid[0].np,all_grid[0].np);
+    all_weights[0].rescale(all_grid[0].norm,all_grid[0].norm);
     if(par.multi_tracers==true){
-        all_weights[1].rescale(par.nofznorm2,par.nofznorm2,all_grid[1].np,all_grid[1].np);
-        all_weights[2].rescale(par.nofznorm,par.nofznorm2,all_grid[0].np,all_grid[1].np);
+        all_weights[1].rescale(all_grid[1].norm,all_grid[1].norm);
+        all_weights[2].rescale(all_grid[0].norm,all_grid[1].norm);
     }
     
     // Now define all possible correlation functions and random draws:

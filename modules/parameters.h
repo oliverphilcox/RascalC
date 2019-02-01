@@ -26,8 +26,8 @@ public:
     char *radial_bin_file_cf = NULL;
     const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/radial_binning_corr.csv";
     
-    // Number of galaxies in first dataset
-    Float nofznorm=642051;
+    // Sum of weights in first dataset
+    Float nofznorm=1.07636096e+05;
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
@@ -67,7 +67,7 @@ public:
     char *corname12 = NULL; // xi_12 file
     const char default_corname12[500] = "";
     
-    // Number of galaxies in second dataset
+    // Sum of weights in second dataset
     Float nofznorm2=0; // 
     
     // Jackknife weight files
@@ -91,8 +91,8 @@ public:
     
     // Number of random cells to draw at each stage
     int N2 = 20; // number of j cells per i cell
-    int N3 = 40; // number of k cells per j cell
-    int N4 = 80; // number of l cells per k cell
+    int N3 = 30; // number of k cells per j cell
+    int N4 = 40; // number of l cells per k cell
     
     //-------- OTHER PARAMETERS ----------------------------------------------
     
@@ -329,7 +329,7 @@ private:
         fprintf(stderr, "   -binfile <filename>: File containing the desired radial bins\n");
         fprintf(stderr, "   -cor <file>: File location of input xi_1 correlation function file.\n");
 	    fprintf(stderr, "   -binfile_cf <filename>: File containing the desired radial bins for the correlation function.\n");
-        fprintf(stderr, "   -norm <nofznorm>: Number of galaxies in the survey for the first tracer set.\n");
+        fprintf(stderr, "   -norm <nofznorm>: Sum of galaxy weights for the first tracer set.\n");
         fprintf(stderr, "   -jackknife <filename>: File containing the {1,1} jackknife weights (normally computed from Corrfunc)\n");
         fprintf(stderr, "   -RRbin <filename>: File containing the {1,1} jackknife RR bin counts (computed from Corrfunc)\n");
         fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");   
@@ -344,7 +344,7 @@ private:
 	    fprintf(stderr, "   -in2 <file>: (Optional) The input random particle file for particle-set 2 (space-separated x,y,z,w).\n");
 	    fprintf(stderr, "   -cor12 <file>: (Optional) File location of input xi_{12} cross-correlation function file.\n");
 	    fprintf(stderr, "   -cor2 <file>: (Optional) File location of input xi_2 correlation function file.\n");
-	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Number of galaxies in the survey for the second tracer set.\n");
+	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Sum of galaxy weights in the survey for the second tracer set.\n");
         fprintf(stderr, "   -jackknife12 <filename>: (Optional) File containing the {1,2} jackknife weights (normally computed from Corrfunc)\n");
         fprintf(stderr, "   -jackknife2 <filename>: (Optional) File containing the {2,2} jackknife weights (normally computed from Corrfunc)\n");
         fprintf(stderr, "   -RRbin12 <filename>: (Optional) File containing the {1,2} jackknife RR bin counts (computed from Corrfunc)\n");

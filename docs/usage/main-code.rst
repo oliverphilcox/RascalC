@@ -55,8 +55,8 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-def``: Run the code with the default options for all parameters (as specified in the ``modules/parameters.h`` file.
 - ``-in`` (*fname*): Input ASCII random particle file for the first set of tracer particles. This must be in {x,y,z,w,j} format, as described in :ref:`file-inputs`.
 - ``-binfile`` (*radial_bin_file*): Radial binning ASCII file (see :ref:`file-inputs`) specifying upper and lower bounds of each radial bin.
-- ``-cor`` (*corname*): Input correlation function estimate for the first set of particles in ASCII format, as specified in :ref:`file-inputs`.
-- ``-norm`` (*nofznorm*): Total number of galaxies in the first set of tracer particles. This is used to rescale the random particle covariances.
+- ``-cor`` (*corname*): Input correlation function estimate for the first set of particles in ASCII format, as specified in :ref:`file-inputs`. This can be user defined or created by :ref:`full-correlations`.
+- ``-norm`` (*nofznorm*): Sum of all galaxy weights in the first set of tracer particles. This is used to rescale the random particle covariances.
 - ``-jackknife`` (*jk_weight_file*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_11.dat`` file containing the jackknife weights for each bin (:math:`w_{aA}^{11}`), as created by the :file:`jackknife_weights` scripts.
 - ``-RRbin`` (*RR_bin_file*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_11.dat`` ASCII file containing the summed jackknife pair counts in each bin (:math:`RR_{aA}^{11}`), created by the :file:`jackknife_weights` scripts.
 - ``-output`` (*out_file*): Output directory in which to store covariance matrix estimates. This directory will be created if not already present. **Beware**: the code can produce a large volume of output (:math:`\sim 1` GB for a standard run with one field and :math:`\sim1000` bins). 
@@ -68,12 +68,9 @@ Input parameters for the RascalC code may be specified by passing options on the
 
 - ``-in2`` (*fname2*): Input ASCII random particle file for the second set of tracer particles.
 - (*nofznorm2*): Total number of galaxies in the second set of tracer particles.
-- ``-cor12`` (*corname12*): Input cross correlation function file between the two sets of random particles, as created by **XXX**.
-- ``-cor2`` (*corname2*): Input autocorrelation function for the second set of particles, either user-defined or created by **XXX**.
-
-.. todo:: add in correlation function creator script
-
-- ``-norm2`` (*nofznorm2*): Total number of galaxies in the second set of tracer particles. This is used to rescale the random particle covariances.
+- ``-cor12`` (*corname12*): Input cross correlation function file between the two sets of random particles, as created by :ref:`full-correlations`.
+- ``-cor2`` (*corname2*): Input autocorrelation function for the second set of particles, either user-defined or created by :ref:`full-correlations`.
+- ``-norm2`` (*nofznorm2*): Sum of all galaxy weights in the second set of tracer particles. This is used to rescale the random particle covariances.
 - ``-jackknife12`` (*jk_weight_file12*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_12.dat`` file containing the jackknife weights for each bin for the combination of random particle sets 1 and 2 (:math:`w_{aA}^{12}`), as created by the :file:`jackknife_weights` scripts.
 - ``-jackknife2`` (*jk_weight_file2*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_22.dat`` file containing the jackknife weights for each bin for the second set of random particles (:math:`w_{aA}^{22}`), as created by the :file:`jackknife_weights` scripts.
 - ``-RRbin12`` (*RR_bin_file12*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_12.dat`` ASCII file containing the summed jackknife pair counts in each bin for the combination of random particle sets 1 and 2 (:math:`RR_{aA}^{12}`), created by the :file:`jackknife_weights` scripts.
