@@ -19,7 +19,8 @@ class Grid {
     int *filled; //List of filled cells
     int nf;      //Number of filled cells
     int maxnp;   //Max number of particles in a single cell
-    Float norm; // no. randoms / no. galaxies for normalization
+    Float norm; // sum_weights randoms / sum_weights galaxies for normalization
+    Float sum_weights; // total summed weights
     Float sumw_pos, sumw_neg; // Summing the weights
 
     int test_cell(integer3 cell){
@@ -93,6 +94,7 @@ class Grid {
         maxnp=g->maxnp;
         sumw_pos=g->sumw_pos;
         sumw_neg=g->sumw_neg;
+        sum_weights=g->sum_weights;
         
         // Allocate memory:
         p = (Particle *)malloc(sizeof(Particle)*np);
@@ -158,15 +160,17 @@ class Grid {
 
         printf("\nThere are %d filled cells compared with %d total cells.\n",nf,ncells);
         
-        // Count the number of positively weighted particles
-        sumw_pos = sumw_neg = 0.0;
-        for (int j=0; j<np; j++)
+        // Count the number of positively weighted particles + total weights
+        sumw_pos = sumw_neg = sum_weights = 0.0;
+        for (int j=0; j<np; j++){
+            sum_weights+=input[j].w;
             if (input[j].w>=0) {
                 np_pos++;
             sumw_pos += input[j].w;
             } else {
             sumw_neg += input[j].w;
             }
+	}
 
         // Cumulate the histogram, so we know where to start each cell
         for (int j=0, tot=0; j<ncells; tot+=incell[j], j++) {
@@ -216,7 +220,7 @@ class Grid {
         assert(tot == np);
 
         // compute normalization
-        norm = Float(np)/nofznorm;
+        norm = sum_weights/nofznorm;
 
         free(cell);
         

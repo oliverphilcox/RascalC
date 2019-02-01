@@ -59,6 +59,8 @@ for n, line in enumerate(open(fname2, 'r')):
 
 N = len(X) # number of particles
 N2 = len(X2)
+weight_sum = np.sum(W)
+weight_sum2 = np.sum(W2)
 J_regions = np.unique(np.concatenate([J,J2])) # jackknife regions in use
 N_jack = len(J_regions) # number of jackknife regions which are non-empty in at least one sample
 
@@ -217,17 +219,23 @@ for index in range(3):
             RR_file.write("%s\n" %all_pairs[index][i])
     
     RR_aA_file = 'jackknife_pair_counts_n%d_m%d_j%d_%s.dat'%(nrbins,nmu_bins,N_jack,all_indices[index])
-    print("Saving jackknife pair counts as %s"%RR_aA_file)
+    print("Saving normalized jackknife pair counts as %s"%RR_aA_file)
     with open(outdir+RR_aA_file,"w+") as jackRR_file:
         for j_id,pair_count in enumerate(all_counts[index]):
-            jackRR_file.write("%d\t" %J_regions[j_id])
+            this_jk = J_regions[j_id]
+            if index==0:
+                norm = weight_sum*np.sum(W[J==this_jk)
+            if index==1:
+                norm = weight_sum*np.sum(W2[J2==this_jk])+weight_sum2*np.sum(W[J==this_jk])
+            if index==2:
+                norm = weight_sum2*np.sum(W2[J2==this_jk])
+            jackRR_file.write("%d\t" %this_jk)
             for i in range(len(pair_count)):
-                jackRR_file.write("%.8e" %pair_count[i])
+                jackRR_file.write("%.8e" %(pair_count[i]/norm))
                 if i == len(pair_count)-1:
                     jackRR_file.write("\n");
                 else:
                     jackRR_file.write("\t");
-
         
 print("Jackknife weights and binned pair counts written successfully to the %s directory"%outdir)
         

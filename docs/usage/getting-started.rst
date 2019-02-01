@@ -1,9 +1,9 @@
 Getting Started
 ================
 
-RascalC computes covariance matrix estimates from a given correlation function and set of random particles. The required input files are described :ref:`below <file-inputs>`.
+RascalC computes covariance matrix estimates from a given correlation function and set of random particles. Here, we give a broad overview of the procedure and the relevant :ref:`file-inputs`. A :doc:`tutorial` is provided to demonstrate basic use of the code pipeline.
 
-In order to compute these matrices there are several steps:
+In order to compute the covariance matrices there are several steps:
 
 1. :doc:`pre-processing` (*Optional*):
     We provide a suite of utility functions to convert input files to the correct forms used by RascalC. This includes conversion from (Ra,Dec,redshift) to (x,y,z) coordinate space, creation of binfiles and assignment of HealPix jackknife regions to particles. Alternatively, this step can be skipped if the input files are already of the correct format.
@@ -52,7 +52,7 @@ The required input files and formats are described below. Note that several of t
     - These can be user input or created with Corrfunc using the :ref:`full-correlations` codes.
     - Estimates of :math:`\xi(r,\mu)` must be given for a grid of values of :math:`(r,\mu)`, which must extend close to zero for :math:`r` with the bins as specified in the correlation function binning file.
     - *Format*: An ASCII file with space separated values. Line 1 lists the radial coordinates of the bin centers and line 2 lists the angular coordinates. Successive lines list the correlation function estimates :math:`\xi(r,\mu)`, with the column indicating the :math:`\mu` bin center and the row indicating the :math:`r` bin center.
-- *(Usually created internally)* **Jackknife Coorelation Functions**:
+- *(Usually created internally)* **Jackknife Correlation Functions**:
     - This specifies the input correlation function estimates for each *unrestricted* jackknife, :math:`\xi^J_{A}(r,\mu)`. 
     - For two sets of tracer particles, we require three correlation functions; two auto-correlations and a cross-correlation.
     - This is conventionally created with Corrfunc using the :ref:`jackknife-correlations` codes, but may be user input if desired.
