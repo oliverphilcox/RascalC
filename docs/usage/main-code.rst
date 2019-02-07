@@ -41,9 +41,9 @@ The code is used as follows, with the command line options specified below::
     make 
     ./cov [OPTIONS]
 
-The first line removes any pre-existing C++ file before it is recompiled in line 2 to produce the ``./cov`` file. For a summary of input command line parameters, simply run ``./cov`` with no arguments.
+The first line removes any pre-existing C++ file before it is recompiled in line 2 to produce the ``./cov`` file. The Makefile may need to be altered depending on the particular computational configuration used. To run single threaded, simply remove the ``-DOPENMP`` flag (and any references to the OpenMP installation e.g. ``-lgomp`` and ``-fopenmp``) in the Makefile. For periodic random particle files (such as those produced by simulations), the code should be compiled with the ``-DPERIODIC`` flag in the Makefile. This is turned off by default.
 
-**NB**: For periodic random particle files (such as those produced by simulations), the code should be compiled with the ``-DPERIODIC`` flag in the Makefile. This is turned off by default.
+**NB**: For a summary of input command line parameters, simply run ``./cov`` with no arguments.
 
 Options
 ~~~~~~~

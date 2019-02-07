@@ -1,19 +1,12 @@
-#CXXFLAGS = -O2 -Wall 
-#CXXFLAGS = -g -Wal
-
-#CC = icc -ipo
-#CXX = icc -liomp5 -openmp
+## MAKEFILE FOR RascalC. This compiles the grid_covariance.cpp file into the ./cov exececutable.
 
 CC = gcc
-#CFLAGS = -g 
 CFLAGS = -O3 -Wall
-#CXXFLAGS = -g -DOPENMP 
 CXXFLAGS = -O3 -Wall -DOPENMP 
-#-DPERIODIC
-#CXXFLAGS = -Wall -DOPENMP -O3 -unroll-aggressive -opt-prefetch -ipo
+# disable OPENMP to run single threaded
+#-DPERIODIC # use this to enable periodic behavior
 
 CXX = g++ -fopenmp -lgomp -std=c++0x -ffast-math
-#CXXFLAGS = -O2 -DOPENMP #-openmp
 
 AUNTIE	= cov
 AOBJS	= grid_covariance.o ./cubature/hcubature.o ./ransampl/ransampl.o
@@ -26,10 +19,6 @@ main: $(AUNTIE)
 
 $(AUNTIE):	$(AOBJS)
 	$(LD) $(AOBJS) $(LFLAGS) -o $(AUNTIE)
-
-#grid_covariance.o: ../threept/interp2d/interp2d_spline.h
-
-#default: grid_covariance
 
 clean:
 	rm grid_covariance 

@@ -15,10 +15,10 @@ Here, we compute the covariance matrix for a single `QPM <https://arxiv.org/pdf/
 - ``mock_galaxy_DR12_CMASS_N_QPM_0001.txt``: Galaxy positions and weights for the QPM mock in (Ra,Dec,redshift,weight) format.
 - ``mock_random_DR12_CMASS_N_50x1.txt``: 50x Random positions and weights for the CMASS survey in (Ra,Dec,redshift,weight).
 
-First, we'll convert these into Cartesian (x,y,z,weight) coordinates, using :math:`\Omega_m = 0.31`, :math:`\Omega_k = 0`, :math:`w_\Lambda = -1` (to be consistent with BOSS DR12)::
+First, we'll convert these into Cartesian (x,y,z,weight) coordinates, using :math:`\Omega_m = 0.29`, :math:`\Omega_k = 0`, :math:`w_\Lambda = -1` (to be consistent with the QPM mock data creation)::
 
-    python python/convert_to_xyz.py mock_galaxy_DR12_CMASS_N_QPM_0001.txt qpm_galaxies.xyz 0.31 0. -1
-    python python/convert_to_xyz.py mock_random_DR12_CMASS_N_50x1.txt qpm_randoms_50x.xyz 0.31 0. -1
+    python python/convert_to_xyz.py mock_galaxy_DR12_CMASS_N_QPM_0001.txt qpm_galaxies.xyz 0.29 0. -1
+    python python/convert_to_xyz.py mock_random_DR12_CMASS_N_50x1.txt qpm_randoms_50x.xyz 0.29 0. -1
     
 (See :ref:`coord-conversion`).
     
