@@ -209,6 +209,7 @@ public:
         assert(omp_get_num_threads()<=par->nthread);
         if (thread==0) printf("# Computing correlation function iteration %d of %d on %d threads.\n", index+1,par->cf_loops, omp_get_num_threads());        
     #else
+        { // start empty loop
         int thread = 0;
         printf("# Computing correlation function iteration %d of %d single threaded.\n",index+1,par->cf_loops);
     #endif
@@ -257,8 +258,9 @@ public:
                     thread_xi_function.compile_integral(prim_list, prim_ids, pln, particle_j, pid_j, p2);
                 }
             }
-            
+#ifdef OPENMP
 #pragma omp critical
+#endif
 {
         full_xi_function.sum(&thread_xi_function);
         thread_xi_function.reset();

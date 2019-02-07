@@ -238,8 +238,9 @@ public:
 
 			printf("\nNumber of Boxes in Probability Grid: %ld\n",(*np));
 			fflush(NULL);
-
+#ifdef OPENMP
 #pragma omp parallel
+#endif
         {            
             int len=(nside-1)/2; // This works because nside has been required to be odd
             Float n, R = boxside/2;

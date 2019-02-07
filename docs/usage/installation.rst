@@ -19,9 +19,9 @@ Dependencies
 RascalC requires the following packages:
 
 - `C compiler <https://gcc.gnu.org/>`_: Tested with gcc 5.4. O
-- `OpenMP  <https://www.openmp.org/'>`_: Any recent version (required for parallelization)
 - `Gnu Scientific Library (GSL) <https://www.gnu.org/software/gsl/doc/html/index.html>`_: Any recent version
 - `Corrfunc <https://corrfunc.readthedocs.io>`_: 2.0 or later
+- *Optional but encouraged* `OpenMP  <https://www.openmp.org/'>`_: Any recent version (required for parallelization)
 
 Corrfunc can be installed using ``pip install corrfunc`` and is used for efficient pair counting.
 

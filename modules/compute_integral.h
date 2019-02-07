@@ -239,8 +239,8 @@
     #else
             int thread = 0;
             printf("# Starting integral computation %d of %d single threaded.\n",iter_no,tot_iter);
+            { // start loop
     #endif
-            //TODO: Make sure this works single-threaded
             
     //-----------DEFINE LOCAL THREAD VARIABLES
             Particle *prim_list; // list of particles in first cell
@@ -378,8 +378,9 @@
                 tot_triples+=loc_used_triples;
                 tot_quads+=loc_used_quads; 
                
-                
+    #ifdef OPENMP
     #pragma omp critical // only one processor can access at once
+    #endif
             {
                  
                 if ((n_loops+1)%par->nthread==0){ // Print every nthread loops
