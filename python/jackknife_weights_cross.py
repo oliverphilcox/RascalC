@@ -119,7 +119,6 @@ if not periodic:
             
             if distinct:
                 # This term is only needed if field1!=field2 else it arises from double counting
-                
                 # Now compute contribution from JK region in data2 and all of data1:
                 filt2 = np.where(J2==j)
                 if len(filt2[0])>0:
@@ -127,6 +126,7 @@ if not periodic:
                                 RA2=Ra2[filt2],DEC2=Dec2[filt2],CZ2=com_dist2[filt2],weights2=W2[filt2],verbose=False,is_comoving_dist=True)
                     # Weight by average particle weighting
                     RR_aA[i]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
+                RR_aA[i]/=2.
         return RR_aA
     
     # Now compute RR pair counts
@@ -168,6 +168,7 @@ else:
                                 X2=X2[filt],Y2=Y2[filt],Z2=Z2[filt],weights2=W2[filt],periodic=True,verbose=False)
                     # Weight by average particle weighting
                     RR_aA[i]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
+                RR_aA[i]/=2.
             return RR_aA
 
     # Now compute RR pair counts

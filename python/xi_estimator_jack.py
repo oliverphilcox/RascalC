@@ -199,7 +199,7 @@ if not periodic:
             cross_DR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra[filt],d_Dec[filt],d_com_dist[filt],
                                    weights1=dW[filt],weight_type='pair_product', RA2=r_Ra_DR, DEC2=r_Dec_DR, 
                                    CZ2 = r_com_dist_DR, weights2 = rW_DR, verbose=False,is_comoving_dist=True)
-            DR_counts[i,:] += cross_DR[:]['npairs']*cross_DR[:]['weightavg']
+            DR_counts[i,:] += 0.5*cross_DR[:]['npairs']*cross_DR[:]['weightavg']
         
         # Compute pair coutnts between random jackknife and data survey
         filt2 = np.where(rJ_DR==j)
@@ -207,8 +207,8 @@ if not periodic:
             cross_DR = DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,
                                    weights1=dW,weight_type='pair_product', RA2=r_Ra_DR[filt2], DEC2=r_Dec_DR[filt2], 
                                    CZ2 = r_com_dist_DR[filt2], weights2 = rW_DR[filt2], verbose=False,is_comoving_dist=True)
-            DR_counts[i,:] += cross_DR[:]['npairs']*cross_DR[:]['weightavg']
-        DR_counts[i,:]/= np.sum(rW_DR)*np.sum(dW[filt])+np.sum(dW)*np.sum(rW_DR[filt2])
+            DR_counts[i,:] += 0.5*cross_DR[:]['npairs']*cross_DR[:]['weightavg']
+        DR_counts[i,:]/= 0.5*(np.sum(rW_DR)*np.sum(dW[filt])+np.sum(dW)*np.sum(rW_DR[filt2]))
     print("Finished DR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DD counts
@@ -269,7 +269,7 @@ else:
             cross_DR1 = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX[filt],dY[filt],dZ[filt],
                                    weights1=dW[filt],weight_type='pair_product', X2=rX_DR, Y2=rY_DR, 
                                    Z2 = rZ_DR, weights2 = rW_DR, verbose=False,periodic=True)
-            DR_counts[i,:] += cross_DR1[:]['npairs']*cross_DR1[:]['weightavg']
+            DR_counts[i,:] += 0.5*cross_DR1[:]['npairs']*cross_DR1[:]['weightavg']
         
         # Compute pair coutnts between random jackknife and data survey
         filt2 = np.where(rJ_DR==j)
@@ -277,8 +277,8 @@ else:
             cross_DR2 = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,
                                    weights1=dW,weight_type='pair_product', X2=rX_DR[filt2], Y2=rY_DR[filt2], 
                                    Z2 = rZ_DR[filt2], weights2 = rW_DR[filt2], verbose=False,periodic=True)
-            DR_counts[i,:] += cross_DR2[:]['npairs']*cross_DR2[:]['weightavg']
-        DR_counts[i,:]/=np.sum(rW_DR)*np.sum(dW[filt])+np.sum(rW_DR[filt2])*np.sum(dW)
+            DR_counts[i,:] += 0.5*cross_DR2[:]['npairs']*cross_DR2[:]['weightavg']
+        DR_counts[i,:]/=0.5*(np.sum(rW_DR)*np.sum(dW[filt])+np.sum(rW_DR[filt2])*np.sum(dW))
     print("Finished DR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DD counts
