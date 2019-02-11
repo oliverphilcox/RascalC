@@ -43,9 +43,9 @@ public:
     }
     
     void rescale(Float norm1, Float norm2){
-        // Rescale the RR pair counts by a factor (N_gal1/N_rand1)*(N_gal2/N_rand2) - where N is weighted by particle weights
+        // Rescale the RR pair counts by a factor (N_gal1/N_rand1)*(N_gal2/N_rand2)
         Float rescale_factor = norm1*norm2;
-        printf("Rescaling RR pair counts by a (weighted) factor (N_gal_1/N_rand_1)*(N_gal2/N_rand2) = %.1e\n",1./rescale_factor);
+        printf("Rescaling RR pair counts by a factor (N_gal_1/N_rand_1)*(N_gal2/N_rand2) = %.1e\n",1./rescale_factor);
         for(int i=0;i<nbins;i++){
             RR_pair_counts[i]/=rescale_factor;
         }

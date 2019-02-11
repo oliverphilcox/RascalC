@@ -220,7 +220,7 @@ class Grid {
         assert(tot == np);
 
         // compute normalization
-        norm = sum_weights/nofznorm;
+        norm = np/nofznorm;
 
         free(cell);
         

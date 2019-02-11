@@ -20,14 +20,14 @@ public:
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/Mock1QPM4/mean_xi.xi";
+	const char default_corname[500] = "/mnt/store1/oliverphilcox/Mock1QPM4/RascalXi.xi";
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
-    const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Mock1QPM4/radial_binning_corr.csv";
+    const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Mock1QPM4/radial_binning_rascal.csv";
     
-    // Sum of weights in first dataset
-    Float nofznorm=1.07636096e+05;
+    // Number of galaxies in first dataset
+    Float nofznorm=642051;
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
@@ -39,13 +39,13 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM4/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM4/RascalXi/";
     
 	// The number of mu bins
 	int mbin = 10;
     
     // The number of mu bins in the correlation function
-    int mbin_cf = 10;
+    int mbin_cf = 120;
     
     // The number of threads to run on
 	int nthread=20;
@@ -67,7 +67,7 @@ public:
     char *corname12 = NULL; // xi_12 file
     const char default_corname12[500] = "";
     
-    // Sum of weights in second dataset
+    // Number of galaxies in second dataset
     Float nofznorm2=0; // 
     
     // Jackknife weight files
@@ -103,16 +103,16 @@ public:
 	Float mumax = 1.0;
     
     // Number of loops over which to refine the correlation function
-    int cf_loops = 10;
+    int cf_loops = 0;
     
     // The periodicity of the position-space cube.
-	Float boxsize = 400; // this is only used if the input particles are made randomly
+	Float boxsize = 200; // this is only used if the input particles are made randomly
     
 	// The particles will be read from the unit cube, but then scaled by boxsize.
 	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
 
 	// The radius beyond which the correlation function is set to zero
-	Float xicutoff = 200.0;
+	Float xicutoff = 400.0;
     
 	// The maximum number of points to read
 	uint64 nmax = 1000000000000;
@@ -329,7 +329,7 @@ private:
         fprintf(stderr, "   -binfile <filename>: File containing the desired radial bins\n");
         fprintf(stderr, "   -cor <file>: File location of input xi_1 correlation function file.\n");
 	    fprintf(stderr, "   -binfile_cf <filename>: File containing the desired radial bins for the correlation function.\n");
-        fprintf(stderr, "   -norm <nofznorm>: Sum of galaxy weights for the first tracer set.\n");
+        fprintf(stderr, "   -norm <nofznorm>: Number of galaxies in the first tracer set.\n");
         fprintf(stderr, "   -jackknife <filename>: File containing the {1,1} jackknife weights (normally computed from Corrfunc)\n");
         fprintf(stderr, "   -RRbin <filename>: File containing the {1,1} jackknife RR bin counts (computed from Corrfunc)\n");
         fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");   
@@ -344,7 +344,7 @@ private:
 	    fprintf(stderr, "   -in2 <file>: (Optional) The input random particle file for particle-set 2 (space-separated x,y,z,w).\n");
 	    fprintf(stderr, "   -cor12 <file>: (Optional) File location of input xi_{12} cross-correlation function file.\n");
 	    fprintf(stderr, "   -cor2 <file>: (Optional) File location of input xi_2 correlation function file.\n");
-	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Sum of galaxy weights in the survey for the second tracer set.\n");
+	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Number of galaxies in the survey for the second tracer set.\n");
         fprintf(stderr, "   -jackknife12 <filename>: (Optional) File containing the {1,2} jackknife weights (normally computed from Corrfunc)\n");
         fprintf(stderr, "   -jackknife2 <filename>: (Optional) File containing the {2,2} jackknife weights (normally computed from Corrfunc)\n");
         fprintf(stderr, "   -RRbin12 <filename>: (Optional) File containing the {1,2} jackknife RR bin counts (computed from Corrfunc)\n");

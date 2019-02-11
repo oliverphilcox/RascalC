@@ -174,17 +174,19 @@ public:
         int grid1_index[3] = {0,0,1}, grid2_index[3] = {0,1,1};
         
         for(int index=0;index<number_xi;index++){ // iterate over correlation functions
-            printf("\nRefining correlation function %d of %d.\n",index+1,number_xi);
-            true_cf.copy_function(&all_cf[index]); // store initial correlation function
-            for(int n_refine=0;n_refine<par->cf_loops;n_refine++){ // refine cf_loops times per correlation function
-                // Rescale correlation function
-                CorrelationFunction output = rescale_xi(par, &all_grid[grid1_index[index]], &all_grid[grid2_index[index]], &all_cf[index], &true_cf, &all_rd[index],n_refine);
-                // Update correlation function
-                all_cf[index].copy_function(&output);
+            if (par->cf_loops>0){
+                printf("\nRefining correlation function %d of %d.\n",index+1,number_xi);
             }
-            // Only update random draws on the final iteration for speed
-            RandomDraws tmp_rd(&all_cf[index],par,NULL,0);
-            all_rd[index].copy(&tmp_rd);
+                true_cf.copy_function(&all_cf[index]); // store initial correlation function
+                for(int n_refine=0;n_refine<par->cf_loops;n_refine++){ // refine cf_loops times per correlation function
+                    // Rescale correlation function
+                    CorrelationFunction output = rescale_xi(par, &all_grid[grid1_index[index]], &all_grid[grid2_index[index]], &all_cf[index], &true_cf, &all_rd[index],n_refine);
+                    // Update correlation function
+                    all_cf[index].copy_function(&output);
+                }
+                // Only update random draws on the final iteration for speed
+                RandomDraws tmp_rd(&all_cf[index],par,NULL,0);
+                all_rd[index].copy(&tmp_rd);
         }
     }
     
