@@ -184,7 +184,7 @@ public:
                 JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pi.JK),int(pj.JK),tmp_bin,tmp_bin,JK12,JK12, product_weights12_12);
             
                 // Now compute the integral:
-                c2v = tmp_weight*tmp_weight*(1.+tmp_xi) / prob; // c2 contribution
+                c2v = tmp_weight*tmp_weight*(1.+tmp_xi) / prob*2.; // c2 contribution with symmetry factor
                 c2vj = c2v*JK_weight;
                 rav = tmp_weight / prob; // RR_a contribution
                 
@@ -237,7 +237,7 @@ public:
             cleanup_l(pi.pos,pk.pos,rik_mag,rik_mu); // define angles/lengths
             xi_ik_tmp = cf13->xi(rik_mag, rik_mu); 
             
-            tmp_weight = wij[i]*pk.w; // product of weights, w_iw_jw_k
+            tmp_weight = wij[i]*pk.w; // product of weights, w_iw_jw_k 
             
             // save arrays for later
             xi_ik[i]=xi_ik_tmp;
@@ -251,7 +251,7 @@ public:
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pj.JK),int(pk.JK),bin_ij[i],tmp_bin, JK12, JK23, product_weights12_23);
             
             // Now compute the integral;
-            c3v = tmp_weight*pj.w/prob*xi_ik_tmp;
+            c3v = tmp_weight*pj.w/prob*xi_ik_tmp*4.; // include symmetry factor
             c3vj = c3v*JK_weight;
             
             // Add to local counts
@@ -291,7 +291,7 @@ public:
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin, JK12, JK34, product_weights12_34);
             
             // Now compute the integral;
-            c4v = tmp_weight/prob*2*xi_ik[i]*xi_jl; 
+            c4v = tmp_weight/prob*2.*xi_ik[i]*xi_jl; // with xi_ik*xi_jl = xi_il*xi_jk symmetry factor
             c4vj = c4v*JK_weight;
             
             // Add to local counts
