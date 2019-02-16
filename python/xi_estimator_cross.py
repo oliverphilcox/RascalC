@@ -296,6 +296,6 @@ for index in range(3):
             
 print("All correlation functions computed successfully.")
 
-print("NB: Sum of galaxy 1 weights is %.8e"%np.sum(data1[3]))
+print("NB: Number of galaxies in field 1 is %d"%N_gal1)
 
-print("NB: Sum of galaxy 2 weights is %.8e"%np.sum(data2[3]))
+print("NB: Number of galaxies in field 2 is %d"%N_gal2)

@@ -1,0 +1,26 @@
+## MAKEFILE FOR RascalC. This compiles the grid_covariance.cpp file into the ./cov exececutable and is for use with Macs.
+
+CC = gcc
+CFLAGS = -O3 -Wall
+CXXFLAGS = -O3 -Wall -DOPENMP
+# disable OPENMP to run single threaded
+#-DPERIODIC # use this to enable periodic behavior
+
+# Here we load the OpenMP mac package from LLVM
+# This may need to be modified to match the local OpenMP installation
+CXX = /usr/local/opt/llvm/bin/clang++ -std=c++11 -fopenmp -ffast-math
+CXXFLAGS = -O3 -Wall -v
+
+AUNTIE	= cov
+AOBJS	= grid_covariance.o ./cubature/hcubature.o ./ransampl/ransampl.o
+
+LD	= /usr/local/opt/llvm/bin/clang++
+LDFLAGS = -lgsl -lgslcblas -lgomp
+
+main: $(AUNTIE)
+
+$(AUNTIE):	$(AOBJS)
+	$(LD) $(AOBJS) $(LDFLAGS) -o $(AUNTIE)
+
+clean:
+	rm grid_covariance
