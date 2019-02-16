@@ -185,7 +185,7 @@ if not periodic:
                                       weight_type='pair_product',RA2=r_Ra_RR[filt],DEC2=r_Dec_RR[filt],CZ2=r_com_dist_RR[filt],
                                       weights2=rW_RR[filt],verbose=False,is_comoving_dist=True)
                 RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
-                RR_counts[i,:]/= np.sum(rW_RR)*np.sum(rW_RR[filt]) # normalize by total number of pairs possible
+                RR_counts[i,:]/= np.sum(rW_RR)**2.# np.sum(rW_RR)*np.sum(rW_RR[filt]) # normalize by total number of pairs possible
     print("Finished RR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DR counts
@@ -208,7 +208,7 @@ if not periodic:
                                    weights1=dW,weight_type='pair_product', RA2=r_Ra_DR[filt2], DEC2=r_Dec_DR[filt2], 
                                    CZ2 = r_com_dist_DR[filt2], weights2 = rW_DR[filt2], verbose=False,is_comoving_dist=True)
             DR_counts[i,:] += 0.5*cross_DR[:]['npairs']*cross_DR[:]['weightavg']
-        DR_counts[i,:]/= 0.5*(np.sum(rW_DR)*np.sum(dW[filt])+np.sum(dW)*np.sum(rW_DR[filt2]))
+        DR_counts[i,:]/= np.sum(rW_DR)*np.sum(dW)#0.5*(np.sum(rW_DR)*np.sum(dW[filt])+np.sum(dW)*np.sum(rW_DR[filt2]))
     print("Finished DR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DD counts
@@ -222,7 +222,7 @@ if not periodic:
                                     weight_type='pair_product',RA2=d_Ra[filt],DEC2=d_Dec[filt],CZ2=d_com_dist[filt],
                                     weights2=dW[filt],verbose=False,is_comoving_dist=True)
             DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
-            DD_counts[i,:]/=np.sum(dW)*np.sum(dW[filt])
+            DD_counts[i,:]/=np.sum(dW)**2.#np.sum(dW)*np.sum(dW[filt])
     print("Finished after %d seconds"%(time.time()-init))
     
 else:
@@ -255,7 +255,7 @@ else:
                                       weight_type='pair_product',X2=rX_RR[filt],Y2=rY_RR[filt],Z2=rZ_RR[filt],
                                       weights2=rW_RR[filt],verbose=False,periodic=True)
                 RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
-                RR_counts[i,:]/=np.sum(rW_RR)*np.sum(rW_RR[filt])
+                RR_counts[i,:]/=np.sum(rW_RR)**2.#np.sum(rW_RR)*np.sum(rW_RR[filt])
     print("Finished RR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DR counts
@@ -278,7 +278,7 @@ else:
                                    weights1=dW,weight_type='pair_product', X2=rX_DR[filt2], Y2=rY_DR[filt2], 
                                    Z2 = rZ_DR[filt2], weights2 = rW_DR[filt2], verbose=False,periodic=True)
             DR_counts[i,:] += 0.5*cross_DR2[:]['npairs']*cross_DR2[:]['weightavg']
-        DR_counts[i,:]/=0.5*(np.sum(rW_DR)*np.sum(dW[filt])+np.sum(rW_DR[filt2])*np.sum(dW))
+        DR_counts[i,:]/=np.sum(rW_DR)*np.sum(dW)#0.5*(np.sum(rW_DR)*np.sum(dW[filt])+np.sum(rW_DR[filt2])*np.sum(dW))
     print("Finished DR pair counts after %d seconds"%(time.time()-init))
     
     # Now compute DD counts
@@ -292,7 +292,7 @@ else:
                                     weight_type='pair_product',X2=dX[filt],Y2=dY[filt],Z2=dZ[filt],
                                     weights2=dW[filt],verbose=False,periodic=True)
             DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
-            DD_counts[i,:]/=np.sum(dW)*np.sum(dW[filt])
+            DD_counts[i,:]/=np.sum(dW)**2.#np.sum(dW)*np.sum(dW[filt])
     print("Finished after %d seconds"%(time.time()-init))
     
 
@@ -325,4 +325,8 @@ with open(outdir+outname,"w+") as outfile:
         
 print("Correlation function written successfully to %s"%(outdir+outname))
 
-print("NB: Sum of galaxy weights is %.8e"%np.sum(dW))
+print("NB: Number of galaxies is %d"%N_gal)
+
+#print("ADD IN NORM")
+
+np.savez("test_jack_xi.npz",xi_jack=xi_function,DD=DD_counts,RR=RR_counts,DR=DR_counts);

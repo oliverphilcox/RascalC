@@ -243,4 +243,4 @@ with open(outdir+outname,"w+") as outfile:
         
 print("Correlation function written successfully to %s"%(outdir+outname))
 
-print("NB: Sum of galaxy weights is %.8e"%np.sum(dW))
+print("NB: Number of galaxies is %d"%N_gal)

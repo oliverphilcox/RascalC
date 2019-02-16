@@ -48,7 +48,7 @@ if input_file.lower().endswith('.fits'):
     all_dec=fitsfile.data['DEC']
     all_z=fitsfile.data['Z']
     all_w=fitsfile.data['WEIGHT_FKP']
-elif input_file.lower().endswith(('.txt', '.dat', '.csv')):
+else:# input_file.lower().endswith(('.txt', '.dat', '.csv')):
     print("Counting lines in file")
     total_lines=0
     for n, line in enumerate(open(input_file, 'r')):
@@ -65,9 +65,9 @@ elif input_file.lower().endswith(('.txt', '.dat', '.csv')):
         all_dec[n]=split_line[1];
         all_z[n]=split_line[2];
         all_w[n]=split_line[3];
-else: 
-    print("Input file must be of the form 'txt', 'csv', 'dat' or 'fits'")
-    sys.exit()
+#else: 
+#    print("Input file must be of the form 'txt', 'csv', 'dat' or 'fits'")
+#    sys.exit()
     
 from astropy.constants import c as c_light
 import astropy.units as u

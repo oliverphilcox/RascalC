@@ -20,7 +20,7 @@ public:
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/Mock1QPM4/RascalXi.xi";
+	const char default_corname[500] = "/mnt/store1/oliverphilcox/Mock1QPM4/RascalXi.xi";//mean_xi.xi";//RascalXi.xi";//xi/xi_n45_m20_11.dat";
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
@@ -39,7 +39,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM4/RascalXi/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM4/RascalXiLS/";
     
 	// The number of mu bins
 	int mbin = 10;
@@ -90,8 +90,8 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 20; // number of j cells per i cell
-    int N3 = 20; // number of k cells per j cell
+    int N2 = 10; // number of j cells per i cell
+    int N3 = 10; // number of k cells per j cell
     int N4 = 20; // number of l cells per k cell
     
     //-------- OTHER PARAMETERS ----------------------------------------------
