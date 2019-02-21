@@ -31,6 +31,8 @@ For an analysis using two distinct fields::
 
 **NB**: The two field script computes all three distinct (cross-)correlations between the two fields, thus has a runtime :math:`\sim` 3 times that of ``xi_estimator.py``. The two fields should be distinct to avoid issues with double counting. 
 
+.. todo:: currently Periodic flag is set to False in Corrfunc periodic computation - CHANGE THIS!!
+
 
 **Input Parameters**
 

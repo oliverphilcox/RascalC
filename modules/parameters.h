@@ -27,7 +27,7 @@ public:
     const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/DR12_QPM/radial_binning_corr.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm=6420510;
+    Float nofznorm=0;
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
@@ -90,9 +90,9 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 10; // number of j cells per i cell
-    int N3 = 10; // number of k cells per j cell
-    int N4 = 20; // number of l cells per k cell
+    int N2 = 20; // number of j cells per i cell
+    int N3 = 20; // number of k cells per j cell
+    int N4 = 40; // number of l cells per k cell
     
     //-------- OTHER PARAMETERS ----------------------------------------------
     
@@ -103,7 +103,7 @@ public:
 	Float mumax = 1.0;
     
     // Number of loops over which to refine the correlation function
-    int cf_loops = 0;
+    int cf_loops = 10;
     
     // The periodicity of the position-space cube.
 	Float boxsize = 200; // this is only used if the input particles are made randomly

@@ -225,11 +225,11 @@ for index in range(3):
         for j_id,pair_count in enumerate(all_counts[index]):
             this_jk = J_regions[j_id]
             if index==0:
-                norm = weight_sum*np.sum(W[J==this_jk)
+                norm = weight_sum**2.#np.sum(W[J==this_jk)
             if index==1:
-                norm = weight_sum*np.sum(W2[J2==this_jk])+weight_sum2*np.sum(W[J==this_jk])
+                norm = weight_sum*weight_sum2#np.sum(W2[J2==this_jk])+weight_sum2*np.sum(W[J==this_jk])
             if index==2:
-                norm = weight_sum2*np.sum(W2[J2==this_jk])
+                norm = weight_sum2**2.#*np.sum(W2[J2==this_jk])
             jackRR_file.write("%d\t" %this_jk)
             for i in range(len(pair_count)):
                 jackRR_file.write("%.8e" %(pair_count[i]/norm))

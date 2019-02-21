@@ -145,7 +145,7 @@ print("Saving normalized jackknife pair counts as %s"%RR_aA_file)
 with open(outdir+RR_aA_file,"w+") as jackRR_file:
     for j_id,pair_count in enumerate(RR_aA):
         this_jk = J_regions[j_id]
-        norm = weight_sum*np.sum(W[J==this_jk])
+        norm = weight_sum**2.
         jackRR_file.write("%d\t" %this_jk)
         for i in range(len(pair_count)):
             jackRR_file.write("%.8e" %(pair_count[i]/norm))
