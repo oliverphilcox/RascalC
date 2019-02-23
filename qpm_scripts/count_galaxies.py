@@ -14,7 +14,7 @@ assert(min_mock==1)
 N_gals = np.zeros(max_mock-min_mock+1,dtype=int)
 for mock_no in range(min_mock,max_mock+1):
     print("Counting number of galaxies for mock %d of %d"%(mock_no,max_mock))
-    gal_file = '/mnt/store1/oliverphilcox/DR12_QPM/processed/qpm_galaxy_%d.xyzwj'%mock_no
+    gal_file = '/mnt/store1/oliverphilcox/DR12_QPM/unprocessed/mock_galaxy_DR12_CMASS_N_QPM_%s.rdzw'%str(mock_no).zfill(4)
     with open(gal_file) as infile:
         for l,line in enumerate(infile):
             pass
