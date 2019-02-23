@@ -87,12 +87,12 @@ public:
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=20;
+    int max_loops=100;
     
     // Number of random cells to draw at each stage
     int N2 = 20; // number of j cells per i cell
     int N3 = 20; // number of k cells per j cell
-    int N4 = 40; // number of l cells per k cell
+    int N4 = 20; // number of l cells per k cell
     
     //-------- OTHER PARAMETERS ----------------------------------------------
     
@@ -103,7 +103,7 @@ public:
 	Float mumax = 1.0;
     
     // Number of loops over which to refine the correlation function
-    int cf_loops = 10;
+    int cf_loops = 0;
     
     // The periodicity of the position-space cube.
 	Float boxsize = 200; // this is only used if the input particles are made randomly
