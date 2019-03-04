@@ -90,7 +90,7 @@ In addition, we'll use 120 :math:`\mu` bins in :math:`[0,1]` and set the code to
     
 (See :ref:`full-correlations`).
 
-This uses Corrfunc to perform pair counting and computes :math:`\xi_a` for each bin, :math:`a`, via the Landy-Szalay estimator. Here we're using 10x randoms to compute the RR pair counts and 50x randoms to compute the DR pair counts. The output is saved as ``xi/xi_n200_m120_11.dat`` in the format specified in :ref:`file-inputs`. We'll use this full correlation function to compute the theoretical covariance matrix later on. In addition, at the end of the code, we're told that the sum of the galaxy weights is :math:`1.07636096\times 10^5`; this is an important quantity that we'll need later on.
+This uses Corrfunc to perform pair counting and computes :math:`\xi_a` for each bin, :math:`a`, via the Landy-Szalay estimator. Here we're using 10x randoms to compute the RR pair counts and 50x randoms to compute the DR pair counts. The output is saved as ``xi/xi_n200_m120_11.dat`` in the format specified in :ref:`file-inputs`. We'll use this full correlation function to compute the theoretical covariance matrix later on. In addition, at the end of the code, we're told that the number of galaxies is :math:`642051`; this is an important quantity that we'll need later on.
 
 Now let's compute the jackknnife correlation function estimates for each bin, :math:`\xi^J_{aA}`. These are the individual correlation functions obtained from each unrestricted jackknife, and we can use them to create a data jackknife covariance matrix which we can compare to theory. This is run in a similar way to before, but we must now use the *covariance matrix* radial binning file, since we use these to directly compute a covariance. Here, we'll use 10x randoms for RR counts and 50x randoms for DR counts, but we can skip some of the work by loading in the jackknife pair counts computed by the :doc:`jackknife-weights` script (in the same binning as here), which avoids recomputing RR counts. (The input 10x random file isn't loaded in this case).::
 
@@ -133,7 +133,7 @@ There's two ways to run the code here; firstly we could edit parameters in the `
     const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/radial_binning_corr.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm=1.07636096e+05;
+    Float nofznorm=642051;
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
@@ -211,7 +211,7 @@ The output is a single compressed Python ``.npz`` file which contains the follow
     - Optimal shot-noise rescaling parameter :math:`\alpha^*`
     - Full theory covariance matrix :math:`C_{ab}(\alpha^*)`
     - Jackknife theory covariance matrix :math:`C^J_{ab}(\alpha^*)`
-    - Jackknife data covariance matrix :math:`C^{J,\mathrm{data}}_{ab}
+    - Jackknife data covariance matrix :math:`C^{J,\mathrm{data}}_{ab}`
     - Full (quadratic bias corrected) precision matrix :math:`\Psi_{ab}(\alpha^*)`
     - Jackknife (quadratic bias corrected) precision matrix :math:`\Psi^J_{ab}(\alpha^*)`
     - Full quadratic bias :math:`\hat{D}_{ab}` matrix

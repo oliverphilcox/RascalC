@@ -5,6 +5,10 @@ Correlation Functions
 The scripts described below are wrappers of the `Corrfunc <https://corrfunc.readthedocs.io>`_ code (Sinha & Garrison 2017), used to create full-survey and jackknife correlation functions. The former are used in the computation of the Gaussian covariance matrices, and the latter allow for determination of the shot-noise rescaling parameter. If the correlation function is required to be computed in a different manner, user-input correlation functions can simply replace the output of these codes, with the file-types described in :ref:`file-inputs`.
 
 
+.. todo:: talk about the normalizations used here + how they aren't the true values
+
+.. todo:: also specify how to use a different input xi-jack i.e. say the normalization
+
 .. _full-correlations:
 
 Full Matrix Correlations :math:`\xi(r,\mu)`
@@ -39,7 +43,7 @@ For an analysis using two distinct fields::
 - {RANDOM_FILE_RR}, {RANDOM_FILE_1_RR}, {RANDOM_FILE_2_RR}: Input ASCII file containing random particle positions and weights to be used for RR pair counting (with filetype as for the galaxy files). **NB**: If pre-computed RR pair counts are specified only the length of the RR random file is used by the code (for normalization).
 - {RADIAL_BIN_FILE}: ASCII file specifying the radial bins for :math:`\xi(r,\mu)`, as described in :ref:`file-inputs`. This can be user-defined or created by the :ref:`write-binning-file` scripts.  **NB**: This bin-file specifies the bins for the *correlation function*, which may be distinct from the *covariance-matrix* bins. In particular, the lowest bin should extend to :math:`r = 0`.
 - {MU_MAX}: Maximum :math:`\mu = \cos\theta` used in the angular binning.
-- {N_MU_BINS}: Number of angular bins used in the range :math:`[0,\mu]`.
+- {N_MU_BINS}: Number of angular bins used in the range :math:`[0,\mu_\mathrm{max}]`.
 - {NTHREADS}: Number of CPU threads to use for pair counting parallelization.
 - {PERIODIC}: Whether the input dataset has periodic boundary conditions (0 = non-periodic, 1 = periodic). See note below.
 - {OUTPUT_DIR}: Directory in which to house the correlation functions. This will be created if not in existence.
@@ -50,14 +54,14 @@ For an analysis using two distinct fields::
 
 ASCII files are created specifying the correlation function in the file-format given in :ref:`file-inputs`. The filename has the format ``xi_n{N}_m{M}_{INDEX}.dat``, where N and M specify the number of radial and angular bins respectively. INDEX specifies the correlation function type, where 11 = field 1 auto-correlation, 22 = field 2 auto-correlation, 12 = cross-correlation of fields 1 and 2. The first and second lines of the ``.dat`` file list the radial and angular bin centers, then each subsequent line lists the :math:`\xi(r,\mu)` estimate, with the column specifying the :math:`\mu` bin and the row specifying the :math:`r` bin.
 
-**NB**: The final line of code output gives the summed total weights for the galaxy datafile(s); :math:`\sum_i w^{X}_i` where :math:`i` runs over all galaxies in field :math:`X`. This quantity is important for later normalization of the C++ code.
+**NB**: The code also prints the number of galaxies in each dataset to the terminal, :math:`N_\mathrm{gal}`. This quantity is important for later normalization of the C++ code.
     
 .. _jackknife-correlations:
 
 Jackknife Matrix Correlations :math:`\xi^J(r,\mu)`
 ----------------------------------------------------
 
-For later comparison of the jackknife covariance matrix estimate with the data, we require the jackknife covariance matrix, which is derived from the correlation function estimates in each unrestricted jackknife. The scripts below are provided to compute these using Corrfunc. For jackknife :math:`J` and fields :math:`\{X,Y\}`, we compute the pair counts :math:`FG^{XY}_a` in bin :math:`a` (where :math:`F,G\in[D,R]` for data and random fields D and R), from a cross-pair counts between particles in jackknife :math:`A` of :math:`F^X` and the entire of field :math:`G^Y`. These are added to the pair counts from the cross of particles in jackknife :math:`A` of field :math:`G^Y` with the entire of field :math:`F^X` if the fields are distinct. This allows us to compute all :math:`n_\mathrm{jack}` correlation functions :math:`\xi^{XY}_A(r,\mu)` via the Landy-Szalay estimator :math:`\xi^{XY}_{aA} = (\widehat{DD}_{aA}^{XY} - \widehat{DR}_{aA}^{XY} - \widehat{DR}_{aA}^{YX} + \widehat{RR}_{aA}^{XY})/\widehat{RR}_{aA}^{XY}` for bin :math:`a` (where the hat indicates that quantities are normalized by the product of the sum of weights in each field). As before, the code takes two random particle fields of each type, allowing different sized random fields to be used for DR and RR pair counting.
+For later comparison of the jackknife covariance matrix estimate with the data, we require the jackknife covariance matrix, which is derived from the correlation function estimates in each unrestricted jackknife. The scripts below are provided to compute these using Corrfunc. For jackknife :math:`J` and fields :math:`\{X,Y\}`, we compute the pair counts :math:`FG^{XY}_a` in bin :math:`a` (where :math:`F,G\in[D,R]` for data and random fields D and R), from a cross-pair counts between particles in jackknife :math:`A` of :math:`F^X` and the entire of field :math:`G^Y`. These are added to the pair counts from the cross of particles in jackknife :math:`A` of field :math:`G^Y` with the entire of field :math:`F^X` if the fields are distinct. This allows us to compute all :math:`n_\mathrm{jack}` correlation functions :math:`\xi^{XY}_A(r,\mu)` via the Landy-Szalay estimator :math:`\xi^{XY}_{aA} = (\widehat{DD}_{aA}^{XY} - \widehat{DR}_{aA}^{XY} - \widehat{DR}_{aA}^{YX} + \widehat{RR}_{aA}^{XY})/\widehat{RR}_{aA}^{XY}` for bin :math:`a` (where the hat indicates that quantities are normalized by the product of the sum of weights in each complete field, as before). As before, the code takes two random particle fields of each type, allowing different sized random fields to be used for DR and RR pair counting.
 
 **NB**: The binning file used here should be the same as that used for the *covariance matrix* **not** the full correlation function, to allow comparison with the :math:`C^J_{ab}` estimate.
 
