@@ -4,7 +4,6 @@ Usage Tutorial
 
 We present a basic example of the use of the RascalC code for a single field. Multiple field cases proceed similarly. Detailed documentation for all functions is given in associated pages, as overviewed in the :doc:`getting-started` pages.
 
-
 Here, we compute the covariance matrix for a single `QPM <https://arxiv.org/pdf/1309.5532.pdf>`_ mock dataset. We'll work in the directory in which RascalC is installed for simplicity.
 
 1) Pre-Processing
@@ -220,5 +219,3 @@ The output is a single compressed Python ``.npz`` file which contains the follow
     - Individual full covariance matrix estimates :math:`C_{ab}^{(i)}(\alpha^*)`
     
 This completes the analysis!
-
-.. todo:: link API for visualization??

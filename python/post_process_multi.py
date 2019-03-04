@@ -136,6 +136,14 @@ for i,index in enumerate(indices):
     # Load in full jackknife theoretical matrices
     print("Loading best estimate of jackknife covariance matrix for field %d"%(i+1))
     c2,c3,c4=load_matrices('full',i+1)
+
+    # Check matrix convergence
+    from np.linalg import eigvalsh
+    eig_c4 = eigvalsh(c4)
+    eig_c2 = eigvalsh(c2)
+    if min(eig_c4)<-1.*min(eig_c2):
+        print("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
+        sys.exit()
     
     # Load in partial jackknife theoretical matrices
     c2s,c3s,c4s=[],[],[]
