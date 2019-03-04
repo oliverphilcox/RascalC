@@ -4,7 +4,9 @@ Covariance Matrix Estimation
 Overview
 ----------
 
-.. todo:: update to add new parameters for refining in parameters.h
+.. todo:: should we take multiple correlation function binfiles? Also how is this treated for multu-field?
+
+.. todo:: create section which crashes if we use periodic box boolean but not periodic compilation - also do we need both??
 
 This is the main section of RascalC, where a covariance matrix estimates are computed via Monte Carlo integration from a given set of input particles. Depending on the number of input fields the code will compute either components for a single covariance matrix or all required components for 6 cross-covariance matrices. 
 
@@ -56,13 +58,16 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-in`` (*fname*): Input ASCII random particle file for the first set of tracer particles. This must be in {x,y,z,w,j} format, as described in :ref:`file-inputs`.
 - ``-binfile`` (*radial_bin_file*): Radial binning ASCII file (see :ref:`file-inputs`) specifying upper and lower bounds of each radial bin.
 - ``-cor`` (*corname*): Input correlation function estimate for the first set of particles in ASCII format, as specified in :ref:`file-inputs`. This can be user defined or created by :ref:`full-correlations`.
+- ``-binfile_cf`` (*radial_bin_file_cf*): Radial binning ASCII file for the correlation function (see :ref:`file-inputs`) specifying upper and lower bounds of each radial bin.
 - ``-norm`` (*nofznorm*): Sum of all galaxy weights in the first set of tracer particles. This is used to rescale the random particle covariances.
 - ``-jackknife`` (*jk_weight_file*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_11.dat`` file containing the jackknife weights for each bin (:math:`w_{aA}^{11}`), as created by the :file:`jackknife_weights` scripts.
 - ``-RRbin`` (*RR_bin_file*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_11.dat`` ASCII file containing the summed jackknife pair counts in each bin (:math:`RR_{aA}^{11}`), created by the :file:`jackknife_weights` scripts.
 - ``-output`` (*out_file*): Output directory in which to store covariance matrix estimates. This directory will be created if not already present. **Beware**: the code can produce a large volume of output (:math:`\sim 1` GB for a standard run with one field and :math:`\sim1000` bins). 
 - ``-mbin`` (*mbin*): Number of :math:`\mu` bins used. This must match that used to create the jackknife weights. 
-- ``-nthread`` (*nthread*): Number of parallel processing threads used if code is compiled with OpenMPI.
+- ``-mbin_cf`` (*mbin_cf*): Number of :math:`\mu` bins used for the correlation function. 
 - ``-nside`` (*nside*): Number of cubic cells to use along the longest dimension of the grid encompassing the random particles. See :ref:`particle-grid` note for usage.
+- ``-nthread`` (*nthread*): Number of parallel processing threads used if code is compiled with OpenMPI.
+- ``-perbox`` (*perbox*): Whether or not we are using a periodic box.
 
 **Additional Multi Field Parameters**:
 
@@ -79,12 +84,13 @@ Input parameters for the RascalC code may be specified by passing options on the
 **Precision Parameters**
 
 - ``-maxloops`` (*max_loops*): This is the number of matrix subsamples to compute. See :ref:`covariance-precision` note for usage guidelines. (Default: 10)
-- (*N2*, *N3*, *N4*): The parameters controlling how many random particles to select at each stage. See :ref:`covariance-precision` note above. (Default: 10)
+- ``-N2``, ``-N3``, ``-N4`` (*N2*, *N3*, *N4*): The parameters controlling how many random particles to select at each stage. See :ref:`covariance-precision` note above. (Default: 10)
 
 **Optional Parameters**
 
 - ``-mumin`` (*mumin*): Minimum :math:`\mu` binning to use in the analysis. (Default: 0) 
 - ``-mumax`` (*mumax*): Maximum :math:`\mu` binning to use in the analysis. (Default: 1)
+- ``-cf_loops`` (*cf_loops*): Number of iterations over which to refine the correlation functions.
 - (*perbox*): Boolean controlling whether we are using a periodic box. (Default: False)
 - ``-boxsize`` (*boxsize*): If creating particles randomly, this is the periodic size of the computational domain. If particles are read from file, this is set dynamically. (Default: 400)
 - ``-rescale`` (*rescale*): Factor by which to dilate the input positions. Zero or negative values cause this to be set to the boxsize. (Default: 1)
@@ -98,9 +104,6 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-rs`` (*rstart*): If inverting particle weights, this sets the index from which to start weight inversion. (Default: 0)
 
 .. todo:: don't let code run with random particle creation and multiple fields. And note this in doc somewhere.
-
-.. todo:: Add rstart, perbox as input.
-
 
 .. _code-output:
 

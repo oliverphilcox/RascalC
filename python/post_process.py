@@ -82,6 +82,14 @@ def load_matrices(index,jack=True):
 print("Loading best estimate of jackknife covariance matrix")
 c2,c3,c4=load_matrices('full')
 
+# Check matrix convergence
+from np.linalg import eigvalsh
+eig_c4 = eigvalsh(c4)
+eig_c2 = eigvalsh(c2)
+if min(eig_c4)<-1.*min(eig_c2):
+    print("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
+    sys.exit()
+
 # Load in partial jackknife theoretical matrices
 c2s,c3s,c4s=[],[],[]
 for i in range(n_samples):
@@ -126,6 +134,13 @@ jack_cov = c4+c3*alpha_best+c2*alpha_best**2.
 jack_prec = Psi(alpha_best)
 c2f,c3f,c4f=load_matrices('full',jack=False)
 full_cov = c4f+c3f*alpha_best+c2f*alpha_best**2.
+
+# Check convergence
+eig_c4f = eigvalsh(c4f)
+eig_c2f = eigvalsh(c2f)
+if min(eig_c4f)<min(eig_c2f)*-1.:
+    print("Full 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
+    sys.exit()
 
 # Compute full precision matrix
 print("Computing the full precision matrix estimate:")

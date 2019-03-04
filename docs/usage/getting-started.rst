@@ -15,8 +15,6 @@ In order to compute the covariance matrices there are several steps:
     The main C++ code computing the individual covariance matrix terms using Monte Carlo integration. For multiple input correlation functions, this computes all relevant terms for the six non-trivial cross-covariance matrices. The covariances are saved as ``.txt`` files which can be reconstructed in Python.
 5. :doc:`post-processing`: 
     This Python script computes the shot-noise rescaling parameter(s) and reconstructs output covariance matrices from the jackknive correlation function estimates produced in :doc:`correlation-functions`. A single ``.npz`` file is created including the output covariance and precision matrices as well as the effective number of mocks :math:`N_\mathrm{eff}`.
-6. :doc:`visualization`: (*Optional*)
-    We provide a Python module for reconstruction and visualization of the output covariance matrices. This performs similar routines to the :doc:`post-processing` codes, but allows for greater user interactivity, as well as plotting regimes.
 
 .. todo:: add in post-processing multi-field scripts.
     

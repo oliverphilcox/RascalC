@@ -199,6 +199,7 @@ public:
         else if (!strcmp(argv[i],"-N2")) N2=atof(argv[++i]);
         else if (!strcmp(argv[i],"-N3")) N3=atof(argv[++i]);
         else if (!strcmp(argv[i],"-N4")) N4=atof(argv[++i]);
+        else if (!strcmp(argv[i],"-perbox")) perbox = 1;
         else if (!strcmp(argv[i],"-np")) {
 			double tmp;
 			if (sscanf(argv[++i],"%lf", &tmp)!=1) {
@@ -333,12 +334,13 @@ private:
         fprintf(stderr, "   -jackknife <filename>: File containing the {1,1} jackknife weights (normally computed from Corrfunc)\n");
         fprintf(stderr, "   -RRbin <filename>: File containing the {1,1} jackknife RR bin counts (computed from Corrfunc)\n");
         fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");   
-        fprintf(stderr, "   -mbin:  The number of mu bins (spaced linearly).\n");
-	    fprintf(stderr, "   -mbin_cf:  The number of mu bins in the correlation function (spaced linearly).\n");
+        fprintf(stderr, "   -mbin <mbin>:  The number of mu bins (spaced linearly).\n");
+	    fprintf(stderr, "   -mbin_cf <mbin_cf>:  The number of mu bins in the correlation function (spaced linearly).\n");
 	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 250.\n");
 	    fprintf(stderr, "          Recommend having several grid cells per rmax.\n");
         fprintf(stderr, "          There are {nside} cells along the longest dimension of the periodic box.\n");
 	    fprintf(stderr, "   -nthread <nthread>: The number of CPU threads ot use for parallelization.\n");
+        fprintf(stderr, "   -perbox <perbox>: Boolean, whether the box is periodic is not\n");
         fprintf(stderr, "\n");
         
 	    fprintf(stderr, "   -in2 <file>: (Optional) The input random particle file for particle-set 2 (space-separated x,y,z,w).\n");
@@ -351,15 +353,15 @@ private:
 	    fprintf(stderr, "   -RRbin2 <filename>: (Optional) File containing the {2,2} jackknife RR bin counts (computed from Corrfunc)\n");
         fprintf(stderr, "\n");
         
-        fprintf(stderr, "   -maxloops: Maximum number of integral loops\n");
-        fprintf(stderr, "   -N2: Number of secondary particles to choose per primary particle\n");
-        fprintf(stderr, "   -N3: Number of tertiary particles to choose per secondary particle\n");
-        fprintf(stderr, "   -N4: Number of quaternary particles to choose per tertiary particle\n");
+        fprintf(stderr, "   -maxloops <max_loops>: Maximum number of integral loops\n");
+        fprintf(stderr, "   -N2 <N2>: Number of secondary particles to choose per primary particle\n");
+        fprintf(stderr, "   -N3 <N3>: Number of tertiary particles to choose per secondary particle\n");
+        fprintf(stderr, "   -N4 <N4>: Number of quaternary particles to choose per tertiary particle\n");
         fprintf(stderr, "\n");
         
-        fprintf(stderr, "   -mumin : Minimum mu binning to use.\n");
-        fprintf(stderr, "   -mumax : Maximum mu binning to use.\n");
-        fprintf(stderr, "   -cf_loops: Number of iterations over which to refine the correlation functions.\n");
+        fprintf(stderr, "   -mumin <mumin> : Minimum mu binning to use.\n");
+        fprintf(stderr, "   -mumax <mumax> : Maximum mu binning to use.\n");
+        fprintf(stderr, "   -cf_loops <cf_loops>: Number of iterations over which to refine the correlation functions.\n");
         fprintf(stderr, "   -boxsize <boxsize> : If creating particles randomly, this is the periodic size of the cubic computational domain.\n");
         fprintf(stderr, "           Default 400. If reading from file, this is reset dynamically creating a cuboidal box.\n");
 	    fprintf(stderr, "   -rescale <rescale>: How much to dilate the input positions by.  Default 1.\n");
