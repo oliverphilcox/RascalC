@@ -17,7 +17,7 @@ This is the main section of RascalC, where a covariance matrix estimates are com
 Particle Grid and Cells
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the code, the particles are divided up into many cells for efficient computation, with each containing :math:`\sim10` random particles. A cuboidal grid of cells is constructed aligned with the :math:`(x,y,z)` axes, which fully encompasses all random particles. The cellsize is set by the the *nside* parameter, which gives the number of (cubic) cells along the largest dimension along the box. This must be an odd integer, and the code will automatically exit if *nside* is too small or too large (since this gives inefficient performance).
+In the code, the particles are divided up into many cells for efficient computation, with each containing :math:`\sim10` random particles. A cuboidal grid of cells is constructed aligned with the :math:`(x,y,z)` axes, which fully encompasses all random particles. The cellsize is set by the the :math:`N_\mathrm{side}` parameter, which gives the number of (cubic) cells along the largest dimension along the box. This must be an odd integer, and the code will automatically exit if :math:`N_\mathrm{side}` is too small or too large (since this gives inefficient performance).
 
 .. _covariance-precision:
 
@@ -43,7 +43,9 @@ The code is used as follows, with the command line options specified below::
     make 
     ./cov [OPTIONS]
 
-The first line removes any pre-existing C++ file before it is recompiled in line 2 to produce the ``./cov`` file. The Makefile may need to be altered depending on the particular computational configuration used. To run single threaded, simply remove the ``-DOPENMP`` flag (and any references to the OpenMP installation e.g. ``-lgomp`` and ``-fopenmp``) in the Makefile. For periodic random particle files (such as those produced by simulations), the code should be compiled with the ``-DPERIODIC`` flag in the Makefile. This is turned off by default.
+The first line removes any pre-existing C++ file before it is recompiled in line 2 to produce the ``./cov`` file. The Makefile may need to be altered depending on the particular computational configuration used. The default Makefile is for a standard Unix installation, with the ``Makefile_mac`` file giving a sample Makefile for a Mac installation.
+
+To run single threaded, simply remove the ``-DOPENMP`` flag (and any references to the OpenMP installation e.g. ``-lgomp`` and ``-fopenmp``) in the Makefile. For periodic random particle files (such as those produced by simulations), the code should be compiled with the ``-DPERIODIC`` flag in the Makefile. This is turned off by default.
 
 **NB**: For a summary of input command line parameters, simply run ``./cov`` with no arguments.
 
@@ -59,13 +61,13 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-binfile`` (*radial_bin_file*): Radial binning ASCII file (see :ref:`file-inputs`) specifying upper and lower bounds of each radial bin.
 - ``-cor`` (*corname*): Input correlation function estimate for the first set of particles in ASCII format, as specified in :ref:`file-inputs`. This can be user defined or created by :ref:`full-correlations`.
 - ``-binfile_cf`` (*radial_bin_file_cf*): Radial binning ASCII file for the correlation function (see :ref:`file-inputs`) specifying upper and lower bounds of each radial bin.
-- ``-norm`` (*nofznorm*): Sum of all galaxy weights in the first set of tracer particles. This is used to rescale the random particle covariances.
+- ``-norm`` (*nofznorm*): Number of galaxies in the first set of tracer particles. This is used to rescale the random particle covariances.
 - ``-jackknife`` (*jk_weight_file*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_11.dat`` file containing the jackknife weights for each bin (:math:`w_{aA}^{11}`), as created by the :file:`jackknife_weights` scripts.
 - ``-RRbin`` (*RR_bin_file*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_11.dat`` ASCII file containing the summed jackknife pair counts in each bin (:math:`RR_{aA}^{11}`), created by the :file:`jackknife_weights` scripts.
 - ``-output`` (*out_file*): Output directory in which to store covariance matrix estimates. This directory will be created if not already present. **Beware**: the code can produce a large volume of output (:math:`\sim 1` GB for a standard run with one field and :math:`\sim1000` bins). 
 - ``-mbin`` (*mbin*): Number of :math:`\mu` bins used. This must match that used to create the jackknife weights. 
 - ``-mbin_cf`` (*mbin_cf*): Number of :math:`\mu` bins used for the correlation function. 
-- ``-nside`` (*nside*): Number of cubic cells to use along the longest dimension of the grid encompassing the random particles. See :ref:`particle-grid` note for usage.
+- ``-nside`` (*nside*): Number of cubic cells to use along the longest dimension of the grid encompassing the random particles, i.e. :math:`N_\mathrm{side}`. See :ref:`particle-grid` note for usage.
 - ``-nthread`` (*nthread*): Number of parallel processing threads used if code is compiled with OpenMPI.
 - ``-perbox`` (*perbox*): Whether or not we are using a periodic box.
 
@@ -75,7 +77,7 @@ Input parameters for the RascalC code may be specified by passing options on the
 - (*nofznorm2*): Total number of galaxies in the second set of tracer particles.
 - ``-cor12`` (*corname12*): Input cross correlation function file between the two sets of random particles, as created by :ref:`full-correlations`.
 - ``-cor2`` (*corname2*): Input autocorrelation function for the second set of particles, either user-defined or created by :ref:`full-correlations`.
-- ``-norm2`` (*nofznorm2*): Sum of all galaxy weights in the second set of tracer particles. This is used to rescale the random particle covariances.
+- ``-norm2`` (*nofznorm2*): Number of galaxies in the second set of tracer particles. This is used to rescale the random particle covariances.
 - ``-jackknife12`` (*jk_weight_file12*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_12.dat`` file containing the jackknife weights for each bin for the combination of random particle sets 1 and 2 (:math:`w_{aA}^{12}`), as created by the :file:`jackknife_weights` scripts.
 - ``-jackknife2`` (*jk_weight_file2*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_22.dat`` file containing the jackknife weights for each bin for the second set of random particles (:math:`w_{aA}^{22}`), as created by the :file:`jackknife_weights` scripts.
 - ``-RRbin12`` (*RR_bin_file12*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_12.dat`` ASCII file containing the summed jackknife pair counts in each bin for the combination of random particle sets 1 and 2 (:math:`RR_{aA}^{12}`), created by the :file:`jackknife_weights` scripts.
@@ -100,7 +102,7 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-load`` (*loadname*): If set, load a cell selection probability grid computed in a previous run of RascalC. (Default: NULL) 
 - ``-invert`` (*qinvert*): If this flag is passed to RascalC, all input particle weights are multiplied by -1. (Default: 0)
 - ``-balance`` (*qbalance*): If this flag is passed to RascalC, all negative weights are rescaled such that the total particle weight is 0. (Default: 0)
-- ``-np`` (*np*, *make_random*): If *make_random*=1, this overrides any input random particle file and creates *np* randomly drawn particles in the cubic box. **NB**: The command line argument automatically sets *make_random* = 1. 
+- ``-np`` (*np*, *make_random*): If *make_random* = 1, this overrides any input random particle file and creates *np* randomly drawn particles in the cubic box. **NB**: The command line argument automatically sets *make_random* = 1. 
 - ``-rs`` (*rstart*): If inverting particle weights, this sets the index from which to start weight inversion. (Default: 0)
 
 .. todo:: don't let code run with random particle creation and multiple fields. And note this in doc somewhere.
