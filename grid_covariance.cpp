@@ -174,6 +174,8 @@ int main(int argc, char *argv[]) {
     rescale_correlation rescale(&par);
     rescale.refine_wrapper(&par, all_grid, all_cf, all_rd, max_no_functions);
     
+    exit(1);
+    
     printf("\nUsing xi(r) sampling for i-k and j-l cells\n");
     printf("Using 1/r^2 sampling for i-j cells\n");
     

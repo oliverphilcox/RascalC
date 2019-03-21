@@ -20,14 +20,14 @@ public:
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "";//mean_xi.xi";//RascalXi.xi";//xi/xi_n45_m20_11.dat";
+	const char default_corname[500] = "/mnt/store1/oliverphilcox/DR12_QPM/xi/mock_1/xi_n45_m10_11.dat";
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
     const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/DR12_QPM/radial_binning_corr.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm=0;
+    Float nofznorm=642051;
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
@@ -39,7 +39,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "";
+    const char default_out_file[500] = "tmp_out/";
     
 	// The number of mu bins
 	int mbin = 10;
@@ -87,7 +87,7 @@ public:
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=100;
+    int max_loops=50;
     
     // Number of random cells to draw at each stage
     int N2 = 20; // number of j cells per i cell
@@ -103,7 +103,7 @@ public:
 	Float mumax = 1.0;
     
     // Number of loops over which to refine the correlation function
-    int cf_loops = 0;
+    int cf_loops = 20;
     
     // The periodicity of the position-space cube.
 	Float boxsize = 200; // this is only used if the input particles are made randomly
