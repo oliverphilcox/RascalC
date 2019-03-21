@@ -5,4 +5,4 @@ C++ code to simulate correlation function covariance matrices from large surveys
 
 For full usage, see the ReadTheDocs [documentation](https://rascalc.readthedocs.io/en/latest).
 
-Any usage of this code should cite Philcox et al. (2018, in prep.)
+Any usage of this code should cite Philcox et al. (2019, in prep.)

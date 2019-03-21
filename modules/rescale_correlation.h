@@ -293,26 +293,26 @@ public:
         new_cf = new CorrelationFunction(new_xi_array, r_centers, mu_centers, nbin, mbin);
         
         // TESTING:
-//         // PRINT OUTPUT TO FILE
-//         FILE * XiFile = fopen("xi_refined.txt","w");
-//         for(int i=0;i<nbin;i++){
-//             for(int j=0;j<mbin;j++){
-//                 fprintf(XiFile,"%le\t",new_xi_array[i*mbin+j]);
-//             }
-//             fprintf(XiFile,"\n");
-//         }
-//         fclose(XiFile);
-//         
-//         // PRINT OUTPUT TO FILE
-//         FILE * XiFile2 = fopen("xi_binned_output.txt","w");
-//         for(int i=0;i<nbin;i++){
-//             for(int j=0;j<mbin;j++){
-//                 fprintf(XiFile2,"%le\t",full_xi_function.cf_estimate[i*mbin+j]);
-//             }
-//             fprintf(XiFile2,"\n");
-//         }
-//         fclose(XiFile2);
-//         
+        // PRINT OUTPUT TO FILE
+        FILE * XiFile = fopen("xi_refined.txt","w");
+        for(int i=0;i<nbin;i++){
+            for(int j=0;j<mbin;j++){
+                fprintf(XiFile,"%le\t",new_xi_array[i*mbin+j]);
+            }
+            fprintf(XiFile,"\n");
+        }
+        fclose(XiFile);
+        
+        // PRINT OUTPUT TO FILE
+        FILE * XiFile2 = fopen("xi_binned_output.txt","w");
+        for(int i=0;i<nbin;i++){
+            for(int j=0;j<mbin;j++){
+                fprintf(XiFile2,"%le\t",full_xi_function.cf_estimate[i*mbin+j]);
+            }
+            fprintf(XiFile2,"\n");
+        }
+        fclose(XiFile2);
+        
         
         return new_cf;
     }               
