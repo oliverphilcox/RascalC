@@ -83,7 +83,7 @@ print("Loading best estimate of jackknife covariance matrix")
 c2,c3,c4=load_matrices('full')
 
 # Check matrix convergence
-from np.linalg import eigvalsh
+from numpy.linalg import eigvalsh
 eig_c4 = eigvalsh(c4)
 eig_c2 = eigvalsh(c2)
 if min(eig_c4)<-1.*min(eig_c2):

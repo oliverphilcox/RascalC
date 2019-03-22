@@ -4,10 +4,6 @@ Post-Processing & Reconstruction
 These scripts post-process the single- or multi-field integrals computed by the C++ code. This computes the shot-noise rescaling parameter(s), :math:`\alpha_i`, from data derived covariance matrices (from individual jackknife correlation functions computed in the :ref:`jackknife-correlations` script). A variety of analysis products are output as an ``.npz`` file, as described below.
 
 
-.. todo:: test eigenvalue test for convergence in both scripts
-
-.. todo:: test full multi-field post-processing scripts
-
 .. _post-processing-single:
 
 

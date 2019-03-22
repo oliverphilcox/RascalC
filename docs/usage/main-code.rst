@@ -4,8 +4,6 @@ Covariance Matrix Estimation
 Overview
 ----------
 
-.. todo:: create section which crashes if we use periodic box boolean but not periodic compilation - also do we need both??
-
 This is the main section of RascalC, where a covariance matrix estimates are computed via Monte Carlo integration from a given set of input particles. Depending on the number of input fields the code will compute either components for a single covariance matrix or all required components for 6 cross-covariance matrices. 
 
 **NB**: Before running this code, the jackknife weights and binned pair counts must be computed 
@@ -24,10 +22,10 @@ Covariance Matrix Precision
 
 The precision of covariance matrix estimators can be user-controlled in the RascalC code. To understand these parameters we must briefly outline the selection of random quads of particles (denoted :math:`\{i,j,k,l\}`) used in the Monte Carlo integration. The particle selection algorithm has the following form:
 
-1. Loop over all :math:`i` particles :math:`N_\mathrm{loops}` times. Each loop is independent and can be run on separate cores.
-2. For each :math:`i` particle, we pick :math:`N_2` :math:`j` particles at random, according to some selection rule. Here we compute the 2-point contribution to the covariance matrix.
-3. For each :math:`j` particle, we pick :math:`N_3` :math:`k` particles at random, according to some selection rule. Here we compute the 3-point contribution to the covariance matrix.
-4. For each :math:`k` particle, we pick :math:`N_4` :math:`l` particles at random, according to some selection rule. Here we compute the 4-point contribution to the covariance matrix.
+1. Loop over all :math:`i`-particles :math:`N_\mathrm{loops}` times. Each loop is independent and can be run on separate cores.
+2. For each :math:`i` particle, we pick :math:`N_2` :math:`j`-particles at random, according to some selection rule. Here we compute the 2-point contribution to the covariance matrix.
+3. For each :math:`j` particle, we pick :math:`N_3` :math:`k`-particles at random, according to some selection rule. Here we compute the 3-point contribution to the covariance matrix.
+4. For each :math:`k` particle, we pick :math:`N_4` :math:`l`-particles at random, according to some selection rule. Here we compute the 4-point contribution to the covariance matrix.
 
 By setting the parameters :math:`(N_\mathrm{loops},N_2, N_3, N_4)` we can control the precision of each matrix component. Standard values of :math:`N_2\sim N_3\sim N_4 \sim 10` normally work well. Each loop of the code produces an independent estimate of the full covariance matrix, which can be used to create accurate inverse matrices and effective number of mock calculations. The covariance converges relatively fast, so setting :math:`N_\mathrm{loops}` 
 to a few times the number of cores should work well. Values of :math:`N_\mathrm{loops}\gtrsim 100` should be avoided to stop file sizes and reconstruction times becoming large.
@@ -100,10 +98,8 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-load`` (*loadname*): If set, load a cell selection probability grid computed in a previous run of RascalC. (Default: NULL) 
 - ``-invert`` (*qinvert*): If this flag is passed to RascalC, all input particle weights are multiplied by -1. (Default: 0)
 - ``-balance`` (*qbalance*): If this flag is passed to RascalC, all negative weights are rescaled such that the total particle weight is 0. (Default: 0)
-- ``-np`` (*np*, *make_random*): If *make_random* = 1, this overrides any input random particle file and creates *np* randomly drawn particles in the cubic box. **NB**: The command line argument automatically sets *make_random* = 1. 
+- ``-np`` (*np*, *make_random*): If *make_random* = 1, this overrides any input random particle file and creates *np* randomly drawn particles in the cubic box. **NB**: The command line argument automatically sets *make_random* = 1. Currently creating particles at random is only supported for a single set of tracer particles. 
 - ``-rs`` (*rstart*): If inverting particle weights, this sets the index from which to start weight inversion. (Default: 0)
-
-.. todo:: don't let code run with random particle creation and multiple fields. And note this in doc somewhere.
 
 .. _code-output:
 
