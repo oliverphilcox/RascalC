@@ -19,6 +19,10 @@ m = int(sys.argv[6])
 n_samples = int(sys.argv[7])
 outdir = str(sys.argv[8])
 
+if n_samples<2:
+    print("Need more than 1 subsample for matrix inversion; exiting.")
+    sys.exit()
+
 # Create output directory
 if not os.path.exists(outdir):
     os.makedirs(outdir)
@@ -120,15 +124,15 @@ indices = ['11','22']
 for i,index in enumerate(indices):
 
     RR_file = weight_dir+'binned_pair_counts_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index)
-    #print("Loading weights file from %s"%weight_file)
-    #weights = np.loadtxt(weight_file)[:,1:]
-    print("DO WE NEED THESE?")
+    weight_file = weight_dir+'jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index)
+    print("Loading weights file from %s"%weight_file)
+    weights = np.loadtxt(weight_file)[:,1:]
     print("Loading weights file from %s"%RR_file)
     RR=np.loadtxt(RR_file)
 
     # Filter out bad jackknifes
     xi_jack = xi_jack_all[i][good_jk]
-    #weights = weights[good_jk]
+    weights = weights[good_jk]
 
     # Read in data covariance matrix
     this_data_cov = data_cov[i,i,i,i]
@@ -138,7 +142,7 @@ for i,index in enumerate(indices):
     c2,c3,c4=load_matrices('full',i+1)
 
     # Check matrix convergence
-    from np.linalg import eigvalsh
+    from numpy.linalg import eigvalsh
     eig_c4 = eigvalsh(c4)
     eig_c2 = eigvalsh(c2)
     if min(eig_c4)<-1.*min(eig_c2):
@@ -212,8 +216,11 @@ def matrix_readin(suffix='full'):
         # Define input files
         file_root_all=file_root+'CovMatricesAll/'
         file_root_jack=file_root+'CovMatricesJack/'
-        rr_true_file =weight_dir+'binned_pair_counts_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index2)
-        weights_file = weight_dir+'jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index2)
+        jndex=index2
+        if jndex=='21':
+            jndex='12' # to get correct weights
+        rr_true_file =weight_dir+'binned_pair_counts_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,jndex)
+        weights_file = weight_dir+'jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,jndex)
         
         if suffix=='full':
             counts_file = file_root_all+'total_counts_n%d_m%d_%s.txt'%(n,m,index4)

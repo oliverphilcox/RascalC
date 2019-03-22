@@ -12,34 +12,34 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/DR12_QPM/qpm_randoms_10x.xyzwj"; 
+	const char default_fname[500] = "random_file.xyzwj"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/DR12_QPM/radial_binning_cov.csv";
+    const char default_radial_bin_file[500] = "radial_binning_cov.csv";
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/DR12_QPM/xi/mock_1/xi_n45_m10_11.dat";
+	const char default_corname[500] = "xi_n45_m10_11.dat";
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
-    const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/DR12_QPM/radial_binning_corr.csv";
+    const char default_radial_bin_file_cf[500] = "radial_binning_corr.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm=642051;
+    Float nofznorm = 0;
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/DR12_QPM/jackknife_weights_n35_m10_j169_11.dat";
+    const char default_jk_weight_file[500] = "jackknife_weights_n35_m10_j169_11.dat";
     
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/DR12_QPM/binned_pair_counts_n35_m10_j169_11.dat";
+    const char default_RR_bin_file[500] = "binned_pair_counts_n35_m10_j169_11.dat";
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/tmp_out/";
+    const char default_out_file[500] = "outfile";
     
 	// The number of mu bins
 	int mbin = 10;
@@ -48,11 +48,14 @@ public:
     int mbin_cf = 10;
     
     // The number of threads to run on
-	int nthread=20;
+	int nthread = 20;
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
 	int nside = 251;
+    
+    // Whether or not we are using a periodic box
+	bool perbox = false;
 
     //------------------ MULTI FIELD PARAMETERS ----------------------------
     
@@ -87,7 +90,7 @@ public:
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=50;
+    int max_loops=10;
     
     // Number of random cells to draw at each stage
     int N2 = 20; // number of j cells per i cell
@@ -103,7 +106,7 @@ public:
 	Float mumax = 1.0;
     
     // Number of loops over which to refine the correlation function
-    int cf_loops = 20;
+    int cf_loops = 10;
     
     // The periodicity of the position-space cube.
 	Float boxsize = 200; // this is only used if the input particles are made randomly
@@ -132,10 +135,7 @@ public:
 	int np = -1; // NB: This is only used for grid creation so we don't need a separate variable for the second set of randoms
 
 	// The index from which on to invert the sign of the weights
-	int rstart=0;
-
-	// Whether or not we are using a periodic box
-	bool perbox=false;
+	int rstart = 0;
 
 	//---------------- INTERNAL PARAMETERS -----------------------------------
     // (no more user defined parameters below this line)
@@ -218,6 +218,24 @@ public:
 		i++;
 	    }
 	    
+    	    
+#ifdef PERIODIC
+        if (perbox!=true){
+            printf("\nC++ code compiled with periodic flag, but periodic box parameter is not set! Exiting.\n\n");
+            exit(1);
+        }
+#else
+        if (perbox==true){
+            printf("\nC++ code not compiled with periodic flag, but periodic box parameter is set! Exiting.\n\n");
+            exit(1);
+        }
+#endif
+
+        if((!multi_tracers)&&(make_random==1)){
+            printf("\nRunning for multiple tracers but creating particles at random; this is not yet supported. Exiting.\n\n");
+            exit(1);
+        }
+
 	    // compute smallest and largest boxsizes
 	    Float box_min = fmin(fmin(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
 	    Float box_max = fmax(fmax(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
@@ -298,18 +316,6 @@ public:
 	    assert(box_min>0.0);
 	    assert(rmax>0.0);
 	    assert(nside>0);
-	    
-#ifdef PERIODIC
-        if (perbox!=true){
-            printf("\nC++ code compiled with periodic flag, but periodic box parameter is not set! Exiting.\n");
-            exit(1);
-        }
-#else
-        if (perbox==true){
-            printf("\nC++ code not compiled with periodic flag, but periodic box parameter is set! Exiting.\n");
-            exit(1);
-        }
-#endif
 
 #ifdef OPENMP
 		omp_set_num_threads(nthread);
