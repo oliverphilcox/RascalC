@@ -40,7 +40,8 @@ The required input files and formats are described below. Note that several of t
     - *Format*: An ASCII file with each bin occupying a separate line, with tab-separated columns specifying :math:`(r_\mathrm{min},r_\mathrm{max})` for each bin.
 - **Correlation Function Binning File**:
     - File specifying the radial binning used in the input correlation function.
-    - The lowest bin must extend to zero for this, and the highest bin should be at least as large as the maximum covariance matrix bin.
+    - The lowest bin must extend to zero for this, and the highest bin should be at least as large as the maximum covariance matrix bin. 
+    - Currently must be the same for all input correlation functions, for the multiple field case.
     - *Format*: See above.
 - *(Usually created internally)* **Correlation Function(s)**:
     - This specifies the input correlation function estimates to be used by RascalC. 
@@ -53,6 +54,7 @@ The required input files and formats are described below. Note that several of t
     - For two sets of tracer particles, we require three correlation functions; two auto-correlations and a cross-correlation.
     - This is conventionally created with Corrfunc using the :ref:`jackknife-correlations` codes, but may be user input if desired.
     - The radial and angular binning should match that desired for the output covariance matrix.
+    - If this is supplied separately, the user must ensure that the pair count terms are normalized by the ratio of summed galaxy and random particle weights across the **entire** survey, not just those in the relevant jackknife region. This is for later convenience when estimating the jackknife covariance matrix model.
     - *Format*: An ASCII file with space separated values. Lines 1 and 2 list the radial and angular bin centers (as for the full correlation function). Each succeeding line gives the entire correlation function estimate for a given jackknife. The rows indicate the jackknife and the columns specify the collapsed bin, using the indexing :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` for a total of :math:`n_\mu` angular bins (unlike for the full correlation function). 
 - *(Usually created internally)* **Jackknife Weights and Random Particle Counts**:
     - These specify the weights of each jackknife region for each bin and the random particle counts both for each jackknife, and for the entire survey. 

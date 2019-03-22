@@ -4,17 +4,12 @@ Correlation Functions
 
 The scripts described below are wrappers of the `Corrfunc <https://corrfunc.readthedocs.io>`_ code (Sinha & Garrison 2017), used to create full-survey and jackknife correlation functions. The former are used in the computation of the Gaussian covariance matrices, and the latter allow for determination of the shot-noise rescaling parameter. If the correlation function is required to be computed in a different manner, user-input correlation functions can simply replace the output of these codes, with the file-types described in :ref:`file-inputs`.
 
-
-.. todo:: talk about the normalizations used here + how they aren't the true values
-
-.. todo:: also specify how to use a different input xi-jack i.e. say the normalization
-
 .. _full-correlations:
 
-Full Matrix Correlations :math:`\xi(r,\mu)`
-----------------------------------------------
+Full Survey Correlation Functions 
+-----------------------------------
 
-To compute the covariance matrix estimates :math:`\hat{C}_{ab}` we require some estimate of the correlation function. Here, we compute the full-survey correlation function with a specified binning using Corrfunc. We provide routines for both 1- and 2-field scenarios (computing the fields :math:`\{\xi^{11}(r,\mu), \xi^{12}(r,\mu), \xi^{22}(r,\mu)\}` in the latter case). This uses both the galaxies and random particle files, and requires a correlation function binning file, such as created by :ref:`write-binning-file`. The estimations are computed via the Landy-Szalay estimator using :math:`\xi^{XY}_a = (\widehat{DD}_a^{XY} - \widehat{DR}_a^{XY} - \widehat{DR}_a^{YX} + \widehat{RR}_a^{XY})/\widehat{RR}_a^{XY}` for bin :math:`a`, fields :math:`X, Y` with DD/DR/RR specifying data-data / data-random / random-random pair counts. The hats indicate that the quantities are normalized by the product of the summed weights in the two fields (i.e. :math:`\sum_{i\in X}w_i^X\sum_{j\in Y}w_j^Y`. Note that the binned correlation function estimates :math:`\hat\xi^{XY}_a` cannot simply placed at the bin-centers and interpolated to give a smooth :math:`\xi^{XY}(r,\mu)` estimate; here we use an iterative approach to convert these estimates into interpolation points for the smooth :math:`\xi^{XY}(r,\mu)`.
+To compute the covariance matrix estimates :math:`\hat{C}_{ab}` we require some estimate of the correlation function. Here, we compute the full-survey correlation function with a specified binning using Corrfunc. We provide routines for both 1- and 2-field scenarios (computing the fields :math:`\{\xi^{11}(r,\mu), \xi^{12}(r,\mu), \xi^{22}(r,\mu)\}` in the latter case). This uses both the galaxies and random particle files, and requires a correlation function binning file, such as created by :ref:`write-binning-file`. The estimations are computed via the Landy-Szalay estimator using :math:`\xi^{XY}_a = (\widehat{DD}_a^{XY} - \widehat{DR}_a^{XY} - \widehat{DR}_a^{YX} + \widehat{RR}_a^{XY})/\widehat{RR}_a^{XY}` for bin :math:`a`, fields :math:`X, Y` with DD/DR/RR specifying data-data / data-random / random-random pair counts. The hats indicate that the quantities are normalized by the product of the summed weights in the two fields (i.e. :math:`\sum_{i\in X}w_i^X\sum_{j\in Y}w_j^Y`). Note that the binned correlation function estimates :math:`\hat\xi^{XY}_a` cannot simply placed at the bin-centers and interpolated to give a smooth :math:`\xi^{XY}(r,\mu)` estimate; here we use an iterative approach to convert these estimates into interpolation points for the smooth :math:`\xi^{XY}(r,\mu)`.
 
 The scripts take two sets of random particle files; one to compute :math:`DR` counts and one to compute :math:`RR` counts. This allows for a larger number of randoms to be used for :math:`RR` counts, as is often useful.
 
@@ -32,8 +27,6 @@ For an analysis using two distinct fields::
     python python/xi_estimator_cross.py {GALAXY_FILE_1} {GALAXY_FILE_2} {RANDOM_FILE_1_DR} {RANDOM_FILE_1_RR} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts_11} {RR_counts_12} {RR_counts_22}]
 
 **NB**: The two field script computes all three distinct (cross-)correlations between the two fields, thus has a runtime :math:`\sim` 3 times that of ``xi_estimator.py``. The two fields should be distinct to avoid issues with double counting. 
-
-.. todo:: currently Periodic flag is set to False in Corrfunc periodic computation - CHANGE THIS!!
 
 
 **Input Parameters**
@@ -58,10 +51,10 @@ ASCII files are created specifying the correlation function in the file-format g
     
 .. _jackknife-correlations:
 
-Jackknife Matrix Correlations :math:`\xi^J(r,\mu)`
-----------------------------------------------------
+Jackknife Matrix Correlation Functions
+----------------------------------------------
 
-For later comparison of the jackknife covariance matrix estimate with the data, we require the jackknife covariance matrix, which is derived from the correlation function estimates in each unrestricted jackknife. The scripts below are provided to compute these using Corrfunc. For jackknife :math:`J` and fields :math:`\{X,Y\}`, we compute the pair counts :math:`FG^{XY}_a` in bin :math:`a` (where :math:`F,G\in[D,R]` for data and random fields D and R), from a cross-pair counts between particles in jackknife :math:`A` of :math:`F^X` and the entire of field :math:`G^Y`. These are added to the pair counts from the cross of particles in jackknife :math:`A` of field :math:`G^Y` with the entire of field :math:`F^X` if the fields are distinct. This allows us to compute all :math:`n_\mathrm{jack}` correlation functions :math:`\xi^{XY}_A(r,\mu)` via the Landy-Szalay estimator :math:`\xi^{XY}_{aA} = (\widehat{DD}_{aA}^{XY} - \widehat{DR}_{aA}^{XY} - \widehat{DR}_{aA}^{YX} + \widehat{RR}_{aA}^{XY})/\widehat{RR}_{aA}^{XY}` for bin :math:`a` (where the hat indicates that quantities are normalized by the product of the sum of weights in each complete field, as before). As before, the code takes two random particle fields of each type, allowing different sized random fields to be used for DR and RR pair counting.
+For later comparison of the jackknife covariance matrix estimate with the data, we require the jackknife covariance matrix, which is derived from the correlation function estimates in each unrestricted jackknife. The scripts below are provided to compute these using Corrfunc. For jackknife :math:`J` and fields :math:`\{X,Y\}`, we compute the pair counts :math:`FG^{XY}_a` in bin :math:`a` (where :math:`F,G\in[D,R]` for data and random fields D and R), from a cross-pair counts between particles in jackknife :math:`A` of :math:`F^X` and the entire of field :math:`G^Y`. These are added to the pair counts from the cross of particles in jackknife :math:`A` of field :math:`G^Y` with the entire of field :math:`F^X` if the fields are distinct. This allows us to compute all :math:`n_\mathrm{jack}` correlation functions :math:`\xi^{XY}_A(r,\mu)` via the Landy-Szalay estimator :math:`\xi^{XY}_{aA} = (\widehat{DD}_{aA}^{XY} - \widehat{DR}_{aA}^{XY} - \widehat{DR}_{aA}^{YX} + \widehat{RR}_{aA}^{XY})/\widehat{RR}_{aA}^{XY}` for bin :math:`a`. As before, the code takes two random particle fields of each type, allowing different sized random fields to be used for DR and RR pair counting. For convenience the quantities are normalized by the summed weights across the **entire** set of particles, not just those specific to the given jackknife. The jackknife correlation functions are thus not quite true estimates of :math:`\xi_a`, since they neglect differences in the ratio of galaxies and random particles between galaxies. 
 
 **NB**: The binning file used here should be the same as that used for the *covariance matrix* **not** the full correlation function, to allow comparison with the :math:`C^J_{ab}` estimate.
 
@@ -83,7 +76,7 @@ Following computation of :math:`\xi^J_{aA}` we can estimate the single-survey ja
 
 **Input Parameters**
 
-See the input parameters for the :ref:`full-correlations` script. In addition, the {RR_jackknife_counts_XY} quantities are the :math:`RR_{aA}^{XY}` pair counts which can be specified to avoid recomputation. These have been previously output by the :doc:`jackknife-weights` code as ``jackknife_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` (using the correct covariance-matrix binning) hence can be used here for a significant speed boost. The :math:`RR_{aA}^{XY}` pair counts must be normalized by :math:`\sum_i w_i \sum_{j\in A} w_j` (where :math:`j\in A` indicates random particles in jackknife :math:`A`) - this is done automatically in the preceding script.
+See the input parameters for the :ref:`full-correlations` script. In addition, the {RR_jackknife_counts_XY} quantities are the :math:`RR_{aA}^{XY}` pair counts which can be specified to avoid recomputation. These have been previously output by the :doc:`jackknife-weights` code as ``jackknife_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` (using the correct covariance-matrix binning) hence can be used here for a significant speed boost. The :math:`RR_{aA}^{XY}` pair counts must be normalized by the squared full-survey summed weights :math:`(\sum_i w_i)^2` - this is done automatically in the preceding script.
 
 
 **Output Files**
