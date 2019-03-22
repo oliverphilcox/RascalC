@@ -214,7 +214,7 @@ The output is a single compressed Python ``.npz`` file which contains the follow
     - Jackknife data covariance matrix :math:`C^{J,\mathrm{data}}_{ab}`
     - Full (quadratic bias corrected) precision matrix :math:`\Psi_{ab}(\alpha^*)`
     - Jackknife (quadratic bias corrected) precision matrix :math:`\Psi^J_{ab}(\alpha^*)`
-    - Full quadratic bias :math:`\hat{D}_{ab}` matrix
+    - Full quadratic bias :math:`\tilde{D}_{ab}` matrix
     - Effective number of mocks :math:`N_\mathrm{eff}`
     - Individual full covariance matrix estimates :math:`C_{ab}^{(i)}(\alpha^*)`
     

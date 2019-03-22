@@ -2,7 +2,7 @@
 Output file format has (x,y,z,w) coordinates in Mpc/h units 
 
     Parameters:
-        INFILE = input fits/csv/txt/dat file
+        INFILE = input ASCII file
         OUTFILE = output .txt or .csv file specifier
         ---OPTIONAL---
         OMEGA_M = Matter density (default 0.31)
@@ -41,33 +41,22 @@ sys.path.insert(0, str(dirname)+'/wcdm/')
 import wcdm
 
 # Load in data:
-if input_file.lower().endswith('.fits'):
-    from astropy.io import fits
-    fitsfile=fits.open(input_file)[1]
-    all_ra=fitsfile.data['RA']
-    all_dec=fitsfile.data['DEC']
-    all_z=fitsfile.data['Z']
-    all_w=fitsfile.data['WEIGHT_FKP']
-else:# input_file.lower().endswith(('.txt', '.dat', '.csv')):
-    print("Counting lines in file")
-    total_lines=0
-    for n, line in enumerate(open(input_file, 'r')):
-        total_lines+=1
+print("Counting lines in file")
+total_lines=0
+for n, line in enumerate(open(input_file, 'r')):
+    total_lines+=1
 
-    all_ra,all_dec,all_z,all_w=[np.zeros(total_lines) for _ in range(4)]
+all_ra,all_dec,all_z,all_w=[np.zeros(total_lines) for _ in range(4)]
 
-    print("Reading in data");
-    for n, line in enumerate(open(input_file, 'r')):
-        if n%1000000==0:
-            print("Reading line %d of %d" %(n,total_lines))
-        split_line=np.array(line.strip().split("   "), dtype=float) 
-        all_ra[n]=split_line[0];
-        all_dec[n]=split_line[1];
-        all_z[n]=split_line[2];
-        all_w[n]=split_line[3];
-#else: 
-#    print("Input file must be of the form 'txt', 'csv', 'dat' or 'fits'")
-#    sys.exit()
+print("Reading in data");
+for n, line in enumerate(open(input_file, 'r')):
+    if n%1000000==0:
+        print("Reading line %d of %d" %(n,total_lines))
+    split_line=np.array(line.strip().split("   "), dtype=float) 
+    all_ra[n]=split_line[0];
+    all_dec[n]=split_line[1];
+    all_z[n]=split_line[2];
+    all_w[n]=split_line[3];
     
 from astropy.constants import c as c_light
 import astropy.units as u

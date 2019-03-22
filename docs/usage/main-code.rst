@@ -4,8 +4,6 @@ Covariance Matrix Estimation
 Overview
 ----------
 
-.. todo:: should we take multiple correlation function binfiles? Also how is this treated for multu-field?
-
 .. todo:: create section which crashes if we use periodic box boolean but not periodic compilation - also do we need both??
 
 This is the main section of RascalC, where a covariance matrix estimates are computed via Monte Carlo integration from a given set of input particles. Depending on the number of input fields the code will compute either components for a single covariance matrix or all required components for 6 cross-covariance matrices. 

@@ -39,7 +39,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "tmp_out/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/tmp_out/";
     
 	// The number of mu bins
 	int mbin = 10;
@@ -299,6 +299,17 @@ public:
 	    assert(rmax>0.0);
 	    assert(nside>0);
 	    
+#ifdef PERIODIC
+        if (perbox!=true){
+            printf("\nC++ code compiled with periodic flag, but periodic box parameter is not set! Exiting.\n");
+            exit(1);
+        }
+#else
+        if (perbox==true){
+            printf("\nC++ code not compiled with periodic flag, but periodic box parameter is set! Exiting.\n");
+            exit(1);
+        }
+#endif
 
 #ifdef OPENMP
 		omp_set_num_threads(nthread);

@@ -7,7 +7,7 @@ We provide a suite of Python scripts to create input files for the RascalC code.
 
 Coordinate Conversion
 ----------------------
-This converts a set of input particles (either random particle or galaxy positions) in the form {RA,Dec,redshift,w} to the Cartesian form {x,y,z,w} (for weights w), given some cosmological parameters (using a WCDM coordinate converter by Daniel Eisenstein). The output coordinates are in comoving Mpc/h units, and are saved as an ASCII file for later use.
+This converts a set of input particles (either random particle or galaxy positions) in the form {RA,Dec,redshift,weight} to the Cartesian form {x,y,z,weight}, given some cosmological parameters (using a WCDM coordinate converter by Daniel Eisenstein). The output coordinates are in comoving Mpc/h units, and are saved as an ASCII file for later use.
 
 **Usage**::
 
@@ -15,7 +15,7 @@ This converts a set of input particles (either random particle or galaxy positio
     
 **Parameters**:
 
-- {INFILE}: Input data file containing {RA,Dec,redshift,weight} coordinates for each particle. This may be specified as a ``.fits``, ``.csv``, ``.txt`` or ``.dat`` datafile. For an input FITS file, the columns 'RA', 'DEC', 'Z' and 'WEIGHT_FKP' are required (as in BOSS DR12 data).
+- {INFILE}: Input data file containing {RA,Dec,redshift,weight} coordinates for each particle. This should be in the form of an input ASCII datafile, with each particle on a separate row.
 - {OUTFILE}: Output ``.txt``, ``.dat`` or ``.csv`` filename.
 - *Optional* {OMEGA_M}: Current matter density, :math:`\Omega_m` (default 0.31)
 - *Optional* {OMEGA_K}: Current curvature density. :math:`\Omega_k` (default 0)
@@ -35,7 +35,7 @@ This function assigns each particle (either random particles or galxy positions)
 
 - {INFILE}: Input data ASCII file of (random/galaxy) Cartesian particle positions with space-separated columns {x,y,z,w}, such as that created by the :ref:`coord-conversion` script. This can be in ``.txt``, ``.dat`` or ``.csv`` format.
 - {OUTFILE}: Output ``.txt``, ``.dat`` or ``.csv`` filename.
-- {HEALPIX_NSIDE}: HealPix NSIDE parameter which controls the number of pixels used to divide up the sky. For NSIDE=:math:`n`, a total of :math:`12n^2` pixels are used.
+- {HEALPIX_NSIDE}: HealPix NSIDE parameter which controls the number of pixels used to divide up the sky. For NSIDE = :math:`n`, a total of :math:`12n^2` pixels are used.
 
 .. _particle-subset:
 
