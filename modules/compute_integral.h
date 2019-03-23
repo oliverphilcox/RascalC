@@ -2,9 +2,13 @@
 
     #ifndef COMPUTE_INTEGRAL_H
     #define COMPUTE_INTEGRAL_H
-
+    
+// Choose relevant class to hold integrals
+#ifdef LEGENDRE
+    #include "integrals_legendre.h"
+#else
     #include "integrals.h"
-
+#endif
     class compute_integral{
         
     private:
@@ -105,21 +109,33 @@
             else return &all_grid[1];
         }
         
+#ifdef LEGENDRE
+        SurveyCorrection* which_survey(SurveyCorrection all_survey[], int Ia,int Ib){
+            // Returns relevant survey correction fucntion for two input field indices
+            if((Ia==1)&(Ib==1)) return &all_survey[0];
+            else if ((Ia==2)&&(Ib==2)) return &all_survey[1];
+            else return &all_survey[2];
+        }
+#else
         JK_weights* which_JK(JK_weights all_JK[], int Ia, int Ib){
             // Returns the relevant correlation function for two input field indices
             if((Ia==1)&(Ib==1)) return &all_JK[0];
             else if ((Ia==2)&&(Ib==2)) return &all_JK[1];
             else return &all_JK[2];
         }
+#endif
         
     public:    
         compute_integral(){};
-        
+#ifdef LEGENDRE
+        compute_integral(Grid all_grid[], Parameters *par, CorrelationFunction all_cf[], RandomDraws all_rd[], SurveyCorrection all_survey[], int I1, int I2, int I3, int I4, int iter_no){
+#else
         compute_integral(Grid all_grid[], Parameters *par, JK_weights all_JK[], CorrelationFunction all_cf[], RandomDraws all_rd[], int I1, int I2, int I3, int I4, int iter_no){
+#endif
             // MAIN FUNCTION TO COMPUTE INTEGRALS
             
             int tot_iter=1; // total number of iterations
-            if(par->multi_tracers==true) tot_iter=6;
+            if(par->multi_tracers==true) tot_iter=7;
             
             // Define relevant grids 
             Grid *grid1 = which_grid(all_grid,I1);
@@ -136,10 +152,18 @@
             RandomDraws *rd13 = which_rd(all_rd,I1,I3);
             RandomDraws *rd24 = which_rd(all_rd,I2,I4);
             
+#ifdef LEGENDRE
+            // Define relevant survey correction factor
+            SurveyCorrection *survey_corr_12 = which_survey(all_survey,I1,I2);
+            SurveyCorrection *survey_corr_23 = which_survey(all_survey,I2,I3);
+            SurveyCorrection *survey_corr_34 = which_survey(all_survey,I3,I4);
+            int n_param = survey_corr_12->n_param;            
+#else
             // Define relevant jackknife JK_weights
             JK_weights *JK12 = which_JK(all_JK,I1,I2);
             JK_weights *JK23 = which_JK(all_JK,I2,I3);
             JK_weights *JK34 = which_JK(all_JK,I3,I4);
+#endif
             
             nbin = par->nbin; // number of radial bins
             mbin = par->mbin; // number of mu bins
@@ -149,13 +173,12 @@
             
             int convergence_counter=0, printtime=0;// counter to stop loop early if convergence is reached.
             
-            
-            
+#ifndef LEGENDRE
     // --------Compute product weights----------------------
-            Float *product_weights12_12, *product_weights12_23, *product_weights12_34; // arrays to get products of jackknife weights to avoid recomputation
             int nbins=nbin*mbin;
-            
+            Float *product_weights12_12, *product_weights12_23, *product_weights12_34; // arrays to get products of jackknife weights to avoid recomputation
             product_weights12_12 = JK12->product_weights;
+            
             
             // ------ w_12*w_34 weight:: -------            
             // Read in product weights if already computed
@@ -206,14 +229,18 @@
             }
             
             printf("Computed relevant product weights\n");
+#endif
             
     //-----------INITIALIZE OPENMP + CLASSES----------
             std::random_device urandom("/dev/urandom");
             std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
             unsigned long int steps = dist(urandom);        
             gsl_rng_env_setup(); // initialize gsl rng
+#ifdef LEGENDRE
+            Integrals sumint(par, cf12, cf13, cf24, I1, I2, I3, I4,survey_corr_12,survey_corr_23,survey_corr_34); // total integral
+#else
             Integrals sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4,product_weights12_12,product_weights12_23,product_weights12_34); // total integral
-            
+#endif       
             uint64 tot_pairs=0, tot_triples=0, tot_quads=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
             uint64 cell_attempt2=0,cell_attempt3=0,cell_attempt4=0; // number of j,k,l cells attempted
             uint64 used_cell2=0,used_cell3=0,used_cell4=0; // number of used j,k,l cells
@@ -229,18 +256,22 @@
             
             TotalTime.Start(); // Start timer
             
-    #ifdef OPENMP       
+#ifdef OPENMP       
+#ifdef LEGENDRE
+        #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+#else
     #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+#endif
             { // start parallel loop
             // Decide which thread we are in
             int thread = omp_get_thread_num();
             assert(omp_get_num_threads()<=par->nthread);
             if (thread==0) printf("# Starting integral computation %d of %d on %d threads.\n", iter_no, tot_iter, omp_get_num_threads());        
-    #else
+#else
             int thread = 0;
             printf("# Starting integral computation %d of %d single threaded.\n",iter_no,tot_iter);
             { // start loop
-    #endif
+#endif
             
     //-----------DEFINE LOCAL THREAD VARIABLES
             Particle *prim_list; // list of particles in first cell
@@ -258,8 +289,17 @@
             integer3 delta2, delta3, delta4, prim_id, sec_id, thi_id;
             Float3 cell_sep2,cell_sep3;
             
+#ifdef LEGENDRE
+            Float *poly_ij, *factor_ij;
+            Integrals locint(par, cf12, cf13, cf24, I1, I2, I3, I4, survey_corr_12,survey_corr_23,survey_corr_34); // Accumulates the integral contribution of each thread
+            // Assign memory for useful quantities
+            int ecL=0; 
+            ecL+=posix_memalign((void **) &factor_ij, PAGE, sizeof(Float)*mnp);
+            ecL+=posix_memalign((void **) &poly_ij, PAGE, sizeof(Float)*mnp*n_param);
+            assert(ecL==0);
+#else
             Integrals locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4, product_weights12_12, product_weights12_23, product_weights12_34); // Accumulates the integral contribution of each thread
-            
+#endif
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
             gsl_rng_set(locrng, steps*(thread+1));
             
@@ -332,7 +372,11 @@
                         p2*=1./(grid1->np*(double)sln); // probability is divided by total number of i particles and number of particles in cell
                         
                         // Compute C2 integral
+#ifdef LEGENDRE
+                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, p21, p22, factor_ij, poly_ij);
+#else
                         locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, p21, p22);
+#endif
                         
                         // LOOP OVER N3 K CELLS
                         for (int n3=0; n3<par->N3; n3++){
@@ -348,9 +392,13 @@
                             used_cell3+=1; // new third cell used
                             
                             p3*=p2/(double)tln; // update probability
-                            
+                    
                             // Compute third integral
+#ifdef LEGENDRE
+                            locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_ik, w_ijk, p3,factor_ij,poly_ij);
+#else
                             locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_ik, w_ijk, p3);
+#endif
                             
                             // LOOP OVER N4 L CELLS
                             for (int n4=0; n4<par->N4; n4++){
@@ -366,8 +414,12 @@
                                 p4*=p3/(double)fln;
                                 
                                 // Now compute the four-point integral
+#ifdef LEGENDRE
+                                locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, p4, factor_ij, poly_ij);
+#else                 
                                 locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, p4);
-                                
+#endif
+               
                             }
                         }
                     }
@@ -390,15 +442,24 @@
                     fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops+1,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
                     
                     TotalTime.Start(); // Restart the timer
-                    Float frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j;
+                    Float frob_C2, frob_C3, frob_C4;
+#ifdef LEGENDRE
+                    sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4);
+                    if(frob_C4<0.01) convergence_counter++;
+                    if (n_loops!=0){
+                        fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
+                    }
+#else
+                    Float frob_C2j, frob_C3j, frob_C4j;
                     sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j);
                     if((frob_C4<0.01)&&(frob_C4j<0.01)) convergence_counter++;
-                    
                     if (n_loops!=0){
                         fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
                         fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n",n_loops,frob_C2j, frob_C3j, frob_C4j);
                     }
+#endif
                 }
+                    
                 
                 // Sum up integrals
                 sumint.sum_ints(&locint); 
@@ -409,8 +470,9 @@
                 
                 locint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads);
                 locint.save_integrals(output_string,0);
+#ifndef LEGENDRE
                 locint.save_jackknife_integrals(output_string);
-                
+#endif
                 locint.sum_total_counts(cnt2, cnt3, cnt4); 
                 locint.reset();
                 
@@ -453,8 +515,10 @@
         sumint.save_integrals(out_string,1); // save integrals to file
         sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file
         printf("Printed integrals to file in the %sCovMatricesAll/ directory\n",par->out_file);
+#ifndef LEGENDRE
         sumint.save_jackknife_integrals(out_string);
         printf("Printed jackknife integrals to file in the %sCovMatricesJack/ directory\n",par->out_file);
+#endif
         fflush(NULL);
         return;
         }
