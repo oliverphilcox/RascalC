@@ -40,14 +40,21 @@ typedef double3 Float3;
 
 
 // Define module files
-#include "modules/parameters.h"
-#include "modules/cell_utilities.h"
-#include "modules/grid.h"
-#include "modules/correlation_function.h"
-#include "modules/random_draws.h"
-#include "modules/integrals.h"
-#include "modules/driver.h"
-#include "modules/jackknife_weights.h"
+    #include "modules/parameters.h"
+    #include "modules/cell_utilities.h"
+    #include "modules/grid.h"
+    #include "modules/correlation_function.h"
+
+#ifdef LEGENDRE
+    #include "modules/legendre_utilities.h"
+    #include "modules/integrals_legendre.h"
+#else
+    #include "modules/jackknife_weights.h"
+    #include "modules/integrals.h"
+#endif
+
+    #include "modules/random_draws.h"
+    #include "modules/driver.h"
 
 // Get the correlation function into the integrator
 CorrelationFunction * RandomDraws::corr;
@@ -55,7 +62,6 @@ CorrelationFunction * RandomDraws::corr;
 STimer TotalTime;
 
 // ====================  Computing the integrals ==================
-
 
 #include "modules/compute_integral.h"
 #include "modules/rescale_correlation.h"
@@ -73,7 +79,19 @@ int main(int argc, char *argv[]) {
         max_no_functions=3;
         no_fields=2;
     }
+#ifdef LEGENDRE
+    // Define all possible survey correction functions
+    SurveyCorrection all_survey[max_no_functions]; // create empty functions
     
+    SurveyCorrection tmp_sc(&par,1,1);
+    all_survey[0].copy(&tmp_sc); // save into global memory
+    
+    if(par.multi_tracers==true){
+        SurveyCorrection tmp_sc12(&par,1,2), tmp_sc2(&par,2,2);
+        all_survey[1].copy(&tmp_sc2);
+        all_survey[2].copy(&tmp_sc12);
+    }
+#else
     // Read in jackknife weights and RR pair counts
     JK_weights all_weights[max_no_functions]; // create empty functions
 
@@ -85,7 +103,8 @@ int main(int argc, char *argv[]) {
         JK_weights tmp12(&par,1,2), tmp2(&par,2,2);
         all_weights[1].copy(&tmp2);
         all_weights[2].copy(&tmp12);
-    }
+    }    
+#endif
     
     // Now read in particles to grid:
     Grid all_grid[no_fields]; // create empty grids
@@ -97,8 +116,13 @@ int main(int argc, char *argv[]) {
             char *filename;
             if(index==0) filename=par.fname;
             else filename=par.fname2;
+#ifdef LEGENDRE
+            orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax);
+            assert(par.np>0);
+#else
             orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax, &all_weights[index]);
             assert(par.np>0);
+#endif
             par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.rmax, shift, par.nside);
         } else {
         // If you want to just make random particles instead:
@@ -144,13 +168,14 @@ int main(int argc, char *argv[]) {
         
         fflush(NULL);
     }
-    
+#ifndef LEGENDRE
     // Now rescale weights based on number of particles
     all_weights[0].rescale(all_grid[0].norm,all_grid[0].norm);
     if(par.multi_tracers==true){
         all_weights[1].rescale(all_grid[1].norm,all_grid[1].norm);
         all_weights[2].rescale(all_grid[0].norm,all_grid[1].norm);
     }
+#endif
     
     // Now define all possible correlation functions and random draws:
     CorrelationFunction all_cf[max_no_functions];
@@ -177,16 +202,32 @@ int main(int argc, char *argv[]) {
     printf("\nUsing xi(r) sampling for i-k and j-l cells\n");
     printf("Using 1/r^2 sampling for i-j cells\n");
     
+#ifdef LEGENDRE
+    // Compute integrals
+    compute_integral(all_grid,&par,all_cf,all_rd,all_survey,1,1,1,1,1); // final digit is iteration number
+
+    if(par.multi_tracers==true){
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,1,2,1,1,2);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,1,2,2,1,3);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,1,2,1,2,4);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,1,1,2,2,5);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,2,1,2,2,6);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,2,2,2,2,7);
+    }
+#else
     // Compute integrals
     compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,1,1,1,1); // final digit is iteration number
 
     if(par.multi_tracers==true){
         compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,2,1,1,2);
         compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,2,2,1,3);
-        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,1,2,2,4);
-        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,2,1,2,2,5);
-        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,2,2,2,2,6);
+        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,2,1,2,4);
+        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,1,2,2,5);
+        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,2,1,2,2,6);
+        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,2,2,2,2,7);
     }
+#endif
+
     rusage ru;
     getrusage(RUSAGE_SELF, &ru);
 

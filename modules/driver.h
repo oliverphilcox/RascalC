@@ -24,8 +24,12 @@ Particle *make_particles(Float3 rect_boxsize, int np) {
     return p;
 }
 
+#ifdef LEGENDRE
+Particle *read_particles(Float rescale, int *np, const char *filename, const int rstart, uint64 nmax) {
+#else
 Particle *read_particles(Float rescale, int *np, const char *filename, const int rstart, uint64 nmax, const JK_weights *JK) {
-    // This will read particles from a file, space-separated x,y,z,w,JK for weight w, jackknife region JK
+#endif
+    // This will read particles from a file, space-separated x,y,z,w,JK for weight w, (jackknife region JK)
     // Particle positions will be rescaled by the variable 'rescale'.
     // For example, if rescale==boxsize, then inputting the unit cube will cover the periodic volume
     char line[1000];
@@ -39,10 +43,12 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
         fprintf(stderr,"File %s not found\n", filename); abort();
     }
 
+#ifndef LEGENDRE
     // Store filled jackknives in local memory to avoid file corruption
     int tmp_n_JK = JK->n_JK_filled;
     int tmp_filled_JK[tmp_n_JK];
     for(int ii=0;ii<tmp_n_JK;ii++) tmp_filled_JK[ii]=JK->filled_JKs[ii];
+#endif
     
     // Count lines to construct the correct size
     while (fgets(line,1000,fp)!=NULL&&(uint)n<nmax) {
@@ -84,6 +90,7 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 			   p[j].w = -tmp[stat-2]; //read in weights
 		   else
 			   p[j].w = tmp[stat-2]; 
+#ifndef LEGENDRE
         int tmp_JK = tmp[stat-1]; // read in JK region
 		
 		// Collapse jacknife indices to only include filled JKs:
@@ -93,7 +100,7 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
             if (tmp_filled_JK[x]==tmp_JK) p[j].JK=x;
         }
         assert(p[j].JK!=-1); // ensure we find jackknife index		    
-        
+#endif
         }
 		
 		j++;

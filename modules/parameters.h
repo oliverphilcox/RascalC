@@ -12,37 +12,25 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "random_file.xyzwj"; 
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/qpm_randoms_10x.xyzwj"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "radial_binning_cov.csv";
+    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/radial_binning_cov.csv";
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "xi_n45_m10_11.dat";
+	const char default_corname[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/xi_n45_m10_11.dat";
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
-    const char default_radial_bin_file_cf[500] = "radial_binning_corr.csv";
+    const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/radial_binning_corr.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm = 0;
-    
-    // Name of the jackknife weight file
-    char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "jackknife_weights_n35_m10_j169_11.dat";
-    
-     // Name of the RR bin file
-    char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "binned_pair_counts_n35_m10_j169_11.dat";
-    
+    Float nofznorm = 642051;
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "outfile";
-    
-	// The number of mu bins
-	int mbin = 10;
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/";
     
     // The number of mu bins in the correlation function
     int mbin_cf = 10;
@@ -57,6 +45,36 @@ public:
     // Whether or not we are using a periodic box
 	bool perbox = false;
 
+    //---------- (r,mu) PARAMETERS ------------------------------------------
+    
+	// The number of mu bins
+	int mbin = 10;
+    
+    // Name of the jackknife weight file
+    char *jk_weight_file = NULL; // w_{aA}^{11} weights
+    const char default_jk_weight_file[500] = "jackknife_weights_n35_m10_j169_11.dat";
+    
+     // Name of the RR bin file
+    char *RR_bin_file = NULL; // RR_{aA}^{11} file
+    const char default_RR_bin_file[500] = "binned_pair_counts_n35_m10_j169_11.dat";
+    
+    //-------- LEGENDRE PARAMETERS -------------------------------------------
+    
+    int max_l = 10; // max Legendre moment (must be even)
+    
+    char *phi_file = NULL; // Survey correction function coefficient file 
+    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/BinCorrectionFactor_n35_m1000_11.txt";
+    
+    //---------- PRECISION PARAMETERS ---------------------------------------
+	
+    // Maximum number of iterations to compute the C_ab integrals over
+    int max_loops=20;
+    
+    // Number of random cells to draw at each stage
+    int N2 = 20; // number of j cells per i cell
+    int N3 = 20; // number of k cells per j cell
+    int N4 = 20; // number of l cells per k cell
+    
     //------------------ MULTI FIELD PARAMETERS ----------------------------
     
     // Second set of random particles
@@ -73,6 +91,8 @@ public:
     // Number of galaxies in second dataset
     Float nofznorm2=0; // 
     
+    //---------- (r,mu) MULTI FIELD PARAMETERS ------------------------------
+    
     // Jackknife weight files
     char *jk_weight_file12 = NULL; // w_{aA}^{12} weights
     const char default_jk_weight_file12[500] = "";
@@ -87,15 +107,13 @@ public:
     char *RR_bin_file2 = NULL; // RR_{aA}^{22} file
     const char default_RR_bin_file2[500] = "";
     
-    //---------- PRECISION PARAMETERS ---------------------------------------
-	
-    // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=10;
+    //-------- LEGENDRE MULTI-FIELD PARAMETERS -------------------------------
     
-    // Number of random cells to draw at each stage
-    int N2 = 20; // number of j cells per i cell
-    int N3 = 20; // number of k cells per j cell
-    int N4 = 20; // number of l cells per k cell
+    char *phi_file2 = NULL; // (Normalized) survey correction function survey_22
+    const char default_phi_file2[500] = "";
+    
+    char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
+    const char default_phi_file12[500] = "";
     
     //-------- OTHER PARAMETERS ----------------------------------------------
     
@@ -181,7 +199,6 @@ public:
         else if (!strcmp(argv[i],"-rs")) rstart = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-nmax")) nmax = atoll(argv[++i]);
 		else if (!strcmp(argv[i],"-nthread")) nthread = atoi(argv[++i]);
-		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-mbin_cf")) mbin_cf = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-save")) savename = argv[++i];
 		else if (!strcmp(argv[i],"-load")) loadname = argv[++i];
@@ -190,15 +207,23 @@ public:
         else if (!strcmp(argv[i],"-output")) out_file = argv[++i];
         else if (!strcmp(argv[i],"-binfile")) radial_bin_file=argv[++i];
         else if (!strcmp(argv[i],"-binfile_cf")) radial_bin_file_cf=argv[++i];
+        else if (!strcmp(argv[i],"-N2")) N2=atof(argv[++i]);
+        else if (!strcmp(argv[i],"-N3")) N3=atof(argv[++i]);
+        else if (!strcmp(argv[i],"-N4")) N4=atof(argv[++i]);
+#ifdef LEGENDRE
+        else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
+        else if (!strcmp(argv[i],"-phi_file12")) phi_file12=argv[++i];
+        else if (!strcmp(argv[i],"-phi_file2")) phi_file2=argv[++i];
+#else
+		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
         else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
         else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
         else if (!strcmp(argv[i],"-jackknife2")) jk_weight_file2=argv[++i];
         else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin12")) RR_bin_file12=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin2")) RR_bin_file2=argv[++i];
-        else if (!strcmp(argv[i],"-N2")) N2=atof(argv[++i]);
-        else if (!strcmp(argv[i],"-N3")) N3=atof(argv[++i]);
-        else if (!strcmp(argv[i],"-N4")) N4=atof(argv[++i]);
+#endif
         else if (!strcmp(argv[i],"-perbox")) perbox = 1;
         else if (!strcmp(argv[i],"-np")) {
 			double tmp;
@@ -218,7 +243,7 @@ public:
 		i++;
 	    }
 	    
-    	    
+	        
 #ifdef PERIODIC
         if (perbox!=true){
             printf("\nC++ code compiled with periodic flag, but periodic box parameter is not set! Exiting.\n\n");
@@ -249,6 +274,21 @@ public:
 	    assert(mumin>=0); // We take the absolte value of mu
 	    assert(mumax<=1); // mu > 1 makes no sense
         
+#ifdef LEGENDRE
+        assert(max_l%2==0); // check maximum ell is even
+        assert(max_l<=10); // ell>10 not yet implemented!
+        if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
+        if (phi_file2==NULL) {phi_file2 = (char *) default_phi_file2;}
+        if (phi_file12==NULL) {phi_file12 = (char *) default_phi_file12;} 
+        mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
+#else
+	    if (RR_bin_file==NULL) RR_bin_file = (char *) default_RR_bin_file; // no binning file was given
+	    if (RR_bin_file12==NULL) RR_bin_file12 = (char *) default_RR_bin_file12; // no binning file was given
+	    if (RR_bin_file2==NULL) RR_bin_file2 = (char *) default_RR_bin_file2; // no binning file was given
+	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
+	    if (jk_weight_file12==NULL) jk_weight_file12 = (char *) default_jk_weight_file12; // No jackknife name was given
+	    if (jk_weight_file2==NULL) jk_weight_file2 = (char *) default_jk_weight_file2; // No jackknife name was given
+#endif
         if (rescale<=0.0) rescale = box_max;   // This would allow a unit cube to fill the periodic volume
 	    if (corname==NULL) { corname = (char *) default_corname; }// No name was given
 	    if (out_file==NULL) out_file = (char *) default_out_file; // no output savefile
@@ -259,16 +299,39 @@ public:
 	    if (fname2==NULL) fname2 = (char *) default_fname2;   // No name was given
 	    if (corname2==NULL) { corname2 = (char *) default_corname2; }// No name was given
 	    if (corname12==NULL) { corname12 = (char *) default_corname12; }// No name was given
-	    if (RR_bin_file==NULL) RR_bin_file = (char *) default_RR_bin_file; // no binning file was given
-	    if (RR_bin_file12==NULL) RR_bin_file12 = (char *) default_RR_bin_file12; // no binning file was given
-	    if (RR_bin_file2==NULL) RR_bin_file2 = (char *) default_RR_bin_file2; // no binning file was given
-	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
-	    if (jk_weight_file12==NULL) jk_weight_file12 = (char *) default_jk_weight_file12; // No jackknife name was given
-	    if (jk_weight_file2==NULL) jk_weight_file2 = (char *) default_jk_weight_file2; // No jackknife name was given
-	    
 	    
 	    // Decide if we are using multiple tracers:
 	    if (strlen(fname2)!=0){
+#ifdef LEGENDRE
+            if ((strlen(phi_file12)==0)||(strlen(phi_file2)==0)){
+                printf("Two random particle sets input but not enough survey correction function files! Exiting.");
+                exit(1);
+            }
+            else if ((strlen(corname2)==0)||(strlen(corname12)==0)){
+                printf("Two random particle sets input but not enough correlation function files! Exiting.");
+                exit(1);
+            }
+            else if (nofznorm2==0){
+                printf("Two random particle sets input but only one galaxy number provided; exiting.");
+                exit(1);
+            }
+            else{
+                // Set multi tracers parameter since we have all required data
+                printf("Using two sets of tracer particles");
+                multi_tracers=true;
+            }
+        }
+        else{
+            printf("\nUsing a single set of tracer particles\n");
+            multi_tracers=false;
+            // set variables for later use
+            phi_file12=phi_file;
+            phi_file2=phi_file;
+            nofznorm2=nofznorm;
+            corname12=corname;
+            corname2=corname;
+        }            
+#else
             if ((strlen(RR_bin_file12)==0)||(strlen(RR_bin_file2)==0)){
                 printf("Two random particle sets input but not enough RR pair count files! Exiting.");
                 exit(1);
@@ -278,11 +341,11 @@ public:
                 exit(1);
             }
             else if ((strlen(corname2)==0)||(strlen(corname12)==0)){
-                printf("Two random particle sets input but not enough jackknife weight files! Exiting.");
+                printf("Two random particle sets input but not enough correlation function files! Exiting.");
                 exit(1);
             }
             else if (nofznorm2==0){
-                printf("Two random particle sets input but only one n_of_z norm provided; exiting.");
+                printf("Two random particle sets input but only one galaxy number provided; exiting.");
                 exit(1);
             }
             else{
@@ -303,6 +366,7 @@ public:
             jk_weight_file12=jk_weight_file;
             jk_weight_file2=jk_weight_file;
         }
+#endif
 	    
 	    create_directory();
         
@@ -369,7 +433,14 @@ private:
         fprintf(stderr, "   -RRbin12 <filename>: (Optional) File containing the {1,2} jackknife RR bin counts (computed from Corrfunc)\n");
 	    fprintf(stderr, "   -RRbin2 <filename>: (Optional) File containing the {2,2} jackknife RR bin counts (computed from Corrfunc)\n");
         fprintf(stderr, "\n");
-        
+#ifdef LEGENDRE
+        fprintf(stderr, "   -max_l <max_l>: Maximum legendre multipole (must be even)");
+        fprintf(stderr, "   -phi_file <filename>: Survey correction function coefficient file\n");
+        fprintf(stderr, "\n");
+        fprintf(stderr, "   -phi_file12 <filename>: (Optional) Survey correction function coefficient file for fields 1 x 2\n");
+        fprintf(stderr, "   -phi_file2 <filename>: (Optional) Survey correction function coefficent file for field 2\n");
+        fprintf(stderr, "\n");
+#endif
         fprintf(stderr, "   -maxloops <max_loops>: Maximum number of integral loops\n");
         fprintf(stderr, "   -N2 <N2>: Number of secondary particles to choose per primary particle\n");
         fprintf(stderr, "   -N3 <N3>: Number of tertiary particles to choose per secondary particle\n");

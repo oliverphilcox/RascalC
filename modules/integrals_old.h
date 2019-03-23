@@ -3,7 +3,6 @@
 #include "correlation_function.h"
 #include "cell_utilities.h"
 #include "jackknife_weights.h"
-#include "legendre_utilities.h"
 
 #ifndef INTEGRALS_H
 #define INTEGRALS_H
@@ -30,6 +29,7 @@ private:
     
 public:
     Integrals(){};
+    
     Integrals(Parameters *par, CorrelationFunction *_cf12, CorrelationFunction *_cf13, CorrelationFunction *_cf24, JK_weights *_JK12, JK_weights *_JK23, JK_weights *_JK34, int _I1, int _I2, int _I3, int _I4, Float* _product_weights12_12, Float* _product_weights12_23, Float* _product_weights12_34){
         cf12 = new CorrelationFunction(_cf12);
         cf13 = new CorrelationFunction(_cf13);
@@ -148,17 +148,16 @@ public:
         }
         return which_bin*mbin + floor((mu-mumin)/dmu);
     }
-
+    
     inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const int pj_id, int* &bin, Float* &wij, const double prob, const double prob1, const double prob2){
         // Accumulates the two point integral C2. Also outputs an array of bin values for later reuse.
         // Prob. here is defined as g_ij / f_ij where g_ij is the sampling PDF and f_ij is the true data PDF for picking pairs (equal to n_i/N n_j/N for N particles)
         // Prob1/2 are for when we divide the random particles into two subsets 1 and 2.
         
-        Float tmp_weight, tmp_xi, rij_mag, rij_mu, c2v;
+        Float tmp_weight, tmp_xi, rij_mag, rij_mu, rav, c2v, c2vj, JK_weight;
         Particle pi;
-        int tmp_bin;
-        Float c2vj,rav,JK_weight;
-        int jk_bin_i, jk_bin_j,max_bin=nbin*mbin;
+        int tmp_bin, jk_bin_i, jk_bin_j;
+
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
                 if(prim_ids[i]==pj_id){
                     wij[i]=-1;
@@ -167,12 +166,13 @@ public:
                 
                 pi = pi_list[i]; // first particle
                 cleanup_l(pi.pos,pj.pos,rij_mag,rij_mu); // define |r_ij| and ang(r_ij)
+                tmp_bin = getbin(rij_mag, rij_mu); // bin for each particle
                 
-                if ((tmp_bin<0)||(tmp_bin>=max_bin)){
+                if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)){
                     wij[i]=-1;
-                    continue;
+                    continue; // if not in correct bin
                 }
-                 
+                
                 tmp_weight = pi.w*pj.w; // product of weights
                 tmp_xi = cf12->xi(rij_mag, rij_mu); // correlation function for i-j
                 
@@ -180,12 +180,11 @@ public:
                 bin[i]=tmp_bin;
                 wij[i] = tmp_weight;
                 
-                
-                // Now compute the integral:
-                c2v = tmp_weight*tmp_weight*(1.+tmp_xi) / prob*2.; // c2 contribution with symmetry factor
                  // Compute jackknife weight tensor:
                 JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pi.JK),int(pj.JK),tmp_bin,tmp_bin,JK12,JK12, product_weights12_12);
             
+                // Now compute the integral:
+                c2v = tmp_weight*tmp_weight*(1.+tmp_xi) / prob*2.; // c2 contribution with symmetry factor
                 c2vj = c2v*JK_weight;
                 rav = tmp_weight / prob; // RR_a contribution
                 
@@ -217,21 +216,19 @@ public:
                 }
         }
     }
+
     inline void third(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const int pj_id, const int pk_id, const int* bin_ij, const Float* wij, Float* &xi_ik, Float* wijk, const double prob){
         // Accumulates the three point integral C3. Also outputs an array of xi_ik and bin_ik values for later reuse.
-       
+        
         // First define variables:
         Particle pi;
-        Float rik_mag, rik_mu, c3v, rjk_mag, rjk_mu, tmp_weight, xi_ik_tmp;
+        Float rik_mag, rik_mu, c3v, c3vj, rjk_mag, rjk_mu, tmp_weight, xi_ik_tmp, JK_weight;
         int tmp_bin, tmp_full_bin;
         
         cleanup_l(pj.pos,pk.pos,rjk_mag,rjk_mu); 
-        
-        Float c3vj, JK_weight;
         tmp_bin = getbin(rjk_mag,rjk_mu); // bin for each particle
-        int max_bin = nbin*mbin;
-                
-        for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
+        
+        for(int i=0;i<pln;i++){ // Iterate ovr particle in pi_list
             if((pk_id==pj_id)||(wij[i]==-1)||(prim_ids[i]==pk_id)){
                 wijk[i]=-1;
                 continue; // skip incorrect bins / ij,jk self counts
@@ -246,37 +243,40 @@ public:
             xi_ik[i]=xi_ik_tmp;
             wijk[i]=tmp_weight;
             
-            if ((tmp_bin<0)||(tmp_bin>=max_bin)){
+            if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)){
                 // Don't add contributions of this to C3 - but STILL save xi_ik etc. for later
                 continue; // if not in correct bin
             }
+            // Compute jackknife weight tensor:
+            JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pj.JK),int(pk.JK),bin_ij[i],tmp_bin, JK12, JK23, product_weights12_23);
             
             // Now compute the integral;
             c3v = tmp_weight*pj.w/prob*xi_ik_tmp*4.; // include symmetry factor
-            // Compute jackknife weight tensor:
-            JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pj.JK),int(pk.JK),bin_ij[i],tmp_bin, JK12, JK23, product_weights12_23);
             c3vj = c3v*JK_weight;
+            
             // Add to local counts
             tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c3[tmp_full_bin]+=c3v;
             c3j[tmp_full_bin]+=c3vj;
-            binct3[tmp_full_bin]++;           
+            binct3[tmp_full_bin]++;
         }
     }
+     
     inline void fourth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const int pj_id, const int pk_id, const int pl_id, const int* bin_ij, const Float* wijk, const Float* xi_ik, const double prob){
         // Accumulates the four point integral C4.
         
         // First define variables
         Particle pi;
-        Float rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, xi_jl, tmp_weight;
-        int tmp_bin, tmp_full_bin;
-        cleanup_l(pl.pos,pk.pos,rkl_mag,rkl_mu); 
+        Float rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, c4vj, xi_jl, tmp_weight, JK_weight;
+        int tmp_bin, tmp_full_bin;    
         
-        Float c4vj,JK_weight;
-        int max_bin = nbin*mbin;
-        tmp_bin = getbin(rkl_mag,rkl_mu);
+        // Compute quantities independent of i
+        if((pj_id==pl_id)||(pk_id==pl_id)) return;
+        cleanup_l(pk.pos, pl.pos, rkl_mag, rkl_mu); // define angles/lengths
+        tmp_bin = getbin(rkl_mag,rkl_mu); // kl bin for each particle
+            
+        if ((tmp_bin<0)||(tmp_bin>=nbin*mbin)) return; // if not in correct bin            
         
-        if ((tmp_bin<0)||(tmp_bin>=max_bin)) return; // if not in correct bin                    
         cleanup_l(pl.pos,pj.pos,rjl_mag,rjl_mu); 
         xi_jl = cf24->xi(rjl_mag, rjl_mu); // j-l correlation
         
@@ -287,11 +287,13 @@ public:
             pi = pi_list[i];
             tmp_weight = wijk[i]*pl.w; // product of weights, w_i*w_j*w_k*w_l
             
-            // Now compute the integral;
-            c4v = tmp_weight/prob*2.*xi_ik[i]*xi_jl; // with xi_ik*xi_jl = xi_il*xi_jk symmetry factor
             // Compute jackknife weight tensor:
             JK_weight=weight_tensor(int(pi.JK),int(pj.JK),int(pk.JK),int(pl.JK),bin_ij[i],tmp_bin, JK12, JK34, product_weights12_34);
+            
+            // Now compute the integral;
+            c4v = tmp_weight/prob*2.*xi_ik[i]*xi_jl; // with xi_ik*xi_jl = xi_il*xi_jk symmetry factor
             c4vj = c4v*JK_weight;
+            
             // Add to local counts
             tmp_full_bin = bin_ij[i]*mbin*nbin+tmp_bin;
             c4[tmp_full_bin]+=c4v;
@@ -299,7 +301,7 @@ public:
             binct4[tmp_full_bin]++;            
         }
     }
-     
+        
 private:   
     inline Float weight_tensor(const int Ji, const int Jj, const int Jk, const int Jl, const int bin_a, const int bin_b, JK_weights *JK_XY, JK_weights *JK_ZW, Float *product_weights){
         // Compute the jackknife weight tensor for jackknife regions J_i, J_j, J_k, J_l and w_aA weight matrix w_matrix. NB: J_x are collapsed jackknife indices here - only using the non-empty regions.

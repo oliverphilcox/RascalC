@@ -2,7 +2,7 @@
 
 CC = gcc
 CFLAGS = -O3 -Wall
-CXXFLAGS = -O3 -Wall -DOPENMP 
+CXXFLAGS = -O3 -Wall -DOPENMP -DLEGENDRE
 # disable OPENMP to run single threaded
 #-DPERIODIC # use this to enable periodic behavior
 

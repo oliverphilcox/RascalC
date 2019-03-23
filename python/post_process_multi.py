@@ -191,10 +191,10 @@ for i,index in enumerate(indices):
     alpha_best[i]=optimal_alpha
 
 # input indices
-I1 = [1,1,1,1,2,2]
-I2 = [1,2,2,1,1,2]
-I3 = [1,1,2,2,2,2]
-I4 = [1,1,1,2,2,2]
+I1 = [1,1,1,1,1,2,2]
+I2 = [1,2,2,2,1,1,2]
+I3 = [1,1,2,1,2,2,2]
+I4 = [1,1,1,2,2,2,2]
 
 def matrix_readin(suffix='full'):
     """Read in multi-field covariance matrices. This returns lists of full and jackknife covariance matrices"""
@@ -267,10 +267,14 @@ def matrix_readin(suffix='full'):
         diff2s[j1,j2]=diff2
         c3s[j2,j1,j3]=c3
         c3js[j2,j1,j3]=c3j
-        c4s[j1,j2,j3,j4]=c4
-        c4js[j1,j2,j3,j4]=c4j
+        if((j1!=j2)&(j3!=j4)):
+            c4s[j1,j2,j3,j4]+=0.5*c4 # to account for xi_ik xi_jl = xi_il xi_jk assumption
+            c4js[j1,j2,j3,j4]+=0.5*c4j
+        else:
+            c4s[j1,j2,j3,j4]=c4
+            c4js[j1,j2,j3,j4]=c4j
         
-        # Add symmetries:
+        # Add symmetries (automatically accounts for xi assumption):
         if j1!=j3:
             c3s[j2,j3,j1]=c3
             c3js[j2,j3,j1]=c3j
