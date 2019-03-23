@@ -183,9 +183,10 @@ int main(int argc, char *argv[]) {
     if(par.multi_tracers==true){
         compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,2,1,1,2);
         compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,2,2,1,3);
-        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,1,2,2,4);
-        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,2,1,2,2,5);
-        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,2,2,2,2,6);
+        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,2,1,2,4);
+        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,1,1,2,2,5);
+        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,2,1,2,2,6);
+        compute_integral(all_grid,&par,all_weights,all_cf,all_rd,2,2,2,2,7);
     }
     rusage ru;
     getrusage(RUSAGE_SELF, &ru);

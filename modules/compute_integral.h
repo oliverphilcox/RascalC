@@ -119,7 +119,7 @@
             // MAIN FUNCTION TO COMPUTE INTEGRALS
             
             int tot_iter=1; // total number of iterations
-            if(par->multi_tracers==true) tot_iter=6;
+            if(par->multi_tracers==true) tot_iter=7;
             
             // Define relevant grids 
             Grid *grid1 = which_grid(all_grid,I1);
