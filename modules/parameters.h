@@ -20,7 +20,7 @@ public:
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/xi_n45_m10_11.dat";
+	const char default_corname[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/mean_xi.xi";
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
@@ -31,7 +31,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/MeanXi/";
     
     // The number of mu bins in the correlation function
     int mbin_cf = 10;
@@ -49,11 +49,11 @@ public:
     //---------- (r,mu) PARAMETERS ------------------------------------------
     
 	// The number of mu bins
-	int mbin = 10;
+	int mbin = 30;
     
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/RR_counts_n35_m10_11.txt";
+    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/RR_counts_n35_30_11.txt";
     
     //---------- JACKKNIFE PARAMETERS ---------------------------------------
     
@@ -74,9 +74,9 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 20; // number of j cells per i cell
-    int N3 = 20; // number of k cells per j cell
-    int N4 = 20; // number of l cells per k cell
+    int N2 = 40; // number of j cells per i cell
+    int N3 = 40; // number of k cells per j cell
+    int N4 = 40; // number of l cells per k cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
