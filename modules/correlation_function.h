@@ -126,7 +126,7 @@ class CorrelationFunction{
             *y = (double *)malloc(sizeof(double)*m);
             *z = (double *)malloc(sizeof(double)*n*m);
 
-            printf("# Found %d radial and %d mu bins in %s\n", n,m, filename);
+            printf("# Found %d radial and %d mu bins in %s\n", n-1,m, filename);
 
             int nx=0, ny=0, nz=0, lnnr=0;
 

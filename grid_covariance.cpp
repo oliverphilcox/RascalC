@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
         all_survey[2].copy(&tmp_sc12);
     }
 #else
-    // Read in jackknife weights and RR pair counts
+    // Read in jackknife weights and RR pair counts (if JACKKNIFE is not defined just includes RR counts)
     JK_weights all_weights[max_no_functions]; // create empty functions
 
     
@@ -116,11 +116,11 @@ int main(int argc, char *argv[]) {
             char *filename;
             if(index==0) filename=par.fname;
             else filename=par.fname2;
-#ifdef LEGENDRE
-            orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax);
+#ifdef JACKKNIFE
+            orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax, &all_weights[index]);
             assert(par.np>0);
 #else
-            orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax, &all_weights[index]);
+            orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax);
             assert(par.np>0);
 #endif
             par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.rmax, shift, par.nside);
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
         fflush(NULL);
     }
 #ifndef LEGENDRE
-    // Now rescale weights based on number of particles
+    // Now rescale weights based on number of particles (whether or not using jackknives)
     all_weights[0].rescale(all_grid[0].norm,all_grid[0].norm);
     if(par.multi_tracers==true){
         all_weights[1].rescale(all_grid[1].norm,all_grid[1].norm);

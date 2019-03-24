@@ -6,8 +6,8 @@ import sys
 import numpy as np
 
 # PARAMETERS
-if len(sys.argv)!=9:
-    print("Usage: python RR_counts.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR}")
+if len(sys.argv)!=10:
+    print("Usage: python RR_counts.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} {NORMED}")
     sys.exit()
 fname = str(sys.argv[1])
 fname2 = str(sys.argv[2])
@@ -17,6 +17,7 @@ nmu_bins = int(sys.argv[5])
 nthreads = int(sys.argv[6])
 periodic = int(sys.argv[7])
 outdir=str(sys.argv[8])
+normed=int(sys.argv[9])
 
 ## First read in weights and positions:
 dtype = np.double 
@@ -109,9 +110,15 @@ if not periodic:
                    verbose=False,is_comoving_dist=True)
     
     # Weight by average particle weighting
-    RR_counts11=RR11[:]['npairs']*RR11[:]['weightavg']/np.sum(W)**2.
-    RR_counts12=RR12[:]['npairs']*RR12[:]['weightavg']/(np.sum(W)*np.sum(W2))
-    RR_counts22=RR22[:]['npairs']*RR22[:]['weightavg']/np.sum(W2)**2.
+    RR_counts11=RR11[:]['npairs']*RR11[:]['weightavg']
+    if normed:
+        RR_counts11/=np.sum(W)**2.
+    RR_counts12=RR12[:]['npairs']*RR12[:]['weightavg']
+    if normed:
+        RR_counts12/=(np.sum(W)*np.sum(W2))
+    RR_counts22=RR22[:]['npairs']*RR22[:]['weightavg']
+    if normed:
+        RR_counts22/=np.sum(W2)**2.
         
 else:
     # Compute RR counts for the periodic case (measuring mu from the Z-axis)
@@ -129,9 +136,15 @@ else:
     RR22=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,X2,Y2,Z2,weights1=W2,weight_type='pair_product',
              periodic=False,verbose=False)
     # Weight by average particle weighting
-    RR_counts11=RR11[:]['npairs']*RR11[:]['weightavg']/np.sum(W)**2.
-    RR_counts12=RR12[:]['npairs']*RR12[:]['weightavg']/(np.sum(W)*np.sum(W2))
-    RR_counts22=RR22[:]['npairs']*RR22[:]['weightavg']/np.sum(W2)**2.
+    RR_counts11=RR11[:]['npairs']*RR11[:]['weightavg']
+    if normed:
+        RR_counts11/=np.sum(W)**2.
+    RR_counts12=RR12[:]['npairs']*RR12[:]['weightavg']
+    if normed:
+        RR_counts12/=(np.sum(W)*np.sum(W2))
+    RR_counts22=RR22[:]['npairs']*RR22[:]['weightavg']
+    if normed:
+        RR_counts22/=np.sum(W2)**2.
     
 
 outfile11 = outdir+"RR_counts_n%d_m%d_11.txt"%(nrbins,nmu_bins)

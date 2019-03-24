@@ -6,8 +6,8 @@ import sys
 import numpy as np
 
 # PARAMETERS
-if len(sys.argv)!=8:
-    print("Usage: python RR_counts.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR}")
+if len(sys.argv)!=9:
+    print("Usage: python RR_counts.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} {NORMED}")
     sys.exit()
 fname = str(sys.argv[1])
 binfile = str(sys.argv[2])
@@ -16,7 +16,7 @@ nmu_bins = int(sys.argv[4])
 nthreads = int(sys.argv[5])
 periodic = int(sys.argv[6])
 outdir=str(sys.argv[7])
-
+normed=int(sys.argv[8])
 
 ## First read in weights and positions:
 dtype = np.double 
@@ -83,7 +83,9 @@ if not periodic:
     RR=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,Ra,Dec,com_dist,weights1=W,weight_type='pair_product',
                    verbose=False,is_comoving_dist=True)
     # Weight by average particle weighting
-    RR_counts=RR[:]['npairs']*RR[:]['weightavg']/np.sum(W)**2.
+    RR_counts=RR[:]['npairs']*RR[:]['weightavg']
+    if normed:
+        RR_counts/=np.sum(W)**2.
         
 else:
     # Compute RR counts for the periodic case (measuring mu from the Z-axis)
@@ -94,7 +96,10 @@ else:
     RR=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,X,Y,Z,weights1=W,weight_type='pair_product',
              periodic=False,verbose=False)
     # Weight by average particle weighting
-    RR_counts=RR[:]['npairs']*RR[:]['weightavg']/np.sum(W)**2.
+    RR_counts=RR[:]['npairs']*RR[:]['weightavg']
+    if normed:
+        RR_counts/=np.sum(W)**2.
+    
     
 outfile = outdir+"RR_counts_n%d_m%d_11.txt"%(nrbins,nmu_bins)
 print("Saving binned pair counts as %s" %outfile);

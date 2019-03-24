@@ -127,6 +127,7 @@
         
     public:    
         compute_integral(){};
+        
 #ifdef LEGENDRE
         compute_integral(Grid all_grid[], Parameters *par, CorrelationFunction all_cf[], RandomDraws all_rd[], SurveyCorrection all_survey[], int I1, int I2, int I3, int I4, int iter_no){
 #else
@@ -173,7 +174,7 @@
             
             int convergence_counter=0, printtime=0;// counter to stop loop early if convergence is reached.
             
-#ifndef LEGENDRE
+#ifdef JACKKNIFE
     // --------Compute product weights----------------------
             int nbins=nbin*mbin;
             Float *product_weights12_12, *product_weights12_23, *product_weights12_34; // arrays to get products of jackknife weights to avoid recomputation
@@ -238,8 +239,10 @@
             gsl_rng_env_setup(); // initialize gsl rng
 #ifdef LEGENDRE
             Integrals sumint(par, cf12, cf13, cf24, I1, I2, I3, I4,survey_corr_12,survey_corr_23,survey_corr_34); // total integral
-#else
+#elif defined JACKKNIFE
             Integrals sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4,product_weights12_12,product_weights12_23,product_weights12_34); // total integral
+#else
+            Integrals sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // total integral
 #endif       
             uint64 tot_pairs=0, tot_triples=0, tot_quads=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
             uint64 cell_attempt2=0,cell_attempt3=0,cell_attempt4=0; // number of j,k,l cells attempted
@@ -258,9 +261,11 @@
             
 #ifdef OPENMP       
 #ifdef LEGENDRE
-        #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
-#else
+    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+#elif defined JACKKNIFE
     #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+#else
+    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #endif
             { // start parallel loop
             // Decide which thread we are in
@@ -297,8 +302,10 @@
             ecL+=posix_memalign((void **) &factor_ij, PAGE, sizeof(Float)*mnp);
             ecL+=posix_memalign((void **) &poly_ij, PAGE, sizeof(Float)*mnp*n_param);
             assert(ecL==0);
-#else
+#elif defined JACKKNIFE
             Integrals locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4, product_weights12_12, product_weights12_23, product_weights12_34); // Accumulates the integral contribution of each thread
+#else
+            Integrals locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // Accumulates the integral contribution of each thread
 #endif
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
             gsl_rng_set(locrng, steps*(thread+1));
@@ -434,7 +441,6 @@
     #pragma omp critical // only one processor can access at once
     #endif
             {
-                 
                 if ((n_loops+1)%par->nthread==0){ // Print every nthread loops
                     TotalTime.Stop(); // interrupt timing to access .Elapsed()
                     int current_runtime = TotalTime.Elapsed();
@@ -443,7 +449,7 @@
                     
                     TotalTime.Start(); // Restart the timer
                     Float frob_C2, frob_C3, frob_C4;
-#ifdef LEGENDRE
+#ifndef JACKKNIFE
                     sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4);
                     if(frob_C4<0.01) convergence_counter++;
                     if (n_loops!=0){
@@ -470,7 +476,7 @@
                 
                 locint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads);
                 locint.save_integrals(output_string,0);
-#ifndef LEGENDRE
+#ifdef JACKKNIFE
                 locint.save_jackknife_integrals(output_string);
 #endif
                 locint.sum_total_counts(cnt2, cnt3, cnt4); 
@@ -515,7 +521,7 @@
         sumint.save_integrals(out_string,1); // save integrals to file
         sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file
         printf("Printed integrals to file in the %sCovMatricesAll/ directory\n",par->out_file);
-#ifndef LEGENDRE
+#ifdef JACKKNIFE
         sumint.save_jackknife_integrals(out_string);
         printf("Printed jackknife integrals to file in the %sCovMatricesJack/ directory\n",par->out_file);
 #endif

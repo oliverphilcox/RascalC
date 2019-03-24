@@ -28,6 +28,7 @@ public:
     
     // Number of galaxies in first dataset
     Float nofznorm = 642051;
+    
     // Output directory 
     char *out_file = NULL;
     const char default_out_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/";
@@ -50,13 +51,15 @@ public:
 	// The number of mu bins
 	int mbin = 10;
     
-    // Name of the jackknife weight file
-    char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "jackknife_weights_n35_m10_j169_11.dat";
-    
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "binned_pair_counts_n35_m10_j169_11.dat";
+    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/RR_counts_n35_m10_11.txt";
+    
+    //---------- JACKKNIFE PARAMETERS ---------------------------------------
+    
+    // Name of the jackknife weight file
+    char *jk_weight_file = NULL; // w_{aA}^{11} weights
+    const char default_jk_weight_file[500] = "";
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
@@ -75,7 +78,7 @@ public:
     int N3 = 20; // number of k cells per j cell
     int N4 = 20; // number of l cells per k cell
     
-    //------------------ MULTI FIELD PARAMETERS ----------------------------
+    //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
     // Second set of random particles
     char *fname2 = NULL;
@@ -91,14 +94,7 @@ public:
     // Number of galaxies in second dataset
     Float nofznorm2=0; // 
     
-    //---------- (r,mu) MULTI FIELD PARAMETERS ------------------------------
-    
-    // Jackknife weight files
-    char *jk_weight_file12 = NULL; // w_{aA}^{12} weights
-    const char default_jk_weight_file12[500] = "";
-    
-    char *jk_weight_file2 = NULL; // w_{aA}^{22} weights
-    const char default_jk_weight_file2[500] = "";
+    //---------- (r,mu) MULTI-FIELD PARAMETERS ------------------------------
     
     // Summed pair count files 
     char *RR_bin_file12 = NULL; // RR_{aA}^{12} file
@@ -106,6 +102,15 @@ public:
     
     char *RR_bin_file2 = NULL; // RR_{aA}^{22} file
     const char default_RR_bin_file2[500] = "";
+    
+    //-------- JACKKNIFE MULTI-FIELD PARAMETERS ------------------------------
+    
+    // Jackknife weight files
+    char *jk_weight_file12 = NULL; // w_{aA}^{12} weights
+    const char default_jk_weight_file12[500] = "";
+    
+    char *jk_weight_file2 = NULL; // w_{aA}^{22} weights
+    const char default_jk_weight_file2[500] = "";
     
     //-------- LEGENDRE MULTI-FIELD PARAMETERS -------------------------------
     
@@ -124,7 +129,7 @@ public:
 	Float mumax = 1.0;
     
     // Number of loops over which to refine the correlation function
-    int cf_loops = 10;
+    int cf_loops = 20;
     
     // The periodicity of the position-space cube.
 	Float boxsize = 200; // this is only used if the input particles are made randomly
@@ -215,11 +220,12 @@ public:
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
         else if (!strcmp(argv[i],"-phi_file12")) phi_file12=argv[++i];
         else if (!strcmp(argv[i],"-phi_file2")) phi_file2=argv[++i];
-#else
-		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
+#elif defined JACKKNIFE
         else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
         else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
         else if (!strcmp(argv[i],"-jackknife2")) jk_weight_file2=argv[++i];
+#else
+		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
         else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin12")) RR_bin_file12=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin2")) RR_bin_file2=argv[++i];
@@ -281,13 +287,14 @@ public:
         if (phi_file2==NULL) {phi_file2 = (char *) default_phi_file2;}
         if (phi_file12==NULL) {phi_file12 = (char *) default_phi_file12;} 
         mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
+#elif defined JACKKNIFE
+	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
+	    if (jk_weight_file12==NULL) jk_weight_file12 = (char *) default_jk_weight_file12; // No jackknife name was given
+	    if (jk_weight_file2==NULL) jk_weight_file2 = (char *) default_jk_weight_file2; // No jackknife name was given
 #else
 	    if (RR_bin_file==NULL) RR_bin_file = (char *) default_RR_bin_file; // no binning file was given
 	    if (RR_bin_file12==NULL) RR_bin_file12 = (char *) default_RR_bin_file12; // no binning file was given
 	    if (RR_bin_file2==NULL) RR_bin_file2 = (char *) default_RR_bin_file2; // no binning file was given
-	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
-	    if (jk_weight_file12==NULL) jk_weight_file12 = (char *) default_jk_weight_file12; // No jackknife name was given
-	    if (jk_weight_file2==NULL) jk_weight_file2 = (char *) default_jk_weight_file2; // No jackknife name was given
 #endif
         if (rescale<=0.0) rescale = box_max;   // This would allow a unit cube to fill the periodic volume
 	    if (corname==NULL) { corname = (char *) default_corname; }// No name was given
@@ -336,10 +343,12 @@ public:
                 printf("Two random particle sets input but not enough RR pair count files! Exiting.");
                 exit(1);
             }
+#ifdef JACKKNIFE
             else if ((strlen(jk_weight_file12)==0)||(strlen(jk_weight_file2)==0)){
                 printf("Two random particle sets input but not enough jackknife weight files! Exiting.");
                 exit(1);
             }
+#endif
             else if ((strlen(corname2)==0)||(strlen(corname12)==0)){
                 printf("Two random particle sets input but not enough correlation function files! Exiting.");
                 exit(1);
@@ -363,8 +372,10 @@ public:
             nofznorm2=nofznorm;
             corname12=corname;
             corname2=corname;
+#ifdef JACKKNIFE
             jk_weight_file12=jk_weight_file;
             jk_weight_file2=jk_weight_file;
+#endif
         }
 #endif
 	    
@@ -428,11 +439,7 @@ private:
 	    fprintf(stderr, "   -cor12 <file>: (Optional) File location of input xi_{12} cross-correlation function file.\n");
 	    fprintf(stderr, "   -cor2 <file>: (Optional) File location of input xi_2 correlation function file.\n");
 	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Number of galaxies in the survey for the second tracer set.\n");
-        fprintf(stderr, "   -jackknife12 <filename>: (Optional) File containing the {1,2} jackknife weights (normally computed from Corrfunc)\n");
-        fprintf(stderr, "   -jackknife2 <filename>: (Optional) File containing the {2,2} jackknife weights (normally computed from Corrfunc)\n");
-        fprintf(stderr, "   -RRbin12 <filename>: (Optional) File containing the {1,2} jackknife RR bin counts (computed from Corrfunc)\n");
-	    fprintf(stderr, "   -RRbin2 <filename>: (Optional) File containing the {2,2} jackknife RR bin counts (computed from Corrfunc)\n");
-        fprintf(stderr, "\n");
+        
 #ifdef LEGENDRE
         fprintf(stderr, "   -max_l <max_l>: Maximum legendre multipole (must be even)");
         fprintf(stderr, "   -phi_file <filename>: Survey correction function coefficient file\n");
@@ -440,6 +447,14 @@ private:
         fprintf(stderr, "   -phi_file12 <filename>: (Optional) Survey correction function coefficient file for fields 1 x 2\n");
         fprintf(stderr, "   -phi_file2 <filename>: (Optional) Survey correction function coefficent file for field 2\n");
         fprintf(stderr, "\n");
+#else
+        fprintf(stderr, "   -RRbin12 <filename>: (Optional) File containing the {1,2} jackknife RR bin counts (computed from Corrfunc)\n");
+	    fprintf(stderr, "   -RRbin2 <filename>: (Optional) File containing the {2,2} jackknife RR bin counts (computed from Corrfunc)\n");
+        fprintf(stderr, "\n");
+#ifdef JACKKNIFE
+        fprintf(stderr, "   -jackknife12 <filename>: (Optional) File containing the {1,2} jackknife weights (normally computed from Corrfunc)\n");
+        fprintf(stderr, "   -jackknife2 <filename>: (Optional) File containing the {2,2} jackknife weights (normally computed from Corrfunc)\n");
+#endif
 #endif
         fprintf(stderr, "   -maxloops <max_loops>: Maximum number of integral loops\n");
         fprintf(stderr, "   -N2 <N2>: Number of secondary particles to choose per primary particle\n");
@@ -476,24 +491,28 @@ private:
 	    if (mkdir(out_file,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)==0){
             printf("\nCreating output directory\n");
         }
-	    char cname[1000],cjname[1000];
+	    char cname[1000];
         snprintf(cname, sizeof cname, "%sCovMatricesAll/",out_file);
-        snprintf(cjname, sizeof cjname, "%sCovMatricesJack/",out_file);
 	    if (mkdir(cname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0){
             }
-        if (mkdir(cjname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)!=0){
-        }
         // Check if this was successful:
         struct stat info;
-
+        
         if( stat( cname, &info ) != 0 ){
             printf( "\nCreation of directory %s failed\n", cname);
             exit(1);
         }
+#ifdef JACKKNIFE
+        char cjname[1000];
+        snprintf(cjname, sizeof cjname, "%sCovMatricesJack/",out_file);
+        if (mkdir(cjname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)!=0){
+        }
+
         if(stat(cjname,&info)!=0){
             printf("\nCreation of directory %s fiailed\n",cjname);
             exit(1);
         }
+#endif
     }
     
     void read_radial_binning_cf(char* binfile_name){

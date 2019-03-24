@@ -5,29 +5,29 @@
 
 inline void legendre_polynomials(Float mu,int max_l, Float *poly_out){
     // Declare Legendre polynomials here
-    Float mu2,mu4,mu6,mu8,mu10; // declare all powers of mu here
+    Float all_mu[5]; // declare all powers of mu here
     
     // now compute relevant Legendre polynomials
     poly_out[0]=1;
     if(max_l>1){
-        mu2 = mu*mu;
-        poly_out[1] = 0.5*(3*mu2-1);
+        all_mu[0] = mu*mu; // mu^4
+        poly_out[1] = 0.5*(3.*all_mu[0]-1.);
     }
     if(max_l>3){
-        mu4 = mu2*mu2;
-        poly_out[2] = 1/8*(35*mu4-30*mu2+3);
+        all_mu[1] = pow(all_mu[0],2.); // mu^4
+        poly_out[2] = 1./8.*(35.*all_mu[1]-30.*all_mu[0]+3.);
     }
     if(max_l>5){
-        mu6 = mu4*mu2;
-        poly_out[3] = 1/16*(231*mu6-315*mu4+105*mu2-5);
+        all_mu[2] = all_mu[0]*all_mu[1]; // mu^6
+        poly_out[3] = 1./16.*(231.*all_mu[2]-315.*all_mu[1]+105.*all_mu[0]-5.);
     }
     if(max_l>7){
-        mu8 = mu6*mu2;
-        poly_out[4] = 1/128*(6435*mu8-12012*mu6+6930*mu4-1260*mu2+35);
+        all_mu[3] = all_mu[0]*all_mu[2]; // mu^8
+        poly_out[4] = 1./128.*(6435.*all_mu[3]-12012.*all_mu[2]+6930.*all_mu[1]-1260.*all_mu[0]+35.);
     }
     if(max_l>9){
-        mu10 = mu8*mu2;
-        poly_out[5] = 1/256*(46189*mu10-109395*mu8+90090*mu6-30030*mu4+3465*mu2-63);
+        all_mu[4] = all_mu[0]*all_mu[3]; // mu^10
+        poly_out[5] = 1./256.*(46189.*all_mu[4]-109395.*all_mu[3]+90090.*all_mu[2]-30030.*all_mu[1]+3465.*all_mu[0]-63.);
     }
 }
 
