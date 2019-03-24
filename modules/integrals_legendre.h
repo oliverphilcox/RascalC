@@ -343,12 +343,10 @@ public:
         double corrf3 = corrf2*norm3;
         double corrf4 = corrf3*norm4;;
         
-        int legendre_factor = pow((max_l/2+1),2.); // number of bins filled per set of particles used
-        
         for(int i = 0; i<nbin*mbin*nbin*mbin;i++){
-            c2[i]/=(n_pairs*corrf2*legendre_factor);
-            c3[i]/=(n_triples*corrf3*legendre_factor);
-            c4[i]/=(n_quads*corrf4*legendre_factor);
+            c2[i]/=(n_pairs*corrf2);
+            c3[i]/=(n_triples*corrf3);
+            c4[i]/=(n_quads*corrf4);
         }
         
         // Further normalize by pre-factor
