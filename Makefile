@@ -1,8 +1,8 @@
 ## MAKEFILE FOR RascalC. This compiles the grid_covariance.cpp file into the ./cov exececutable.
 
 CC = gcc
-CFLAGS = -O3 -Wall
-CXXFLAGS = -O3 -Wall -DOPENMP -DLEGENDRE
+CFLAGS = -Wall -O3 -Wall
+CXXFLAGS = -Wall -O3 -DOPENMP -DLEGENDRE
 # disable OPENMP to run single threaded
 #-DPERIODIC # use this to enable periodic behavior
 

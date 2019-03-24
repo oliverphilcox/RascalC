@@ -13,11 +13,11 @@ public:
     
 private:
     int nbin, mbin, max_l;
-    Float rmin,rmax,mumin,mumax,dmu; //Ranges in r and mu
+    Float rmin,rmax,mumin,mumax; //Ranges in r and mu
     Float *r_high, *r_low; // Max and min of each radial bin
     Float *c2, *c3, *c4; // Arrays to accumulate integrals
     char* out_file;
-    bool box,rad=0; // Flags to decide whether we have a periodic box + if we have a radial correlation function only
+    bool box; // Flags to decide whether we have a periodic box
     int I1, I2, I3, I4; // indices for which fields to use for each particle
     
     uint64 *binct, *binct3, *binct4; // Arrays to accumulate bin counts
@@ -71,9 +71,6 @@ public:
         r_high = par->radial_bins_high;
         r_low = par->radial_bins_low;
         
-        dmu=(mumax-mumin)/mbin;
-
-        rad=mbin==1&&dmu==1.;
     }
 
     ~Integrals() {
@@ -158,7 +155,7 @@ public:
                 int out_bin,tmp_out_bin;
                 for(int p_bin=0;p_bin<mbin;p_bin++){ // iterate over all legendre polynomials
                     // add to output list
-                    poly_ij[i*pln+p_bin]=polynomials[p_bin];
+                    poly_ij[i*mbin+p_bin]=polynomials[p_bin];
                     tmp_out_bin = (tmp_bin*mbin+p_bin)*nbin*mbin+tmp_bin*mbin;
                     for(int q_bin=0;q_bin<mbin;q_bin++){ // second polynomial
                         out_bin = tmp_out_bin+q_bin; // output bin
@@ -276,29 +273,22 @@ public:
     void cleanup_l(Float3 p1,Float3 p2,Float& norm,Float& mu){
         Float3 pos=p1-p2;
         norm = pos.norm();
-        // If the input correlation function had only radial information and no mu bins
-        // fill the dummy mu bins by 0.5
-        if(rad){
-            mu=0.5;
-        }
-        else{
 #ifndef PERIODIC
-            Float3 los=p1+p2; // No 1/2 as normalized anyway below
-            mu = fabs(pos.dot(los)/norm/los.norm());
+        Float3 los=p1+p2; // No 1/2 as normalized anyway below
+        mu = fabs(pos.dot(los)/norm/los.norm());
 #else
-            // In the periodic case use z-direction for mu
-            mu = fabs(pos.z/norm);
+        // In the periodic case use z-direction for mu
+        mu = fabs(pos.z/norm);
 #endif
-        }
     }
 public:
     void sum_ints(Integrals* ints) {
         // Add the values accumulated in ints to the corresponding internal sums
         for(int i=0;i<nbin*mbin*nbin*mbin;i++){
-            binct[i]+=ints->binct[i];
             c2[i]+=ints->c2[i];
             c3[i]+=ints->c3[i];
             c4[i]+=ints->c4[i];
+            binct[i]+=ints->binct[i];
             binct3[i]+=ints->binct3[i];
             binct4[i]+=ints->binct4[i];
         }
@@ -404,18 +394,18 @@ public:
         // Create output files
         
         char c2name[1000];
-        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_leg_n%d_m%d_%d%d_%s.txt", out_file,nbin, mbin,I1,I2,suffix);
+        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_leg_n%d_l%d_%d%d_%s.txt", out_file,nbin, max_l,I1,I2,suffix);
         char c3name[1000];
-        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_leg_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin,I2,I1,I3,suffix);
+        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_leg_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l,I2,I1,I3,suffix);
         char c4name[1000];
-        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_leg_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
+        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_leg_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1,I2,I3,I4,suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
         
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
-                fprintf(C2File,"%le\n",c2[i*nbin*mbin+j]);
+                fprintf(C2File,"%le\t",c2[i*nbin*mbin+j]);
                 fprintf(C3File,"%le\t",c3[i*nbin*mbin+j]);
                 fprintf(C4File,"%le\t",c4[i*nbin*mbin+j]);
             }

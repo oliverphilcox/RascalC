@@ -1,6 +1,8 @@
 // driver.h - this contains various c++ functions to create particles in random positions / read them in from file. Based on code by Alex Wiegand.
 #include "cell_utilities.h"
-#include "jackknife_weights.h"
+#ifndef LEGENDRE
+    #include "jackknife_weights.h"
+#endif
 
 #ifndef DRIVER_H
 #define DRIVER_H
@@ -24,10 +26,10 @@ Particle *make_particles(Float3 rect_boxsize, int np) {
     return p;
 }
 
-#ifdef LEGENDRE
-Particle *read_particles(Float rescale, int *np, const char *filename, const int rstart, uint64 nmax) {
-#else
+#ifdef JACKKNIFE
 Particle *read_particles(Float rescale, int *np, const char *filename, const int rstart, uint64 nmax, const JK_weights *JK) {
+#else
+Particle *read_particles(Float rescale, int *np, const char *filename, const int rstart, uint64 nmax) {
 #endif
     // This will read particles from a file, space-separated x,y,z,w,JK for weight w, (jackknife region JK)
     // Particle positions will be rescaled by the variable 'rescale'.
@@ -43,7 +45,7 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
         fprintf(stderr,"File %s not found\n", filename); abort();
     }
 
-#ifndef LEGENDRE
+#ifdef JACKKNIFE
     // Store filled jackknives in local memory to avoid file corruption
     int tmp_n_JK = JK->n_JK_filled;
     int tmp_filled_JK[tmp_n_JK];
@@ -90,7 +92,7 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 			   p[j].w = -tmp[stat-2]; //read in weights
 		   else
 			   p[j].w = tmp[stat-2]; 
-#ifndef LEGENDRE
+#ifdef JACKKNIFE
         int tmp_JK = tmp[stat-1]; // read in JK region
 		
 		// Collapse jacknife indices to only include filled JKs:
