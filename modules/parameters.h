@@ -53,7 +53,7 @@ public:
     
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/RR_counts_n35_30_11.txt";
+    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/RR_counts_n35_m30_11.txt";
     
     //---------- JACKKNIFE PARAMETERS ---------------------------------------
     
