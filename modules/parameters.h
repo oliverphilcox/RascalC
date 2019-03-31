@@ -78,6 +78,11 @@ public:
     int N3 = 40; // number of k cells per j cell
     int N4 = 40; // number of l cells per k cell
     
+    //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
+    
+    int N5 = 10; // number of m cells per l cell
+    int N6 = 10; // number of n cells per m cell
+    
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
     // Second set of random particles
@@ -224,6 +229,11 @@ public:
         else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
         else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
         else if (!strcmp(argv[i],"-jackknife2")) jk_weight_file2=argv[++i];
+#elif defined 3PCF
+        else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
+        else if (!strcmp(argv[i],"-N5")) N5=atof(argv[++i]);
+        else if (!strcmp(argv[i],"-N6")) N6=atof(argv[++i]);
 #else
 		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
         else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
@@ -261,12 +271,6 @@ public:
             exit(1);
         }
 #endif
-
-        if((!multi_tracers)&&(make_random==1)){
-            printf("\nRunning for multiple tracers but creating particles at random; this is not yet supported. Exiting.\n\n");
-            exit(1);
-        }
-
 	    // compute smallest and largest boxsizes
 	    Float box_min = fmin(fmin(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
 	    Float box_max = fmax(fmax(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
@@ -286,6 +290,11 @@ public:
         if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
         if (phi_file2==NULL) {phi_file2 = (char *) default_phi_file2;}
         if (phi_file12==NULL) {phi_file12 = (char *) default_phi_file12;} 
+        mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
+#elif defined 3PCF
+        assert(max_l%2==0); // check maximum ell is even
+        assert(max_l<=10); // ell>10 not yet implemented!
+        if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
         mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
 #elif defined JACKKNIFE
 	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
@@ -378,6 +387,23 @@ public:
 #endif
         }
 #endif
+
+        if((!multi_tracers)&&(make_random==1)){
+            printf("\nRunning for multiple tracers but creating particles at random; this is not yet supported. Exiting.\n\n");
+            exit(1);
+        }
+
+
+
+
+#ifdef LEGENDRE
+        if(multi_tracers){
+            printf("\nSupport for multi-tracer 3PCF covariance matrices not yet available. Exiting.\n\n");
+            exit(1);
+        }
+#endif
+
+
 	    
 	    create_directory();
         
@@ -461,7 +487,11 @@ private:
         fprintf(stderr, "   -N3 <N3>: Number of tertiary particles to choose per secondary particle\n");
         fprintf(stderr, "   -N4 <N4>: Number of quaternary particles to choose per tertiary particle\n");
         fprintf(stderr, "\n");
-        
+#ifdef 3PCF
+        fprintf(stderr, "   -N5 <N5>: Number of fifth particles to choose per quaternary particle\n");
+        fprintf(stderr, "   -N6 <N6>: Number of sixth particles to choose per fifth particle\n");
+        fprintf(stderr, "\n");
+#endif
         fprintf(stderr, "   -mumin <mumin> : Minimum mu binning to use.\n");
         fprintf(stderr, "   -mumax <mumax> : Maximum mu binning to use.\n");
         fprintf(stderr, "   -cf_loops <cf_loops>: Number of iterations over which to refine the correlation functions.\n");
