@@ -44,15 +44,16 @@ typedef double3 Float3;
     #include "modules/cell_utilities.h"
     #include "modules/grid.h"
     #include "modules/correlation_function.h"
-
-#ifdef LEGENDRE
+#ifdef 3PCF
+    #include "modules/compute_integral_3pcf.h"
+    #include "modules/legendre_utilities.h"
+#elif defined LEGENDRE
     #include "modules/legendre_utilities.h"
     #include "modules/integrals_legendre.h"
 #else
     #include "modules/jackknife_weights.h"
     #include "modules/integrals.h"
 #endif
-
     #include "modules/random_draws.h"
     #include "modules/driver.h"
 
@@ -63,7 +64,11 @@ STimer TotalTime;
 
 // ====================  Computing the integrals ==================
 
-#include "modules/compute_integral.h"
+#ifdef 3PCF
+    #include "modules/compute_integral_3pcf.h"
+#else
+    #include "modules/compute_integral.h"
+#endif
 #include "modules/rescale_correlation.h"
 
 // ================================ main() =============================
@@ -168,6 +173,7 @@ int main(int argc, char *argv[]) {
         
         fflush(NULL);
     }
+    
 #ifndef LEGENDRE
     // Now rescale weights based on number of particles (whether or not using jackknives)
     all_weights[0].rescale(all_grid[0].norm,all_grid[0].norm);
@@ -199,10 +205,12 @@ int main(int argc, char *argv[]) {
     rescale_correlation rescale(&par);
     rescale.refine_wrapper(&par, all_grid, all_cf, all_rd, max_no_functions);
     
-    printf("\nUsing xi(r) sampling for i-k and j-l cells\n");
-    printf("Using 1/r^2 sampling for i-j cells\n");
+#ifdef 3PCF
+    // Compute 3PCF integrals
+    compute_integral(all_grid,&par,all_cf[0],all_rd[0],all_survey[0],0); // final digit is iteration number
+    compute_integral(all_grid,&par,all_cf[0],all_rd[0],all_survey[0],1); 
     
-#ifdef LEGENDRE
+#elif defined LEGENDRE
     // Compute integrals
     compute_integral(all_grid,&par,all_cf,all_rd,all_survey,1,1,1,1,1); // final digit is iteration number
 

@@ -119,7 +119,7 @@ public:
         int tmp_bin;
         Float correction_factor;
         int max_bin=nbin;
-        Float polynomials[sc12->n_param];
+        Float polynomials[mbin];
 
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
                 if(prim_ids[i]==pj_id){
@@ -180,7 +180,7 @@ public:
         cleanup_l(pj.pos,pk.pos,rjk_mag,rjk_mu);         
         tmp_bin = get_radial_bin(rjk_mag); // radial bin
         int max_bin = nbin,out_bin;
-        Float correction_factors,polynomials_jk[sc12->n_param];
+        Float correction_factors,polynomials_jk[mbin];
         
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
             if((pk_id==pj_id)||(wij[i]==-1)||(prim_ids[i]==pk_id)){
@@ -234,7 +234,7 @@ public:
         cleanup_l(pl.pos,pk.pos,rkl_mag,rkl_mu); 
         
         int max_bin = nbin, out_bin;
-        Float correction_factors, polynomials_kl[sc12->n_param];
+        Float correction_factors, polynomials_kl[mbin];
         tmp_bin = get_radial_bin(rkl_mag); // radial kl bin
         
         if ((tmp_bin<0)||(tmp_bin>=max_bin)) return; // if not in correct bin                    
