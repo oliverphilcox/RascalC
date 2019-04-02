@@ -1,4 +1,4 @@
- // This class computes the contributions to the 3PCF autocovariance C_ab integral iterating over cells and particles. 
+ // This class computes the contributions to the threePCF autocovariance C_ab integral iterating over cells and particles. 
 
     #ifndef COMPUTE_INTEGRAL_3PCF_H
     #define COMPUTE_INTEGRAL_3PCF_H
@@ -27,7 +27,6 @@ class compute_integral{
         return no_particles;
         }
         
-    private:
         int draw_particle(integer3 id_3D, Particle &particle, int &pid, integer3 shift, Grid *grid, int &n_particles, gsl_rng* locrng){
             // Draw a random particle from a cell given the cell ID.
             // This updates the particle and particle ID and returns 1 if error.
@@ -45,7 +44,6 @@ class compute_integral{
             return 0;
         }
         
-    public:
         void check_threads(Parameters *par,int print){
             // Set up OPENMP and define which threads to use
     #ifdef OPENMP
@@ -68,13 +66,11 @@ class compute_integral{
     public:    
         compute_integral(){};
         
-        compute_integral(Grid all_grid[], Parameters *par, CorrelationFunction *cf, RandomDraws *rd, SurveyCorrection *survey_corr, int iter_no){
+        compute_integral(Grid *grid, Parameters *par, CorrelationFunction *cf, RandomDraws *rd, SurveyCorrection *survey_corr, int iter_no){
 
             // MAIN FUNCTION TO COMPUTE INTEGRALS
             
             int tot_iter=2; // total number of integral sets to compute
-            
-            int n_param = survey_corr->n_param;            
             
             nbin = par->nbin; // number of radial bins
             mbin = par->mbin; // number of Legendre bins
@@ -99,9 +95,9 @@ class compute_integral{
         
             initial.Stop();
             fprintf(stderr, "Init time: %g s\n",initial.Elapsed());
-            printf("# 1st grid filled cells: %d\n",grid1->nf);
-            printf("# All 1st grid points in use: %d\n",grid1->np);
-            printf("# Max points in one cell in grid 1%d\n",grid1->maxnp);
+            printf("# 1st grid filled cells: %d\n",grid->nf);
+            printf("# All 1st grid points in use: %d\n",grid->np);
+            printf("# Max points in one cell in grid 1%d\n",grid->maxnp);
             fflush(NULL);
             
             TotalTime.Start(); // Start timer
@@ -126,10 +122,10 @@ class compute_integral{
             Particle particle_j, particle_k, particle_l,particle_m,particle_n; // randomly drawn particle
             int* prim_ids; // list of particle IDs in primary cell
             double p2,p3,p4,p5,p6; // probabilities
-            int mnp = grid1->maxnp; // max number of particles in a grid1 cell
-            Float *correction_ijk, *legendre_ijk, *xi_pass, *xi_pass2, xi_pass3, *w_ijk, *w_ijkl, *w_ijklm;
-            Float norm_jk, norm_kl, norm_lm; // arrays to store xi and weight values
-            int *bins_ijk, bin_jk, bin_kl, bin_lm; // i-j separation bin
+            int mnp = grid->maxnp; // max number of particles in a grid cell
+            Float *correction_ijk, *legendre_ijk, *xi_pass, *xi_pass2, xi_pass3=0, *w_ijk, *w_ijkl, *w_ijklm;
+            Float norm_jk=0, norm_kl=0, norm_lm=0; // arrays to store xi and weight values
+            int *bins_ijk, bin_jk=0, bin_kl=0, bin_lm=0; // i-j separation bin
             Float percent_counter;
             int x, prim_id_1D;
             integer3 delta2, delta3, delta4, delta5, delta6, prim_id, sec_id, thi_id, fou_id, fif_id, six_id;
@@ -154,7 +150,7 @@ class compute_integral{
             ec+=posix_memalign((void **) &xi_pass2, PAGE, sizeof(Float)*mnp);
             assert(ec==0);
             
-            uint64 loc_used_triples, loc_used_quads, loc_used_quints, loc_used_hexes; // local counts of used pairs/triples/quads
+            uint64 loc_used_triples, loc_used_quads, loc_used_quints, loc_used_hexes; // local counts of used triples->hexes
             
     //-----------START FIRST LOOP-----------
     #ifdef OPENMP
@@ -172,11 +168,11 @@ class compute_integral{
                     }
                     
                 // LOOP OVER ALL FILLED I CELLS
-                for (int n1=0; n1<grid1->nf;n1++){
+                for (int n1=0; n1<grid->nf;n1++){
                     
                     // Print time left
-                    if((float(n1)/float(grid1->nf)*100)>=percent_counter){
-                        printf("Integral %d of %d, run %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n",iter_no,tot_iter,1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),thread, n1+1,grid1->nf,percent_counter);
+                    if((float(n1)/float(grid->nf)*100)>=percent_counter){
+                        printf("Integral %d of %d, run %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n",iter_no+1,tot_iter,1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),thread, n1+1,grid->nf,percent_counter);
                         percent_counter+=1.;
                     }
                     
@@ -187,7 +183,6 @@ class compute_integral{
                     
                     if(pln==0) continue; // skip if empty
                     
-                    loc_used_pairs+=pln*par->N2;
                     loc_used_triples+=pln*par->N2*par->N3;
                     loc_used_quads+=pln*par->N2*par->N3*par->N4;
                     loc_used_quints+=pln*par->N2*par->N3*par->N4*par->N5;
@@ -196,19 +191,16 @@ class compute_integral{
                     
                     // LOOP OVER N2 J CELLS
                     for (int n2=0; n2<par->N2; n2++){
-                        printf("Check if k==j particles etc. in this script for efficiency?");
-                        cell_attempt2+=1; // new cell attempted
+                        // TODO:Check if k==j particles etc. in this script for efficiency?
                         
                         // Draw second cell from i                         
                         if(iter_no==0) delta2 = rd->random_xidraw(locrng, &p2); // weight by xi(r)
                         else delta2 = rd->random_cubedraw(locrng,&p2); // weight by 1/r^2
                         
                         sec_id = prim_id + delta2;
-                        cell_sep2 = grid2->cell_sep(delta2);
+                        cell_sep2 = grid->cell_sep(delta2);
                         x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid, sln, locrng);
                         if(x==1) continue; // skip if error
-                        
-                        used_cell2+=1; // new cell accepted
                         
                         // For all particles
                         p2*=1./(grid->np*(double)sln); // probability is divided by total number of i particles and number of particles in cell
@@ -238,7 +230,7 @@ class compute_integral{
                                 cell_attempt4+=1; // new fourth cell attempted
                                 
                                 // Draw fourth cell from k cell weighted by xi(r)
-                                delta4 = rd->random_xidraw(locrng,&p4)
+                                delta4 = rd->random_xidraw(locrng,&p4);
                                 
                                 fou_id = thi_id + delta4;
                                 cell_sep4 = cell_sep3 + grid->cell_sep(delta4);
@@ -309,7 +301,6 @@ class compute_integral{
                 }
                 
                 // Update used pair/triple/quad counts
-                tot_pairs+=loc_used_pairs;
                 tot_triples+=loc_used_triples;
                 tot_quads+=loc_used_quads; 
                 tot_quints+=loc_used_quints;
@@ -327,7 +318,6 @@ class compute_integral{
                     
                     TotalTime.Start(); // Restart the timer
                     Float frob_C3, frob_C4, frob_C5, frob_C6;
-#ifndef JACKKNIFE
                     sumint.frobenius_difference_sum(&locint,n_loops, frob_C3, frob_C4, frob_C5, frob_C6);
                     if(frob_C6<0.01) convergence_counter++;
                     if (n_loops!=0){
@@ -373,15 +363,15 @@ class compute_integral{
         sumint.normalize(grid->norm,(Float)tot_triples,(Float)tot_quads,(Float)tot_quints,(Float)tot_hexes);
         
         int runtime = TotalTime.Elapsed();
-        printf("\n\nINTEGRAL %d OF %d COMPLETE\n",iter_no,tot_iter); 
+        printf("\n\nINTEGRAL %d OF %d COMPLETE\n",iter_no+1,tot_iter); 
         fprintf(stderr, "\nTotal process time for %.2e sets of cells and %.2e hexes of particles: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", double(used_cell6),double(tot_hexes),runtime, runtime/3600,runtime/60%60,runtime%60);
         printf("We tried %.2e triples, %.2e quads, %.2e quints and %.2e hexes of cells.\n",double(cell_attempt3),double(cell_attempt4),double(cell_attempt5),double(cell_attempt6));
         printf("Of these, we accepted %.2e triples, %.2e quads, %.2e quints and %.2e hexes of cells.\n",double(used_cell3),double(used_cell4),double(used_cell5),double(used_cell6));
         printf("We sampled %.2e triples, %.2e quads, %.2e quints and %.2e hexes of particles.\n",double(tot_triples),double(tot_quads),double(tot_quints),double(tot_hexes));
-        printf("Of these, we have integral contributions from %.2e triples, %.2e quads, %.2e quids and %.2e hexes of particles.\n",double(cnt3),double(cnt4),double(cnt5),double(cnt6));
+        printf("Of these, we have integral contributions from %.2e triples, %.2e quads, %.2e quints and %.2e hexes of particles.\n",double(cnt3),double(cnt4),double(cnt5),double(cnt6));
         printf("Cell acceptance ratios are %.3f for triples, %.3f for quads, %.3f for quints and %.3f for hexes.\n",(double)used_cell3/cell_attempt3,(double)used_cell4/cell_attempt4,(double)used_cell5/cell_attempt5,(double)used_cell6/cell_attempt6);
-        printf("Acceptance ratios are %.3f for triples, %.3f for quads, %.3f for quints and %.3f for hexes.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
-        printf("Average of %.2f triples accepted per primary particle.\n\n",(Float)cnt3/grid->np);
+        printf("Acceptance ratios are %.3f for triples, %.3f for quads, %.3f for quints and %.3f for hexes.\n",(double)cnt3/tot_triples,(double)cnt4/tot_quads,(double)cnt5/tot_quints,(double)cnt6/tot_hexes);
+        printf("Average of %.2f triples accepted per primary particle.\n\n",(double)cnt3/grid->np);
         
         printf("\nTrial speed: %.2e hexes per core per second\n",double(tot_hexes)/(runtime*double(par->nthread)));
         printf("Acceptance speed: %.2e hexes per core per second\n",double(cnt6)/(runtime*double(par->nthread)));

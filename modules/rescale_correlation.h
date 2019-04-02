@@ -253,7 +253,11 @@ public:
                     delta2 = rd->random_xidraw(locrng,&p2);
                     sec_id = prim_id+delta2;
                     cell_sep2 = grid2->cell_sep(delta2);
+#ifdef THREE_PCF
+                    x = compute->draw_particle(sec_id,particle_j,pid_j,cell_sep2,grid2,sln,locrng);
+#else
                     x = compute->draw_particle_without_class(sec_id,particle_j,pid_j,cell_sep2,grid2,sln,locrng);
+#endif
                     if(x==1) continue; // skip if error
                     p2*=1./(grid1->np*(double)sln);
                     // Compute contributions to correlation function
