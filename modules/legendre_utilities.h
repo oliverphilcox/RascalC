@@ -47,7 +47,7 @@ public:
         n_param=sc->n_param;
         nbin=sc->nbin;
         mu_crit=sc->mu_crit;
-#ifdef 3PCF
+#ifdef THREE_PCF
         phi_coeffs=(Float *)malloc(sizeof(Float)*nbin*nbin*n_param);
         for(int i=0;i<nbin*nbin*n_param;i++) phi_coeffs[i]=sc->phi_coeffs[i];
 #else
@@ -62,8 +62,8 @@ public:
     // Assignment operator creation
     SurveyCorrection& operator=(const SurveyCorrection& survey_corr);
     
-#ifdef 3PCF
-    SurveyCorrection(Paramters *par){
+#ifdef THREE_PCF
+    SurveyCorrection(Parameters *par){
         // This initializes the function and reads in the relevant polynomial coefficients for each radial bin
         // NB: coefficients are indexed as INDEX = RADIAL_BIN_1*N_COEFF^2. + RADIAL_BIN_2*N_COEFF + COEFF_ID where N_COEFF is the total number of coefficients for each model; here 7. 
 #else
@@ -79,7 +79,7 @@ public:
         int line_no = 0;
         FILE *fp;
         
-#ifdef 3PCF
+#ifdef THREE_PCF
         phi_file = par->phi_file;
 #else
         if((index1==1)&&(index2==1)) phi_file=par->phi_file;
@@ -104,7 +104,7 @@ public:
         
         int ec=0;
         // Now allocate memory to the weights array
-#ifdef 3PCF
+#ifdef THREE_PCF
         assert(line_no==nbin*nbin); // need correct number of functions
         ec+=posix_memalign((void **) &phi_coeffs, PAGE, sizeof(Float)*n_param*nbin*nbin);
 #else
@@ -135,7 +135,7 @@ public:
             line_count++;
         }
             
-#ifdef 3PCF
+#ifdef THREE_PCF
         assert(line_count==nbin*nbin);
         assert(index==nbin*nbin*n_param);
 #else
@@ -153,12 +153,12 @@ public:
         return;
     }
     
-#ifdef 3PCF
+#ifdef THREE_PCF
     Float correction_function_3pcf(int radial_bin1, int radial_bin2, Float mu_1, Float mu_2){
         // Create function to output polynomial RRR correction model given two radial bin numbers
         int base_bin = (radial_bin1*nbin+radial_bin2)*n_param;
-        printf("DEFINE MODEL HERE\n");
-        if(mu<mu_crit) return phi_coeffs[base_bin]+phi_coeffs[base_bin+1]*mu_1+phi_coeffs[base_bin+2]*mu_1*mu_1;
+        //TODO: Define model here;
+        if(mu_1<mu_crit) return phi_coeffs[base_bin]+phi_coeffs[base_bin+1]*mu_1+phi_coeffs[base_bin+2]*mu_1*mu_1;
         else{
             Float mu2 = mu_1*mu_1;
             return phi_coeffs[base_bin+3]+phi_coeffs[base_bin+4]*mu_1+phi_coeffs[base_bin+5]*mu2+phi_coeffs[base_bin+6]*mu2*mu_1;

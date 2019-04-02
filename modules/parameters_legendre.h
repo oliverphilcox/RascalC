@@ -12,11 +12,11 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/3PCF/qpm_randoms_10x.xyzwj"; 
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/qpm_randoms_10x.xyzwj"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/3PCF/3pcf_binfile_cov.csv";
+    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/radial_binning_cov.csv";
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
@@ -31,7 +31,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/3PCF/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/MeanXi/";
     
     // The number of mu bins in the correlation function
     int mbin_cf = 10;
@@ -63,10 +63,10 @@ public:
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 4; // max Legendre moment (must be even)
+    int max_l = 10; // max Legendre moment (must be even)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
-    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/3pcf_correction_simple.dat";
+    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/BinCorrectionFactor_n35_m1000_11.txt";
     
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
@@ -74,14 +74,14 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 20; // number of j cells per i cell
-    int N3 = 20; // number of k cells per j cell
-    int N4 = 20; // number of l cells per k cell
+    int N2 = 40; // number of j cells per i cell
+    int N3 = 40; // number of k cells per j cell
+    int N4 = 40; // number of l cells per k cell
     
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     
-    int N5 = 0; // number of m cells per l cell
-    int N6 = 0; // number of n cells per m cell
+    int N5 = 10; // number of m cells per l cell
+    int N6 = 10; // number of n cells per m cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
@@ -134,7 +134,7 @@ public:
 	Float mumax = 1.0;
     
     // Number of loops over which to refine the correlation function
-    int cf_loops = 0;
+    int cf_loops = 20;
     
     // The periodicity of the position-space cube.
 	Float boxsize = 200; // this is only used if the input particles are made randomly
@@ -522,12 +522,8 @@ private:
             printf("\nCreating output directory\n");
         }
 	    char cname[1000];
-#ifdef THREE_PCF
-        snprintf(cname, sizeof cname, "%s3PCFCovMatricesAll/",out_file);
-#else
-	    snprintf(cname, sizeof cname, "%sCovMatricesAll/",out_file);
-#endif
-        if (mkdir(cname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0){
+        snprintf(cname, sizeof cname, "%sCovMatricesAll/",out_file);
+	    if (mkdir(cname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0){
             }
         // Check if this was successful:
         struct stat info;

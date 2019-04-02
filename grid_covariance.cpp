@@ -28,7 +28,6 @@
 #endif
 
 // In order to not print the output matrices
-#define NOPRINT
 
 #define PAGE 4096     // To force some memory alignment.
 
@@ -44,9 +43,9 @@ typedef double3 Float3;
     #include "modules/cell_utilities.h"
     #include "modules/grid.h"
     #include "modules/correlation_function.h"
-#ifdef 3PCF
-    #include "modules/compute_integral_3pcf.h"
+#ifdef THREE_PCF
     #include "modules/legendre_utilities.h"
+    #include "modules/integrals_3pcf.h"
 #elif defined LEGENDRE
     #include "modules/legendre_utilities.h"
     #include "modules/integrals_legendre.h"
@@ -64,7 +63,7 @@ STimer TotalTime;
 
 // ====================  Computing the integrals ==================
 
-#ifdef 3PCF
+#ifdef THREE_PCF
     #include "modules/compute_integral_3pcf.h"
 #else
     #include "modules/compute_integral.h"
@@ -84,18 +83,23 @@ int main(int argc, char *argv[]) {
         max_no_functions=3;
         no_fields=2;
     }
-#ifdef LEGENDRE
+#if (defined LEGENDRE)||(defined THREE_PCF)
     // Define all possible survey correction functions
     SurveyCorrection all_survey[max_no_functions]; // create empty functions
     
+#ifdef THREE_PCF
+    SurveyCorrection tmp_sc(&par);
+    all_survey[0].copy(&tmp_sc); // save into global memory
+#else
     SurveyCorrection tmp_sc(&par,1,1);
     all_survey[0].copy(&tmp_sc); // save into global memory
-    
+   
     if(par.multi_tracers==true){
         SurveyCorrection tmp_sc12(&par,1,2), tmp_sc2(&par,2,2);
         all_survey[1].copy(&tmp_sc2);
         all_survey[2].copy(&tmp_sc12);
     }
+#endif
 #else
     // Read in jackknife weights and RR pair counts (if JACKKNIFE is not defined just includes RR counts)
     JK_weights all_weights[max_no_functions]; // create empty functions
@@ -174,7 +178,7 @@ int main(int argc, char *argv[]) {
         fflush(NULL);
     }
     
-#ifndef LEGENDRE
+#if (!defined LEGENDRE && !defined THREE_PCF)
     // Now rescale weights based on number of particles (whether or not using jackknives)
     all_weights[0].rescale(all_grid[0].norm,all_grid[0].norm);
     if(par.multi_tracers==true){
@@ -205,10 +209,10 @@ int main(int argc, char *argv[]) {
     rescale_correlation rescale(&par);
     rescale.refine_wrapper(&par, all_grid, all_cf, all_rd, max_no_functions);
     
-#ifdef 3PCF
-    // Compute 3PCF integrals
-    compute_integral(all_grid,&par,all_cf[0],all_rd[0],all_survey[0],0); // final digit is iteration number
-    compute_integral(all_grid,&par,all_cf[0],all_rd[0],all_survey[0],1); 
+#ifdef THREE_PCF
+    // Compute threePCF integrals
+    compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],0); // final digit is iteration number
+    compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],1); 
     
 #elif defined LEGENDRE
     // Compute integrals
