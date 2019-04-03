@@ -1,3 +1,4 @@
+
 // parameter function file for grid_covariance.cpp (originally from Alex Wiegand)
 
 #ifndef PARAMETERS_H
@@ -75,8 +76,8 @@ public:
     
     // Number of random cells to draw at each stage
     int N2 = 20; // number of j cells per i cell
-    int N3 = 20; // number of k cells per j cell
-    int N4 = 20; // number of l cells per k cell
+    int N3 = 30; // number of k cells per j cell
+    int N4 = 30; // number of l cells per k cell
     
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     

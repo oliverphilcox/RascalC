@@ -252,7 +252,7 @@ public:
             }
             
             // Now compute the integral contribution
-            c3v = 9.*tmp_weight*tmp_weight*tmp_xi / prob;
+            c3v = 3.*tmp_weight*tmp_weight*(1.+3.*tmp_xi) / prob;
             
             // Pre-load relevant Legendre polynomials and correction factors;
             for(int bin_index=0;bin_index<3;bin_index++){

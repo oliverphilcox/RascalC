@@ -374,7 +374,7 @@ public:
         // Print the counts for each integral (used for combining the estimates outside of C++)
         // This is the number of counts used in each loop [always the same]
         char counts_file[1000];
-        snprintf(counts_file, sizeof counts_file, "%sCovMatricesAll/total_counts_n%d_m%d_%d%d,%d%d.txt",out_file,nbin,mbin,I1,I2,I3,I4);
+        snprintf(counts_file, sizeof counts_file, "%sCovMatricesAll/total_counts_n%d_l%d_%d%d,%d%d.txt",out_file,nbin,max_l,I1,I2,I3,I4);
         FILE * CountsFile = fopen(counts_file,"w");
         fprintf(CountsFile,"%llu\n",pair_counts);
         fprintf(CountsFile,"%llu\n",triple_counts);
@@ -421,15 +421,15 @@ public:
         
         if(save_all==1){
             char binname4[1000];
-            snprintf(binname4,sizeof binname4, "%sCovMatricesAll/binct_c4_n%d_m%d_%d%d,%d%d_%s.txt",out_file, nbin,mbin,I1,I2,I3,I4,suffix);
+            snprintf(binname4,sizeof binname4, "%sCovMatricesAll/binct_c4_n%d_l%d_%d%d,%d%d_%s.txt",out_file, nbin,max_l,I1,I2,I3,I4,suffix);
             FILE * BinFile4 = fopen(binname4,"w");
             
             char binname3[1000];
-            snprintf(binname3,sizeof binname3, "%sCovMatricesAll/binct_c3_n%d_m%d_%d,%d%d_%s.txt",out_file, nbin,mbin,I2,I1,I3,suffix);
+            snprintf(binname3,sizeof binname3, "%sCovMatricesAll/binct_c3_n%d_l%d_%d,%d%d_%s.txt",out_file, nbin,max_l,I2,I1,I3,suffix);
             FILE * BinFile3 = fopen(binname3,"w");
             
             char binname2[1000];
-            snprintf(binname2,sizeof binname2, "%sCovMatricesAll/binct_c2_n%d_m%d_%d%d_%s.txt",out_file, nbin,mbin,I1,I2,suffix);
+            snprintf(binname2,sizeof binname2, "%sCovMatricesAll/binct_c2_n%d_l%d_%d%d_%s.txt",out_file, nbin,max_l,I1,I2,suffix);
             FILE * BinFile2 = fopen(binname2,"w");
         
             for(int i=0;i<nbin*mbin;i++){

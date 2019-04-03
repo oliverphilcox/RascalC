@@ -1,10 +1,8 @@
 ## MAKEFILE FOR RascalC. This compiles the grid_covariance.cpp file into the ./cov exececutable.
 
 CC = gcc
-CFLAGS = -Wall -g
-#-O3 -Wall
-CXXFLAGS = -Wall -g -DOPENMP -DTHREE_PCF
-#-O3 -DOPENMP -DTHREE_PCF
+CFLAGS = -Wall -O3 -Wall
+CXXFLAGS = -Wall -O3 -DOPENMP -DTHREE_PCF
 # disable OPENMP to run single threaded
 #-DPERIODIC # use this to enable periodic behavior
 #-DLEGENDRE # use this to compute 2PCF covariances in Legendre bins
