@@ -183,7 +183,6 @@ public:
     
     // Constructor
 	Parameters(int argc, char *argv[]){
-        
 	    if (argc==1) usage();
 	    int i=1;
 	    while (i<argc) {
