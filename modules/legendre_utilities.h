@@ -154,14 +154,14 @@ public:
     }
     
 #ifdef THREE_PCF
-    Float correction_function_3pcf(int radial_bin1, int radial_bin2, Float mu_1, Float mu_2){
-        // Create function to output polynomial RRR correction model given two radial bin numbers
+    Float correction_function_3pcf(int radial_bin1, int radial_bin2, Float mu){
+        // Create function to output polynomial RRR correction model given two radial bin numbers and an opening angle
         int base_bin = (radial_bin1*nbin+radial_bin2)*n_param;
         //TODO: Define model here;
-        if(mu_1<mu_crit) return phi_coeffs[base_bin]+phi_coeffs[base_bin+1]*mu_1+phi_coeffs[base_bin+2]*mu_1*mu_1;
+        if(mu<mu_crit) return phi_coeffs[base_bin]+phi_coeffs[base_bin+1]*mu+phi_coeffs[base_bin+2]*mu*mu;
         else{
-            Float mu2 = mu_1*mu_1;
-            return phi_coeffs[base_bin+3]+phi_coeffs[base_bin+4]*mu_1+phi_coeffs[base_bin+5]*mu2+phi_coeffs[base_bin+6]*mu2*mu_1;
+            Float mu2 = mu*mu;
+            return phi_coeffs[base_bin+3]+phi_coeffs[base_bin+4]*mu+phi_coeffs[base_bin+5]*mu2+phi_coeffs[base_bin+6]*mu2*mu;
         }
     }
 #else

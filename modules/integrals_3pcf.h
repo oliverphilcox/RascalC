@@ -145,9 +145,9 @@ public:
         else norm[2] = pos12.norm();
         
         // Compute internal angles
-        ang[0] = fabs(pos12.dot(pos13)/norm[0]/norm[1]);
-        ang[1] = fabs(pos12.dot(pos23)/norm[0]/norm[2]);
-        ang[2] = fabs(pos13.dot(pos23)/norm[1]/norm[2]);
+        ang[0] = fabs(pos12.dot(pos13)/norm[2]/norm[1]);
+        ang[1] = fabs(pos12.dot(pos23)/norm[2]/norm[0]);
+        ang[2] = fabs(pos13.dot(pos23)/norm[1]/norm[0]);
     }
     
     int all_bins(Float norm[3], Float bin_ab[6], const int bin_in,int preload){
@@ -247,7 +247,7 @@ public:
             
             if(index==0){
                 los_tmp = compute_los(pi.pos, pj.pos, norm_ijk[2]);
-                tmp_xi = cf->xi(norm_ijk[2], ang_ijk[2]); //xi_ij
+                tmp_xi = cf->xi(norm_ijk[2], los_tmp); //xi_ij
                 xi_pass[i] = tmp_xi; // save for next integrator
             }
             
@@ -266,7 +266,7 @@ public:
                     all_correction_factor[i*3+bin_index]=-1;
                     continue; // skip if bad bin
                 }
-                correction_factor1 = sc->correction_function_3pcf(bin_1,bin_2,ang_ijk[bin_index*2],ang_ijk[bin_index*2+1]);
+                correction_factor1 = sc->correction_function_3pcf(bin_1,bin_2,ang_ijk[bin_index]);
                 all_correction_factor[i*3+bin_index] = correction_factor1;
                 legendre_polynomials(ang_ijk[bin_index],max_l,polynomials_tmp);
                 for(int p_bin=0;p_bin<mbin;p_bin++){
@@ -363,7 +363,7 @@ public:
                 all_correction_factor_jkl[bin_index]=-1;
                 continue;
             }
-            all_correction_factor_jkl[bin_index]=sc->correction_function_3pcf(bin_1,bin_2,ang_jkl[bin_index*2],ang_jkl[bin_index*2+1]);
+            all_correction_factor_jkl[bin_index]=sc->correction_function_3pcf(bin_1,bin_2,ang_jkl[bin_index]);
             legendre_polynomials(ang_jkl[bin_index],max_l,polynomials_tmp1);
             for(int p_bin=0;p_bin<mbin;p_bin++) all_legendre_jkl[bin_index*mbin+p_bin]=polynomials_tmp1[p_bin];
         }
@@ -391,8 +391,8 @@ public:
             }
             
             // Now compute integral contribution
-            if(index==0) c4v = 36.*tmp_weight*pi.w*pj.w/prob * tmp_xi1 * tmp_xi2;
-            else c4v = 18.*tmp_weight*pi.w*pj.w/prob * tmp_xi2*(tmp_xi1+1.);
+            if(index==0) c4v = 36.*tmp_weight*pj.w*pk.w/prob * tmp_xi1 * tmp_xi2;
+            else c4v = 18.*tmp_weight*pj.w*pk.w/prob * tmp_xi2*(tmp_xi1+1.);
             
             for(int bin_index=0;bin_index<3;bin_index++){
                 correction_factor1 = all_correction_factor_ijk[i*3+bin_index];
@@ -477,7 +477,7 @@ public:
                 all_correction_factor_klm[bin_index]=-1;
                 continue;
             }
-            all_correction_factor_klm[bin_index]=sc->correction_function_3pcf(bin_1,bin_2,ang_klm[bin_index*2],ang_klm[bin_index*2]);
+            all_correction_factor_klm[bin_index]=sc->correction_function_3pcf(bin_1,bin_2,ang_klm[bin_index]);
             legendre_polynomials(ang_klm[bin_index],max_l,polynomials_tmp);
             for(int p_bin=0;p_bin<mbin;p_bin++) all_legendre_klm[bin_index*mbin+p_bin]=polynomials_tmp[p_bin];
         }
@@ -500,8 +500,8 @@ public:
             else tmp_xi2 = xi_pass2[i]; // xi_il
             
             // Now compute integral contribution
-            if(index==0) c5v = 9.*tmp_weight*pi.w/prob * tmp_xi1 * tmp_xi2;
-            else c5v = 18.*tmp_weight*pi.w/prob * tmp_xi1*tmp_xi2;
+            if(index==0) c5v = 9.*tmp_weight*pk.w/prob * tmp_xi1 * tmp_xi2;
+            else c5v = 18.*tmp_weight*pk.w/prob * tmp_xi1*tmp_xi2;
             
             for(int bin_index=0;bin_index<3;bin_index++){
                 // Load correction factor
@@ -578,7 +578,7 @@ public:
                 all_correction_factor_lmn[bin_index]=-1;
                 continue;
             }
-            all_correction_factor_lmn[bin_index]=sc->correction_function_3pcf(bin_1,bin_2,ang_lmn[bin_index*2],ang_lmn[bin_index*2+1]);
+            all_correction_factor_lmn[bin_index]=sc->correction_function_3pcf(bin_1,bin_2,ang_lmn[bin_index]);
             legendre_polynomials(ang_lmn[bin_index],max_l,polynomials_tmp);
             for(int p_bin=0;p_bin<mbin;p_bin++) all_legendre_lmn[bin_index*mbin+p_bin]=polynomials_tmp[p_bin];
         }

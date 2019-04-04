@@ -173,11 +173,11 @@ class compute_integral{
                     // Print time left
                     if((float(n1)/float(grid->nf)*100)>=percent_counter){
                         printf("Integral %d of %d, run %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n",iter_no+1,tot_iter,1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),thread, n1+1,grid->nf,percent_counter);
-                        percent_counter+=1.;
+                        percent_counter+=5.;
                     }
                     
                     // Pick first particle
-                    prim_id_1D = grid-> filled[n1]; // 1d ID for cell i 
+                    prim_id_1D = grid->filled[n1]; // 1d ID for cell i 
                     prim_id = grid->cell_id_from_1d(prim_id_1D); // define first cell
                     pln = particle_list(prim_id_1D, prim_list, prim_ids, grid); // update list of particles and number of particles
                     
