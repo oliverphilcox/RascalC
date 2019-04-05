@@ -232,8 +232,15 @@ class compute_integral{
                                 // Draw fourth cell from k cell weighted by xi(r)
                                 delta4 = rd->random_xidraw(locrng,&p4);
                                 
-                                fou_id = thi_id + delta4;
-                                cell_sep4 = cell_sep3 + grid->cell_sep(delta4);
+                                if(iter_no==0){
+                                    fou_id = thi_id + delta4;
+                                    cell_sep4 = cell_sep3 + grid->cell_sep(delta4);
+                                }
+                                else{
+                                    fou_id = prim_id + delta4;
+                                    cell_sep4 = grid->cell_sep(delta4);
+                                }
+                                
                                 x = draw_particle(fou_id,particle_l,pid_l,cell_sep4,grid,fln,locrng); // draw from grid
                                 if(x==1) continue;
                                 
@@ -255,8 +262,8 @@ class compute_integral{
                                         cell_sep5 = cell_sep4 + grid->cell_sep(delta5);
                                     }
                                     else{
-                                        fif_id = prim_id + delta5;
-                                        cell_sep5 = grid->cell_sep(delta5);
+                                        fif_id = sec_id + delta5;
+                                        cell_sep5 = cell_sep2 + grid->cell_sep(delta5);
                                     }
                                         
                                     x = draw_particle(fif_id,particle_m,pid_m,cell_sep5,grid,filn,locrng); // draw from grid
@@ -280,8 +287,8 @@ class compute_integral{
                                             cell_sep6 = cell_sep5 + grid->cell_sep(delta6);
                                         }
                                         else{
-                                            six_id = sec_id + delta6;
-                                            cell_sep6 = cell_sep2 + grid->cell_sep(delta6);
+                                            six_id = thi_id + delta6;
+                                            cell_sep6 = cell_sep3 + grid->cell_sep(delta6);
                                         }
                                         
                                         x = draw_particle(six_id,particle_n,pid_n,cell_sep6,grid,siln,locrng); // draw from grid
