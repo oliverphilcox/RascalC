@@ -345,11 +345,11 @@ public:
         
         // Compute radial bins for this triangle
         int x = all_bins(norm_jkl,bins_jkl,bin_jk,2);
-        bin_kl = bins_jkl[5];
         if(x==3){
             wijkl[0]=-2;
             return; // if no correct radial bins
         }
+        bin_kl = bins_jkl[5];
         
         // Preload correction factors and Legendre polynomials
         for(int bin_index=0;bin_index<3;bin_index++){
@@ -501,7 +501,7 @@ public:
             
             // Now compute integral contribution
             if(index==0) c5v = 9.*tmp_weight*pk.w/prob * tmp_xi1 * tmp_xi2;
-            else c5v = 18.*tmp_weight*pk.w/prob * tmp_xi1*tmp_xi2;
+            else c5v = 18.*tmp_weight*pk.w/prob * tmp_xi1 * tmp_xi2;
             
             for(int bin_index=0;bin_index<3;bin_index++){
                 // Load correction factor
@@ -527,7 +527,7 @@ public:
                             out_bin = (tmp_radial_bin+p_bin)*array_len+tmp_radial_bin2+q_bin;
                         
                             // Add to integral (extra 4 is from 2x symmetry in each angle kernel)
-                            c5[out_bin] +=c5v*this_poly*all_legendre_klm[bin_index2*mbin+q_bin]*correction_factor1*correction_factor2*4.;
+                            c5[out_bin] += c5v*this_poly*all_legendre_klm[bin_index2*mbin+q_bin]*correction_factor1*correction_factor2*4.;
                             binct5[out_bin]++;
                         }
                     }
