@@ -13,7 +13,7 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/3PCF/qpm_randoms_10x.xyzwj"; 
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/3PCF/qpm_galaxy_1.xyzwj";//randoms_10x.xyzwj"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
@@ -32,7 +32,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/3PCF/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/3PCF_test/";
     
     // The number of mu bins in the correlation function
     int mbin_cf = 10;
@@ -42,7 +42,7 @@ public:
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
-	int nside = 251;
+	int nside = 101;
     
     // Whether or not we are using a periodic box
 	bool perbox = false;
@@ -50,7 +50,7 @@ public:
     //---------- (r,mu) PARAMETERS ------------------------------------------
     
 	// The number of mu bins
-	int mbin = 30;
+	int mbin = 120;
     
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
@@ -67,22 +67,22 @@ public:
     int max_l = 4; // max Legendre moment (must be even)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
-    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/3pcf_correction_simple.dat";
+    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/SurveyCorrectionFactor_3PCF_n10_m50_11.txt";
     
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=20;
+    int max_loops=4;
     
     // Number of random cells to draw at each stage
-    int N2 = 20; // number of j cells per i cell
-    int N3 = 30; // number of k cells per j cell
-    int N4 = 30; // number of l cells per k cell
+    int N2 = 2; // number of j cells per i cell
+    int N3 = 2; // number of k cells per j cell
+    int N4 = 2; // number of l cells per k cell
     
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     
-    int N5 = 0; // number of m cells per l cell
-    int N6 = 0; // number of n cells per m cell
+    int N5 = 2; // number of m cells per l cell
+    int N6 = 2; // number of n cells per m cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     

@@ -132,7 +132,7 @@ bool compute_bounding_box(Particle *p, int np, Float3 &rect_boxsize, Float rmax,
     printf("# Range of z positions are %6.2f to %6.2f\n", pmin.z, pmax.z);
     Float3 prange = pmax-pmin;
     Float         biggest = prange.x;
-    biggest = fmax(biggest, prange.y);
+    biggest = fmax(biggest, prange.y); 
     biggest = fmax(biggest, prange.z);
     if (prange.x>0.99*biggest && prange.y>0.99*biggest && prange.z>0.99*biggest) {
         // Probably using a cube of inputs, intended for a periodic box

@@ -217,6 +217,7 @@ class compute_integral{
                             cell_sep3 = cell_sep2 + grid->cell_sep(delta3); 
                             x = draw_particle(thi_id,particle_k,pid_k,cell_sep3,grid,tln,locrng); 
                             if(x==1) continue; 
+                            if(pid_k==pid_j) continue; // no self-counting
                             
                             used_cell3+=1; // new third cell used
                             
@@ -243,6 +244,7 @@ class compute_integral{
                                 
                                 x = draw_particle(fou_id,particle_l,pid_l,cell_sep4,grid,fln,locrng); // draw from grid
                                 if(x==1) continue;
+                                if((pid_l==pid_k)||(pid_l==pid_j)) continue;
                                 
                                 used_cell4+=1; // new fourth cell used
                                 
@@ -268,6 +270,7 @@ class compute_integral{
                                         
                                     x = draw_particle(fif_id,particle_m,pid_m,cell_sep5,grid,filn,locrng); // draw from grid
                                     if(x==1) continue;
+                                    if((pid_m==pid_l)||(pid_m==pid_k)||(pid_m==pid_j)||(w_ijkl[0]==-2)) continue;
                                     
                                     used_cell5+=1; // new fourth cell used
                                     
@@ -293,6 +296,7 @@ class compute_integral{
                                         
                                         x = draw_particle(six_id,particle_n,pid_n,cell_sep6,grid,siln,locrng); // draw from grid
                                         if(x==1) continue;
+                                        if((pid_n==pid_m)||(pid_n==pid_l)||(pid_n==pid_k)||(pid_n==pid_j)||(w_ijklm[0]==-2)) continue;
                                         
                                         used_cell6+=1; // new sixth cell used
                                         

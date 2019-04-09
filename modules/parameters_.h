@@ -12,7 +12,7 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/qpm_randoms_10x.xyzwj"; 
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/qpm_galaxy_1.xyzwj";//randoms_10x.xyzwj"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
@@ -41,7 +41,7 @@ public:
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
-	int nside = 251;
+	int nside = 101;
     
     // Whether or not we are using a periodic box
 	bool perbox = false;
@@ -63,7 +63,7 @@ public:
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 10; // max Legendre moment (must be even)
+    int max_l = 4; // max Legendre moment (must be even)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
     const char default_phi_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/BinCorrectionFactor_n35_m1000_11.txt";
@@ -71,17 +71,17 @@ public:
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=20;
+    int max_loops=2;
     
     // Number of random cells to draw at each stage
-    int N2 = 40; // number of j cells per i cell
-    int N3 = 40; // number of k cells per j cell
-    int N4 = 40; // number of l cells per k cell
+    int N2 = 3; // number of j cells per i cell
+    int N3 = 3; // number of k cells per j cell
+    int N4 = 3; // number of l cells per k cell
     
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     
-    int N5 = 10; // number of m cells per l cell
-    int N6 = 10; // number of n cells per m cell
+    int N5 = 3; // number of m cells per l cell
+    int N6 = 3; // number of n cells per m cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
