@@ -1,22 +1,21 @@
 ## MAKEFILE FOR RascalC. This compiles the grid_covariance.cpp file into the ./cov exececutable.
 
 CC = gcc
-CFLAGS = -Wall -O3 -Wall
-CXXFLAGS = -Wall -O3 -DOPENMP -DTHREE_PCF
+CFLAGS = -O3 -Wall 
+CXXFLAGS = -DOPENMP -DTHREE_PCF -O3 -DOPENMP 
 # disable OPENMP to run single threaded
 #-DPERIODIC # use this to enable periodic behavior
 #-DLEGENDRE # use this to compute 2PCF covariances in Legendre bins
 #-DJACKKNIFE # use this to compute (r,mu)-space 2PCF covariances and jackknife covariances
 #-DTHREE_PCF # use this to compute 3PCF autocovariances
 
-CXX = g++ -fopenmp -lgomp -std=c++0x -ffast-math
+CXX = g++ -fopenmp -lgomp -std=c++0x -ffast-math 
 
 AUNTIE	= cov
 AOBJS	= grid_covariance.o ./cubature/hcubature.o ./ransampl/ransampl.o
 
 LD	= g++
-LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu -lgsl -lgslcblas -lgomp
-
+LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu -lgsl -lgslcblas -lgomp 
 
 main: $(AUNTIE)
 
