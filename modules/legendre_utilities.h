@@ -101,7 +101,7 @@ public:
         int line_no = 0;
         FILE *fp;
         
-#ifdef THREE_PCF
+#if (defined THREE_PCF || defined POWER)
         phi_file = par->phi_file;
 #else
         if((index1==1)&&(index2==1)) phi_file=par->phi_file;

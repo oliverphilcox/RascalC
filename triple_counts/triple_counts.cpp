@@ -1,4 +1,4 @@
-// grid_covariance.cpp -- Oliver Philcox / Alexander Wiegand, started Oct 14, 2016 based on grid_multipoles.cpp of Daniel Eisenstein.
+// triple_counts.cpp -- Oliver Philcox started March 2019 based on grid_multipoles.cpp of Daniel Eisenstein.
 
 #include <sys/time.h>
 #include <sys/resource.h>

@@ -4,7 +4,7 @@ import sys
 import numpy as np
 
 if len(sys.argv)<7:
-    print "Please specify input parameters in the form {N_LOG_BINS} {N_LIN_BINS} {MIN_R} {CUTOFF_R} {MAX_R} {OUTPUT_FILE}."
+    print("Please specify input parameters in the form {N_LOG_BINS} {N_LIN_BINS} {MIN_R} {CUTOFF_R} {MAX_R} {OUTPUT_FILE}.")
     sys.exit()
 n_log_bins = int(sys.argv[1])
 n_lin_bins = int(sys.argv[2])
@@ -26,4 +26,4 @@ with file(out_file,'w+') as writefile:
     for i in range(n_log_bins+1,n_lin_bins+n_log_bins):
         writefile.write("%.8f\t%.8f\n" %(rbins[i],rbins[i+1]))
     writefile.write("%.8f\t%.8f" %(rbins[n_lin_bins+n_log_bins],rbins[n_lin_bins+n_log_bins+1]))
-print "Binning file '%s' written successfully."%out_file
+print("Binning file '%s' written successfully."%out_file)
