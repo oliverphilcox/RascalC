@@ -434,9 +434,13 @@ public:
 		if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
         printf("Radial Bins = %d\n", nbin);
 		printf("Radial Binning = {%6.5f, %6.5f} over %d bins (user-defined bin widths) \n",rmin,rmax,nbin);
+#ifndef LEGENDRE
+#ifndef THREE_PCF
 		printf("Mu Bins = %d\n", mbin);
 		printf("Mu Binning = {%6.5f, %6.5f, %6.5f}\n",mumin,mumax,(mumax-mumin)/mbin);
-		printf("Density Normalization = %6.5e\n",nofznorm);
+#endif
+#endif
+		printf("Number of galaxies = %6.5e\n",nofznorm);
         printf("Maximum number of integration loops = %d\n",max_loops);
         printf("Output directory: '%s'\n",out_file);
 
@@ -450,11 +454,17 @@ private:
         fprintf(stderr, "   -cor <file>: File location of input xi_1 correlation function file.\n");
 	    fprintf(stderr, "   -binfile_cf <filename>: File containing the desired radial bins for the correlation function.\n");
         fprintf(stderr, "   -norm <nofznorm>: Number of galaxies in the first tracer set.\n");
+#ifdef JACKKNIFE
         fprintf(stderr, "   -jackknife <filename>: File containing the {1,1} jackknife weights (normally computed from Corrfunc)\n");
+#endif
+#ifndef LEGENDRE
+#ifndef THREE_PCF
         fprintf(stderr, "   -RRbin <filename>: File containing the {1,1} jackknife RR bin counts (computed from Corrfunc)\n");
-        fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");   
         fprintf(stderr, "   -mbin <mbin>:  The number of mu bins (spaced linearly).\n");
+#endif
+#endif
 	    fprintf(stderr, "   -mbin_cf <mbin_cf>:  The number of mu bins in the correlation function (spaced linearly).\n");
+        fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");   
 	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 250.\n");
 	    fprintf(stderr, "          Recommend having several grid cells per rmax.\n");
         fprintf(stderr, "          There are {nside} cells along the longest dimension of the periodic box.\n");
