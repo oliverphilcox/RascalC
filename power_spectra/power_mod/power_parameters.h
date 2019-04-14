@@ -13,37 +13,37 @@ public:
     
     // Name of the first particle field
     char *fname = NULL;
-    const char default_fname[500] = "/mnt/store1/oliverphilcox/3PCF/qpm_galaxy_1.xyzwj";//randoms_10x.xyzwj"; 
+    const char default_fname[500] = "/mnt/store1/oliverphilcox/PowerSpectra/qpm_galaxy_1.xyzwj";//randoms_10x.xyzwj"; 
     
     // Name of second particle field 
     char *fname2 = NULL;
-	const char default_fname2[500] = "/mnt/store1/oliverphilcox/3PCF/qpm_galaxy_1.xyzwj";//randoms_10x.xyzwj"; 
-    
-    // Name of the radial binning .csv file in k-space
-    char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/radial_binning_cov.csv";
-    
-    // Output directory 
-    char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/PowerTest_RR/";
+	const char default_fname2[500] = "/mnt/store1/oliverphilcox/PowerSpectra/qpm_galaxy_1.xyzwj";// "/mnt/store1/oliverphilcox/3PCF/qpm_galaxy_1.xyzwj";
     
     // Optional File Prefix for output
     char *out_string = NULL;
-    const char default_out_string[500] = "RR"; 
+    const char default_out_string[500] = "DD"; 
+    
+    // Name of the radial binning .csv file in k-space
+    char *radial_bin_file = NULL;
+    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/PowerSpectra/k_binning.csv";
+    
+    // Output directory 
+    char *out_file = NULL;
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/PowerTest_binned2/";
     
     // The number of threads to run on
 	int nthread = 20;
 
-    // The grid size, which should be tuned to match boxsize and rmax. 
+    // The grid size, which should be tuned to match boxsize. 
 	// This uses the maximum width of the cuboidal box.
 	int nside = 151;
     
     // Whether or not we are using a periodic box
 	bool perbox = false;
 
-    int max_l = 4; // max Legendre moment (must be even)
+    int max_l = 0; // max Legendre moment (must be even)
     
-    Float R0 = 100; // kernel truncation radius (in Mpc/h)
+    Float R0 = 50; // kernel truncation radius (in Mpc/h)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
     const char default_phi_file[500] = "/mnt/store1/oliverphilcox/PowerSpectra/InvPhiCoeff_DR12.txt";
@@ -102,10 +102,12 @@ public:
                 Float tmp_box=atof(argv[++i]);
                 rect_boxsize = {tmp_box,tmp_box,tmp_box};
                 }
+        else if (!strcmp(argv[i],"-fname")) fname = argv[++i];
+        else if (!strcmp(argv[i],"-fname2")) fname2 = argv[++i];
         else if (!strcmp(argv[i],"-rescale")) rescale = atof(argv[++i]);
 	    else if (!strcmp(argv[i],"-R0")) R0 = atof(argv[++i]);
         else if (!strcmp(argv[i],"-nside")) nside = atoi(argv[++i]);
-		else if (!strcmp(argv[i],"-in")) fname = argv[++i];
+        else if (!strcmp(argv[i],"-in")) fname = argv[++i];
         else if (!strcmp(argv[i],"-in2")) fname2 = argv[++i];
 		else if (!strcmp(argv[i],"-rs")) rstart = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-nmax")) nmax = atoll(argv[++i]);
@@ -166,8 +168,6 @@ public:
 	    
 	    assert(i==argc);  // For example, we might have omitted the last argument, causing disaster.
 
-	    assert(nside%2!=0); // The probability integrator needs an odd grid size
-	    
         assert(max_l%2==0); // check maximum ell is even
         assert(max_l<=10); // ell>10 not yet implemented!
         if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
@@ -176,6 +176,7 @@ public:
         mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
         if (rescale<=0.0) rescale = box_max;   // This would allow a unit cube to fill the periodic volume
 	    if (out_file==NULL) out_file = (char *) default_out_file; // no output savefile
+	    if (out_string==NULL) out_string = (char *) default_out_string; // no output string
 	    if (radial_bin_file==NULL) {radial_bin_file = (char *) default_radial_bin_file;} // No radial binning 
 	    
 	    if (fname==NULL) fname = (char *) default_fname;   // No name was given
@@ -185,7 +186,7 @@ public:
         
 	    // Read in the radial binning
 	    read_radial_binning(radial_bin_file);
-        printf("Read in %d radial bins in range (%.0f, %.0f) successfully.\n",nbin,rmin,rmax);
+        printf("Read in %d radial k-space bins in range (%.0f, %.0f) successfully.\n",nbin,rmin,rmax);
         
 	    assert(box_min>0.0);
 	    assert(rmax>0.0);
@@ -200,11 +201,7 @@ public:
 		// Output for posterity
 		printf("Box Size = {%6.5e,%6.5e,%6.5e}\n", rect_boxsize.x,rect_boxsize.y,rect_boxsize.z);
 		printf("Grid = %d\n", nside);
-		printf("Maximum Radius = %6.5e\n", rmax);
-		Float gridsize = rmax/(box_max/nside);
-		printf("Max Radius in Grid Units = %6.5e\n", gridsize);
-		if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
-        printf("Radial Bins = %d\n", nbin);
+		printf("Radial Bins = %d\n", nbin);
 		printf("Radial k-space binning = {%6.5f, %6.5f} over %d bins (user-defined bin widths) \n",rmin,rmax,nbin);
 		printf("Output directory: '%s'\n",out_file);
 
@@ -219,8 +216,7 @@ private:
         fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n"); 
         fprintf(stderr, "   -out_string: (Optional) String to add to file name to specify field type (e.g. RR)\n");
         fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 250.\n");
-	    fprintf(stderr, "          Recommend having several grid cells per rmax.\n");
-        fprintf(stderr, "          There are {nside} cells along the longest dimension of the periodic box.\n");
+	    fprintf(stderr, "          There are {nside} cells along the longest dimension of the periodic box.\n");
 	    fprintf(stderr, "   -nthread <nthread>: The number of CPU threads ot use for parallelization.\n");
         fprintf(stderr, "   -perbox <perbox>: Boolean, whether the box is periodic is not\n");
         fprintf(stderr, "\n");
