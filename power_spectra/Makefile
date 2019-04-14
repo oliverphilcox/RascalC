@@ -1,8 +1,10 @@
 ## MAKEFILE FOR RascalC/grid_power.cpp. This compiles the grid_power.cpp file into the ./power exececutable.
 
 CC = gcc
-CFLAGS = -Wall -O3 -Wall
-CXXFLAGS = -Wall -O3 -DOPENMP -DPOWER
+CFLAGS = -g
+##-O3 -Wall
+CXXFLAGS = -DPOWER -g
+#-Wall -O3 -DOPENMP 
 # disable OPENMP to run single threaded
 #-DPERIODIC # use this to enable periodic behavior
 

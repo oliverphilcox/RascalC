@@ -9,6 +9,7 @@ class pair_counter{
     
 private:
     int nbin,mbin;
+    int one_grid; // boolean to check if grids are the same
     uint64 cnt2; // number of pairs counted
     
 public:
@@ -32,7 +33,7 @@ public:
     }
 
 public:
-    pair_counter(Grid *grid1, Grid *grid2, Parameters *par, SurveyCorrection *sc, integer3 *cell_sep, int len_cell_sep){
+    pair_counter(Grid *grid1, Grid *grid2, Parameters *par, SurveyCorrection *sc, KernelInterp all_interp[], integer3 *cell_sep, int len_cell_sep){
         
         // Define parameters
         nbin = par->nbin; // number of radial bins
@@ -40,11 +41,19 @@ public:
         Float percent_counter=0.,used_cells=0,cell_attempts=0;
         uint64 used_particles=0;
         
+        one_grid=0;
+        if(!strcmp(par->fname,par->fname2)) one_grid=1;
+        
         STimer initial, TotalTime; // time initialization
         initial.Start();
         
+        printf("CHECK_pair_count1: %.2e\n",all_interp[0].kernel_vals[2000]);
+        
         //-----------INITIALIZE OPENMP + CLASSES----------
-        PowerCounts global_counts(par,sc);
+        PowerCounts global_counts(par,sc,all_interp);
+        
+        printf("CHECK_pair_count2: %.2e\n",all_interp[0].kernel_vals[2000]);
+        exit(1);
         
         check_threads(par,1); // define threads
         
@@ -58,7 +67,7 @@ public:
             
         
 #ifdef OPENMP
-        #pragma omp parallel firstprivate(par,grid1) shared(global_counts,TotalTime) reduction(+:percent_counter,used_cells,used_particles)
+        #pragma omp parallel firstprivate(par,grid1,grid2) shared(global_counts,TotalTime) reduction(+:percent_counter,used_cells,used_particles)
         { // start parallel loop
         // Decide which thread we are in
         int thread = omp_get_thread_num();
@@ -77,7 +86,19 @@ public:
             int mnp = grid1->maxnp; // max number of particles in grid1 cell
             Cell prim_cell,sec_cell; // cell objects
             
-            PowerCounts loc_counts(par,sc);
+            KernelInterp new_interp[nbin*mbin];
+            for(int i=0;i<nbin*mbin;i++){
+                printf("\nhere\n");
+                fflush(NULL);
+                printf("%d, %.2e\n",i,&all_interp[i].kernel_vals[5004]);
+                KernelInterp tmp_interp = new KernelInterp(&all_interp[i]);
+                printf("\nhere2\n");
+                fflush(NULL);
+                new_interp[i].copy_function(&tmp_interp);
+            }
+            printf("\nhere");
+            
+            PowerCounts loc_counts(par,sc,new_interp);
             
             // Assign memory for intermediate steps
             int ec=0;
@@ -115,11 +136,12 @@ public:
                     if(sec_cell.np==0) continue; // if empty cell
                     
                     used_cells++; // number of cells used
-                    used_particles+=prim_cell.np*sec_cell.np;
                     
                     // Now iterate over particles
                     for(int i=prim_cell.start;i<(prim_cell.start+prim_cell.np);i++){
                         for(int j=sec_cell.start;j<(sec_cell.start+sec_cell.np);j++){
+                            used_particles++;
+                            if((one_grid==1)&&(i==j)) continue; // skip if identical particles in same grids
                             loc_counts.count_pairs(grid1->p[i],grid2->p[j]);
                         }
                     }
@@ -129,13 +151,13 @@ public:
 #pragma omp critical // only one processor at once
 #endif
         {
+            printf("HERE\n");
             // Sum up power-sums
             global_counts.sum_counts(&loc_counts);
             loc_counts.reset();
         }
             
     } // end OPENMP loop
-    
     
     // ----- REPORT AND SAVE OUTPUT ------------
     TotalTime.Stop();
@@ -151,6 +173,11 @@ public:
     printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)global_counts.used_pairs/grid1->np);
     
     printf("\nTrial speed: %.2e cell pairs per core per second\n",double(used_cells)/(runtime*double(par->nthread)));       printf("Acceptance speed: %.2e particle pairs per core per second\n\n",double(global_counts.used_pairs)/(runtime*double(par->nthread)));   
+    
+    char this_out[5];
+    sprintf(this_out,"full");
+    global_counts.save_counts(this_out);
+    printf("Printed counts to file as %s%s_power_counts_n%d_m%d_full.txt\n", par->out_file,par->out_string,nbin, mbin);
     }
 };
 

@@ -10,6 +10,9 @@
 #include "../threevector.hh"
 #include "../STimer.cc"
 #include <sys/stat.h>
+#include <gsl/gsl_sf.h>
+#include <gsl/gsl_interp.h>
+#include <gsl/gsl_spline.h>
 
 // For multi-threading:
 #ifdef OPENMP
@@ -32,6 +35,7 @@ typedef double3 Float3;
 #include "../modules/cell_utilities.h"
 #include "../modules/grid.h"
 #include "../modules/driver.h"
+#include "power_mod/kernel_interp.h"
 #include "power_mod/survey_correction_legendre.h"
 #include "power_mod/pair_counter.h"
 #include "power_mod/power_counts.h"
@@ -75,15 +79,14 @@ int main(int argc, char *argv[]) {
 
         Float grid_density = (double)par.np/tmp_grid.nf;
         printf("\n RANDOM CATALOG %d DIAGNOSTICS:\n",index+1);
+        printf("Grid cell-size = %.2fMpc/h\n", tmp_grid.cellsize);
         printf("Average number of particles per grid cell = %6.2f\n", grid_density);
-        Float max_density = 16.0;
+        Float max_density = 200.0;
         if (grid_density>max_density){
             fprintf(stderr,"Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n",max_density);
             exit(1);
         }
-        printf("Average number of particles per max_radius ball = %6.2f\n",
-                par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
-        if (grid_density<2){
+        if (grid_density<0.01){
             printf("#\n# WARNING: grid appears inefficiently fine; exiting.\n#\n");
             exit(1);
         }
@@ -107,7 +110,7 @@ int main(int argc, char *argv[]) {
     
     // Count number of second field cells enclosed by the maximum truncation radius
     Float cellsize = all_grid[1].cellsize;
-    Float filled_vol = 4./3.*M_PI*pow(par.R0+cellsize,3);
+    Float filled_vol = 4./3.*M_PI*pow(par.R0+2.*cellsize,3);
     int n_close = ceil(filled_vol/pow(cellsize,3)); // number of close cells
     
     // Define cell separations (dimensionless) within truncation radius
@@ -132,12 +135,21 @@ int main(int argc, char *argv[]) {
     integer3 cell_sep_close[len_cell_sep_close]; // proper array to house cell separations of correct length
     for(int i=0;i<len_cell_sep_close;i++) cell_sep_close[i] = cell_sep_close_tmp[i];
     
+    // Compute kernel interpolation functions
+    KernelInterp all_interp[par.nbin*par.mbin];
+    for(int i=0;i<par.nbin;i++){
+        printf("Creating kernel interpolator for k-bin %d of %d\n",i+1,par.nbin);
+        for(int j=0;j<par.mbin;j++){
+            KernelInterp tmp_interp(j*2,par.radial_bins_low[i],par.radial_bins_high[i],par.R0);
+            all_interp[i*par.mbin+j].copy_function(tmp_interp);
+            if((i==0)&&(j==0)) printf("%.2e\n",all_interp[i*par.mbin+j].kernel_vals[2000]);
+        }
+    }
+        
     // RUN Pair Counter
     
-    pair_counter(&all_grid[0],&all_grid[1],&par,&sc,cell_sep_close,len_cell_sep_close);
+    pair_counter(&all_grid[0],&all_grid[1],&par,&sc,all_interp,cell_sep_close,len_cell_sep_close);
     
-    
-    // END
     rusage ru;
     getrusage(RUSAGE_SELF, &ru);
 
