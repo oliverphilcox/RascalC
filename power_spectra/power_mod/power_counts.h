@@ -14,7 +14,7 @@ private:
     char *out_file, *out_string;
     int max_legendre; // maximum order of Legendre polynomials needed
     SurveyCorrection *sc; // survey correction function
-    KernelInterp all_kernel[];
+    KernelInterp *kernel_interp;
 public:
     uint64 used_pairs; // total number of pairs used
     
@@ -38,22 +38,14 @@ public:
     }
     
 public:
-    PowerCounts(Parameters *par, SurveyCorrection *_sc, KernelInterp _all_kernel[]){
+    PowerCounts(Parameters *par, SurveyCorrection *_sc, KernelInterp *_kernel_interp){
         nbin = par->nbin; // number of radial bins
         mbin = par->mbin; // number of Legendre bins
         out_file = par->out_file; // output directory
         out_string = par->out_string; // type specifier string
         R0 = par-> R0; // truncation radius
         
-        printf("CHECK_power_count1: %.2e\n",(_all_kernel)[0].kernel_vals[2000]);
-        
-        for(int i=0;i<nbin*mbin;i++){
-            //printf("CHECK_power_count2: %.2e\n",(_all_kernel)[0].kernel_vals[2000]);
-            KernelInterp tmp_kernel = new KernelInterp((_all_kernel)[i]);
-            all_kernel[i].copy_function(tmp_kernel);
-            printf("CHECK_power_count3: %.2e\n",(_all_kernel)[0].kernel_vals[2000]);
-        }
-        
+        kernel_interp = new KernelInterp(_kernel_interp);
         
         sc = _sc;
         max_legendre = fmax((sc->l_bins-1)*2,par->max_l);
@@ -86,8 +78,9 @@ public:
     
     inline void count_pairs(Particle pi, Particle pj){
         // Count pairs of particles with some weighting function        
-        Float r_ij, mu_ij, w_ij, tmp_phi_inv=0;
+        Float r_ij, mu_ij, w_ij, tmp_phi_inv=0, new_kr, old_kr,new_kernel,diff_kr,new_kr3, old_kr3;
         Float legendre[max_legendre/2+1]; // Even-ell Legendre coefficients
+        Float old_kernel[mbin]; // saved kernel functions
         
         cleanup_l(pi.pos,pj.pos,r_ij,mu_ij); // define distance and angle
         
@@ -119,19 +112,27 @@ public:
         
         for(int l_i=0;l_i<sc->l_bins;l_i++) tmp_phi_inv+=legendre[l_i]*sc->inv_correction_function(l_i*2,r_ij);
         
-        w_ij = pi.w*pj.w/tmp_phi_inv;
+        w_ij = pi.w*pj.w*pair_weight(r_ij);///tmp_phi_inv
         
-        //TODO: Reuse last bins kernel function
-        
+        // NB: This assumes bins are contiguous
         for(int i=0;i<nbin;i++){
             // Now compute multipole contributions
-            //KernelInterp this_kernel;
-            for(int j=0;j<mbin;j++){
-                //printf("%d i: %.4e\n",i*mbin+j,all_kernel[i*mbin+j].kernel(r_ij));
-                //fflush(NULL);
-                //this_kernel = &all_kernel[i*mbin+j];
-                power_counts[i*mbin+j]+= w_ij*legendre[j]*all_kernel[i*mbin+j].kernel(r_ij);//this_kernel.kernel(r_ij);
+            if(i==0){
+                old_kr = r_ij*r_low[0];
+                old_kr3 = pow(old_kr,3);
             }
+            new_kr = r_ij*r_high[i];
+            new_kr3 = pow(new_kr,3);
+            diff_kr = new_kr3 - old_kr3;
+            for(int j=0;j<mbin;j++){
+                if(i==0) old_kernel[j] = kernel_interp->kernel(j*2,old_kr);
+                new_kernel = kernel_interp->kernel(j*2,new_kr);
+                power_counts[i*mbin+j]+=w_ij*legendre[j]*(new_kernel-old_kernel[j])/diff_kr;
+                old_kernel[j] = new_kernel;
+            }
+            // Update values for next time
+            old_kr = new_kr;
+            old_kr3 = new_kr3;
         }
     }
     
@@ -140,7 +141,7 @@ public:
         Float r_ij, mu_ij, kr_ij_lo, kr_ij_hi,w_ij;
         Float legendre[max_legendre/2+1]; // Even-ell Legendre coefficients
         Float tmp_phi_inv=0.,tmp_bessel;
-#define BINNED
+//#define BINNED
 #ifdef BINNED
         Float k_sin_lo, k_cos_lo, k_sin_hi, k_cos_hi,k_Si_lo=0,k_Si_hi=0;
         Float diff_k3, tmp_kernel;
@@ -257,8 +258,13 @@ public:
         snprintf(pow_name, sizeof pow_name, "%s/%s_power_counts_n%d_m%d_%s.txt", out_file,out_string,nbin, mbin,suffix);
         FILE * PowFile = fopen(pow_name,"w"); 
         
-        for (int j=0;j<nbin*mbin;j++) fprintf(PowFile,"%le\n",power_counts[j]);
-        
+        for (int i=0;i<nbin;i++){
+            for(int j=0;j<mbin;j++){
+                fprintf(PowFile,"%le\t",power_counts[i*mbin+j]);
+            }
+            fprintf(PowFile,"\n");
+        }
+                
         fflush(NULL);
         
         // Close open files

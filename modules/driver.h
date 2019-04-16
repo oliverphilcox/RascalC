@@ -84,6 +84,7 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
         
         // Get the weights from line 4 if present, else fill with +1/-1 depending on the value of rstart
         // For grid_covariance rstart is typically not used
+#ifdef JACKKNIFE
         if(stat!=5)
 		   if(rstart>0&&j>=rstart)
 			   p[j].w = -1.;
@@ -94,7 +95,6 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 			   p[j].w = -tmp[stat-2]; //read in weights
 		   else
 			   p[j].w = tmp[stat-2]; 
-#ifdef JACKKNIFE
         int tmp_JK = tmp[stat-1]; // read in JK region
 		
 		// Collapse jacknife indices to only include filled JKs:
@@ -104,6 +104,17 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
             if (tmp_filled_JK[x]==tmp_JK) p[j].JK=x;
         }
         assert(p[j].JK!=-1); // ensure we find jackknife index		    
+#else
+        if(stat!=4)
+            if(rstart>0&&j>=rstart)
+                p[j].w = -1.;
+            else
+                p[j].w = 1.;
+            else{
+                if(rstart>0&&j>=rstart)
+                    p[j].w = -tmp[3]; // read in weights
+                else
+                    p[j].w = tmp[3];
 #endif
         }
 		

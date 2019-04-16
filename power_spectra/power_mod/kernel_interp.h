@@ -7,7 +7,8 @@ class KernelInterp{
     // Compute a interpolation kernel function
     
 public:
-    int npoint=10000;
+    int npoint=100000;
+    Float min_val;
     double *sep, *kernel_vals_0, *kernel_vals_2, *kernel_vals_4;
     gsl_interp_accel *sep_a;
     gsl_spline *interp_kernel_0, *interp_kernel_2, *interp_kernel_4;
@@ -15,12 +16,15 @@ public:
 public:
     inline double kernel(int ell, double this_sep){
         // Kernel function accelerated by interpolation
-        if (ell==0) return gsl_spline_eval(interp_kernel_0,this_sep,sep_a);
-        else if (ell==2) return gsl_spline_eval(interp_kernel_2,this_sep,sep_a);
-        else if (ell==4) return gsl_spline_eval(interp_kernel_4,this_sep,sep_a);
+        if(this_sep<=min_val) return 0.;
         else{
-            printf("Multipoles greater than hexadecapole not yet implemented");
-            exit(1);
+            if (ell==0) return gsl_spline_eval(interp_kernel_0,this_sep,sep_a);
+            else if (ell==2) return gsl_spline_eval(interp_kernel_2,this_sep,sep_a);
+            else if (ell==4) return gsl_spline_eval(interp_kernel_4,this_sep,sep_a);
+            else{
+                printf("Multipoles greater than hexadecapole not yet implemented");
+                exit(1);
+            }
         }
     }
     
@@ -28,6 +32,7 @@ public:
     void copy_function(KernelInterp *kern){
         // Copy pre-existing kernel function into object
         npoint = kern->npoint;
+        min_val = kern->min_val;
         
         // Allocate memory
         sep = (double *)malloc(sizeof(double)*npoint);
@@ -47,8 +52,9 @@ public:
     }
     
 private:
-    void copy(int& _npoint, double **_sep, double **_kernel_vals_0, double **_kernel_vals_2, double **_kernel_vals_4){
+    void copy(int& _npoint, Float& _min_val, double **_sep, double **_kernel_vals_0, double **_kernel_vals_2, double **_kernel_vals_4){
         _npoint = npoint;
+        _min_val = min_val;
         *_sep = (double *)malloc(sizeof(double)*npoint);
         *_kernel_vals_0 = (double *)malloc(sizeof(double)*npoint);
         *_kernel_vals_2 = (double *)malloc(sizeof(double)*npoint);
@@ -81,11 +87,11 @@ public:
     KernelInterp(KernelInterp *kern){
         // Copy constructor
         
-        kern->copy(npoint,&sep,&kernel_vals_0, &kernel_vals_2, &kernel_vals_4);
+        kern->copy(npoint,min_val,&sep,&kernel_vals_0, &kernel_vals_2, &kernel_vals_4);
         interpolate();
     }
     
-    KernelInterp(Float R0){
+    KernelInterp(Float R0, Float k_min){
         // Construct interpolation object
         Float tmp_kw,Si_int,tmp_bessel, tmp_sin, tmp_cos, tmp_kernel;
         
@@ -95,8 +101,10 @@ public:
         kernel_vals_2 = (double *)malloc(sizeof(double)*npoint);
         kernel_vals_4 = (double *)malloc(sizeof(double)*npoint);
         
+        min_val = (R0*k_min)/double(npoint); // minimum interpolation value
+        
         for(int i=0;i<npoint;i++){
-            tmp_kw = double(i+1)/double(npoint)*R0; // must be greater than zero here
+            tmp_kw = double(i+1)/double(npoint)*(R0*k_min); // must be greater than zero here
             sep[i] = tmp_kw;
             tmp_sin = sin(tmp_kw);
             tmp_cos = cos(tmp_kw);
@@ -123,6 +131,7 @@ public:
                     exit(1);
                 }
             }
+        }
         
         // activate interpolator function
         interpolate();
