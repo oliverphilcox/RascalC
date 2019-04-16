@@ -33,7 +33,7 @@ public:
     }
 
 public:
-    pair_counter(Grid *grid1, Grid *grid2, Parameters *par, SurveyCorrection *sc, KernelInterp all_interp[], integer3 *cell_sep, int len_cell_sep){
+    pair_counter(Grid *grid1, Grid *grid2, Parameters *par, SurveyCorrection *sc, KernelInterp *kernel_interp, integer3 *cell_sep, int len_cell_sep){
         
         // Define parameters
         nbin = par->nbin; // number of radial bins
@@ -47,14 +47,9 @@ public:
         STimer initial, TotalTime; // time initialization
         initial.Start();
         
-        printf("CHECK_pair_count1: %.2e\n",all_interp[0].kernel_vals[2000]);
-        
         //-----------INITIALIZE OPENMP + CLASSES----------
-        PowerCounts global_counts(par,sc,all_interp);
-        
-        printf("CHECK_pair_count2: %.2e\n",all_interp[0].kernel_vals[2000]);
-        exit(1);
-        
+        PowerCounts global_counts(par,sc,kernel_interp);
+
         check_threads(par,1); // define threads
         
         fprintf(stderr, "Init time: %g s\n",initial.Elapsed());
@@ -67,7 +62,7 @@ public:
             
         
 #ifdef OPENMP
-        #pragma omp parallel firstprivate(par,grid1,grid2) shared(global_counts,TotalTime) reduction(+:percent_counter,used_cells,used_particles)
+        #pragma omp parallel firstprivate(par,grid1,grid2,kernel_interp) shared(global_counts,TotalTime) reduction(+:percent_counter,used_cells,used_particles)
         { // start parallel loop
         // Decide which thread we are in
         int thread = omp_get_thread_num();
@@ -86,19 +81,7 @@ public:
             int mnp = grid1->maxnp; // max number of particles in grid1 cell
             Cell prim_cell,sec_cell; // cell objects
             
-            KernelInterp new_interp[nbin*mbin];
-            for(int i=0;i<nbin*mbin;i++){
-                printf("\nhere\n");
-                fflush(NULL);
-                printf("%d, %.2e\n",i,&all_interp[i].kernel_vals[5004]);
-                KernelInterp tmp_interp = new KernelInterp(&all_interp[i]);
-                printf("\nhere2\n");
-                fflush(NULL);
-                new_interp[i].copy_function(&tmp_interp);
-            }
-            printf("\nhere");
-            
-            PowerCounts loc_counts(par,sc,new_interp);
+            PowerCounts loc_counts(par,sc,kernel_interp);
             
             // Assign memory for intermediate steps
             int ec=0;
@@ -151,7 +134,6 @@ public:
 #pragma omp critical // only one processor at once
 #endif
         {
-            printf("HERE\n");
             // Sum up power-sums
             global_counts.sum_counts(&loc_counts);
             loc_counts.reset();

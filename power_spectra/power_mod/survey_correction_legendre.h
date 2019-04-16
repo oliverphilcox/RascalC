@@ -3,48 +3,6 @@
 #ifndef SURVEY_CORRECTION_LEGENDRE_H
 #define SURVEY_CORRECTION_LEGENDRE_H
 
-/*inline void legendre_polynomials_preload(Float* even_mu, int max_l, Float *poly_out){
-    // Declare Legendre polynomials using pre-computed (even) powers of mu from correction function
-    
-    // Compute all Legendre polynomials in a list
-    poly_out[0] = 1;
-    
-    if(max_l>1) poly_out[1] = 0.5*(3.*even_mu[0]-1.);
-    if(max_l>3) poly_out[2] = 1./8.*(35.*even_mu[1]-30.*even_mu[0]+3.);
-    if(max_l>5) poly_out[3] = 1./16.*(231.*even_mu[2]-315.*even_mu[1]+105.*even_mu[0]-5.);
-    if(max_l>7) poly_out[4] = 1./128.*(6435.*even_mu[3]-12012.*even_mu[2]+6930.*even_mu[1]-1260.*even_mu[0]+35.);
-    if(max_l>9) poly_out[5] = 1./256.*(46189.*even_mu[4]-109395.*even_mu[3]+90090.*even_mu[2]-30030.*even_mu[1]+3465.*even_mu[0]-63.);
-
-}
-
-inline void legendre_polynomials(Float mu,int max_l, Float *poly_out){
-    // Declare Legendre polynomials here
-    Float all_mu[5]; // declare all powers of mu here
-    _
-    // now compute relevant Legendre polynomials
-    poly_out[0]=1;
-    if(max_l>1){
-        all_mu[0] = mu*mu; // mu^4
-        poly_out[1] = 0.5*(3.*all_mu[0]-1.);
-    }
-    if(max_l>3){
-        all_mu[1] = pow(all_mu[0],2.); // mu^4
-        poly_out[2] = 1./8.*(35.*all_mu[1]-30.*all_mu[0]+3.);
-    }
-    if(max_l>5){
-        all_mu[2] = all_mu[0]*all_mu[1]; // mu^6
-        poly_out[3] = 1./16.*(231.*all_mu[2]-315.*all_mu[1]+105.*all_mu[0]-5.);
-    }
-    if(max_l>7){
-        all_mu[3] = all_mu[0]*all_mu[2]; // mu^8
-        poly_out[4] = 1./128.*(6435.*all_mu[3]-12012.*all_mu[2]+6930.*all_mu[1]-1260.*all_mu[0]+35.);
-    }
-    if(max_l>9){
-        all_mu[4] = all_mu[0]*all_mu[3]; // mu^10
-        poly_out[5] = 1./256.*(46189.*all_mu[4]-109395.*all_mu[3]+90090.*all_mu[2]-30030.*all_mu[1]+3465.*all_mu[0]-63.);
-    }
-}*/
-
 class SurveyCorrection{
     // this class stores the correction functions for each bin, giving the difference between the true and estimated RR counts. It is created by reading in coefficients to  compute smooth Phi(r,mu).
     // For convenience we read in coefficients describing the monopoles of 1/Phi(r,mu)

@@ -136,19 +136,12 @@ int main(int argc, char *argv[]) {
     for(int i=0;i<len_cell_sep_close;i++) cell_sep_close[i] = cell_sep_close_tmp[i];
     
     // Compute kernel interpolation functions
-    KernelInterp all_interp[par.nbin*par.mbin];
-    for(int i=0;i<par.nbin;i++){
-        printf("Creating kernel interpolator for k-bin %d of %d\n",i+1,par.nbin);
-        for(int j=0;j<par.mbin;j++){
-            KernelInterp tmp_interp(j*2,par.radial_bins_low[i],par.radial_bins_high[i],par.R0);
-            all_interp[i*par.mbin+j].copy_function(tmp_interp);
-            if((i==0)&&(j==0)) printf("%.2e\n",all_interp[i*par.mbin+j].kernel_vals[2000]);
-        }
-    }
+    printf("Creating kernel interpolator function\n");
+    KernelInterp interp_func(par.R0,par.rmax);
         
     // RUN Pair Counter
     
-    pair_counter(&all_grid[0],&all_grid[1],&par,&sc,all_interp,cell_sep_close,len_cell_sep_close);
+    pair_counter(&all_grid[0],&all_grid[1],&par,&sc,&interp_func,cell_sep_close,len_cell_sep_close);
     
     rusage ru;
     getrusage(RUSAGE_SELF, &ru);

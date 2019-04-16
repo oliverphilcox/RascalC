@@ -13,11 +13,11 @@ public:
     
     // Name of the first particle field
     char *fname = NULL;
-    const char default_fname[500] = "/mnt/store1/oliverphilcox/PowerSpectra/qpm_galaxy_1.xyzwj";//randoms_10x.xyzwj"; 
+    const char default_fname[500] = "/mnt/store1/oliverphilcox/QPM_proc/qpm_galaxy_0001.xyzw";//PowerSpectra/qpm_galaxy_1.xyzwj";//randoms_10x.xyzwj"; 
     
     // Name of second particle field 
     char *fname2 = NULL;
-	const char default_fname2[500] = "/mnt/store1/oliverphilcox/PowerSpectra/qpm_galaxy_1.xyzwj";// "/mnt/store1/oliverphilcox/3PCF/qpm_galaxy_1.xyzwj";
+	const char default_fname2[500] = "/mnt/store1/oliverphilcox/QPM_proc/qpm_galaxy_0001.xyzw";//PowerSpectra/qpm_galaxy_1.xyzwj";// "/mnt/store1/oliverphilcox/3PCF/qpm_galaxy_1.xyzwj";
     
     // Optional File Prefix for output
     char *out_string = NULL;
@@ -29,7 +29,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/PowerTest_binned2/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/PowerTest2/";
     
     // The number of threads to run on
 	int nthread = 20;
@@ -41,7 +41,7 @@ public:
     // Whether or not we are using a periodic box
 	bool perbox = false;
 
-    int max_l = 0; // max Legendre moment (must be even)
+    int max_l = 4; // max Legendre moment (must be even)
     
     Float R0 = 50; // kernel truncation radius (in Mpc/h)
     
