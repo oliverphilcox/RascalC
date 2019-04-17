@@ -25,7 +25,7 @@ public:
     
     // Name of the radial binning .csv file in k-space
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/PowerSpectra/k_binning.csv";
+    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/PowerSpectra/k_binning2.csv";
     
     // Output directory 
     char *out_file = NULL;

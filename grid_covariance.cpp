@@ -50,6 +50,9 @@ typedef double3 Float3;
 #elif defined LEGENDRE
     #include "modules/legendre_utilities.h"
     #include "modules/integrals_legendre.h"
+#elif defined POWER
+    #include "power_spectra/power_mod/kernel_interp.h"
+    #include "modules/integrals_power.h"
 #else
     #include "modules/jackknife_weights.h"
     #include "modules/integrals.h"
@@ -84,7 +87,7 @@ int main(int argc, char *argv[]) {
         max_no_functions=3;
         no_fields=2;
     }
-#if (defined LEGENDRE)||(defined THREE_PCF)
+#if (defined LEGENDRE)||(defined THREE_PCF)||(defined POWER)
     // Define all possible survey correction functions
     SurveyCorrection all_survey[max_no_functions]; // create empty functions
     
@@ -179,13 +182,19 @@ int main(int argc, char *argv[]) {
         fflush(NULL);
     }
     
-#if (!defined LEGENDRE && !defined THREE_PCF)
+#if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)
     // Now rescale weights based on number of particles (whether or not using jackknives)
     all_weights[0].rescale(all_grid[0].norm,all_grid[0].norm);
     if(par.multi_tracers==true){
         all_weights[1].rescale(all_grid[1].norm,all_grid[1].norm);
         all_weights[2].rescale(all_grid[0].norm,all_grid[1].norm);
     }
+#endif
+    
+#ifdef POWER
+    // Compute kernel interpolation functions
+    printf("Creating kernel interpolator function\n");
+    KernelInterp interp_func(par.R0,par.rmax);
 #endif
     
     // Now define all possible correlation functions and random draws:
@@ -214,6 +223,20 @@ int main(int argc, char *argv[]) {
     // Compute threePCF integrals
     compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],0); // final digit is iteration number
     compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],1); 
+    
+#elif defined POWER
+    // Compute integrals
+    compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,1,1,1,1,1); // final digit is iteration number
+
+    if(par.multi_tracers==true){
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,1,2,1,1,2);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,1,2,2,1,3);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,1,2,1,2,4);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,1,1,2,2,5);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,2,1,2,2,6);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,2,2,2,2,7);
+    }
+
     
 #elif defined LEGENDRE
     // Compute integrals

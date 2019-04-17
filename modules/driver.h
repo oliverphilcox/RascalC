@@ -105,7 +105,7 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
         }
         assert(p[j].JK!=-1); // ensure we find jackknife index		    
 #else
-        if(stat!=4)
+        if((stat!=4)&&(stat!=5))
             if(rstart>0&&j>=rstart)
                 p[j].w = -1.;
             else
@@ -115,9 +115,9 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
                     p[j].w = -tmp[3]; // read in weights
                 else
                     p[j].w = tmp[3];
-#endif
-        }
-		
+#endif                
+            }
+      	
 		j++;
     }
     fclose(fp);

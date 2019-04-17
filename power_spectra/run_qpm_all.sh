@@ -3,12 +3,12 @@
 bash clean;
 make;
 
-    
-## Run RR counts
-for i in {0..50}
-    do
-        ./power -fname /mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_50x_$i -fname2 /mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_50x_$i -out_string RR_$i -output /mnt/store1/oliverphilcox/PowerQPM/
-    done
+#     
+# ## Run RR counts
+# for i in {0..50}
+#     do
+#         ./power -fname /mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_50x_$i -fname2 /mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_50x_$i -out_string RR_$i -output /mnt/store1/oliverphilcox/PowerQPM/
+#     done
 
 for i in {0001..0100}
     do 

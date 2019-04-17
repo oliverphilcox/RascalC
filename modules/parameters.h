@@ -69,6 +69,11 @@ public:
     char *phi_file = NULL; // Survey correction function coefficient file 
     const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/SurveyCorrectionFactor_3PCF_n10_m50_11.txt";
     
+    //-------- POWER PARAMETERS ---------------------------------------------
+    
+    Float R0 = 50; // truncation radius in Mpc/h
+    Float power_norm = 0.; // normalization of the power spectrum
+    
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
     // Maximum number of iterations to compute the C_ab integrals over
@@ -221,11 +226,15 @@ public:
         else if (!strcmp(argv[i],"-N2")) N2=atof(argv[++i]);
         else if (!strcmp(argv[i],"-N3")) N3=atof(argv[++i]);
         else if (!strcmp(argv[i],"-N4")) N4=atof(argv[++i]);
-#ifdef LEGENDRE
+#if (defined LEGENDRE)||(defined POWER)
         else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
         else if (!strcmp(argv[i],"-phi_file12")) phi_file12=argv[++i];
         else if (!strcmp(argv[i],"-phi_file2")) phi_file2=argv[++i];
+#endif
+#ifdef POWER
+        else if (!strcmp(argv[i],"-R0")) R0 = atof(argv[++i]);
+        else if (!strcmp(argv[i],"-power_norm")) power_norm = atof(argv[++i]);
 #elif defined JACKKNIFE
         else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
         else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
@@ -285,13 +294,23 @@ public:
 	    assert(mumin>=0); // We take the absolte value of mu
 	    assert(mumax<=1); // mu > 1 makes no sense
         
-#ifdef LEGENDRE
+#if (defined LEGENDRE)||(defined POWER)
         assert(max_l%2==0); // check maximum ell is even
         assert(max_l<=10); // ell>10 not yet implemented!
         if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
         if (phi_file2==NULL) {phi_file2 = (char *) default_phi_file2;}
         if (phi_file12==NULL) {phi_file12 = (char *) default_phi_file12;} 
         mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
+#endif
+#ifdef POWER
+        if(R0<40){
+            printf("\nTruncation radius (%.0f Mpc/h) is too small for accurate power computation. Exiting.\n\n",R0);
+            exit(1);
+        }
+        if(R0>400){
+            printf("\nTruncation radius (%.0f Mpc/h) is too large for efficient power computation. Exiting.\n\n",R0);
+            exit(1);
+        }
 #elif defined THREE_PCF
         assert(max_l%2==0); // check maximum ell is even
         assert(max_l<=10); // ell>10 not yet implemented!
@@ -477,13 +496,17 @@ private:
 	    fprintf(stderr, "   -cor2 <file>: (Optional) File location of input xi_2 correlation function file.\n");
 	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Number of galaxies in the survey for the second tracer set.\n");
         
-#ifdef LEGENDRE
+#if (defined LEGENDRE||defined POWER)
         fprintf(stderr, "   -max_l <max_l>: Maximum legendre multipole (must be even)");
         fprintf(stderr, "   -phi_file <filename>: Survey correction function coefficient file\n");
         fprintf(stderr, "\n");
         fprintf(stderr, "   -phi_file12 <filename>: (Optional) Survey correction function coefficient file for fields 1 x 2\n");
         fprintf(stderr, "   -phi_file2 <filename>: (Optional) Survey correction function coefficent file for field 2\n");
         fprintf(stderr, "\n");
+#endif
+#ifdef POWER
+        fprintf(stderr, "   -R0 <R0>: Truncation radius for pair-wise separation window function in Mpc/h. Default: R0 = 100\n");
+        fprintf(stderr, "   -power_norm: Power spectrum normalization = V*<(nw)^2> = Sum(nw^2)\n");
 #else
         fprintf(stderr, "   -RRbin12 <filename>: (Optional) File containing the {1,2} jackknife RR bin counts (computed from Corrfunc)\n");
 	    fprintf(stderr, "   -RRbin2 <filename>: (Optional) File containing the {2,2} jackknife RR bin counts (computed from Corrfunc)\n");
