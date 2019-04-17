@@ -27,25 +27,31 @@ inline void legendre_polynomials(Float mu,int max_l, Float *poly_out){
     if(max_l>1){
         all_mu[0] = mu*mu; // mu^4
         poly_out[1] = 0.5*(3.*all_mu[0]-1.);
-    }
-    if(max_l>3){
-        all_mu[1] = pow(all_mu[0],2.); // mu^4
-        poly_out[2] = 1./8.*(35.*all_mu[1]-30.*all_mu[0]+3.);
-    }
-    if(max_l>5){
-        all_mu[2] = all_mu[0]*all_mu[1]; // mu^6
-        poly_out[3] = 1./16.*(231.*all_mu[2]-315.*all_mu[1]+105.*all_mu[0]-5.);
-    }
-    if(max_l>7){
-        all_mu[3] = all_mu[0]*all_mu[2]; // mu^8
-        poly_out[4] = 1./128.*(6435.*all_mu[3]-12012.*all_mu[2]+6930.*all_mu[1]-1260.*all_mu[0]+35.);
-    }
-    if(max_l>9){
-        all_mu[4] = all_mu[0]*all_mu[3]; // mu^10
-        poly_out[5] = 1./256.*(46189.*all_mu[4]-109395.*all_mu[3]+90090.*all_mu[2]-30030.*all_mu[1]+3465.*all_mu[0]-63.);
+        if(max_l>3){
+            all_mu[1] = pow(all_mu[0],2.); // mu^4
+            poly_out[2] = 1./8.*(35.*all_mu[1]-30.*all_mu[0]+3.);
+            if(max_l>5){
+                all_mu[2] = all_mu[0]*all_mu[1]; // mu^6
+                poly_out[3] = 1./16.*(231.*all_mu[2]-315.*all_mu[1]+105.*all_mu[0]-5.);
+                if(max_l>7){
+                    all_mu[3] = all_mu[0]*all_mu[2]; // mu^8
+                    poly_out[4] = 1./128.*(6435.*all_mu[3]-12012.*all_mu[2]+6930.*all_mu[1]-1260.*all_mu[0]+35.);
+                    if(max_l>9){
+                        all_mu[4] = all_mu[0]*all_mu[3]; // mu^10
+                        poly_out[5] = 1./256.*(46189.*all_mu[4]-109395.*all_mu[3]+90090.*all_mu[2]-30030.*all_mu[1]+3465.*all_mu[0]-63.);
+                    }
+                }
+            }
+        }
     }
 }
 #endif
+
+#ifdef POWER
+    // Use the inverse Phi definition in this case
+    #include "../power_spectra/power_mod/survey_correction_legendre.h"
+#else
+    // Create new survey correction definition
 
 class SurveyCorrection{
     // this class stores the correction functions for each bin, giving the difference between the true and estimated RR counts. It is created by reading in coefficients to recompute smooth Phi(mu) functions for each radial bin.
@@ -208,4 +214,5 @@ public:
 #endif
 };
 
+#endif
 #endif

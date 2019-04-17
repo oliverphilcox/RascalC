@@ -109,7 +109,7 @@ public:
         return which_bin;
         }
     
-    inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const int pj_id, int* &bin, Float* &wij, const double prob, const double prob1, const double prob2, Float* &factor_ij, Float* &poly_ij){
+    inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const int pj_id, int* &bin, Float* &wij, const double prob, Float* &factor_ij, Float* &poly_ij){
         // Accumulates the two point integral C2. Also outputs an array of bin values for later reuse.
         // Prob. here is defined as g_ij / f_ij where g_ij is the sampling PDF and f_ij is the true data PDF for picking pairs (equal to n_i/N n_j/N for N particles)
         // Prob1/2 are for when we divide the random particles into two subsets 1 and 2.
@@ -182,6 +182,9 @@ public:
         int max_bin = nbin,out_bin;
         Float correction_factors,polynomials_jk[mbin];
         
+        // load all legendre polynomials
+        legendre_polynomials(rjk_mu, max_l, polynomials_jk);            
+        
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
             if((pk_id==pj_id)||(wij[i]==-1)||(prim_ids[i]==pk_id)){
                 wijk[i]=-1;
@@ -205,9 +208,6 @@ public:
             // Now compute the integral;
             c3v = tmp_weight*pj.w/prob*xi_ik_tmp*4.; // include symmetry factor
             correction_factors = factor_ij[i]*sc23->correction_function(tmp_bin,rjk_mu);
-                
-            // load all legendre polynomials
-            legendre_polynomials(rjk_mu, max_l, polynomials_jk);
                 
             // Now add to relevant bins
             for(int p_bin=0;p_bin<mbin;p_bin++){ // iterate over all legendre polynomials
@@ -241,6 +241,9 @@ public:
         cleanup_l(pl.pos,pj.pos,rjl_mag,rjl_mu); 
         xi_jl = cf24->xi(rjl_mag, rjl_mu); // j-l correlation
         
+        // load all legendre polynomials
+        legendre_polynomials(rkl_mu, max_l, polynomials_kl);
+        
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
             if(wijk[i]==-1) continue; // skip incorrect bins / ij self counts
             if(prim_ids[i]==pl_id) continue; // don't self-count
@@ -252,9 +255,6 @@ public:
             c4v = tmp_weight/prob*2.*xi_ik[i]*xi_jl; // with xi_ik*xi_jl = xi_il*xi_jk symmetry factor
             correction_factors = factor_ij[i]*sc34->correction_function(tmp_bin,rkl_mu);
             
-            // load all legendre polynomials
-            legendre_polynomials(rkl_mu, max_l, polynomials_kl);
-                
             // Now add to relevant bins
             for(int p_bin=0;p_bin<mbin;p_bin++){ // iterate over all legendre polynomials
                 tmp_full_bin = (bin_ij[i]*mbin+p_bin)*nbin*mbin+tmp_bin*mbin;
