@@ -10,6 +10,7 @@
 #include <complex>
 #include <algorithm>
 #include <random>
+#include <gsl/gsl_sf.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp2d.h>
@@ -162,8 +163,10 @@ int main(int argc, char *argv[]) {
             fprintf(stderr,"Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n",max_density);
             exit(1);
         }
+#ifndef POWER
         printf("Average number of particles per max_radius ball = %6.2f\n",
                 par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
+#endif
         if (grid_density<2){
             printf("#\n# WARNING: grid appears inefficiently fine; exiting.\n#\n");
             exit(1);
@@ -194,7 +197,7 @@ int main(int argc, char *argv[]) {
 #ifdef POWER
     // Compute kernel interpolation functions
     printf("Creating kernel interpolator function\n");
-    KernelInterp interp_func(par.R0,par.rmax);
+    KernelInterp kernel_interp(par.R0,par.rmax);
 #endif
     
     // Now define all possible correlation functions and random draws:
@@ -226,15 +229,15 @@ int main(int argc, char *argv[]) {
     
 #elif defined POWER
     // Compute integrals
-    compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,1,1,1,1,1); // final digit is iteration number
+    compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,1,1,1,1,1); // final digit is iteration number
 
     if(par.multi_tracers==true){
-        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,1,2,1,1,2);
-        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,1,2,2,1,3);
-        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,1,2,1,2,4);
-        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,1,1,2,2,5);
-        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,2,1,2,2,6);
-        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,kernel_interp,2,2,2,2,7);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,1,2,1,1,2);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,1,2,2,1,3);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,1,2,1,2,4);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,1,1,2,2,5);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,2,1,2,2,6);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,2,2,2,2,7);
     }
 
     

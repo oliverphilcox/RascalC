@@ -27,7 +27,7 @@ public:
     // Assignment operator creation
     SurveyCorrection& operator=(const SurveyCorrection& survey_corr);
         
-    SurveyCorrection(Parameters *par){
+    SurveyCorrection(Parameters *par, int I1, int I2){
         // This initializes the function and reads in the relevant polynomial coefficients for each radial bin. 
         // NB: coefficients are indexed as INDEX = MULTIPOLE_INDEX*N_COEFF. + COEFF_ID where N_COEFF is the total number of coefficients for each multipole; here 3. 
         
@@ -36,7 +36,10 @@ public:
         int line_no = 0;
         FILE *fp;
         
-        phi_file = par->phi_file;
+        if((I1==1)&&(I2==1))    phi_file = par->inv_phi_file;
+        else if ((I1==2)&&(I2==2)) phi_file = par->inv_phi_file2;
+        else phi_file = par->inv_phi_file12;
+        
         fp = fopen(phi_file,"r");
         if (fp==NULL){
             fprintf(stderr,"Survey correction function coefficient file %s not found\n",phi_file);
