@@ -112,7 +112,7 @@ public:
         
         for(int l_i=0;l_i<sc->l_bins;l_i++) tmp_phi_inv+=legendre[l_i]*sc->inv_correction_function(l_i*2,r_ij);
         
-        w_ij = pi.w*pj.w*pair_weight(r_ij);///tmp_phi_inv
+        w_ij = pi.w*pj.w*pair_weight(r_ij)/tmp_phi_inv;
         
         // NB: This assumes bins are contiguous
         for(int i=0;i<nbin;i++){
