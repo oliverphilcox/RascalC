@@ -260,6 +260,10 @@ public:
                         
                         hcubature(1, xi_fun, &param[0], 1, xmin, xmax, 0, 0, 1e-5, ERROR_INDIVIDUAL, &val, &err);
                         
+#ifdef POWER
+                        val*=(1.+5.*pow(boxside/(boxside+n),2));//pow(n+0.1,-2.5);
+#endif
+                        
                         //printf("\nn: %.1f, prob: %.2e, err: %.2e",n,val,err);
                         
                         // Insert the calculated value to its grid position
@@ -426,6 +430,9 @@ public:
         // a is the cubic-boxsize. (Here used as a spherical gaussian window)
         
         // Return limit as n tends to zero to avoid infinities
+#ifdef POWER
+        return 1./pow(a+n,3);//output*(1.+10.*pow(a/(a+n),3));//+pow(n,-20.)*pow(100000000+n,-5.);
+#else
         Float output; 
         if(n<=0){
             output=pow(a,-2);
@@ -433,6 +440,7 @@ public:
             output = gsl_sf_dawson(n/a)/(a*n);
         }
         return output;
+#endif
     }
     
 };
