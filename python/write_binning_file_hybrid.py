@@ -20,7 +20,7 @@ print("Using hybrid binning: log binning up to r = %.1f, linear binning up to r 
 rbins = np.concatenate((np.logspace(np.log(r_min),np.log(r_cut),n_log_bins+1,base=np.e),np.linspace(r_cut,r_max,n_lin_bins+1)))
 
 # PRINT binning:
-with file(out_file,'w+') as writefile:
+with open(out_file,'w+') as writefile:
     for i in range(n_log_bins):
         writefile.write("%.8f\t%.8f\n" %(rbins[i],rbins[i+1]))
     for i in range(n_log_bins+1,n_lin_bins+n_log_bins):

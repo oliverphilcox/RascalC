@@ -410,7 +410,7 @@ public:
     void normalize(Float norm1, Float norm2, Float norm3, Float norm4, Float n_pairs, Float n_triples, Float n_quads, Float norm_factor){
         // Normalize the accumulated integrals (partly done by the normalising probabilities used from the selected cubes)
         // n_pair etc. are the number of PARTICLE pairs etc. attempted (not including rejected cells, but including pairs which don't fall in correct bin ranges)
-        // NB: norm_factor isV*<(nw)^2> or Sum nw^2 for the galaxies
+        // NB: norm_factor is V*<(nw)^2> or Sum nw^2 for the galaxies
         
         // To avoid recomputation
         double corrf2 = norm1*norm2; // correction factor for densities of random points

@@ -13,11 +13,11 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/qpm_randoms_10x.xyzwj"; 
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_50x.xyzwj";//randoms_10x.xyzwj"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/PowerSpectra/k_binning2.csv";//k_binning2.csv";
+    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/RealPowerCov/fine_linear_r_bins_R0_50.csv";//PowerSpectra/k_binning2.csv";//k_binning2.csv";
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
@@ -32,7 +32,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/PowerCovTest/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/RealPowerCov2/";
     
     // The number of mu bins in the correlation function
     int mbin_cf = 10;
@@ -42,7 +42,7 @@ public:
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
-	int nside = 251;
+	int nside = 351;
     
     // Whether or not we are using a periodic box
 	bool perbox = false;
@@ -64,14 +64,14 @@ public:
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 0; // max Legendre moment (must be even)
+    int max_l = 4; // max Legendre moment (must be even)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
     const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/SurveyCorrectionFactor_3PCF_n10_m50_11.txt";
     
     //-------- POWER PARAMETERS ---------------------------------------------
     
-    Float R0 = 100; // truncation radius in Mpc/h
+    Float R0 = 50; // truncation radius in Mpc/h
     Float power_norm = 4.246213506653083; // normalization of the power spectrum
     
     char *inv_phi_file = NULL; // Inverse survey correction function multipole coefficient file 
@@ -84,9 +84,9 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 15; // number of j cells per i cell
-    int N3 = 15; // number of k cells per j cell
-    int N4 = 15; // number of l cells per k cell
+    int N2 = 8; // number of j cells per i cell
+    int N3 = 8; // number of k cells per j cell
+    int N4 = 8 ; // number of l cells per k cell
     
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     
@@ -459,7 +459,7 @@ public:
 
 
 
-#ifdef LEGENDRE
+#ifdef THREE_PCF
         if(multi_tracers){
             printf("\nSupport for multi-tracer threePCF covariance matrices not yet available. Exiting.\n\n");
             exit(1);
@@ -496,7 +496,7 @@ public:
 		if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
         printf("Radial Bins = %d\n", nbin);
 		printf("Radial Binning = {%6.5f, %6.5f} over %d bins (user-defined bin widths) \n",rmin,rmax,nbin);
-#if (!defined LEGENDRE || !defined THREE_PCF || !defined POWER)
+#if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)
 		printf("Mu Bins = %d\n", mbin);
 		printf("Mu Binning = {%6.5f, %6.5f, %6.5f}\n",mumin,mumax,(mumax-mumin)/mbin);
 #endif

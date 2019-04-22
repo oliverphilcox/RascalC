@@ -53,7 +53,7 @@ typedef double3 Float3;
     #include "modules/integrals_legendre.h"
 #elif defined POWER
     #include "power_spectra/power_mod/kernel_interp.h"
-    #include "modules/integrals_legendre_power.h"
+    #include "modules/integrals_power.h"
 #else
     #include "modules/jackknife_weights.h"
     #include "modules/integrals.h"
@@ -163,8 +163,10 @@ int main(int argc, char *argv[]) {
             fprintf(stderr,"Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n",max_density);
             exit(1);
         }
+#ifndef POWER
         printf("Average number of particles per max_radius ball = %6.2f\n",
                 par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
+#endif
         if (grid_density<2){
             printf("#\n# WARNING: grid appears inefficiently fine; exiting.\n#\n");
             exit(1);
@@ -190,6 +192,12 @@ int main(int argc, char *argv[]) {
         all_weights[1].rescale(all_grid[1].norm,all_grid[1].norm);
         all_weights[2].rescale(all_grid[0].norm,all_grid[1].norm);
     }
+#endif
+    
+#ifdef POWER
+    // Compute kernel interpolation functions
+    printf("Creating kernel interpolator function\n");
+    KernelInterp kernel_interp(par.R0,par.rmax);
 #endif
     
     // Now define all possible correlation functions and random draws:
@@ -218,8 +226,22 @@ int main(int argc, char *argv[]) {
     // Compute threePCF integrals
     compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],0); // final digit is iteration number
     compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],1); 
-        
-#elif (defined LEGENDRE || defined POWER)
+    
+#elif defined POWER
+    // Compute integrals
+    compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,1,1,1,1,1); // final digit is iteration number
+
+    if(par.multi_tracers==true){
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,1,2,1,1,2);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,1,2,2,1,3);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,1,2,1,2,4);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,1,1,2,2,5);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,2,1,2,2,6);
+        compute_integral(all_grid,&par,all_cf,all_rd,all_survey,&kernel_interp,2,2,2,2,7);
+    }
+
+    
+#elif defined LEGENDRE
     // Compute integrals
     compute_integral(all_grid,&par,all_cf,all_rd,all_survey,1,1,1,1,1); // final digit is iteration number
 

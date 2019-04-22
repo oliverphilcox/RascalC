@@ -7,8 +7,7 @@
 #ifdef LEGENDRE
     #include "integrals_legendre.h"
 #elif defined POWER
-    #include "integrals_power.h"
-    #include "../power_spectra/power_mod/kernel_interp.h"
+    #include "integrals_legendre_power.h"
 #else
     #include "integrals.h"
 #endif
@@ -131,10 +130,8 @@
     public:    
         compute_integral(){};
         
-#ifdef LEGENDRE
+#if (defined LEGENDRE || defined POWER)
         compute_integral(Grid all_grid[], Parameters *par, CorrelationFunction all_cf[], RandomDraws all_rd[], SurveyCorrection all_survey[], int I1, int I2, int I3, int I4, int iter_no){
-#elif defined POWER
-        compute_integral(Grid all_grid[], Parameters *par, CorrelationFunction all_cf[], RandomDraws all_rd[], SurveyCorrection all_survey[], KernelInterp *kernel_interp, int I1, int I2, int I3, int I4, int iter_no){
 #else
         compute_integral(Grid all_grid[], Parameters *par, JK_weights all_JK[], CorrelationFunction all_cf[], RandomDraws all_rd[], int I1, int I2, int I3, int I4, int iter_no){
 #endif
@@ -168,7 +165,6 @@
             SurveyCorrection *survey_corr_12 = which_survey(all_survey,I1,I2);
             SurveyCorrection *survey_corr_23 = which_survey(all_survey,I2,I3);
             SurveyCorrection *survey_corr_34 = which_survey(all_survey,I3,I4);
-            int n_param = survey_corr_12->n_param;            
 #else
             // Define relevant jackknife JK_weights
             JK_weights *JK12 = which_JK(all_JK,I1,I2);
@@ -247,10 +243,8 @@
             std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
             unsigned long int steps = dist(urandom);        
             gsl_rng_env_setup(); // initialize gsl rng
-#ifdef LEGENDRE
+#if (defined LEGENDRE || defined POWER)
             Integrals sumint(par, cf12, cf13, cf24, I1, I2, I3, I4,survey_corr_12,survey_corr_23,survey_corr_34); // total integral
-#elif defined POWER
-            Integrals sumint(par, cf12, cf13, cf24, I1, I2, I3, I4,survey_corr_12,survey_corr_23,survey_corr_34, kernel_interp); // total integral
 #elif defined JACKKNIFE
             Integrals sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4,product_weights12_12,product_weights12_23,product_weights12_34); // total integral
 #else
@@ -272,10 +266,8 @@
             TotalTime.Start(); // Start timer
             
 #ifdef OPENMP       
-#ifdef LEGENDRE
+#if (defined LEGENDRE || defined POWER)
     #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
-#elif defined POWER
-    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24,kernel_interp) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #elif defined JACKKNIFE
     #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #else
@@ -300,10 +292,10 @@
             //int* bin; // a-b bins for particles
             int* prim_ids; // list of particle IDs in primary cell
             double p2,p3,p4; // probabilities
-#ifndef POWER
+#if (!defined LEGENDRE && !defined POWER)
             Float p22,p21; // probabilities
-            int *bin_ij; // i-j separation bin
 #endif
+            int *bin_ij; // i-j separation bin
             int mnp = grid1->maxnp; // max number of particles in a grid1 cell
             Float *xi_ik, *w_ijk, *w_ij; // arrays to store xi and weight values
             Float percent_counter;
@@ -317,14 +309,14 @@
             // Assign memory for useful quantities
             int ecL=0; 
             ecL+=posix_memalign((void **) &factor_ij, PAGE, sizeof(Float)*mnp);
-            ecL+=posix_memalign((void **) &poly_ij, PAGE, sizeof(Float)*mnp*n_param);
+            ecL+=posix_memalign((void **) &poly_ij, PAGE, sizeof(Float)*mnp*mbin);
             assert(ecL==0);
 #elif defined POWER
-            Float* kernel_ij;
-            Integrals locint(par, cf12, cf13, cf24, I1, I2, I3, I4, survey_corr_12, survey_corr_23, survey_corr_34, kernel_interp);
+            Float *poly_ij;
+            Integrals locint(par, cf12, cf13, cf24, I1, I2, I3, I4, survey_corr_12, survey_corr_23, survey_corr_34);
             // Assign memory
             int ecL=0;
-            ecL+=posix_memalign((void **) &kernel_ij, PAGE, sizeof(Float)*mnp*nbin*mbin);
+            ecL+=posix_memalign((void **) &poly_ij, PAGE, sizeof(Float)*mnp*mbin);
             assert(ecL==0);            
 #elif defined JACKKNIFE
             Integrals locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4, product_weights12_12, product_weights12_23, product_weights12_34); // Accumulates the integral contribution of each thread
@@ -338,9 +330,7 @@
             int ec=0;
             ec+=posix_memalign((void **) &prim_list, PAGE, sizeof(Particle)*mnp);
             ec+=posix_memalign((void **) &prim_ids, PAGE, sizeof(int)*mnp);
-#ifndef POWER
             ec+=posix_memalign((void **) &bin_ij, PAGE, sizeof(int)*mnp);
-#endif
             ec+=posix_memalign((void **) &w_ij, PAGE, sizeof(Float)*mnp);
             ec+=posix_memalign((void **) &xi_ik, PAGE, sizeof(Float)*mnp);
             ec+=posix_memalign((void **) &w_ijk, PAGE, sizeof(Float)*mnp);
@@ -409,7 +399,7 @@
 #ifdef LEGENDRE
                         locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, factor_ij, poly_ij);
 #elif defined POWER
-                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, w_ij, p2, kernel_ij);
+                        locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, poly_ij);
 #else
                         locint.second(prim_list, prim_ids, pln, particle_j, pid_j, bin_ij, w_ij, p2, p21, p22);
 #endif
@@ -434,7 +424,7 @@
 #ifdef LEGENDRE
                             locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_ik, w_ijk, p3,factor_ij,poly_ij);
 #elif defined POWER
-                            locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, w_ij, xi_ik, w_ijk, p3, kernel_ij);
+                            locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_ik, w_ijk, p3, poly_ij);
 #else
                             locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, bin_ij, w_ij, xi_ik, w_ijk, p3);
 #endif
@@ -457,7 +447,7 @@
 #ifdef LEGENDRE
                                 locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, p4, factor_ij, poly_ij);
 #elif defined POWER
-                                locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, w_ijk, xi_ik, p4, kernel_ij);
+                                locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, p4, poly_ij);
 #else                 
                                 locint.fourth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, pid_j, pid_k, pid_l, bin_ij, w_ijk, xi_ik, p4);
 #endif
@@ -517,14 +507,7 @@
 #ifdef JACKKNIFE
                 locint.save_jackknife_integrals(output_string);
 #endif
-#ifdef POWER
-                sumint.sum_total_counts(&locint);
-                cnt2=sumint.used_pairs;
-                cnt3=sumint.used_triples;
-                cnt4=sumint.used_quads;
-#else
                 locint.sum_total_counts(cnt2, cnt3, cnt4); 
-#endif
                 locint.reset();
                 
                 }
@@ -535,11 +518,7 @@
             // Free up allocated memory at end of process
             free(prim_list);
             free(xi_ik);
-#ifndef POWER
             free(bin_ij);
-#else
-            free(kernel_ij);
-#endif
             free(w_ij);
             free(w_ijk);
             
@@ -563,7 +542,11 @@
         printf("We sampled %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(tot_pairs),double(tot_triples),double(tot_quads));
         printf("Of these, we have integral contributions from %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(cnt2),double(cnt3),double(cnt4));
         printf("Cell acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)used_cell2/cell_attempt2,(double)used_cell3/cell_attempt3,(double)used_cell4/cell_attempt4);
+#if (defined LEGENDRE || POWER)
+        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs/pow(mbin,2),(double)cnt3/tot_triples/pow(mbin,2),(double)cnt4/tot_quads/pow(mbin,2));
+#else
         printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
+#endif
         printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid1->np);
         
         printf("\nTrial speed: %.2e quads per core per second\n",double(tot_quads)/(runtime*double(par->nthread)));

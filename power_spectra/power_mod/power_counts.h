@@ -246,7 +246,7 @@ public:
         else{
             Float x = sep/R0;
             if(sep<3*R0/4) return 1.-8.*pow(2*x-1,3)+8.*pow(2*x-1,4);
-            else return -64.*pow(x-1,3)-32*pow(x-1,4);
+            else return -64.*pow(x-1,3)-128*pow(x-1,4);
         }
     }
     
