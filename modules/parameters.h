@@ -32,7 +32,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/RealPowerCov2/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/RealPowerCov3/";
     
     // The number of mu bins in the correlation function
     int mbin_cf = 10;
@@ -84,9 +84,9 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 8; // number of j cells per i cell
-    int N3 = 8; // number of k cells per j cell
-    int N4 = 8 ; // number of l cells per k cell
+    int N2 = 20; // number of j cells per i cell
+    int N3 = 20; // number of k cells per j cell
+    int N4 = 30; // number of l cells per k cell
     
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     
