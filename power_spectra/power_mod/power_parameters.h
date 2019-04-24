@@ -29,7 +29,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/PowerTest2/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/PowerQPM_New/R0=100/";
     
     // The number of threads to run on
 	int nthread = 20;
@@ -43,10 +43,10 @@ public:
 
     int max_l = 4; // max Legendre moment (must be even)
     
-    Float R0 = 50; // kernel truncation radius (in Mpc/h)
+    Float R0 = 100; // kernel truncation radius (in Mpc/h)
     
-    char *phi_file = NULL; // Survey correction function coefficient file 
-    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/PowerSpectra/InvPhiCoeff_DR12.txt";
+    char *inv_phi_file = NULL; // Survey correction function coefficient file 
+    const char default_inv_phi_file[500] = "/mnt/store1/oliverphilcox/PowerSpectra/InvPhiCoeff_DR12.txt";
     
     //-------- OTHER PARAMETERS ----------------------------------------------
     
@@ -78,6 +78,10 @@ public:
 
 	//---------------- INTERNAL PARAMETERS -----------------------------------
     // (no more user defined parameters below this line)
+    
+    // For consistency with other modules    
+    char *inv_phi_file2 = NULL; // Survey correction function coefficient file 
+    char *inv_phi_file12 = NULL; // Survey correction function coefficient file 
     
 	// The periodicity of the position-space cuboid in 3D. 
     Float3 rect_boxsize = {boxsize,boxsize,boxsize}; // this is overwritten on particle read-in
@@ -120,7 +124,7 @@ public:
         else if (!strcmp(argv[i],"-out_string")) out_string = argv[++i];
         else if (!strcmp(argv[i],"-binfile")) radial_bin_file=argv[++i];
         else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
-        else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
+        else if (!strcmp(argv[i],"-inv_phi_file")) inv_phi_file=argv[++i];
         else if (!strcmp(argv[i],"-perbox")) perbox = 1;
         else if (!strcmp(argv[i],"-np")) {
 			double tmp;
@@ -170,7 +174,7 @@ public:
 
         assert(max_l%2==0); // check maximum ell is even
         assert(max_l<=10); // ell>10 not yet implemented!
-        if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
+        if (inv_phi_file==NULL) {inv_phi_file = (char *) default_inv_phi_file;} // no phi file specified
         assert(max_l%2==0); // check maximum ell is even
         assert(max_l<=10); // ell>10 not yet implemented!
         mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
@@ -222,7 +226,7 @@ private:
         fprintf(stderr, "\n");
 	    fprintf(stderr, "   -max_l <max_l>: Maximum legendre multipole (must be even)\n");
         fprintf(stderr, "   -R0 <R0>: Truncation radius for pair-separation window (in Mpc/h)\n");
-        fprintf(stderr, "   -phi_file <filename>: Survey correction function coefficient file\n");
+        fprintf(stderr, "   -inv_phi_file <filename>: Survey inverse correction function multipole coefficient file\n");
         fprintf(stderr, "\n");
         fprintf(stderr, "   -boxsize <boxsize> : If creating particles randomly, this is the periodic size of the cubic computational domain.\n");
         fprintf(stderr, "           Default 400. If reading from file, this is reset dynamically creating a cuboidal box.\n");
