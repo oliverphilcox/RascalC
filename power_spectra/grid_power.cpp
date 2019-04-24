@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
     }
     
     // Read in survey correction fucntion
-    SurveyCorrection sc(&par);
+    SurveyCorrection sc(&par,1,1);
 
     
     // Count number of second field cells enclosed by the maximum truncation radius
