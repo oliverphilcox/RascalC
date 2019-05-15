@@ -12,7 +12,7 @@ public:
     CorrelationFunction *cf;
     
 private:
-    int nbin, mbin, max_l, array_len;
+    int nbin, mbin, max_l, array_len,max_leg,n_param,mbin_leg;
     Float rmin,rmax,mumin,mumax; //Ranges in r and mu
     Float *r_high, *r_low; // Max and min of each radial bin
     Float *c3, *c4, *c5, *c6; // Arrays to accumulate integrals
@@ -36,7 +36,10 @@ public:
         nbin = par->nbin; // number of radial bins
         mbin = par->mbin; // number of mu bins
         out_file = par->out_file; // output directory
-        max_l = par->max_l; // maximum Legendre polynomial
+        max_l = par->max_l; // maximum Legendre polynomial to output
+        n_param = sc->n_param; // maximum survey correction Legendre moment
+        max_leg = fmax(max_l,n_param); // maximum Legendre multipole to use
+        mbin_leg = max_leg+1; // number of legendre bins used in transit
         
         int ec=0;
         array_len = pow(nbin,2)*mbin;
@@ -108,6 +111,7 @@ public:
     
     Float compute_los(Float3 p1, Float3 p2, Float norm){
         // Compute line of sight angle for two vectors p1, p2
+        // NB: the sign of mu does matter for the 3PCF internal angle but not for the output angle
         Float3 pos=p1-p2;
 #ifndef PERIODIC
         Float3 los=p1+p2; // No 1/2 as normalized anyway below
@@ -123,7 +127,7 @@ public:
         norm = pos.norm();
 #ifndef PERIODIC
         Float3 los=p1+p2; // No 1/2 as normalized anyway below
-        mu = fabs(pos.dot(los)/norm/los.norm());
+        mu = fabs(pos.dot(los)/norm/los.norm()); // no sign here
 #else
         // In the periodic case use z-direction for mu
         mu = fabs(pos.z/norm);
@@ -144,10 +148,10 @@ public:
         if(preload==2) norm[2] = norm_in;
         else norm[2] = pos12.norm();
         
-        // Compute internal angles
-        ang[0] = fabs(pos12.dot(pos13)/norm[2]/norm[1]);
-        ang[1] = fabs(pos12.dot(pos23)/norm[2]/norm[0]);
-        ang[2] = fabs(pos13.dot(pos23)/norm[1]/norm[0]);
+        // Compute internal angles - sign does matter for these 
+        ang[0] = pos12.dot(pos13)/norm[2]/norm[1];
+        ang[1] = -pos12.dot(pos23)/norm[2]/norm[0];
+        ang[2] = pos13.dot(pos23)/norm[1]/norm[0];
     }
     
     int all_bins(Float norm[3], Float bin_ab[6], const int bin_in,int preload){
@@ -194,12 +198,12 @@ public:
         // Accumulates the three point integral C3. Also outputs several arrays for later reuse.
         // Prob. here is defined as g_ij / f_ij where g_ij is the sampling PDF and f_ij is the true data PDF for picking sets of particles
         
-        Float tmp_weight, tmp_xi=0, this_poly, los_tmp,c3v;
-        Float norm_ijk[3], ang_ijk[3], bins_ijk[6], even_mu[max_l/2];
+        Float tmp_weight, tmp_xi=0, this_poly, los_tmp,c3v, tmp_phi_inv;
+        Float norm_ijk[3], ang_ijk[3], bins_ijk[6];
         Particle pi;
         Float3 pjk;
         int tmp_radial_bin, tmp_radial_bin2, out_bin, bin_1, bin_2,bin_3,bin_4;
-        Float polynomials_tmp[mbin],correction_factor1,correction_factor2;
+        Float polynomials_tmp[mbin_leg],correction_factor1,correction_factor2;
         
         // Define j-k norm and bin
         pjk = pj.pos-pk.pos;
@@ -260,12 +264,17 @@ public:
                     all_correction_factor[i*3+bin_index]=-1;
                     continue; // skip if bad bin
                 }
-                correction_factor1 = sc->correction_function_3pcf(bin_1,bin_2,ang_ijk[bin_index],even_mu);
-                all_correction_factor[i*3+bin_index] = correction_factor1;
-                legendre_polynomials_preload(even_mu,max_l,polynomials_tmp);
-                for(int p_bin=0;p_bin<mbin;p_bin++){
-                    all_legendre[(i*3+bin_index)*mbin+p_bin]=polynomials_tmp[p_bin];
-                }
+                
+                // Load legendre polynomials
+                legendre_polynomials_preload(ang_ijk[bin_index],max_leg,polynomials_tmp);
+                
+                // Compute correction function
+                tmp_phi_inv=0.;
+                for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp[l_i]*sc->correction_function_3pcf(bin_1,bin_2,l_i);
+                all_correction_factor[i*3+bin_index] = 1./tmp_phi_inv;
+                
+                // Store relevant legendre polynomials
+                for(int p_bin=0;p_bin<mbin;p_bin++) all_legendre[(i*3+bin_index)*mbin+p_bin]=polynomials_tmp[p_bin];
             }
             
             for(int bin_index=0;bin_index<3;bin_index++){
@@ -314,8 +323,8 @@ public:
         Float norm_jkl[3],ang_jkl[3], bins_jkl[6], tmp_weight, tmp_xi1,tmp_xi2,c4v,this_poly,los_tmp;
         Particle pi;
         int bin_1,bin_2,bin_3,bin_4,out_bin, tmp_radial_bin, tmp_radial_bin2;
-        Float polynomials_tmp1[mbin], correction_factor1,correction_factor2;
-        Float all_correction_factor_jkl[3],all_legendre_jkl[3*mbin],even_mu[max_l/2];
+        Float polynomials_tmp1[mbin_leg], correction_factor1,correction_factor2, tmp_phi_inv;
+        Float all_correction_factor_jkl[3],all_legendre_jkl[3*mbin];
         
         // Define triangle sides independent of i
         triangle_bins(pj.pos,pk.pos,pl.pos,norm_jkl,ang_jkl,norm_jk,2);
@@ -351,9 +360,18 @@ public:
                 all_correction_factor_jkl[bin_index]=-1;
                 continue;
             }
-            all_correction_factor_jkl[bin_index]=sc->correction_function_3pcf(bin_1,bin_2,ang_jkl[bin_index],even_mu);
-            legendre_polynomials_preload(even_mu,max_l,polynomials_tmp1);
+            
+            // Load legendre polynomials
+            legendre_polynomials_preload(ang_jkl[bin_index],max_leg,polynomials_tmp1);
+                
+            // Compute correction function
+            tmp_phi_inv=0.;
+            for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp1[l_i]*sc->correction_function_3pcf(bin_1,bin_2,l_i);
+            all_correction_factor_jkl[bin_index] = 1./tmp_phi_inv;
+                
+            // Store legendre polynomials
             for(int p_bin=0;p_bin<mbin;p_bin++) all_legendre_jkl[bin_index*mbin+p_bin]=polynomials_tmp1[p_bin];
+            
         }
         
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
@@ -417,8 +435,8 @@ public:
     inline void fifth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, Particle pm, const int pj_id, const int pk_id, const int pl_id, const int pm_id, const double prob, const Float* wijkl, const int* bins_ijk, const Float* all_correction_factor_ijk, const Float* all_legendre_ijk, const Float* xi_pass, const Float* xi_pass2, const Float norm_kl, const int bin_kl, Float* &wijklm, Float &xi_pass3, Float &norm_lm, int &bin_lm, int index){
         // Accumulates the five point integral C5.
         
-        Float norm_klm[3],ang_klm[3],bins_klm[6],los_tmp, tmp_xi1,tmp_xi2, polynomials_tmp[mbin];
-        Float all_correction_factor_klm[3],all_legendre_klm[3*mbin],tmp_weight,c5v, this_poly, correction_factor1, correction_factor2,even_mu[max_l/2];
+        Float norm_klm[3],ang_klm[3],bins_klm[6],los_tmp, tmp_xi1,tmp_xi2, polynomials_tmp[mbin_leg];
+        Float all_correction_factor_klm[3],all_legendre_klm[3*mbin],tmp_weight,c5v, this_poly, correction_factor1, correction_factor2, tmp_phi_inv;
         int bin_1,bin_2,bin_3,bin_4,tmp_radial_bin, tmp_radial_bin2, out_bin;
         Particle pi;
         
@@ -459,8 +477,16 @@ public:
                 all_correction_factor_klm[bin_index]=-1;
                 continue;
             }
-            all_correction_factor_klm[bin_index]=sc->correction_function_3pcf(bin_1,bin_2,ang_klm[bin_index],even_mu);
-            legendre_polynomials_preload(even_mu,max_l,polynomials_tmp);
+            
+            // Load legendre polynomials
+            legendre_polynomials_preload(ang_klm[bin_index],max_leg,polynomials_tmp);
+                
+            // Compute correction function
+            tmp_phi_inv=0.;
+            for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp[l_i]*sc->correction_function_3pcf(bin_1,bin_2,l_i);
+            all_correction_factor_klm[bin_index] = 1./tmp_phi_inv;
+                
+            // Store legendre polynomials
             for(int p_bin=0;p_bin<mbin;p_bin++) all_legendre_klm[bin_index*mbin+p_bin]=polynomials_tmp[p_bin];
         }
         
@@ -521,8 +547,8 @@ public:
     inline void sixth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const Particle pm, const Particle pn, const int pj_id, const int pk_id, const int pl_id, const int pm_id, const int pn_id, const double prob, const Float* wijklm, const int* bins_ijk,  const Float* all_correction_factor_ijk, const Float* all_legendre_ijk, const Float* xi_pass, const Float* xi_pass2, const Float xi_pass3, const Float norm_lm, const int bin_lm, int index){
         // Accumulates the six point integral C6.
          
-        Float norm_lmn[3],ang_lmn[3],bins_lmn[6],norm_tmp,los_tmp, tmp_xi1,tmp_xi2,tmp_xi3, polynomials_tmp[mbin],correction_factor1,correction_factor2,this_poly;
-        Float all_correction_factor_lmn[3],all_legendre_lmn[3*mbin],c6v,even_mu[max_l/2];
+        Float norm_lmn[3],ang_lmn[3],bins_lmn[6],norm_tmp,los_tmp, tmp_xi1,tmp_xi2,tmp_xi3, polynomials_tmp[mbin_leg],correction_factor1,correction_factor2,this_poly;
+        Float all_correction_factor_lmn[3],all_legendre_lmn[3*mbin],c6v,tmp_phi_inv;
         int bin_1,bin_2,bin_3,bin_4,tmp_radial_bin,tmp_radial_bin2,out_bin;
         Particle pi;
         
@@ -557,8 +583,16 @@ public:
                 all_correction_factor_lmn[bin_index]=-1;
                 continue;
             }
-            all_correction_factor_lmn[bin_index]=sc->correction_function_3pcf(bin_1,bin_2,ang_lmn[bin_index],even_mu);
-            legendre_polynomials_preload(even_mu,max_l,polynomials_tmp);
+            
+            // Load legendre polynomials
+            legendre_polynomials_preload(ang_lmn[bin_index],max_leg,polynomials_tmp);
+                
+            // Compute correction function
+            tmp_phi_inv=0;
+            for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp[l_i]*sc->correction_function_3pcf(bin_1,bin_2,l_i);
+            all_correction_factor_lmn[bin_index] = 1./tmp_phi_inv;
+                
+            // Store legendre polynomials
             for(int p_bin=0;p_bin<mbin;p_bin++) all_legendre_lmn[bin_index*mbin+p_bin]=polynomials_tmp[p_bin];
         }
         
@@ -697,7 +731,7 @@ public:
         Float r_a,r_b,r_c,r_d,delta_a,delta_b,delta_c,delta_d,normalization;
         
         for(int i=0; i<array_len;i++){
-            legendre_p = (i%mbin)*2; // first legendre index
+            legendre_p = (i%mbin); // first legendre index
             ind1 = i/mbin;
             r_a = 0.5*(r_low[ind1/nbin]+r_high[ind1/nbin]); // mid-points of bin
             r_b = 0.5*(r_low[ind1%nbin]+r_high[ind1%nbin]);
@@ -705,7 +739,7 @@ public:
             delta_b = r_high[ind1%nbin]-r_low[ind1%nbin];
             
             for(int j=0;j<array_len;j++){
-                legendre_q = (j%mbin)*2.; // second legendre index
+                legendre_q = (j%mbin); // second legendre index
                 ind2 = j/mbin;
                 r_c = 0.5*(r_low[ind2/nbin]+r_high[ind2/nbin]); // mid-point of bin
                 r_d = 0.5*(r_low[ind2%nbin]+r_high[ind2%nbin]);
@@ -725,7 +759,7 @@ public:
         // Print the counts for each integral (used for combining the estimates outside of C++)
         // This is the number of counts used in each loop [always the same]
         char counts_file[1000];
-        snprintf(counts_file, sizeof counts_file, "%s3PCFCovMatricesAll/total_counts_n%d_m%d_%d.txt",out_file,nbin,mbin,index);
+        snprintf(counts_file, sizeof counts_file, "%s3PCFCovMatricesAll/total_counts_n%d_l%d_%d.txt",out_file,nbin,max_l,index);
         FILE * CountsFile = fopen(counts_file,"w");
         fprintf(CountsFile,"%llu\n",triple_counts);
         fprintf(CountsFile,"%llu\n",quad_counts);

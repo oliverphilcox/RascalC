@@ -13,11 +13,11 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_50x.xyzwj";//randoms_10x.xyzwj"; 
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_10x.xyzwj";//randoms_10x.xyzwj"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/RealPowerCov/fine_linear_r_bins_R0_50.csv";//PowerSpectra/k_binning2.csv";//k_binning2.csv";
+    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/3PCF/SE_binning_n15.csv";//PowerSpectra/k_binning2.csv";//k_binning2.csv";
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
@@ -32,17 +32,17 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/RealPowerCov3/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/3PCF_SE/";
     
     // The number of mu bins in the correlation function
-    int mbin_cf = 10;
+    int mbin_cf = 24;
     
     // The number of threads to run on
 	int nthread = 20;
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
-	int nside = 351;
+	int nside = 201;
     
     // Whether or not we are using a periodic box
 	bool perbox = false;
@@ -64,14 +64,14 @@ public:
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 4; // max Legendre moment (must be even)
+    int max_l = 8; // max Legendre moment (must be even unless computing 3PCF)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
-    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/SurveyCorrectionFactor_3PCF_n10_m50_11.txt";
+    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/BinCorrectionFactor_n15_11.txt";
     
     //-------- POWER PARAMETERS ---------------------------------------------
     
-    Float R0 = 50; // truncation radius in Mpc/h
+    Float R0 = 100; // truncation radius in Mpc/h
     Float power_norm = 4.246213506653083; // normalization of the power spectrum
     
     char *inv_phi_file = NULL; // Inverse survey correction function multipole coefficient file 
@@ -84,9 +84,9 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 20; // number of j cells per i cell
-    int N3 = 20; // number of k cells per j cell
-    int N4 = 30; // number of l cells per k cell
+    int N2 = 2; // number of j cells per i cell
+    int N3 = 2; // number of k cells per j cell
+    int N4 = 2; // number of l cells per k cell
     
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     
@@ -150,7 +150,11 @@ public:
     //-------- OTHER PARAMETERS ----------------------------------------------
     
 	// The minimum mu of the smallest bin.
+#ifdef THREE_PCF
+    Float mumin = -1.;
+#else
 	Float mumin = 0.0;
+#endif
 
 	// The maximum mu of the largest bin.
 	Float mumax = 1.0;
@@ -311,8 +315,9 @@ public:
 	    assert(nside%2!=0); // The probability integrator needs an odd grid size
 	
 	    assert(nofznorm>0); // need some galaxies!
-
+#ifndef THREE_PCF
 	    assert(mumin>=0); // We take the absolte value of mu
+#endif
 	    assert(mumax<=1); // mu > 1 makes no sense
         
 #ifdef LEGENDRE
@@ -340,7 +345,7 @@ public:
         assert(max_l%2==0); // check maximum ell is even
         assert(max_l<=10); // ell>10 not yet implemented!
         if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
-        mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
+        mbin = max_l+1; // number of angular bins is set to number of Legendre bins (including odd bins)
 #elif defined JACKKNIFE
 	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
 	    if (jk_weight_file12==NULL) jk_weight_file12 = (char *) default_jk_weight_file12; // No jackknife name was given

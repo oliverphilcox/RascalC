@@ -29,7 +29,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/PowerQPM_New/R0=100/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/PowerQPM/";
     
     // The number of threads to run on
 	int nthread = 20;
