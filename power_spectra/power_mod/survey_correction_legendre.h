@@ -99,6 +99,8 @@ public:
     
     Float inv_correction_function(int ell, Float r){
         int l_index = ell/2,base_bin = l_index*n_param;
+        //if(ell==0) return 1;
+        //else return 0;
         return phi_coeffs[base_bin]+phi_coeffs[base_bin+1]*r+phi_coeffs[base_bin+2]*pow(r,2);
     }
 };

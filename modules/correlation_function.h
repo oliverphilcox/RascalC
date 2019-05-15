@@ -23,6 +23,7 @@ class CorrelationFunction{
             // as a simple r^-4 power law for each mu bin independently (may lead to different signs for
             // neighbouring mu bins if the correlation function is noisy and fluctuates around 0)
             if(mudim){
+                assert(mu>=0);
                 if(r>rmax){
                     double tmu = fmin(fmax(mu,mumin),mumax);
                     return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,rmax, xa, ya)/pow(rmax,2)*pow(r/rmax,-4);

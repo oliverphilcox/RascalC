@@ -37,6 +37,7 @@
 !requirements.txt
 *.dat
 #*.csv
+*.npz
 
 # Doc files
 _build

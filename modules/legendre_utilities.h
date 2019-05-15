@@ -4,22 +4,46 @@
 #define LEGENDRE_UTILITIES_H
 
 #ifdef THREE_PCF
-inline void legendre_polynomials_preload(Float* even_mu, int max_l, Float *poly_out){
-    // Declare Legendre polynomials using pre-computed (even) powers of mu from correction function
+inline void legendre_polynomials_preload(Float mu, int max_l, Float *poly_out){
+    // Declare Legendre polynomials using pre-computed powers of mu from correction function
     
     // Compute all Legendre polynomials in a list
-    poly_out[0] = 1;
+    poly_out[0] = 1.;
     
-    if(max_l>1){
-        poly_out[1] = 0.5*(3.*even_mu[0]-1.);
-        if(max_l>3){
-            poly_out[2] = 1./8.*(35.*even_mu[1]-30.*even_mu[0]+3.);
-            if(max_l>5){
-                poly_out[3] = 1./16.*(231.*even_mu[2]-315.*even_mu[1]+105.*even_mu[0]-5.);
-                if(max_l>7){
-                    poly_out[4] = 1./128.*(6435.*even_mu[3]-12012.*even_mu[2]+6930.*even_mu[1]-1260.*even_mu[0]+35.);
-                    if(max_l>9){
-                        poly_out[5] = 1./256.*(46189.*even_mu[4]-109395.*even_mu[3]+90090.*even_mu[2]-30030.*even_mu[1]+3465.*even_mu[0]-63.);
+    if(max_l>0){
+        poly_out[1] = mu;
+        if(max_l>1){
+            Float mu2 = mu*mu;
+            poly_out[2] = 0.5*(3*mu2-1.);
+            if(max_l>2){
+                Float mu3 = mu2*mu;
+                poly_out[3] = 0.5*(5.*mu3-3.*mu);
+                if(max_l>3){
+                    Float mu4 = mu3*mu;
+                    poly_out[4] = 1./8.*(35.*mu4-30.*mu2+3.);
+                    if(max_l>4){
+                        Float mu5 = mu4*mu;
+                        poly_out[5] = 1./8.*(63.*mu5-70.*mu3+15.*mu);
+                        if(max_l>5){
+                            Float mu6 = mu5*mu;
+                            poly_out[6] = 1./16.*(231.*mu6-315.*mu4+105.*mu2-5.);
+                            if(max_l>6){
+                                Float mu7 = mu6*mu;
+                                poly_out[7] = 1./16.*(429.*mu7-693.*mu5+315.*mu3-35.*mu);
+                                if(max_l>7){
+                                    Float mu8 = mu7*mu;
+                                    poly_out[8] = 1./128.*(6435.*mu8-12012.*mu6+6930.*mu4-1260.*mu2+35.);
+                                    if(max_l>8){
+                                        Float mu9 = mu8*mu;
+                                        poly_out[9] = 1./128.*(12155.*mu9-25740.*mu7+18018.*mu5-4620.*mu3+315.*mu);
+                                        if(max_l>9){
+                                            Float mu10 = mu9*mu;
+                                            poly_out[10] = 1./256.*(46189.*mu10-109395.*mu8+90090.*mu6-30030.*mu4+3465.*mu2-63.);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -189,10 +213,17 @@ public:
     }
     
 #ifdef THREE_PCF
-    Float correction_function_3pcf(int radial_bin1, int radial_bin2, Float mu, Float* even_mu){
-        // Create function to output polynomial RRR correction model given two radial bin numbers and an opening angle
-        // Even powers of mu are saved for later use
+    Float correction_function_3pcf(int radial_bin1, int radial_bin2, int ell){
+        // Create function to output polynomial RRR correction model given two radial bin numbers and a Legendre polynomial index
+        // This gives the ell-th multipole of 1/Phi for convenience
         int base_bin = (radial_bin1*nbin+radial_bin2)*n_param;
+        
+        return phi_coeffs[base_bin+ell];
+        /*
+            
+        return phi_coeffs[base_bin]
+        
+        
         Float mu2 = mu*mu;
         Float mu3 = mu2*mu;
         Float mu4 = mu3*mu;
@@ -200,13 +231,21 @@ public:
         Float mu6 = mu5*mu;
         
         // Save mu values for later
-        if(max_l>1) even_mu[0] = mu2; // mu^2
-        if(max_l>3) even_mu[1] = mu4; // mu^4
-        if(max_l>5) even_mu[2] = mu4*mu2; // mu^6
-        if(max_l>7) even_mu[3] = mu4*mu4; // mu^8
-        if(max_l>9) even_mu[4] = mu6*mu4; // mu^10
+        if(max_l>0) all_mu[0] = mu; // mu
+        if(max_l>1) all_mu[1] = mu2; // mu^2
+        if(max_l>2) all_mu[2] = mu3; // mu^3
+        if(max_l>3) all_mu[3] = mu4; // mu^4
+        if(max_l>4) all_mu[4] = mu5; // mu^5
+        if(max_l>5) all_mu[5] = mu6; // mu^6
+        if(max_l>6) all_mu[6] = mu4*mu3; // mu^7
+        if(max_l>7) all_mu[7] = mu4*mu4; // mu^8
+        if(max_l>8) all_mu[8] = mu6*mu3; // mu^9
+        if(max_l>9) all_mu[9] = mu6*mu4; // mu^10
+        
+        printf("Add new Phi model\n");
         
         return phi_coeffs[base_bin]+phi_coeffs[base_bin+1]*mu+phi_coeffs[base_bin+2]*mu2+phi_coeffs[base_bin+3]*mu3+phi_coeffs[base_bin+4]*mu4+phi_coeffs[base_bin+5]*mu5+phi_coeffs[base_bin+6]*mu6;
+        */
     }
 #else
     Float correction_function(int radial_bin, Float mu){
