@@ -194,7 +194,7 @@ class compute_integral{
                         // TODO:Check if k==j particles etc. in this script for efficiency?
                         
                         // Draw second cell from i                         
-                        if(iter_no==0) delta2 = rd->random_xidraw(locrng, &p2); // weight by xi(r)
+                        if(iter_no==0) delta2 = rd->random_cubedraw(locrng, &p2); // weight by xi(r)
                         else delta2 = rd->random_cubedraw(locrng,&p2); // weight by 1/r^2
                         
                         sec_id = prim_id + delta2;

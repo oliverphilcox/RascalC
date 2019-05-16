@@ -64,10 +64,10 @@ public:
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 8; // max Legendre moment (must be even unless computing 3PCF)
+    int max_l = 0; // max Legendre moment (must be even unless computing 3PCF)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
-    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/BinCorrectionFactor_n15_11.txt";
+    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/NormedBinCorrectionFactor_n15_11.txt";
     
     //-------- POWER PARAMETERS ---------------------------------------------
     
@@ -84,13 +84,13 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 2; // number of j cells per i cell
-    int N3 = 2; // number of k cells per j cell
-    int N4 = 2; // number of l cells per k cell
+    int N2 = 4; // number of j cells per i cell
+    int N3 = 4; // number of k cells per j cell
+    int N4 = 4; // number of l cells per k cell
     
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
-    
-    int N5 = 2; // number of m cells per l cell
+
+    int N5 = 4; // number of m cells per l cell
     int N6 = 2; // number of n cells per m cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
@@ -163,10 +163,10 @@ public:
     int cf_loops = 0;
     
     // The periodicity of the position-space cube.
-	Float boxsize = 200; // this is only used if the input particles are made randomly
+	Float boxsize = 4000; // this is only used if the input particles are made randomly
     
 	// The particles will be read from the unit cube, but then scaled by boxsize.
-	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
+	Float rescale = 1;   // If left zero or negative, set rescale=boxsize
 
 	// The radius beyond which the correlation function is set to zero
 	Float xicutoff = 400.0;
@@ -456,7 +456,7 @@ public:
         }
 #endif
 
-        if((!multi_tracers)&&(make_random==1)){
+        if((multi_tracers)&&(make_random==1)){
             printf("\nRunning for multiple tracers but creating particles at random; this is not yet supported. Exiting.\n\n");
             exit(1);
         }

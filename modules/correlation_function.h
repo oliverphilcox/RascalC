@@ -26,7 +26,7 @@ class CorrelationFunction{
                 assert(mu>=0);
                 if(r>rmax){
                     double tmu = fmin(fmax(mu,mumin),mumax);
-                    return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,rmax, xa, ya)/pow(rmax,2)*pow(r/rmax,-4);
+                    return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,rmax, xa, ya)/pow(rmax,2)*pow(r/rmax,-4.);
                 }
                 else if(r<rmin){
                     double tmu = fmin(fmax(mu,mumin),mumax);

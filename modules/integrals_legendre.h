@@ -351,18 +351,17 @@ public:
         
         // Further normalize by pre-factor
         int legendre_p,legendre_q;
-        Float r_a,delta_r_a,r_b,delta_r_b,normalization;
+        Float v_a,v_b,normalization;
+        
         for(int i=0; i<nbin*mbin;i++){
             legendre_p = (i%mbin)*2; // first legendre index
-            r_a = 0.5*(r_low[i/mbin]+r_high[i/mbin]); // mid-point of bin
-            delta_r_a = r_high[i/mbin]-r_low[i/mbin];  // width of bin
+            v_a = 4.*M_PI/3.*(pow(r_high[i/mbin],3)-pow(r_low[i/mbin],3));
             
             for(int j=0;j<nbin*mbin;j++){
                 legendre_q = (j%mbin)*2.; // second legendre index
-                r_b = 0.5*(r_low[j/mbin]+r_high[j/mbin]); // mid-point of bin
-                delta_r_b = r_high[j/mbin]-r_low[j/mbin];  // width of bin
-                
-                normalization = float((2*legendre_p+1)*(2*legendre_q+1))/(pow((r_a*r_b),2)*delta_r_a*delta_r_b);                
+                v_b = 4.*M_PI/3.*(pow(r_high[j/mbin],3)-pow(r_low[j/mbin],3));
+            
+                normalization = float((2*legendre_p+1)*(2*legendre_q+1))/(v_a*v_b);                
                 c2[i*nbin*mbin+j]*=normalization;
                 c3[i*nbin*mbin+j]*=normalization;
                 c4[i*nbin*mbin+j]*=normalization;
