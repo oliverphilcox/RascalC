@@ -457,6 +457,7 @@ public:
             xi_pass3 = tmp_xi1; // save for next integrator
         }
         
+
         // Compute radial bins for this triangle
         int x = all_bins(norm_klm,bins_klm,bin_kl,2);
         bin_lm = bins_klm[0];
@@ -547,6 +548,10 @@ public:
     inline void sixth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const Particle pm, const Particle pn, const int pj_id, const int pk_id, const int pl_id, const int pm_id, const int pn_id, const double prob, const Float* wijklm, const int* bins_ijk,  const Float* all_correction_factor_ijk, const Float* all_legendre_ijk, const Float* xi_pass, const Float* xi_pass2, const Float xi_pass3, const Float norm_lm, const int bin_lm, int index){
         // Accumulates the six point integral C6.
          
+        //printf("Maybe try with a 2PCF which exactly integrates to zero - just construct one. Plus could try on a uniform 3PCF cube to check this vanishes.");
+        
+        //printf("6-point large integral should probably cancel since the integral of xi over 3-space should be zero. This is probably a truncation error - think how best to deal with this! Also check which random draws scripts have what maximum separation - and check how that impacts on 3pcf");
+        
         Float norm_lmn[3],ang_lmn[3],bins_lmn[6],norm_tmp,los_tmp, tmp_xi1,tmp_xi2,tmp_xi3, polynomials_tmp[mbin_leg],correction_factor1,correction_factor2,this_poly;
         Float all_correction_factor_lmn[3],all_legendre_lmn[3*mbin],c6v,tmp_phi_inv;
         int bin_1,bin_2,bin_3,bin_4,tmp_radial_bin,tmp_radial_bin2,out_bin;
@@ -636,7 +641,7 @@ public:
                             out_bin = (tmp_radial_bin+p_bin)*array_len+tmp_radial_bin2+q_bin;
                         
                             // Add to integral (extra 4 is from 2x symmetry in each angle kernel)
-                            c6[out_bin] +=c6v*this_poly*all_legendre_lmn[bin_index2*mbin+q_bin]*correction_factor1*correction_factor2*4.;
+                            c6[out_bin] += c6v*this_poly*all_legendre_lmn[bin_index2*mbin+q_bin]*correction_factor1*correction_factor2*4.;
                             binct6[out_bin]++;
                         }
                     }
@@ -728,25 +733,21 @@ public:
         
         // Further normalize by pre-factor
         int legendre_p,legendre_q,ind1,ind2;
-        Float r_a,r_b,r_c,r_d,delta_a,delta_b,delta_c,delta_d,normalization;
+        Float v_a,v_b,v_c,v_d,normalization;
         
         for(int i=0; i<array_len;i++){
             legendre_p = (i%mbin); // first legendre index
             ind1 = i/mbin;
-            r_a = 0.5*(r_low[ind1/nbin]+r_high[ind1/nbin]); // mid-points of bin
-            r_b = 0.5*(r_low[ind1%nbin]+r_high[ind1%nbin]);
-            delta_a = r_high[ind1/nbin]-r_low[ind1/nbin]; // width of bin
-            delta_b = r_high[ind1%nbin]-r_low[ind1%nbin];
+            v_a = 4.*M_PI/3.*(pow(r_high[ind1/nbin],3)-pow(r_low[ind1/nbin],3));
+            v_b = 4.*M_PI/3.*(pow(r_high[ind1%nbin],3)-pow(r_low[ind1%nbin],3));
             
             for(int j=0;j<array_len;j++){
                 legendre_q = (j%mbin); // second legendre index
                 ind2 = j/mbin;
-                r_c = 0.5*(r_low[ind2/nbin]+r_high[ind2/nbin]); // mid-point of bin
-                r_d = 0.5*(r_low[ind2%nbin]+r_high[ind2%nbin]);
-                delta_c = r_high[ind2/nbin]-r_low[ind2/nbin];  // width of bin
-                delta_d = r_high[ind2%nbin]-r_low[ind2%nbin];
+                v_c = 4.*M_PI/3.*(pow(r_high[ind2/nbin],3)-pow(r_low[ind2/nbin],3));
+                v_d = 4.*M_PI/3.*(pow(r_high[ind2%nbin],3)-pow(r_low[ind2%nbin],3));
                 
-                normalization = float((2*legendre_p+1)*(2*legendre_q+1))/(pow((r_a*r_b*r_c*r_d),2)*delta_a*delta_b*delta_c*delta_d);                
+                normalization = float((2*legendre_p+1)*(2*legendre_q+1))/(v_a*v_b*v_c*v_d);                
                 c3[i*array_len+j]*=normalization;
                 c4[i*array_len+j]*=normalization;
                 c5[i*array_len+j]*=normalization;

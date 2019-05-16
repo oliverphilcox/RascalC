@@ -116,7 +116,7 @@ public:
 		// Normalize grid probabilities to one
 		double sum=0.;
 		for(int i=0;i<n;i++){
-			sum+=x[i];
+            sum+=x[i];
 		}
 		for(int i=0;i<n;i++){
 			x[i]/=sum;
@@ -125,7 +125,12 @@ public:
 
 //		Initialize second sampler
 
-		int maxsep = ceil(par->rmax/boxside);
+#ifdef THREE_PCF
+        // we need greater separations for the 3PCF since these are sometimes used as xi legs as well as radial legs
+		int maxsep = ceil(par->xicutoff/boxside);
+#else
+        int maxsep = ceil(par->rmax/boxside);
+#endif
 		nsidecube = 2 * maxsep + 1;
 		long nn=0;
 
@@ -410,8 +415,8 @@ public:
         Float factor_2 = pow((x[0]-n)/(2*R),2);
         
         Float tmp_xi = corr->xi(x[0]);
-        if(tmp_xi<1e-3){
-            tmp_xi=10./pow(x[0],2.1);
+        if(fabs(tmp_xi)<1e-10){
+            tmp_xi=0.;//10./pow(x[0],2.1);
         }
         if(n<=0){
             // Replace expression by Taylor series in this limit
