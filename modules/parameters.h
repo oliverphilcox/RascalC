@@ -21,7 +21,7 @@ public:
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/QPM_xi/QPM_mean.xi"; //3PCF_SE/xi_test.xi";//
+	const char default_corname[500] = "/mnt/store1/oliverphilcox/3PCF_QPM/xi_mean_zero.xi"; //3PCF_SE/xi_test.xi";//
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
