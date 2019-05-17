@@ -127,7 +127,7 @@ public:
 
 #ifdef THREE_PCF
         // we need greater separations for the 3PCF since these are sometimes used as xi legs as well as radial legs
-		int maxsep = ceil(par->xicutoff/boxside);
+		int maxsep = ceil(fmax(par->xicutoff,2*par->rmax)/boxside);
 #else
         int maxsep = ceil(par->rmax/boxside);
 #endif
@@ -415,8 +415,8 @@ public:
         Float factor_2 = pow((x[0]-n)/(2*R),2);
         
         Float tmp_xi = corr->xi(x[0]);
-        if(fabs(tmp_xi)<1e-10){
-            tmp_xi=0.;//10./pow(x[0],2.1);
+        if(tmp_xi<1e-10){ // need positive 2PCF here
+            tmp_xi=10./pow(x[0],2.);
         }
         if(n<=0){
             // Replace expression by Taylor series in this limit

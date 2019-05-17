@@ -21,7 +21,7 @@ public:
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/QPM_xi/QPM_mean.xi";
+	const char default_corname[500] = "/mnt/store1/oliverphilcox/QPM_xi/QPM_mean.xi"; //3PCF_SE/xi_test.xi";//
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
@@ -64,7 +64,7 @@ public:
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 0; // max Legendre moment (must be even unless computing 3PCF)
+    int max_l = 8; // max Legendre moment (must be even unless computing 3PCF)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
     const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/NormedBinCorrectionFactor_n15_11.txt";
@@ -84,14 +84,14 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 4; // number of j cells per i cell
-    int N3 = 4; // number of k cells per j cell
-    int N4 = 4; // number of l cells per k cell
+    int N2 = 1; // number of j cells per i cell
+    int N3 = 1; // number of k cells per j cell
+    int N4 = 1; // number of l cells per k cell
     
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
 
-    int N5 = 4; // number of m cells per l cell
-    int N6 = 2; // number of n cells per m cell
+    int N5 = 1; // number of m cells per l cell
+    int N6 = 1; // number of n cells per m cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
@@ -169,7 +169,7 @@ public:
 	Float rescale = 1;   // If left zero or negative, set rescale=boxsize
 
 	// The radius beyond which the correlation function is set to zero
-	Float xicutoff = 400.0;
+	Float xicutoff = 410.0;
     
 	// The maximum number of points to read
 	uint64 nmax = 1000000000000;
