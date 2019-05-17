@@ -111,7 +111,7 @@ public:
     
     Float compute_los(Float3 p1, Float3 p2, Float norm){
         // Compute line of sight angle for two vectors p1, p2
-        // NB: the sign of mu does matter for the 3PCF internal angle but not for the output xi angle
+        // NB: the sign of mu does matter for the 3PCF internal angle but not for the output angle
         Float3 pos=p1-p2;
 #ifndef PERIODIC
         Float3 los=p1+p2; // No 1/2 as normalized anyway below
@@ -302,7 +302,7 @@ public:
                     // Add to relevant Legendre bins
                     tmp_radial_bin2 = (bin_3*nbin+bin_4)*mbin;
                     for(int p_bin=0;p_bin<mbin;p_bin++){
-                        this_poly = all_legendre[(i*3+bin_index)*mbin+p_bin];
+                        this_poly = all_legendre[(i*3+bin_index)+p_bin];
                         for(int q_bin=0;q_bin<mbin;q_bin++){
                             
                             out_bin = (tmp_radial_bin+p_bin)*array_len+tmp_radial_bin2+q_bin;
@@ -341,6 +341,8 @@ public:
         // Save lengths and bins for later
         norm_kl = norm_jkl[0];
         
+        
+        printf("This isn't a deal breaker. We can still have correct triangles later on - thus we must save xi values here\n");
         // Compute radial bins for this triangle
         int x = all_bins(norm_jkl,bins_jkl,bin_jk,2);
         
@@ -398,7 +400,7 @@ public:
             }
             
             // Don't need to run this if we didn't find a correct triangle orientation
-            if (dont_compute) continue;
+            if dont_compute continue;
             
             // Now compute integral contribution
             if(index==0) c4v = 36.*tmp_weight*pj.w*pk.w/prob * tmp_xi1 * tmp_xi2;
@@ -460,14 +462,17 @@ public:
             cleanup_l(pj.pos,pm.pos,norm_tmp,los_tmp);
             tmp_xi1 = cf->xi(norm_tmp,los_tmp); // xi_jm
             xi_pass3 = tmp_xi1; // save for next integrator
-        }        
+        }
+        
 
         // Compute radial bins for this triangle
         int x = all_bins(norm_klm,bins_klm,bin_kl,2);
-        bin_lm = bins_klm[5];
+        bin_lm = bins_klm[0];
         
         // Check if there are any correct radial bins
         if(x==3) dont_compute=true;
+        
+        printf("check for w=-2 factors");
         
         // Preload correction factors and Legendre polynomials
         for(int bin_index=0;bin_index<3;bin_index++){
@@ -508,8 +513,9 @@ public:
             wijklm[i] = tmp_weight; // save for later
             
             // Skip if there are no correct triangle configurations
-            if (dont_compute) continue;
+            if dont_compute continue;
             
+            //TODO: maybe rearrange xi-pass to get less smaller arrays?
             if(index==0) tmp_xi2 = xi_pass[i]; // xi_ij
             else tmp_xi2 = xi_pass2[i]; // xi_il
             
@@ -605,7 +611,7 @@ public:
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
             
             // First check for any self-counts;
-            if((prim_ids[i]==pn_id)||(wijklm[i]==-1)){
+            if((prim_ids[i]==pm_id)||(wijklm[i]==-1)){
                 continue;
             }
             pi = pi_list[i]; // first particle

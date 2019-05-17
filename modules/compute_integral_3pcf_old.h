@@ -191,9 +191,10 @@ class compute_integral{
                     
                     // LOOP OVER N2 J CELLS
                     for (int n2=0; n2<par->N2; n2++){
+                        // TODO:Check if k==j particles etc. in this script for efficiency?
                         
                         // Draw second cell from i                         
-                        if(iter_no==0) delta2 = rd->random_xidraw(locrng, &p2); // weight by xi(r)
+                        if(iter_no==0) delta2 = rd->random_cubedraw(locrng, &p2); // weight by xi(r)
                         else delta2 = rd->random_cubedraw(locrng,&p2); // weight by 1/r^2
                         
                         sec_id = prim_id + delta2;
@@ -269,7 +270,7 @@ class compute_integral{
                                         
                                     x = draw_particle(fif_id,particle_m,pid_m,cell_sep5,grid,filn,locrng); // draw from grid
                                     if(x==1) continue;
-                                    if((pid_m==pid_l)||(pid_m==pid_k)||(pid_m==pid_j)) continue;
+                                    if((pid_m==pid_l)||(pid_m==pid_k)||(pid_m==pid_j)||(w_ijkl[0]==-2)) continue;
                                     
                                     used_cell5+=1; // new fourth cell used
                                     
@@ -295,7 +296,7 @@ class compute_integral{
                                         
                                         x = draw_particle(six_id,particle_n,pid_n,cell_sep6,grid,siln,locrng); // draw from grid
                                         if(x==1) continue;
-                                        if((pid_n==pid_m)||(pid_n==pid_l)||(pid_n==pid_k)||(pid_n==pid_j)) continue;
+                                        if((pid_n==pid_m)||(pid_n==pid_l)||(pid_n==pid_k)||(pid_n==pid_j)||(w_ijklm[0]==-2)) continue;
                                         
                                         used_cell6+=1; // new sixth cell used
                                         
