@@ -194,51 +194,6 @@ public:
         return error;
     }
     
-    inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const int pj_id, const double prob){
-        
-        
-        for(int i=0;i<pln;i++){
-            
-            // First check for any self-counts
-            if(prim_ids[i]==pj_id) continue;
-            
-            Particle pi = pi_list[i]; // first particle
-            
-            Float3 diff_ij = pi.pos-pj.pos;
-            Float norm_ij = diff_ij.norm();
-            
-            int bin_ij = get_radial_bin(norm_ij);
-            
-            if((bin_ij<0)||(bin_ij>=nbin)) continue;
-            
-            c3[bin_ij]+=1./prob;
-        }
-        
-    }
-    
-    inline void second_all(const Particle* pi_list, const int* prim_ids, int pln, const Particle* pj_list, const int* sec_ids, int sln, const double prob, const Float3 sep){
-        
-        for(int i=0;i<pln;i++){
-            Particle pi = pi_list[i]; // first particle
-            for(int j=0;j<sln;j++){
-                // First check for any self-counts
-                if(prim_ids[i]==sec_ids[j]) continue;
-                
-                Particle pj = pj_list[j];
-                
-                Float3 diff_ij = pi.pos-pj.pos+sep;
-                Float norm_ij = diff_ij.norm();
-                
-                int bin_ij = get_radial_bin(norm_ij);
-                
-                if((bin_ij<0)||(bin_ij>=nbin)) continue;
-                c3[bin_ij]+=1./prob;
-            }
-        }
-        
-    }
-    
-    
     inline void third(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const Particle pk, const int pj_id, const int pk_id, const double prob, Float* &wijk, int* &all_bins_ijk, Float* &all_correction_factor, Float* &all_legendre, Float* &xi_pass, Float &norm_jk, int &bin_jk, int index){
         // Accumulates the three point integral C3. Also outputs several arrays for later reuse.
         // Prob. here is defined as g_ij / f_ij where g_ij is the sampling PDF and f_ij is the true data PDF for picking sets of particles

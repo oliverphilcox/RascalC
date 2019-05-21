@@ -204,12 +204,6 @@ class compute_integral{
                         // For all particles
                         p2*=1./(grid->np*(double)sln); // probability is divided by total number of i particles and number of particles in cell
                         
-                        
-                        
-                        locint.second(prim_list,prim_ids,pln,particle_j,pid_j,p2);
-                        
-                        continue;
-                        
                         // LOOP OVER N3 K CELLS
                         for (int n3=0; n3<par->N3; n3++){
                             cell_attempt3+=1; // new third cell attempted
