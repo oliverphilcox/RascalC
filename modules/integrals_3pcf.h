@@ -194,6 +194,51 @@ public:
         return error;
     }
     
+    inline void second(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const int pj_id, const double prob){
+        
+        
+        for(int i=0;i<pln;i++){
+            
+            // First check for any self-counts
+            if(prim_ids[i]==pj_id) continue;
+            
+            Particle pi = pi_list[i]; // first particle
+            
+            Float3 diff_ij = pi.pos-pj.pos;
+            Float norm_ij = diff_ij.norm();
+            
+            int bin_ij = get_radial_bin(norm_ij);
+            
+            if((bin_ij<0)||(bin_ij>=nbin)) continue;
+            
+            c3[bin_ij]+=1./prob;
+        }
+        
+    }
+    
+    inline void second_all(const Particle* pi_list, const int* prim_ids, int pln, const Particle* pj_list, const int* sec_ids, int sln, const double prob, const Float3 sep){
+        
+        for(int i=0;i<pln;i++){
+            Particle pi = pi_list[i]; // first particle
+            for(int j=0;j<sln;j++){
+                // First check for any self-counts
+                if(prim_ids[i]==sec_ids[j]) continue;
+                
+                Particle pj = pj_list[j];
+                
+                Float3 diff_ij = pi.pos-pj.pos+sep;
+                Float norm_ij = diff_ij.norm();
+                
+                int bin_ij = get_radial_bin(norm_ij);
+                
+                if((bin_ij<0)||(bin_ij>=nbin)) continue;
+                c3[bin_ij]+=1./prob;
+            }
+        }
+        
+    }
+    
+    
     inline void third(const Particle* pi_list, const int* prim_ids, int pln, const Particle pj, const Particle pk, const int pj_id, const int pk_id, const double prob, Float* &wijk, int* &all_bins_ijk, Float* &all_correction_factor, Float* &all_legendre, Float* &xi_pass, Float &norm_jk, int &bin_jk, int index){
         // Accumulates the three point integral C3. Also outputs several arrays for later reuse.
         // Prob. here is defined as g_ij / f_ij where g_ij is the sampling PDF and f_ij is the true data PDF for picking sets of particles
@@ -250,7 +295,7 @@ public:
             }
             
             // Now compute the integral contribution
-            c3v = 3.*tmp_weight*tmp_weight*(1.+3.*tmp_xi) / prob;
+            c3v = 3.*tmp_weight*tmp_weight/prob;//*(1.+3.*tmp_xi);
             
             // Pre-load relevant Legendre polynomials and correction factors;
             for(int bin_index=0;bin_index<3;bin_index++){
@@ -277,7 +322,7 @@ public:
                 for(int p_bin=0;p_bin<mbin;p_bin++) all_legendre[(i*3+bin_index)*mbin+p_bin]=polynomials_tmp[p_bin];
             }
             
-            for(int bin_index=0;bin_index<3;bin_index++){
+            for(int bin_index=1;bin_index<2;bin_index++){
                 // Load correction factor
                 correction_factor1 = all_correction_factor[i*3+bin_index];
                 if(correction_factor1==-1) continue; // skip if bad bin combination
@@ -291,8 +336,12 @@ public:
                 
                 tmp_radial_bin = (bin_1*nbin+bin_2)*mbin;
                 
+                c3[tmp_radial_bin]+=c3v*4*3;
+                /*
                 for(int bin_index2=0;bin_index2<3;bin_index2++){
                     // Load correction factor
+                    
+                    
                     correction_factor2 = all_correction_factor[i*3+bin_index2];
                     if(correction_factor2==-1) continue; // skip if bad bin combination
                     
@@ -312,7 +361,7 @@ public:
                             binct3[out_bin]++;
                         }
                     }
-                }
+                }*/
             }
         }
     }
@@ -401,8 +450,8 @@ public:
             if (dont_compute) continue;
             
             // Now compute integral contribution
-            if(index==0) c4v = 36.*tmp_weight*pj.w*pk.w/prob * tmp_xi1 * tmp_xi2;
-            else c4v = 18.*tmp_weight*pj.w*pk.w/prob * tmp_xi2*(tmp_xi1+1.);
+            if(index==0) c4v = 36.*tmp_weight*pj.w*pk.w/prob*1e-10;// * tmp_xi1 * tmp_xi2;
+            else c4v = 18.*tmp_weight*pj.w*pk.w/prob*1e-10;// * tmp_xi2*(tmp_xi1+1.);
             
             for(int bin_index=0;bin_index<3;bin_index++){
                 correction_factor1 = all_correction_factor_ijk[i*3+bin_index];
@@ -514,8 +563,8 @@ public:
             else tmp_xi2 = xi_pass2[i]; // xi_il
             
             // Now compute integral contribution
-            if(index==0) c5v = 9.*tmp_weight*pk.w/prob * tmp_xi1 * tmp_xi2;
-            else c5v = 18.*tmp_weight*pk.w/prob * tmp_xi1 * tmp_xi2;
+            if(index==0) c5v = 9.*tmp_weight*pk.w/prob*1e-20;// * tmp_xi1 * tmp_xi2;
+            else c5v = 18.*tmp_weight*pk.w/prob*1e-20;// * tmp_xi1 * tmp_xi2;
             
             for(int bin_index=0;bin_index<3;bin_index++){
                 // Load correction factor
@@ -615,8 +664,8 @@ public:
             else tmp_xi3 = xi_pass2[i]; // xi_il
             
             // Now compute integral contribution
-            if(index==0) c6v = 9.*wijklm[i]*pn.w/prob * tmp_xi1 * tmp_xi2 * tmp_xi3;
-            else c6v = 6.*wijklm[i]*pn.w/prob * tmp_xi1 * tmp_xi2 * tmp_xi3;
+            if(index==0) c6v = 9.*wijklm[i]*pn.w/prob*1e-30;// * tmp_xi1 * tmp_xi2 * tmp_xi3;
+            else c6v = 6.*wijklm[i]*pn.w/prob*1e-30;// * tmp_xi1 * tmp_xi2 * tmp_xi3;
             
             for(int bin_index=0;bin_index<3;bin_index++){
                 // Load correction factor

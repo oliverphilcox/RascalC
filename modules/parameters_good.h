@@ -28,11 +28,11 @@ public:
     const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/radial_binning_corr.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm = 5000000;
+    Float nofznorm = 642051;
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/3PCF_test/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/3PCF_SE/";
     
     // The number of mu bins in the correlation function
     int mbin_cf = 24;
@@ -42,10 +42,10 @@ public:
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
-	int nside = 101;
+	int nside = 201;
     
     // Whether or not we are using a periodic box
-	bool perbox = true;
+	bool perbox = false;
 
     //---------- (r,mu) PARAMETERS ------------------------------------------
     
@@ -64,7 +64,7 @@ public:
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 0; // max Legendre moment (must be even unless computing 3PCF)
+    int max_l = 2; // max Legendre moment (must be even unless computing 3PCF)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
     const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/Normed2BinCorrectionFactor_n15_11.txt";
@@ -84,14 +84,14 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 20; // number of j cells per i cell
-    int N3 = 1; // number of k cells per j cell
-    int N4 = 0; // number of l cells per k cell
+    int N2 = 4; // number of j cells per i cell
+    int N3 = 4; // number of k cells per j cell
+    int N4 = 4; // number of l cells per k cell
     
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
 
-    int N5 = 0; // number of m cells per l cell
-    int N6 = 0; // number of n cells per m cell
+    int N5 = 4; // number of m cells per l cell
+    int N6 = 4; // number of n cells per m cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
@@ -163,7 +163,7 @@ public:
     int cf_loops = 0;
     
     // The periodicity of the position-space cube.
-	Float boxsize = 2000; // this is only used if the input particles are made randomly
+	Float boxsize = 4000; // this is only used if the input particles are made randomly
     
 	// The particles will be read from the unit cube, but then scaled by boxsize.
 	Float rescale = 1;   // If left zero or negative, set rescale=boxsize
@@ -183,10 +183,10 @@ public:
 	int qinvert = 0, qbalance = 0;
     
 	// If set, we'll just throw random periodic points instead of reading the file
-	int make_random = 1;
+	int make_random = 0;
 
 	// Will be number of particles in a random distribution, but gets overwritten if reading from a file.
-	int np = 5000000; // NB: This is only used for grid creation so we don't need a separate variable for the second set of randoms
+	int np = -1; // NB: This is only used for grid creation so we don't need a separate variable for the second set of randoms
 
 	// The index from which on to invert the sign of the weights
 	int rstart = 0;

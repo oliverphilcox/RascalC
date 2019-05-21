@@ -62,7 +62,7 @@ class Grid {
     int pos_to_cell(Float3 pos) {
         // Return the 1-d cell number for this position, properly wrapped
         // We assume the first cell is centered at cellsize/2.0
-        // return wrap_cell( floor3(pos/cellsize+Float3(0.5,0.5,0.5)));
+        //return wrap_cell( floor3(pos/cellsize+Float3(0.5,0.5,0.5)));
         return wrap_cell( floor3(pos/cellsize));
     }
 

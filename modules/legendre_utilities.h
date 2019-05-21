@@ -216,9 +216,12 @@ public:
     Float correction_function_3pcf(int radial_bin1, int radial_bin2, int ell){
         // Create function to output polynomial RRR correction model given two radial bin numbers and a Legendre polynomial index
         // This gives the ell-th multipole of 1/Phi for convenience
-        int base_bin = (radial_bin1*nbin+radial_bin2)*n_param;
+        //int base_bin = (radial_bin1*nbin+radial_bin2)*n_param;
+        if(ell==0) return 1;
+        else return 0;
         
-        return phi_coeffs[base_bin+ell];
+        //return phi_coeffs[base_bin+ell];
+        
         /*
             
         return phi_coeffs[base_bin]
