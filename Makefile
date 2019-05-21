@@ -2,7 +2,7 @@
 
 CC = gcc
 CFLAGS = -O3 -Wall 
-CXXFLAGS = -DTHREE_PCF -O3 -Wall -DOPENMP 
+CXXFLAGS = -DTHREE_PCF -O3 -Wall -DOPENMP -DPERIODIC
 # disable OPENMP to run single threaded
 #-DPERIODIC # use this to enable periodic behavior
 #-DLEGENDRE # use this to compute 2PCF covariances in Legendre bins

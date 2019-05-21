@@ -27,8 +27,7 @@ class CorrelationFunction{
                 if(r>rmax){
                     double tmu = fmin(fmax(mu,mumin),mumax);
                     // Choose r-max to ensure function integrates to zero
-                    if(r>400) return 0.;
-                    return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,rmax, xa, ya)/pow(rmax,2)*pow(r/rmax,-1.73);
+                    return gsl_interp2d_eval_extrap(interp_2d,y,x,z,tmu,rmax, xa, ya)/pow(rmax,2)*pow(r/rmax,-4.);
                 }
                 else if(r<rmin){
                     double tmu = fmin(fmax(mu,mumin),mumax);
@@ -54,8 +53,7 @@ class CorrelationFunction{
             // Radial correlation function
             // xi values beyond the maximal radius in the correlation function file read in are extrapolated as a simple 1/r^4 power law
             if(r>rmax){
-                if(r>400) return 0.;
-                return gsl_spline_eval(corfu1d,rmax, x1a)/pow(rmax,2)*pow(r/rmax,-1.73);
+                return gsl_spline_eval(corfu1d,rmax, x1a)/pow(rmax,2)*pow(r/rmax,-4.);
             }
             else{
                 if(r<rmin){

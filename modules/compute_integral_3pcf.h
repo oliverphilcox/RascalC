@@ -27,11 +27,11 @@ class compute_integral{
         return no_particles;
         }
         
-        int draw_particle(integer3 id_3D, Particle &particle, int &pid, integer3 shift, Grid *grid, int &n_particles, gsl_rng* locrng){
+        inline int draw_particle(const integer3 id_3D, Particle& particle, int& pid, Float3 shift, Grid *grid, int& n_particles, gsl_rng* locrng){
             // Draw a random particle from a cell given the cell ID.
             // This updates the particle and particle ID and returns 1 if error.
             
-            int id_1D = grid-> test_cell(id_3D); 
+            int id_1D = grid->test_cell(id_3D); 
             if(id_1D<0) return 1; // error if cell not in grid
             Cell cell = grid->c[id_1D];
             if(cell.np==0) return 1; // error if empty cell
@@ -120,7 +120,7 @@ class compute_integral{
             int pln,sln,tln,fln,filn,siln; // number of particles in each cell
             int pid_j, pid_k, pid_l,pid_m,pid_n; // particle IDs particles drawn from cells
             Particle particle_j, particle_k, particle_l,particle_m,particle_n; // randomly drawn particle
-            int* prim_ids; // list of particle IDs in primary cell
+            int *prim_ids; // list of particle IDs in primary cell
             double p2,p3,p4,p5,p6; // probabilities
             int mnp = grid->maxnp; // max number of particles in a grid cell
             Float *correction_ijk, *legendre_ijk, *xi_pass, *xi_pass2, xi_pass3=0, *w_ijk, *w_ijkl, *w_ijklm;
@@ -188,21 +188,27 @@ class compute_integral{
                     loc_used_quints+=pln*par->N2*par->N3*par->N4*par->N5;
                     loc_used_hexes+=pln*par->N2*par->N3*par->N4*par->N5*par->N6;
                     
-                    
                     // LOOP OVER N2 J CELLS
                     for (int n2=0; n2<par->N2; n2++){
                         
                         // Draw second cell from i                         
-                        if(iter_no==0) delta2 = rd->random_xidraw(locrng, &p2); // weight by xi(r)
+                        if(iter_no==0) delta2 = rd->random_cubedraw(locrng, &p2); // weight by xi(r)
                         else delta2 = rd->random_cubedraw(locrng,&p2); // weight by 1/r^2
                         
                         sec_id = prim_id + delta2;
                         cell_sep2 = grid->cell_sep(delta2);
+                        
                         x = draw_particle(sec_id, particle_j, pid_j,cell_sep2, grid, sln, locrng);
                         if(x==1) continue; // skip if error
                         
                         // For all particles
                         p2*=1./(grid->np*(double)sln); // probability is divided by total number of i particles and number of particles in cell
+                        
+                        
+                        
+                        locint.second(prim_list,prim_ids,pln,particle_j,pid_j,p2);
+                        
+                        continue;
                         
                         // LOOP OVER N3 K CELLS
                         for (int n3=0; n3<par->N3; n3++){
@@ -210,7 +216,7 @@ class compute_integral{
                             
                             // Draw third cell from second cell
                             if(iter_no==0) delta3 = rd->random_cubedraw(locrng,&p3); // weight by 1/r^2
-                            else delta3 = rd->random_xidraw(locrng,&p3); // xi(r) weighting
+                            else delta3 = rd->random_cubedraw(locrng,&p3); // xi(r) weighting
                             
                             thi_id = sec_id + delta3;
                             cell_sep3 = cell_sep2 + grid->cell_sep(delta3); 
@@ -230,7 +236,7 @@ class compute_integral{
                                 cell_attempt4+=1; // new fourth cell attempted
                                 
                                 // Draw fourth cell from k cell weighted by xi(r)
-                                delta4 = rd->random_xidraw(locrng,&p4);
+                                delta4 = rd->random_cubedraw(locrng,&p4);
                                 
                                 if(iter_no==0){
                                     fou_id = thi_id + delta4;
@@ -257,7 +263,7 @@ class compute_integral{
                                     cell_attempt5+=1; // new fourth cell attempted
                                     
                                     // Draw fifth cell from l or i cell
-                                    delta5 = rd->random_xidraw(locrng,&p5); 
+                                    delta5 = rd->random_cubedraw(locrng,&p5); 
                                     if(iter_no==0){
                                         fif_id = fou_id + delta5;
                                         cell_sep5 = cell_sep4 + grid->cell_sep(delta5);
@@ -283,7 +289,7 @@ class compute_integral{
                                         cell_attempt6+=1; // new fourth cell attempted
                                         
                                         // Draw sixth cell from m cell weighted by xi(r)
-                                        delta6 = rd->random_xidraw(locrng,&p6); 
+                                        delta6 = rd->random_cubedraw(locrng,&p6); 
                                         if (iter_no==0){
                                             six_id = fif_id + delta6;
                                             cell_sep6 = cell_sep5 + grid->cell_sep(delta6);

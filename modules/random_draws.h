@@ -127,7 +127,7 @@ public:
 
 #ifdef THREE_PCF
         // we need greater separations for the 3PCF since these are sometimes used as xi legs as well as radial legs
-		int maxsep = ceil(fmax(par->xicutoff,2*par->rmax)/boxside);
+		int maxsep = ceil(par->rmax/boxside);//fmax(par->rmax,par->xicutoff)/boxside);
 #else
         int maxsep = ceil(par->rmax/boxside);
 #endif
@@ -136,7 +136,7 @@ public:
 
         compute_r2_prob(&xcube,&nn,nsidecube,boxside);
 
-		// Set up actual sampler
+        // Set up actual sampler
 		cube = ransampl_alloc( nn );
 		ransampl_set( cube, xcube );
 
