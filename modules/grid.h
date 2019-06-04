@@ -26,7 +26,7 @@ class Grid {
     int test_cell(integer3 cell){
     	// returns -1 if cell is outside the grid or wraps around for the periodic grid
 #ifndef PERIODIC
-    	if(nside_cuboid.x<cell.x||cell.x<0||nside_cuboid.y<cell.y||cell.y<0||nside_cuboid.z<cell.z||cell.z<0)
+    	if(nside_cuboid.x<=cell.x||cell.x<0||nside_cuboid.y<=cell.y||cell.y<0||nside_cuboid.z<=cell.z||cell.z<0)
             return -1;
     	else
 #endif
@@ -37,11 +37,15 @@ class Grid {
         // Return the 1-d cell number, after wrapping
         // We apply a very large bias, so that we're
         // guaranteed to wrap any reasonable input.
+#ifdef PERIODIC
         int cx = (cell.x+ncells)%nside_cuboid.x;
         int cy = (cell.y+ncells)%nside_cuboid.y;
         int cz = (cell.z+ncells)%nside_cuboid.z;
         // return (cx*nside+cy)*nside+cz;
         int answer = (cx*nside_cuboid.y+cy)*nside_cuboid.z+cz;
+#else
+        int answer = (cell.x*nside_cuboid.y+cell.y)*nside_cuboid.z+cell.z;
+#endif
         assert(answer<ncells&&answer>=0);
 
         return answer;
@@ -122,7 +126,7 @@ class Grid {
        //empty constructor
     }
 
-    Grid(Particle *input, int _np, Float3 _rect_boxsize, int _nside, Float3 shift, Float nofznorm) {
+    Grid(Particle *input, int _np, Float3 _rect_boxsize, Float _cellsize, int _nside, Float3 shift, Float nofznorm) {
         // The constructor: the input set of particles is copied into a
         // new list, which is ordered by cell.
         // After this, Grid is self-sufficient; one could discard *input
@@ -130,22 +134,29 @@ class Grid {
         nside = _nside;
         assert(nside<1025);   // Can't guarantee won't spill int32 if bigger
         np = _np;
+        cellsize = _cellsize;
         np_pos = 0;
         max_boxsize=fmax(rect_boxsize.x,fmax(rect_boxsize.y,rect_boxsize.z));
         assert(max_boxsize>0&&nside>0&&np>=0);
-        cellsize = max_boxsize/nside;
         nside_cuboid = integer3(ceil3(rect_boxsize/cellsize));
         ncells = nside_cuboid.x*nside_cuboid.y*nside_cuboid.z;
             
         p = (Particle *)malloc(sizeof(Particle)*np);
         pid = (int *)malloc(sizeof(int)*np);
+        printf("# Allocating %6.3f MB of particles\n", (sizeof(Particle)+sizeof(int))*np/1024.0/1024.0);
+        printf("# Allocating %6.3f MB of cells\n", (sizeof(Cell))*ncells/1024.0/1024.0);
+
         c = (Cell *)malloc(sizeof(Cell)*ncells);
 
         // Now we want to copy the particles, but do so into grid order.
         // First, figure out the cell for each particle
         // Shift them to the primary volume first
         int *cell = (int *)malloc(sizeof(int)*np);
+#ifdef PERIODIC
+        for (int j=0; j<np; j++) cell[j] = pos_to_cell(input[j].pos);
+#else
         for (int j=0; j<np; j++) cell[j] = pos_to_cell(input[j].pos - shift);
+#endif
         
         // Histogram the number of particles in each cell
         int *incell = (int *)malloc(sizeof(int)*ncells);

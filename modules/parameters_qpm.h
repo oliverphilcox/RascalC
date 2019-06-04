@@ -1,3 +1,4 @@
+
 // parameter function file for grid_covariance.cpp (originally from Alex Wiegand)
 
 #ifndef PARAMETERS_H
@@ -12,15 +13,15 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/qpm_galaxy_1.xyzwj";//randoms_10x.xyzwj"; 
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_10x.xyzwj";//randoms_10x.xyzwj"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/radial_binning_cov.csv";
+    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/3PCF/SE_binning_n15.csv";//PowerSpectra/k_binning2.csv";//k_binning2.csv";
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/mean_xi.xi";
+	const char default_corname[500] = "/mnt/store1/oliverphilcox/QPM_xi/QPM_mean.xi"; //3PCF_SE/xi_test.xi";//
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
@@ -31,17 +32,17 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/MeanXi/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/3PCF_QPM_Updated/";
     
     // The number of mu bins in the correlation function
-    int mbin_cf = 10;
+    int mbin_cf = 12;
     
     // The number of threads to run on
 	int nthread = 20;
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
-	int nside = 101;
+	int nside = 201;
     
     // Whether or not we are using a periodic box
 	bool perbox = false;
@@ -49,7 +50,7 @@ public:
     //---------- (r,mu) PARAMETERS ------------------------------------------
     
 	// The number of mu bins
-	int mbin = 30;
+	int mbin = 120;
     
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
@@ -63,25 +64,34 @@ public:
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 4; // max Legendre moment (must be even)
+    int max_l = 6; // max Legendre moment (must be even unless computing 3PCF)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
-    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/BinCorrectionFactor_n35_m1000_11.txt";
+    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF/CorrectedBinCorrectionFactor_n15_11.txt";
+    
+    //-------- POWER PARAMETERS ---------------------------------------------
+    
+    Float R0 = 100; // truncation radius in Mpc/h
+    Float power_norm = 4.246213506653083; // normalization of the power spectrum
+    
+    char *inv_phi_file = NULL; // Inverse survey correction function multipole coefficient file 
+    const char default_inv_phi_file[500] = "/mnt/store1/oliverphilcox/PowerSpectra/InvPhiCoeff_DR12.txt";
+    
     
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=2;
+    int max_loops=20;
     
     // Number of random cells to draw at each stage
     int N2 = 3; // number of j cells per i cell
     int N3 = 3; // number of k cells per j cell
     int N4 = 3; // number of l cells per k cell
-    
+
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     
-    int N5 = 3; // number of m cells per l cell
-    int N6 = 3; // number of n cells per m cell
+    int N5 = 2; // number of m cells per l cell
+    int N6 = 2; // number of n cells per m cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
@@ -125,25 +135,41 @@ public:
     char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
     const char default_phi_file12[500] = "";
     
+    // ------- POWER MULTI-FIELD PARAMETERS ----------------------------------
+    
+    char *inv_phi_file2 = NULL; // (Normalized) inverse survey correction function multipoles survey_22
+    const char default_inv_phi_file2[500] = "";
+    
+    char *inv_phi_file12 = NULL; // (Normalized) inverse survey correction function multipoles survey_12
+    const char default_inv_phi_file12[500] = "";
+    
+    Float power_norm12 = 0; // power spectrum normalization for field 1 x 2
+    
+    Float power_norm2 = 0; // power spectrum normalization for field 2 x 2
+    
     //-------- OTHER PARAMETERS ----------------------------------------------
     
 	// The minimum mu of the smallest bin.
-	Float mumin = 0.0;
+#ifdef THREE_PCF
+    Float mumin = -1.0;
+#else
+	Float mumin = -1.0;
+#endif
 
 	// The maximum mu of the largest bin.
 	Float mumax = 1.0;
     
     // Number of loops over which to refine the correlation function
-    int cf_loops = 20;
+    int cf_loops = 0;
     
     // The periodicity of the position-space cube.
-	Float boxsize = 200; // this is only used if the input particles are made randomly
+	Float boxsize = 1500.; // this is only used if the input particles are made randomly
     
 	// The particles will be read from the unit cube, but then scaled by boxsize.
 	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
 
 	// The radius beyond which the correlation function is set to zero
-	Float xicutoff = 400.0;
+	Float xicutoff = 400.;
     
 	// The maximum number of points to read
 	uint64 nmax = 1000000000000;
@@ -171,6 +197,7 @@ public:
 	// The periodicity of the position-space cuboid in 3D. 
     Float3 rect_boxsize = {boxsize,boxsize,boxsize}; // this is overwritten on particle read-in
     
+    Float cellsize;
     
     // Radial binning parameters (will be set from file)
     int nbin=0,nbin_cf=0;
@@ -183,6 +210,7 @@ public:
     
     // Constructor
 	Parameters(int argc, char *argv[]){
+        
 	    if (argc==1) usage();
 	    int i=1;
 	    while (i<argc) {
@@ -224,6 +252,15 @@ public:
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
         else if (!strcmp(argv[i],"-phi_file12")) phi_file12=argv[++i];
         else if (!strcmp(argv[i],"-phi_file2")) phi_file2=argv[++i];
+#elif defined POWER
+        else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-inv_phi_file")) inv_phi_file=argv[++i];
+        else if (!strcmp(argv[i],"-inv_phi_file12")) inv_phi_file12=argv[++i];
+        else if (!strcmp(argv[i],"-inv_phi_file2")) inv_phi_file2=argv[++i];
+        else if (!strcmp(argv[i],"-R0")) R0 = atof(argv[++i]);
+        else if (!strcmp(argv[i],"-power_norm")) power_norm = atof(argv[++i]);
+        else if (!strcmp(argv[i],"-power_norm12")) power_norm12 = atof(argv[++i]);
+        else if (!strcmp(argv[i],"-power_norm")) power_norm2 = atof(argv[++i]);
 #elif defined JACKKNIFE
         else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
         else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
@@ -279,8 +316,9 @@ public:
 	    assert(nside%2!=0); // The probability integrator needs an odd grid size
 	
 	    assert(nofznorm>0); // need some galaxies!
-
-	    assert(mumin>=0); // We take the absolte value of mu
+#ifndef THREE_PCF
+	    //assert(mumin>=0); // We take the absolte value of mu
+#endif
 	    assert(mumax<=1); // mu > 1 makes no sense
         
 #ifdef LEGENDRE
@@ -289,12 +327,25 @@ public:
         if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
         if (phi_file2==NULL) {phi_file2 = (char *) default_phi_file2;}
         if (phi_file12==NULL) {phi_file12 = (char *) default_phi_file12;} 
-        mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
-#elif defined THREE_PCF
+#elif defined POWER
         assert(max_l%2==0); // check maximum ell is even
         assert(max_l<=10); // ell>10 not yet implemented!
-        if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
+        if (inv_phi_file==NULL) {inv_phi_file = (char *) default_inv_phi_file;} // no phi file specified
+        if (inv_phi_file2==NULL) {inv_phi_file2 = (char *) default_inv_phi_file2;}
+        if (inv_phi_file12==NULL) {inv_phi_file12 = (char *) default_inv_phi_file12;} 
         mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
+        if(R0<40){
+            printf("\nTruncation radius (%.0f Mpc/h) is too small for accurate power computation. Exiting.\n\n",R0);
+            exit(1);
+        }
+        if(R0>400){
+            printf("\nTruncation radius (%.0f Mpc/h) is too large for efficient power computation. Exiting.\n\n",R0);
+            exit(1);
+        }
+#elif defined THREE_PCF
+        assert(max_l<=10); // ell>10 not yet implemented!
+        if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
+        mbin = max_l+1; // number of angular bins is set to number of Legendre bins (including odd bins)
 #elif defined JACKKNIFE
 	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
 	    if (jk_weight_file12==NULL) jk_weight_file12 = (char *) default_jk_weight_file12; // No jackknife name was given
@@ -317,11 +368,22 @@ public:
 	    
 	    // Decide if we are using multiple tracers:
 	    if (strlen(fname2)!=0){
+#if (defined LEGENDRE || defined POWER)
 #ifdef LEGENDRE
             if ((strlen(phi_file12)==0)||(strlen(phi_file2)==0)){
                 printf("Two random particle sets input but not enough survey correction function files! Exiting.");
                 exit(1);
             }
+#else
+            if ((strlen(inv_phi_file12)==0)||(strlen(inv_phi_file2)==0)){
+                printf("Two random particle sets input but not enough survey correction function files! Exiting.");
+                exit(1);
+            }
+            else if ((power_norm12==0)||(power_norm2==0)){
+                printf("Two random particle sets input but not enough power normalizations provided; exiting.");
+                exit(1);
+            }
+#endif
             else if ((strlen(corname2)==0)||(strlen(corname12)==0)){
                 printf("Two random particle sets input but not enough correlation function files! Exiting.");
                 exit(1);
@@ -340,8 +402,15 @@ public:
             printf("\nUsing a single set of tracer particles\n");
             multi_tracers=false;
             // set variables for later use
+#ifdef LEGENDRE
             phi_file12=phi_file;
             phi_file2=phi_file;
+#else
+            inv_phi_file12=inv_phi_file;
+            inv_phi_file2=inv_phi_file;
+            power_norm2 = power_norm;
+            power_norm12 = power_norm;
+#endif
             nofznorm2=nofznorm;
             corname12=corname;
             corname2=corname;
@@ -387,7 +456,7 @@ public:
         }
 #endif
 
-        if((!multi_tracers)&&(make_random==1)){
+        if((multi_tracers)&&(make_random==1)){
             printf("\nRunning for multiple tracers but creating particles at random; this is not yet supported. Exiting.\n\n");
             exit(1);
         }
@@ -395,7 +464,7 @@ public:
 
 
 
-#ifdef LEGENDRE
+#ifdef THREE_PCF
         if(multi_tracers){
             printf("\nSupport for multi-tracer threePCF covariance matrices not yet available. Exiting.\n\n");
             exit(1);
@@ -432,9 +501,11 @@ public:
 		if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
         printf("Radial Bins = %d\n", nbin);
 		printf("Radial Binning = {%6.5f, %6.5f} over %d bins (user-defined bin widths) \n",rmin,rmax,nbin);
+#if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)
 		printf("Mu Bins = %d\n", mbin);
 		printf("Mu Binning = {%6.5f, %6.5f, %6.5f}\n",mumin,mumax,(mumax-mumin)/mbin);
-		printf("Density Normalization = %6.5e\n",nofznorm);
+#endif
+		printf("Number of galaxies = %6.5e\n",nofznorm);
         printf("Maximum number of integration loops = %d\n",max_loops);
         printf("Output directory: '%s'\n",out_file);
 
@@ -448,11 +519,15 @@ private:
         fprintf(stderr, "   -cor <file>: File location of input xi_1 correlation function file.\n");
 	    fprintf(stderr, "   -binfile_cf <filename>: File containing the desired radial bins for the correlation function.\n");
         fprintf(stderr, "   -norm <nofznorm>: Number of galaxies in the first tracer set.\n");
+#ifdef JACKKNIFE
         fprintf(stderr, "   -jackknife <filename>: File containing the {1,1} jackknife weights (normally computed from Corrfunc)\n");
+#endif
+#if (!defined LEGENDRE && !defined POWER && !defined THREE_PCF)
         fprintf(stderr, "   -RRbin <filename>: File containing the {1,1} jackknife RR bin counts (computed from Corrfunc)\n");
-        fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");   
         fprintf(stderr, "   -mbin <mbin>:  The number of mu bins (spaced linearly).\n");
+#endif
 	    fprintf(stderr, "   -mbin_cf <mbin_cf>:  The number of mu bins in the correlation function (spaced linearly).\n");
+        fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");   
 	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 250.\n");
 	    fprintf(stderr, "          Recommend having several grid cells per rmax.\n");
         fprintf(stderr, "          There are {nside} cells along the longest dimension of the periodic box.\n");
@@ -472,14 +547,25 @@ private:
         fprintf(stderr, "   -phi_file12 <filename>: (Optional) Survey correction function coefficient file for fields 1 x 2\n");
         fprintf(stderr, "   -phi_file2 <filename>: (Optional) Survey correction function coefficent file for field 2\n");
         fprintf(stderr, "\n");
-#else
+#elif defined POWER
+        fprintf(stderr, "   -inv_phi_file <filename>: Inverse survey correction function multipole coefficient file\n");
+        fprintf(stderr, "\n");
+        fprintf(stderr, "   -inv_phi_file12 <filename>: (Optional) Inverse survey correction function coefficient file for fields 1 x 2\n");
+        fprintf(stderr, "   -inv_phi_file2 <filename>: (Optional) Inverse survey correction function coefficent file for field 2\n");
+        fprintf(stderr, "\n");
+        fprintf(stderr, "   -R0 <R0>: Truncation radius for pair-wise separation window function in Mpc/h. Default: R0 = 100\n");
+        fprintf(stderr, "   -power_norm: Power spectrum normalization = V*<(nw)^2> = Sum(nw^2)\n");
+        fprintf(stderr, "   -power_norm2: Power spectrum normalization = V*<(nw)^2> = Sum(nw^2) for field 1 x 2\n");
+        fprintf(stderr, "   -power_norm12: Power spectrum normalization = V*<(nw)^2> = Sum(nw^2) for field 2\n");
+#endif
+#if (!defined LEGENDRE && !defined POWER && !defined THREE_PCF)
         fprintf(stderr, "   -RRbin12 <filename>: (Optional) File containing the {1,2} jackknife RR bin counts (computed from Corrfunc)\n");
 	    fprintf(stderr, "   -RRbin2 <filename>: (Optional) File containing the {2,2} jackknife RR bin counts (computed from Corrfunc)\n");
         fprintf(stderr, "\n");
+#endif
 #ifdef JACKKNIFE
         fprintf(stderr, "   -jackknife12 <filename>: (Optional) File containing the {1,2} jackknife weights (normally computed from Corrfunc)\n");
         fprintf(stderr, "   -jackknife2 <filename>: (Optional) File containing the {2,2} jackknife weights (normally computed from Corrfunc)\n");
-#endif
 #endif
         fprintf(stderr, "   -maxloops <max_loops>: Maximum number of integral loops\n");
         fprintf(stderr, "   -N2 <N2>: Number of secondary particles to choose per primary particle\n");
@@ -521,8 +607,14 @@ private:
             printf("\nCreating output directory\n");
         }
 	    char cname[1000];
-        snprintf(cname, sizeof cname, "%sCovMatricesAll/",out_file);
-	    if (mkdir(cname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0){
+#ifdef THREE_PCF
+        snprintf(cname, sizeof cname, "%s3PCFCovMatricesAll/",out_file);
+#elif defined POWER
+        snprintf(cname, sizeof cname, "%sPowerCovMatrices/",out_file);
+#else
+	    snprintf(cname, sizeof cname, "%sCovMatricesAll/",out_file);
+#endif
+        if (mkdir(cname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0){
             }
         // Check if this was successful:
         struct stat info;

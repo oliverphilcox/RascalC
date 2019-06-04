@@ -192,7 +192,7 @@ class compute_integral{
                     for (int n2=0; n2<par->N2; n2++){
                         
                         // Draw second cell from i                         
-                        if(iter_no==0) delta2 = rd->random_cubedraw(locrng, &p2); // weight by xi(r)
+                        if(iter_no==0) delta2 = rd->random_xidraw(locrng, &p2); // weight by xi(r)
                         else delta2 = rd->random_cubedraw(locrng,&p2); // weight by 1/r^2
                         
                         sec_id = prim_id + delta2;
@@ -210,7 +210,7 @@ class compute_integral{
                             
                             // Draw third cell from second cell
                             if(iter_no==0) delta3 = rd->random_cubedraw(locrng,&p3); // weight by 1/r^2
-                            else delta3 = rd->random_cubedraw(locrng,&p3); // xi(r) weighting
+                            else delta3 = rd->random_xidraw(locrng,&p3); // xi(r) weighting
                             
                             thi_id = sec_id + delta3;
                             cell_sep3 = cell_sep2 + grid->cell_sep(delta3); 
@@ -221,7 +221,7 @@ class compute_integral{
                             used_cell3+=1; // new third cell used
                             
                             p3*=p2/(double)tln; // update probability
-                    
+                            
                             // Compute third integral
                             locint.third(prim_list, prim_ids, pln, particle_j, particle_k, pid_j, pid_k, p3, w_ijk, bins_ijk, correction_ijk, legendre_ijk,xi_pass,norm_jk, bin_jk,iter_no);
                             
@@ -230,7 +230,7 @@ class compute_integral{
                                 cell_attempt4+=1; // new fourth cell attempted
                                 
                                 // Draw fourth cell from k cell weighted by xi(r)
-                                delta4 = rd->random_cubedraw(locrng,&p4);
+                                delta4 = rd->random_xidraw(locrng,&p4);
                                 
                                 if(iter_no==0){
                                     fou_id = thi_id + delta4;
@@ -257,7 +257,7 @@ class compute_integral{
                                     cell_attempt5+=1; // new fourth cell attempted
                                     
                                     // Draw fifth cell from l or i cell
-                                    delta5 = rd->random_cubedraw(locrng,&p5); 
+                                    delta5 = rd->random_xidraw(locrng,&p5); 
                                     if(iter_no==0){
                                         fif_id = fou_id + delta5;
                                         cell_sep5 = cell_sep4 + grid->cell_sep(delta5);
@@ -283,7 +283,7 @@ class compute_integral{
                                         cell_attempt6+=1; // new fourth cell attempted
                                         
                                         // Draw sixth cell from m cell weighted by xi(r)
-                                        delta6 = rd->random_cubedraw(locrng,&p6); 
+                                        delta6 = rd->random_xidraw(locrng,&p6); 
                                         if (iter_no==0){
                                             six_id = fif_id + delta6;
                                             cell_sep6 = cell_sep5 + grid->cell_sep(delta6);
@@ -371,6 +371,12 @@ class compute_integral{
         
         // Normalize the accumulated results, using the RR counts
         sumint.normalize(grid->norm,(Float)tot_triples,(Float)tot_quads,(Float)tot_quints,(Float)tot_hexes);
+        
+        // Normalize counts by expected number in each cell
+        cnt3/=(9.*mbin*mbin);
+        cnt4/=(9.*mbin*mbin);
+        cnt5/=(9.*mbin*mbin);
+        cnt6/=(9.*mbin*mbin);
         
         int runtime = TotalTime.Elapsed();
         printf("\n\nINTEGRAL %d OF %d COMPLETE\n",iter_no+1,tot_iter); 

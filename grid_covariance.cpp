@@ -137,11 +137,12 @@ int main(int argc, char *argv[]) {
             orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax);
             assert(par.np>0);
 #endif
-            par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.rmax, shift, par.nside);
+            par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
         } else {
         // If you want to just make random particles instead:
         assert(par.np>0);
         orig_p = make_particles(par.rect_boxsize, par.np);
+        par.cellsize = par.rect_boxsize.x/float(par.nside);
         // set as periodic if we make the random particles
         par.perbox = true;
         }
@@ -153,22 +154,22 @@ int main(int argc, char *argv[]) {
         // Sort the particles into the grid.
         Float nofznorm=par.nofznorm;
         if(index==1) nofznorm=par.nofznorm2;
-        Grid tmp_grid(orig_p, par.np, par.rect_boxsize, par.nside, shift, nofznorm);
+        Grid tmp_grid(orig_p, par.np, par.rect_boxsize, par.cellsize, par.nside, shift, nofznorm);
 
         Float grid_density = (double)par.np/tmp_grid.nf;
         printf("\n RANDOM CATALOG %d DIAGNOSTICS:\n",index+1);
         printf("Average number of particles per grid cell = %6.2f\n", grid_density);
-//         Float max_density = 16.0;
-//         if (grid_density>max_density){
-//             fprintf(stderr,"Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n",max_density);
-//             exit(1);
-//         }
-//         printf("Average number of particles per max_radius ball = %6.2f\n",
-//                 par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
-//         if (grid_density<2){
-//             printf("#\n# WARNING: grid appears inefficiently fine; exiting.\n#\n");
-//             exit(1);
-//         }
+        Float max_density = 16.0;
+        if (grid_density>max_density){
+            fprintf(stderr,"Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n",max_density);
+            exit(1);
+        }
+        printf("Average number of particles per max_radius ball = %6.2f\n",
+                par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
+        if (grid_density<2){
+            printf("#\n# WARNING: grid appears inefficiently fine; exiting.\n#\n");
+            exit(1);
+        }
 
         printf("# Done gridding the particles\n");
         printf("# %d particles in use, %d with positive weight\n", tmp_grid.np, tmp_grid.np_pos);

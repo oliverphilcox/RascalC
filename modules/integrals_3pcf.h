@@ -42,7 +42,7 @@ public:
         mbin_leg = max_leg+1; // number of legendre bins used in transit
         
         int ec=0;
-        array_len = pow(nbin,2)*mbin;
+        array_len = nbin*nbin*mbin;
         // Initialize the binning
         ec+=posix_memalign((void **) &c3, PAGE, sizeof(double)*array_len*array_len);
         ec+=posix_memalign((void **) &c4, PAGE, sizeof(double)*array_len*array_len);
@@ -98,7 +98,7 @@ public:
         
         int which_bin = -1; // default if outside bins
         for(int i=0;i<nbin;i++){
-            if((r>r_low[i])&&(r<r_high[i])){
+            if((r>=r_low[i])&&(r<r_high[i])){
                 which_bin=i;
                 break;
             }
@@ -141,6 +141,8 @@ public:
         
         Float3 pos12 = p1-p2, pos23 = p2-p3, pos13 = p1-p3;
         
+        assert(norm_in>0);
+        
         // Compute lengths
         if(preload==0) norm[0] = norm_in;
         else norm[0]=pos23.norm();
@@ -148,13 +150,17 @@ public:
         if(preload==2) norm[2] = norm_in;
         else norm[2] = pos12.norm();
         
+        assert(norm[0]>0);
+        assert(norm[1]>0);
+        assert(norm[2]>0);
+        
         // Compute internal angles - sign does matter for these 
         ang[0] = pos12.dot(pos13)/norm[2]/norm[1];
         ang[1] = -pos12.dot(pos23)/norm[2]/norm[0];
         ang[2] = pos13.dot(pos23)/norm[1]/norm[0];
     }
     
-    int all_bins(Float norm[3], Float bin_ab[6], const int bin_in,int preload){
+    int all_bins(Float norm[3], int bin_ab[6], const int bin_in,int preload){
         // Compute all triangle bin combinations and save as an array. We use the j-k bin as an input here
         
         int error=0; // to check if there are any correct bins
@@ -199,7 +205,8 @@ public:
         // Prob. here is defined as g_ij / f_ij where g_ij is the sampling PDF and f_ij is the true data PDF for picking sets of particles
         
         Float tmp_weight, tmp_xi=0, this_poly, los_tmp,c3v, tmp_phi_inv;
-        Float norm_ijk[3], ang_ijk[3], bins_ijk[6];
+        Float norm_ijk[3], ang_ijk[3];
+        int bins_ijk[6];
         Particle pi;
         Float3 pjk;
         int tmp_radial_bin, tmp_radial_bin2, out_bin, bin_1, bin_2,bin_3,bin_4;
@@ -208,6 +215,7 @@ public:
         // Define j-k norm and bin
         pjk = pj.pos-pk.pos;
         norm_jk = pjk.norm();
+        assert(norm_jk>0);
         bin_jk = get_radial_bin(norm_jk);
             
         // Compute xi_jk if needed
@@ -250,7 +258,7 @@ public:
             }
             
             // Now compute the integral contribution
-            c3v = 3.*tmp_weight*tmp_weight/prob;//*(1.+3.*tmp_xi);
+            c3v = 3.*tmp_weight*tmp_weight/prob*(1.+3.*tmp_xi);
             
             // Pre-load relevant Legendre polynomials and correction factors;
             for(int bin_index=0;bin_index<3;bin_index++){
@@ -277,7 +285,7 @@ public:
                 for(int p_bin=0;p_bin<mbin;p_bin++) all_legendre[(i*3+bin_index)*mbin+p_bin]=polynomials_tmp[p_bin];
             }
             
-            for(int bin_index=1;bin_index<2;bin_index++){
+            for(int bin_index=0;bin_index<3;bin_index++){
                 // Load correction factor
                 correction_factor1 = all_correction_factor[i*3+bin_index];
                 if(correction_factor1==-1) continue; // skip if bad bin combination
@@ -291,18 +299,15 @@ public:
                 
                 tmp_radial_bin = (bin_1*nbin+bin_2)*mbin;
                 
-                c3[tmp_radial_bin]+=c3v*4*3;
-                /*
                 for(int bin_index2=0;bin_index2<3;bin_index2++){
                     // Load correction factor
-                    
                     
                     correction_factor2 = all_correction_factor[i*3+bin_index2];
                     if(correction_factor2==-1) continue; // skip if bad bin combination
                     
                     bin_3 = bins_ijk[bin_index2*2];
                     bin_4 = bins_ijk[bin_index2*2+1];
-                
+                    
                     // Add to relevant Legendre bins
                     tmp_radial_bin2 = (bin_3*nbin+bin_4)*mbin;
                     for(int p_bin=0;p_bin<mbin;p_bin++){
@@ -310,13 +315,13 @@ public:
                         for(int q_bin=0;q_bin<mbin;q_bin++){
                             
                             out_bin = (tmp_radial_bin+p_bin)*array_len+tmp_radial_bin2+q_bin;
-                        
+                   
                             // Add to integral (extra 4 is from 2x symmetry in each angle kernel)
-                            c3[out_bin]+=c3v*this_poly*all_legendre[(i*3+bin_index2)+q_bin]*correction_factor1*correction_factor2*4.;
+                            c3[out_bin]+=c3v*this_poly*all_legendre[(i*3+bin_index2)*mbin+q_bin]*correction_factor1*correction_factor2*4.;
                             binct3[out_bin]++;
                         }
                     }
-                }*/
+                }
             }
         }
     }
@@ -324,8 +329,9 @@ public:
     inline void fourth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const int pj_id, const int pk_id, const int pl_id, const double prob, const Float* wijk, const int* bins_ijk, const Float* all_correction_factor_ijk, const Float* all_legendre_ijk, const Float* xi_pass, const Float norm_jk, const int bin_jk, Float* &wijkl, Float* &xi_pass2, Float &norm_kl, int &bin_kl, int index){
         // Accumulates the four point integral C4. Also outputs an array of xi_ik and bin_ik values for later reuse.
         
-        Float norm_jkl[3],ang_jkl[3], bins_jkl[6], tmp_weight, tmp_xi1,tmp_xi2,c4v,this_poly,los_tmp;
+        Float norm_jkl[3],ang_jkl[3], tmp_weight, tmp_xi1,tmp_xi2,c4v,this_poly,los_tmp;
         Particle pi;
+        int bins_jkl[6]; 
         bool dont_compute=false;
         int bin_1,bin_2,bin_3,bin_4,out_bin, tmp_radial_bin, tmp_radial_bin2;
         Float polynomials_tmp1[mbin_leg], correction_factor1,correction_factor2, tmp_phi_inv;
@@ -402,17 +408,17 @@ public:
             }
             
             // Don't need to run this if we didn't find a correct triangle orientation
-            if (dont_compute) continue;
+            if(dont_compute) continue;
             
             // Now compute integral contribution
-            if(index==0) c4v = 36.*tmp_weight*pj.w*pk.w/prob*1e-10;// * tmp_xi1 * tmp_xi2;
-            else c4v = 18.*tmp_weight*pj.w*pk.w/prob*1e-10;// * tmp_xi2*(tmp_xi1+1.);
+            if(index==0) c4v = 36.*tmp_weight*pj.w*pk.w/prob* tmp_xi1 * tmp_xi2;
+            else c4v = 18.*tmp_weight*pj.w*pk.w/prob*tmp_xi2*(tmp_xi1+1.);
             
             for(int bin_index=0;bin_index<3;bin_index++){
                 correction_factor1 = all_correction_factor_ijk[i*3+bin_index];
                 if(correction_factor1==-1) continue;
-                bin_1 = bins_ijk[bin_index*2];
-                bin_2 = bins_ijk[bin_index*2+1];
+                bin_1 = bins_ijk[i*6+bin_index*2];
+                bin_2 = bins_ijk[i*6+bin_index*2+1];
                 
                 // Load correction factor
                 tmp_radial_bin = (bin_1*nbin+bin_2)*mbin;
@@ -428,10 +434,11 @@ public:
                     for(int p_bin=0;p_bin<mbin;p_bin++){
                         this_poly = all_legendre_ijk[(i*3+bin_index)*mbin+p_bin];
                         for(int q_bin=0;q_bin<mbin;q_bin++){
+                            
                             out_bin = (tmp_radial_bin+p_bin)*array_len+tmp_radial_bin2+q_bin;
-                        
+                            
                             // Add to integral (extra 4 is from 2x symmetry in each angle kernel)
-                            c4[out_bin] +=c4v*this_poly*all_legendre_jkl[bin_index2*mbin+q_bin]*correction_factor1*correction_factor2*4.;
+                            c4[out_bin] += c4v*this_poly*all_legendre_jkl[bin_index2*mbin+q_bin]*correction_factor1*correction_factor2*4.;
                             binct4[out_bin]++;
                         }
                     }
@@ -443,9 +450,9 @@ public:
     inline void fifth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, Particle pm, const int pj_id, const int pk_id, const int pl_id, const int pm_id, const double prob, const Float* wijkl, const int* bins_ijk, const Float* all_correction_factor_ijk, const Float* all_legendre_ijk, const Float* xi_pass, const Float* xi_pass2, const Float norm_kl, const int bin_kl, Float* &wijklm, Float &xi_pass3, Float &norm_lm, int &bin_lm, int index){
         // Accumulates the five point integral C5.
         
-        Float norm_klm[3],ang_klm[3],bins_klm[6],los_tmp, tmp_xi1,tmp_xi2, polynomials_tmp[mbin_leg];
+        Float norm_klm[3],ang_klm[3],los_tmp, tmp_xi1,tmp_xi2, polynomials_tmp[mbin_leg];
         Float all_correction_factor_klm[3],all_legendre_klm[3*mbin],tmp_weight,c5v, this_poly, correction_factor1, correction_factor2, tmp_phi_inv;
-        int bin_1,bin_2,bin_3,bin_4,tmp_radial_bin, tmp_radial_bin2, out_bin;
+        int bins_klm[6], bin_1,bin_2,bin_3,bin_4,tmp_radial_bin, tmp_radial_bin2, out_bin;
         Particle pi;
         bool dont_compute=false;
         
@@ -518,16 +525,16 @@ public:
             else tmp_xi2 = xi_pass2[i]; // xi_il
             
             // Now compute integral contribution
-            if(index==0) c5v = 9.*tmp_weight*pk.w/prob*1e-20;// * tmp_xi1 * tmp_xi2;
-            else c5v = 18.*tmp_weight*pk.w/prob*1e-20;// * tmp_xi1 * tmp_xi2;
+            if(index==0) c5v = 9.*tmp_weight*pk.w/prob*tmp_xi1 * tmp_xi2;
+            else c5v = 18.*tmp_weight*pk.w/prob*tmp_xi1 * tmp_xi2;
             
             for(int bin_index=0;bin_index<3;bin_index++){
                 // Load correction factor
                 correction_factor1 = all_correction_factor_ijk[i*3+bin_index];
                 if(correction_factor1==-1) continue;
                 
-                bin_1 = bins_ijk[bin_index*2];
-                bin_2 = bins_ijk[bin_index*2+1];
+                bin_1 = bins_ijk[i*6+bin_index*2];
+                bin_2 = bins_ijk[i*6+bin_index*2+1];
                 tmp_radial_bin = (bin_1*nbin+bin_2)*mbin;
                 
                 for(int bin_index2=0;bin_index2<3;bin_index2++){
@@ -557,9 +564,9 @@ public:
     inline void sixth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const Particle pm, const Particle pn, const int pj_id, const int pk_id, const int pl_id, const int pm_id, const int pn_id, const double prob, const Float* wijklm, const int* bins_ijk,  const Float* all_correction_factor_ijk, const Float* all_legendre_ijk, const Float* xi_pass, const Float* xi_pass2, const Float xi_pass3, const Float norm_lm, const int bin_lm, int index){
         // Accumulates the six point integral C6.
          
-        Float norm_lmn[3],ang_lmn[3],bins_lmn[6],norm_tmp,los_tmp, tmp_xi1,tmp_xi2,tmp_xi3, polynomials_tmp[mbin_leg],correction_factor1,correction_factor2,this_poly;
+        Float norm_lmn[3],ang_lmn[3],norm_tmp,los_tmp, tmp_xi1,tmp_xi2,tmp_xi3, polynomials_tmp[mbin_leg],correction_factor1,correction_factor2,this_poly;
         Float all_correction_factor_lmn[3],all_legendre_lmn[3*mbin],c6v,tmp_phi_inv;
-        int bin_1,bin_2,bin_3,bin_4,tmp_radial_bin,tmp_radial_bin2,out_bin;
+        int bins_lmn[6], bin_1,bin_2,bin_3,bin_4,tmp_radial_bin,tmp_radial_bin2,out_bin;
         Particle pi;
         
         // Define triangle sides independent of i
@@ -619,16 +626,16 @@ public:
             else tmp_xi3 = xi_pass2[i]; // xi_il
             
             // Now compute integral contribution
-            if(index==0) c6v = 9.*wijklm[i]*pn.w/prob*1e-30;// * tmp_xi1 * tmp_xi2 * tmp_xi3;
-            else c6v = 6.*wijklm[i]*pn.w/prob*1e-30;// * tmp_xi1 * tmp_xi2 * tmp_xi3;
+            if(index==0) c6v = 9.*wijklm[i]*pn.w/prob * tmp_xi1 * tmp_xi2 * tmp_xi3;
+            else c6v = 6.*wijklm[i]*pn.w/prob * tmp_xi1 * tmp_xi2 * tmp_xi3;
             
-            for(int bin_index=0;bin_index<3;bin_index++){
+            for(int bin_index=0;bin_index<1;bin_index++){
                 // Load correction factor
                 correction_factor1 = all_correction_factor_ijk[i*3+bin_index];
                 if(correction_factor1==-1) continue;
                 
-                bin_1 = bins_ijk[bin_index*2];
-                bin_2 = bins_ijk[bin_index*2+1];
+                bin_1 = bins_ijk[i*6+bin_index*2];
+                bin_2 = bins_ijk[i*6+bin_index*2+1];
                 tmp_radial_bin = (bin_1*nbin+bin_2)*mbin;
                 
                 for(int bin_index2=0;bin_index2<3;bin_index2++){
@@ -637,14 +644,14 @@ public:
            
                     bin_3 = bins_lmn[bin_index2*2];
                     bin_4 = bins_lmn[bin_index2*2+1];
-                
+                    
                     // Add to relevant Legendre bins
                     tmp_radial_bin2 = (bin_3*nbin+bin_4)*mbin;
                     for(int p_bin=0;p_bin<mbin;p_bin++){
                         this_poly = all_legendre_ijk[(i*3+bin_index)*mbin+p_bin];
                         for(int q_bin=0;q_bin<mbin;q_bin++){
                             out_bin = (tmp_radial_bin+p_bin)*array_len+tmp_radial_bin2+q_bin;
-                        
+                                                    
                             // Add to integral (extra 4 is from 2x symmetry in each angle kernel)
                             c6[out_bin] += c6v*this_poly*all_legendre_lmn[bin_index2*mbin+q_bin]*correction_factor1*correction_factor2*4.;
                             binct6[out_bin]++;
@@ -712,10 +719,10 @@ public:
         // Add local counts to total bin counts in acc2-4
         // Divide by 9*mbin*mbin since we add every set of particles to this many bins
         for (int i=0; i<pow(array_len,2); i++) {
-            acc3+=binct3[i]/(9.*mbin*mbin);
-            acc4+=binct4[i]/(9.*mbin*mbin);
-            acc5+=binct5[i]/(9.*mbin*mbin);
-            acc6+=binct6[i]/(9.*mbin*mbin);
+            acc3+=binct3[i];
+            acc4+=binct4[i];
+            acc5+=binct5[i];
+            acc6+=binct6[i];
         }
     }
     
@@ -752,7 +759,7 @@ public:
                 v_c = 4.*M_PI/3.*(pow(r_high[ind2/nbin],3)-pow(r_low[ind2/nbin],3));
                 v_d = 4.*M_PI/3.*(pow(r_high[ind2%nbin],3)-pow(r_low[ind2%nbin],3));
                 
-                normalization = float((2*legendre_p+1)*(2*legendre_q+1))/(v_a*v_b*v_c*v_d);                
+                normalization = float((2.0*legendre_p+1.0)*(2.0*legendre_q+1.0))/(v_a*v_b*v_c*v_d);                
                 c3[i*array_len+j]*=normalization;
                 c4[i*array_len+j]*=normalization;
                 c5[i*array_len+j]*=normalization;

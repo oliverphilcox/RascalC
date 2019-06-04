@@ -23,7 +23,9 @@ Particle *make_particles(Float3 rect_boxsize, int np) {
         p[j].JK = 0.;
         p[j].rand_class = rand()%2; // assign random class to each particle
     }
+#ifdef JACKKNIFE
     fprintf(stderr,"# WARNING - Jackknife regions are not yet implemented for particles made at random. All particles are assigned to the same region.\n");
+#endif
     printf("# Done making %d random particles, periodically distributed.\n", np);
     return p;
 }
@@ -126,7 +128,10 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
     return p;
 }
 
-bool compute_bounding_box(Particle *p, int np, Float3 &rect_boxsize, Float rmax, Float3& pmin, int nside) {
+
+
+
+bool compute_bounding_box(Particle *p, int np, Float3 &rect_boxsize, Float &cellsize, Float rmax, Float3& pmin, int nside) {
     // Compute the boxsize of the bounding cuboid box and determine whether we are periodic
     Float3 pmax;
     bool box=false;
@@ -153,9 +158,15 @@ bool compute_bounding_box(Particle *p, int np, Float3 &rect_boxsize, Float rmax,
 #ifndef PERIODIC
     	fprintf(stderr,"#\n# WARNING: cubic input detected but you have not compiled with PERIODIC flag!\n#\n");
     	printf("#\n# WARNING: cubic input detected but you have not compiled with PERIODIC flag!\n#\n");
+        if(biggest+2*rmax>rect_boxsize.x){
+            printf("#\n# WARNING: Box periodicity is too small; particles will overlap on periodic wrapping!");
+            fprintf(stderr,"#\n# WARNING: Box periodicity is too small; particles will overlap on periodic wrapping!");
+        }
+        biggest = rect_boxsize.x; // just use the input boxsize
 #endif
         // Set boxsize to be the biggest dimension which allows for periodic overlap
         rect_boxsize= {biggest,biggest,biggest};
+        cellsize = biggest/nside;
         printf("# Setting periodic box-size to %6.2f\n", biggest);
     } else {
         // Probably a non-periodic input (e.g. a real dataset)
@@ -167,8 +178,8 @@ bool compute_bounding_box(Particle *p, int np, Float3 &rect_boxsize, Float rmax,
         // set max_boxsize to just enclose the biggest dimension plus r_max 
         // NB: We natively wrap the grid (to allow for any position of the center of the grid)
         // Must add rmax to biggest to ensure there is no periodic overlap in this case.
-        Float max_boxsize = 1.05*(biggest+rmax);
-        Float cellsize = max_boxsize/nside; // compute the width of each cell
+        Float max_boxsize = 1.05*(biggest+2*rmax);
+        cellsize = max_boxsize/nside; // compute the width of each cell
         // Now compute the size of the box in every dimension
         rect_boxsize = ceil3(prange/cellsize)*cellsize; // to ensure we fit an integer number of cells in each direction
         printf("# Setting non-periodic box-size to {%6.2f,%6.2f,%6.2f}\n", rect_boxsize.x,rect_boxsize.y,rect_boxsize.z);
