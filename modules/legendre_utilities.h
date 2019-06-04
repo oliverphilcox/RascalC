@@ -14,7 +14,7 @@ inline void legendre_polynomials_preload(Float mu, int max_l, Float *poly_out){
         poly_out[1] = mu;
         if(max_l>1){
             Float mu2 = mu*mu;
-            poly_out[2] = 0.5*(3*mu2-1.);
+            poly_out[2] = 0.5*(3.*mu2-1.);
             if(max_l>2){
                 Float mu3 = mu2*mu;
                 poly_out[3] = 0.5*(5.*mu3-3.*mu);
@@ -216,11 +216,11 @@ public:
     Float correction_function_3pcf(int radial_bin1, int radial_bin2, int ell){
         // Create function to output polynomial RRR correction model given two radial bin numbers and a Legendre polynomial index
         // This gives the ell-th multipole of 1/Phi for convenience
-        //int base_bin = (radial_bin1*nbin+radial_bin2)*n_param;
-        if(ell==0) return 1;
-        else return 0;
+        int base_bin = (radial_bin1*nbin+radial_bin2)*n_param;
+        //if(ell==0) return 1;
+        //else return 0;
         
-        //return phi_coeffs[base_bin+ell];
+        return phi_coeffs[base_bin+ell];
         
         /*
             

@@ -82,7 +82,7 @@ class CorrelationFunction{
 
         void readData(const char *filename,double **x,double **y, double **z,int *np,int *mp){
 
-            char line[10000];
+            char line[100000];
             char * pch;
             int n=0,m=0;
             double x0;
@@ -94,7 +94,7 @@ class CorrelationFunction{
             }
 
             //Count lines and columns
-            while (fgets(line,10000,fp)!=NULL) {
+            while (fgets(line,100000,fp)!=NULL) {
                 if (line[0]=='#') continue;
                 if (line[0]=='\n') continue;
                 if(n==0){
@@ -143,7 +143,7 @@ class CorrelationFunction{
             }
 
             //Read content of lines and columns
-            while (fgets(line,10000,fp)!=NULL) {
+            while (fgets(line,100000,fp)!=NULL) {
                 if (line[0]=='#') continue;
                 if (line[0]=='\n') continue;
                 if(lnnr==0)	readLine(line, x, &nx);
