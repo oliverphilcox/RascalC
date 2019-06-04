@@ -32,7 +32,7 @@ public:
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/3PCF_QPM_Updated/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/3PCF_QPM_v3/";
     
     // The number of mu bins in the correlation function
     int mbin_cf = 12;

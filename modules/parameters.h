@@ -13,11 +13,11 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/3PCF_QPM_v3/ran_0";///qpm_randoms_10x.xyzwj";//randoms_10x.xyzwj"; 
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_10x.xyzwj";//3PCF_QPM_v3/ran_0";///qpm_randoms_10x.xyzwj";//randoms_10x.xyzwj"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/3PCF_QPM_v3/all_linear_binning.csv";///SE_binning_n15.csv";//PowerSpectra/k_binning2.csv";//k_binning2.csv";
+    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/3PCF_QPM_v3/binning_file_15.csv";//all_linear_binning.csv";///SE_binning_n15.csv";//PowerSpectra/k_binning2.csv";//k_binning2.csv";
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
@@ -28,7 +28,7 @@ public:
     const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/radial_binning_corr.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm = 642051;
+    Float nofznorm = 650523;
     
     // Output directory 
     char *out_file = NULL;
@@ -84,14 +84,14 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 150; // number of j cells per i cell
-    int N3 = 150; // number of k cells per j cell
-    int N4 = 3; // number of l cells per k cell
+    int N2 = 10; // number of j cells per i cell
+    int N3 = 10; // number of k cells per j cell
+    int N4 = 10; // number of l cells per k cell
 
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     
-    int N5 = 2; // number of m cells per l cell
-    int N6 = 2; // number of n cells per m cell
+    int N5 = 10; // number of m cells per l cell
+    int N6 = 10; // number of n cells per m cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
