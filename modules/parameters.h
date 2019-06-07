@@ -28,7 +28,7 @@ public:
     const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/radial_binning_corr.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm = 650523;
+    Float nofznorm = 651506;
     
     // Output directory 
     char *out_file = NULL;
@@ -84,14 +84,14 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 10; // number of j cells per i cell
-    int N3 = 10; // number of k cells per j cell
-    int N4 = 10; // number of l cells per k cell
+    int N2 = 8; // number of j cells per i cell
+    int N3 = 8; // number of k cells per j cell
+    int N4 = 8; // number of l cells per k cell
 
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     
-    int N5 = 10; // number of m cells per l cell
-    int N6 = 10; // number of n cells per m cell
+    int N5 = 8; // number of m cells per l cell
+    int N6 = 8; // number of n cells per m cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
