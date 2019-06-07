@@ -629,7 +629,7 @@ public:
             if(index==0) c6v = 9.*wijklm[i]*pn.w/prob * tmp_xi1 * tmp_xi2 * tmp_xi3;
             else c6v = 6.*wijklm[i]*pn.w/prob * tmp_xi1 * tmp_xi2 * tmp_xi3;
             
-            for(int bin_index=0;bin_index<1;bin_index++){
+            for(int bin_index=0;bin_index<3;bin_index++){
                 // Load correction factor
                 correction_factor1 = all_correction_factor_ijk[i*3+bin_index];
                 if(correction_factor1==-1) continue;
