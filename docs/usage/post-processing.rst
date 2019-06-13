@@ -4,11 +4,15 @@ Post-Processing & Reconstruction
 These scripts post-process the single- or multi-field integrals computed by the C++ code. This computes the shot-noise rescaling parameter(s), :math:`\alpha_i`, from data derived covariance matrices (from individual jackknife correlation functions computed in the :ref:`jackknife-correlations` script). A variety of analysis products are output as an ``.npz`` file, as described below.
 
 
+.. todo:: Add in Legendre + 3PCF into this + default mode
+
 .. _post-processing-single:
 
 
-Single-Field Reconstruction
-------------------------------
+Jackknife Single-Field Reconstruction 
+--------------------------------------
+
+**NB**: This can only be run if the C++ code was run in JACKKNIFE mode for the 2PCF.
 
 This reconstructs output covariance matrices for a single field. Before running this script, covariance matrix estimates must be produced using the :doc:`main-code` code. The shot-noise rescaling parameters are computed by comparing the theoretical jackknife covariance matrix :math:`\hat{C}^{J}_{ab}(\alpha)` with that computed from the data itself, using individual unrestricted jackknife estimates :math:`\hat{\xi}^J_{aA}`. We define the data jackknife covariance matrix as :math:`C^{\mathrm{data}}_{ab} = \sum_A w_{aA}w_{bA}\left(\hat\xi^J_{aA} - \bar{\xi}_a\right)\left(\hat\xi^J_{bA}-\bar\xi_b\right) / \left(1-\sum_B w_{aB} w_{bB}\right)`, where :math:`\bar\xi_a` is the mean correlation function in bin :math:`a`. We compute :math:`\alpha` via minimizing the likelihood function :math:`-\log\mathcal{L}_1(\alpha) = \mathrm{trace}(\Psi^J(\alpha)C^\mathrm{data}) - \log\mathrm{det}\Psi^J(\alpha)+\mathrm{const}.` using the (bias-corrected) precision matrix :math:`\Psi^J(\alpha)`.
 
@@ -49,8 +53,10 @@ The output file has the following entries:
 .. _post-processing-multi:
 
 
-Multi-Field Reconstruction
------------------------------
+Jackknife Multi-Field Reconstruction
+--------------------------------------
+
+**NB**: This can only be run if the C++ code was run in JACKKNIFE mode for the 2PCF.
 
 Analogous to the above, this code performs reconstruction of the covariance matrices, :math:`C_{ab}^{XY,ZW}` for two field cases, using the relevant jackknife correlation functions :math:`\xi^{J,XY}_{aA}` and covariance matrix components. Here, we estimate the shot-noise parameters :math:`\alpha_1` and :math:`\alpha_2` purely from the (11,11) and (22,22) autocovariance matrices, as these give the strongest constraints. In this case, the code will exit if the :math:`C_4^{11,11}` and/or :math:`C_4^{22,22}` are not sufficiently converged, (checking these matrices since :math:`C^{11,11}` and :math:`C^{22,22}` must be inverted to compute :math:`\alpha_1` and :math:`\alpha_2`).
 

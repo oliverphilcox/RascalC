@@ -53,8 +53,6 @@ The first line removes any pre-existing C++ file before it is recompiled in line
 
 **NB**: For a summary of input command line parameters, simply run ``./cov`` with no arguments.
 
-.. todo:: GOT TO HERE!!
-
 Options
 ~~~~~~~
 
@@ -160,5 +158,5 @@ The full output files take the following form (for N radial bins, M angular bins
  - ``RR{P}_n{N}_m{M}_{FIELDS}.txt``: Estimate of :math:`RR_{ab}` pair count for particles in random-subset P (:math:`P\in[1,2]`).  This is used to compute the disconnected jackknife matrix term.
  - ``EE{P}_n{N}_m{M}_{FIELDS}.txt``: Estimate of :math:`EE_{ab}` :math:`\xi`-weighted pair count for particles in random-subset P. This is also used for the disconnected jackknife matrix term.
 
-Each file is an ASCII format file containing the relevant matrices with the collapsed bin indices :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` (2PCF) or :math:`mathrm{bin}_\mathrm{collapsed} = \left(\mathrm{bin}_\mathrm{radial,1}\times n_r + \mathrm{bin}_\mathrm{radial,2}\right)\times n_\mu + \mathrm{bin}_\mathrm{angular}` for a total of :math:`n_\mu = \ell_\mathrm{max}+1` angular bins and :math:`n_r` radial bins. 
+Each file is an ASCII format file containing the relevant matrices with the collapsed bin indices :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` (2PCF) or :math:`\mathrm{bin}_\mathrm{collapsed} = \left(\mathrm{bin}_\mathrm{radial,1}\times n_r + \mathrm{bin}_\mathrm{radial,2}\right)\times n_\mu + \mathrm{bin}_\mathrm{angular}` (3PCF) for a total of :math:`n_\mu` angular (or Legendre) bins and :math:`n_r` radial bins. 
 

@@ -23,6 +23,7 @@ The source code is publicly available on `Github <https://github.com/oliverphilc
    usage/tutorial
    usage/pre-processing
    usage/jackknife-weights
+   usage/geometry-correction
    usage/correlation-functions
    usage/main-code
    usage/post-processing
