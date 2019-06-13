@@ -391,11 +391,11 @@ public:
         // Create output files
         
         char c2name[1000];
-        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_leg_n%d_l%d_%d%d_%s.txt", out_file,nbin, max_l,I1,I2,suffix);
+        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_l%d_%d%d_%s.txt", out_file,nbin, max_l,I1,I2,suffix);
         char c3name[1000];
-        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_leg_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l,I2,I1,I3,suffix);
+        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l,I2,I1,I3,suffix);
         char c4name[1000];
-        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_leg_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1,I2,I3,I4,suffix);
+        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1,I2,I3,I4,suffix);
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
