@@ -222,33 +222,6 @@ public:
         
         return phi_coeffs[base_bin+ell];
         
-        /*
-            
-        return phi_coeffs[base_bin]
-        
-        
-        Float mu2 = mu*mu;
-        Float mu3 = mu2*mu;
-        Float mu4 = mu3*mu;
-        Float mu5 = mu4*mu;
-        Float mu6 = mu5*mu;
-        
-        // Save mu values for later
-        if(max_l>0) all_mu[0] = mu; // mu
-        if(max_l>1) all_mu[1] = mu2; // mu^2
-        if(max_l>2) all_mu[2] = mu3; // mu^3
-        if(max_l>3) all_mu[3] = mu4; // mu^4
-        if(max_l>4) all_mu[4] = mu5; // mu^5
-        if(max_l>5) all_mu[5] = mu6; // mu^6
-        if(max_l>6) all_mu[6] = mu4*mu3; // mu^7
-        if(max_l>7) all_mu[7] = mu4*mu4; // mu^8
-        if(max_l>8) all_mu[8] = mu6*mu3; // mu^9
-        if(max_l>9) all_mu[9] = mu6*mu4; // mu^10
-        
-        printf("Add new Phi model\n");
-        
-        return phi_coeffs[base_bin]+phi_coeffs[base_bin+1]*mu+phi_coeffs[base_bin+2]*mu2+phi_coeffs[base_bin+3]*mu3+phi_coeffs[base_bin+4]*mu4+phi_coeffs[base_bin+5]*mu5+phi_coeffs[base_bin+6]*mu6;
-        */
     }
 #else
     Float correction_function(int radial_bin, Float mu){
