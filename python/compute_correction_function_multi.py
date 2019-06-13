@@ -10,15 +10,20 @@ from scipy.optimize import curve_fit
 
 # PARAMETERS
 if len(sys.argv)!=8:
-    print("Usage: python compute_correction_function_multi.py {GALAXY_FILE} {GALAXY_FILE_2} {BIN_FILE} {RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22} {OUTPUT_DIR}")
+    print("Usage: python compute_correction_function_multi.py {GALAXY_FILE} {GALAXY_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]")
     sys.exit()
 gal_file = str(sys.argv[1])
 gal_file2 = str(sys.argv[2])
 binfile = str(sys.argv[3])
-RR_file = str(sys.argv[4])
-RR_file12 = str(sys.argv[5])
-RR_file2 = str(sys.argv[6])
-outdir=str(sys.argv[7])
+outdir = str(sys.argv[4])
+periodic = int(sys.argv[5])
+
+if periodic:
+    print("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
+else:
+    RR_file = str(sys.argv[6])
+    RR_file12 = str(sys.argv[7])
+    RR_file2 = str(sys.argv[8])
 
 ## Load galaxies
 print("\nLoading galaxy set 1")
@@ -45,10 +50,6 @@ w_bar2 = np.mean(gal2_w)
 N_gal = len(all_gal)
 N_gal2 = len(all_gal2)
 
-nw2_11 = np.mean(gal_n**2*gal_w**2)
-nw2_22 = np.mean(gal2_n**2*gal2_w**2)
-nw2_12 = np.mean(gal_n*gal_w)*np.mean(gal2_n*gal2_w)
-
 ## Find survey volume via ConvexHull in Scipy
 hull = ss.ConvexHull(np.vstack([gal_x,gal_y,gal_z]).T)
 print('\nSurvey volume 1 is approximately: %.2f (Gpc/h)^3'%(hull.volume/1e9))
@@ -69,6 +70,38 @@ n=len(r_bins)
 # Find binning centers
 r_cen = np.mean(r_bins,axis=1)
 vol_r = 4.*np.pi/3.*(r_cen[:,1]**3-r_cen[:,0]**3)
+    
+if periodic:
+    ## Save periodic pair counts simply
+    
+    phi_11 = np.zeros([n,7])
+    phi_12 = np.zeros([n,7])
+    phi_22 = np.zeros([n,7])
+    
+    phi_11[:,0] = 1./(V*n_bar1**2*w_bar1**2)
+    phi_11[:,3] = 1./(V*n_bar1**2*w_bar1**2)
+    phi_12[:,0] = 1./(V*n_bar1*n_bar2*w_bar1*w_bar2)
+    phi_12[:,3] = 1./(V*n_bar1*n_bar2*w_bar1*w_bar2)
+    phi_22[:,0] = 1./(V2*n_bar2**2*w_bar2**2)
+    phi_22[:,3] = 1./(V2*n_bar2**2*w_bar2**2)
+    
+    roots = ['11','12','22']
+    phis = [phi_11,phi_12,phi_22]
+    
+    for index in roots:
+        outfile = outdir+'BinCorrectionFactor_n%d_m%d_%s.txt'%(n,m,index)
+        with open(outfile,"w+") as out:
+            for i in range(n):
+                for j in range(7):
+                    out.write("%.8e"%(phis[i,j]))
+                    if j<6:
+                        out.write("\t")
+                    else:
+                        out.write("\n")    
+        print("Saved (normalized) output for field %s to %s"%(index,outfile))
+        sys.exit();
+  
+## Continue for aperiodic case
     
 # Load RR counts
 RR_flat = np.loadtxt(RR_file)*np.sum(gal_w)**2. # change normalization here

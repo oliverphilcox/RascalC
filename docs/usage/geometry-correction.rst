@@ -58,28 +58,33 @@ Estimating RRR triple counts
 Computing Survey Correction Functions
 --------------------------------------
 
-This script computes the survey correction function :math:`\Phi(r_a,\mu)` in each bin :math:`a` and fits it to a smooth model. The output parameters can be fed into the main C++ script. For convenience, we divide the output :math:`\Phi` by :math:`V\overline{(nw)^2}`, for survey volume :math:`V`.
+This script computes the survey correction function :math:`\Phi(r_a,\mu)` in each bin :math:`a` and fits it to a smooth model. The output parameters can be fed into the main C++ script. For convenience, we divide the output :math:`\Phi` by :math:`V\overline{(nw)^2}`, for survey volume :math:`V`. For the periodic case, the survey correction function is simply unity everywhere, so it is simple to compute. If aperiodic, we require the survey RR pair counts as an input, either from the :ref:`RR_counts` scripts or elsewhere.
 
 Usage
 ~~~~~~
 
 For a single field analysis::
 
-    python python/compute_correction_function.py {GALAXY_FILE} {BIN_FILE} {RR_counts} {OUTPUT_DIR}
+    python python/compute_correction_function.py {GALAXY_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS}]
     
 For an analysis using two distinct fields::
 
-    python python/compute_correction_function_multi.py {GALAXY_FILE} {GALAXY_FILE_2} {BIN_FILE} {RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22} {OUTPUT_DIR}
+    python python/compute_correction_function_multi.py {GALAXY_FILE} {GALAXY_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]
 
 **Input Parameters**:
 
 See the :ref:`RR_counts` parameters above. Additionally;
 
-- {RR_COUNTS}, {RR_COUNTS_11}, {RR_COUNTS_12} {RR_COUNTS_22}: RR counts computed by the :ref:`RR_counts` script. These should be normalized by the sum of the squared random weights (by using the NORMED flag above).
+- {RR_COUNTS}, {RR_COUNTS_11}, {RR_COUNTS_12} {RR_COUNTS_22} *(Only required if dataset is periodic)*: RR counts computed by the :ref:`RR_counts` script, or externally. These should be normalized by the sum of the squared random weights (by using the NORMED flag above).
 
 **Notes**:
 
-- Output
+- **NB:** For aperiodic data, this assumes that the weights are FKP weights, such that they can be used to find the random number density at each galaxy position. This is not assumed for periodic data (where number density is constant everywhere).
+- Output files are saved as ``BinCorrectionFactor_n{N}_m{M}_{INDEX}.txt`` for N radial and M angular bins, with INDEX specfiying which fields are used. If run for two distinct fields, three correction factors are output, for each non-trivial combination of bins.
+- File format is a list of N rows (for N radial bins) with 7 columns specfiying the fitting paramters (as specified in Philcox & Eisenstein 2019). This is automatically read by the main C++ code.
+- For a periodic data-set, we output a set of parameters which will lead to the survey correction function being reconstructed as unity everywhere.
+
+
 .. todo:: test this script and note that we add nw2 V normalizations
 
 .. todo:: add 3PCF to here
