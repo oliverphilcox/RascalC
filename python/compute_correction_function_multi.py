@@ -10,7 +10,7 @@ from scipy.optimize import curve_fit
 
 # PARAMETERS
 if len(sys.argv)!=8:
-    print("Usage: python compute_correction_function.py {GALAXY_FILE} {GALAXY_FILE_2} {BIN_FILE} {RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22} {OUTPUT_DIR}")
+    print("Usage: python compute_correction_function_multi.py {GALAXY_FILE} {GALAXY_FILE_2} {BIN_FILE} {RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22} {OUTPUT_DIR}")
     sys.exit()
 gal_file = str(sys.argv[1])
 gal_file2 = str(sys.argv[2])
@@ -32,16 +32,22 @@ gal_x = all_gal[:,0]
 gal_y = all_gal[:,1]
 gal_z = all_gal[:,2]
 gal_w = all_gal[:,3]
+gal_n = (1./gal_w-1.)/20000.
 gal2_x = all_gal2[:,0]
 gal2_y = all_gal2[:,1]
 gal2_z = all_gal2[:,2]
 gal2_w = all_gal2[:,3]
+gal2_n = (1./gal2_w-1.)/20000.
 
 w_bar1 = np.mean(gal_w)
 w_bar2 = np.mean(gal2_w)
 
 N_gal = len(all_gal)
 N_gal2 = len(all_gal2)
+
+nw2_11 = np.mean(gal_n**2*gal_w**2)
+nw2_22 = np.mean(gal2_n**2*gal2_w**2)
+nw2_12 = np.mean(gal_n*gal_w)*np.mean(gal2_n*gal2_w)
 
 ## Find survey volume via ConvexHull in Scipy
 hull = ss.ConvexHull(np.vstack([gal_x,gal_y,gal_z]).T)
@@ -62,7 +68,7 @@ n=len(r_bins)
 
 # Find binning centers
 r_cen = np.mean(r_bins,axis=1)
-delta_r = r_cen[-1]-r_cen[-2]
+vol_r = 4.*np.pi/3.*(r_cen[:,1]**3-r_cen[:,0]**3)
     
 # Load RR counts
 RR_flat = np.loadtxt(RR_file)*np.sum(gal_w)**2. # change normalization here
@@ -82,19 +88,24 @@ mu_cen = np.arange(1/(2*m),1.+1/(2*m),1/m)
 delta_mu = mu_cen[-1]-mu_cen[-2]
 assert(m==len(mu_cen))    
     
-def compute_phi(w_bar1,w_bar2,n_bar1,n_bar2,V,this_RR,index):
+def compute_phi(gal_w1,gal_w2,gal_n1,gal_n2,V,this_RR,index):
     print("\nComputing survey correction factor %s"%index)
     ## Define normalization constant
-    norm = 4.*np.pi*V*(n_bar1*w_bar1)*(n_bar2*w_bar2)
+    if np.mean(gal_n1)==np.mean(gal_n2): # i.e. same fields
+        this_norm = np.mean(gal_n1**2*gal_w1**2)
+    else:
+        this_norm = np.mean(gal_n1*gal_w1)*np.mean(gal_n2*gal_w2)
+        
+    norm = V*this_norm
     
     ## Define RR model
-    def RR_model(r_cen,mu):
-        return norm*r_cen**2.*delta_r*delta_mu
+    def RR_model(r_bin,mu):
+        return norm*vol_r[r_bin]*delta_mu
 
     # Compute correction functions
     Phi_values = []
     for r_bin in range(n):
-        Phi_values.append(RR_model(r_cen[r_bin],mu_cen)/this_RR[r_bin,:])
+        Phi_values.append(RR_model(r_bin,mu_cen)/this_RR[r_bin,:])
 
     ## check for order of magnitude consistency
     if np.mean(Phi_values)>50:
@@ -145,6 +156,6 @@ def compute_phi(w_bar1,w_bar2,n_bar1,n_bar2,V,this_RR,index):
     print("Saved (normalized) output to %s"%outfile)
 
 # Now run this
-compute_phi(w_bar1,w_bar1,n_bar1,n_bar1,V,RR_true,"11");
-compute_phi(w_bar1,w_bar2,n_bar1,n_bar2,V,RR_true,"12"); # just use volume 1 here
-compute_phi(w_bar2,w_bar2,n_bar2,n_bar2,V2,RR_true,"22");
+compute_phi(gal_w,gal_w,gal_n,gal_n,V,RR_true,"11");
+compute_phi(gal_w,gal2_w,gal_n,gal2_n,V,RR_true,"12"); # just use volume 1 here
+compute_phi(gal2_w,gal2_w,gal2_n,gal2_n,V2,RR_true,"22");

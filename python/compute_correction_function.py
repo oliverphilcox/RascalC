@@ -24,9 +24,12 @@ gal_x = all_gal[:,0]
 gal_y = all_gal[:,1]
 gal_z = all_gal[:,2]
 gal_w = all_gal[:,3]
+gal_n = (1./gal_w-1.)/20000.
 
 N_gal = len(all_gal)
 w_bar = np.mean(gal_w)
+
+nw2_bar = np.mean(gal_n**2*gal_w**2)
 
 ## Find survey volume via ConvexHull in Scipy
 hull = ss.ConvexHull(np.vstack([gal_x,gal_y,gal_z]).T)
@@ -35,7 +38,6 @@ V=hull.volume # in (Mpc/h)^3
 
 ## Galaxy number density
 n_bar = N_gal/V
-
 
 # Load in binning files 
 r_bins = np.loadtxt(binfile)
@@ -48,22 +50,25 @@ RR_true = RR_flat.reshape((n,m))
 
 # Find binning centers
 r_cen = np.mean(r_bins,axis=1)
-delta_r = r_cen[-1]-r_cen[-2]
+
+# Find volume of each bin
+vol_r = 4.*np.pi/3.*(r_bins[:,1]**3-r_bins[:,0]**3)
+
 mu_cen = np.arange(1/(2*m),1.+1/(2*m),1/m)
 delta_mu = mu_cen[-1]-mu_cen[-2]
 assert(m==len(mu_cen))
 
 ## Define RR model
-def RR_model(r_cen,mu):
-    return 4.*np.pi*V*(n_bar*w_bar)**2.*r_cen**2.*delta_r*delta_mu
+def RR_model(r_bin,mu):
+    return vol_r[r_bin]*V*nw2_bar*delta_mu
 
 ## Define normalization constant
-norm = 4.*np.pi*V*(n_bar*w_bar)**2.
+norm = V*nw2_bar
 
 # Compute correction functions
 Phi_values = []
 for r_bin in range(n):
-    Phi_values.append(RR_model(r_cen[r_bin],mu_cen)/RR_true[r_bin,:])
+    Phi_values.append(RR_model(r_bin,mu_cen)/RR_true[r_bin,:])
 
 ## check for order of magnitude consistency
 if np.mean(Phi_values)>10:
