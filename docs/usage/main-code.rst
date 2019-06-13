@@ -149,14 +149,16 @@ The full output files take the following form (for N radial bins, M angular bins
 - ``total_counts_n{N}_l{L}_{FIELDS}_{I}``: Total number of sets of particles attempted for the summed integral.
 
 *DEFAULT or JACKKNIFE mode*:
+ 
  - ``c{X}_n{N}_m{M}_j{J}_{FIELDS}_{I}.txt``: I-th estimate of the X-point covariance matrix estimates, i.e. :math:`C_{X,ab}` The summed covariance matrix has the suffix 'full'. 
  - ``RR_n{N}_m{M}_{FIELDS}_{I}.txt``: I-th estimate of the (non-jackknife) :math:`RR_{ab}^{XY}` pair counts which can be compared with Corrfunc.
  - ``binct_c{X}_n{N}_m{M}_{FIELDS}.txt``: Total used counts per bin for the X-point covariance matrix.
  - ``total_counts_n{N}_m{M}_{FIELDS}.txt``: Total number of pairs, triples and quads attempted for the summed integral.
  
  *JACKKNIFE mode only*:
+ 
  - ``RR{P}_n{N}_m{M}_{FIELDS}.txt``: Estimate of :math:`RR_{ab}` pair count for particles in random-subset P (:math:`P\in[1,2]`).  This is used to compute the disconnected jackknife matrix term.
  - ``EE{P}_n{N}_m{M}_{FIELDS}.txt``: Estimate of :math:`EE_{ab}` :math:`\xi`-weighted pair count for particles in random-subset P. This is also used for the disconnected jackknife matrix term.
 
-Each file is an ASCII format file containing the relevant matrices with the collapsed bin indices :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` for a total of :math:`n_\mu` angular bins. 
+Each file is an ASCII format file containing the relevant matrices with the collapsed bin indices :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` (2PCF) or :math:`mathrm{bin}_\mathrm{collapsed} = \left(\mathrm{bin}_\mathrm{radial,1}\times n_r + \mathrm{bin}_\mathrm{radial,2}\right)\times n_\mu + \mathrm{bin}_\mathrm{angular}` for a total of :math:`n_\mu = \ell_\mathrm{max}+1` angular bins and :math:`n_r` radial bins. 
 
