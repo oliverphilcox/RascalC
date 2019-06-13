@@ -13,85 +13,84 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "";///mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_10x.xyzwj";//3PCF_QPM_v3/ran_0";///qpm_randoms_10x.xyzwj";//randoms_10x.xyzwj"; 
+	const char default_fname[500] = "random_file.xyzwj";
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/BAO_RascalC/rascalC_binning_file.csv";///3PCF_QPM_v3/binning_file_15.csv";
+    const char default_radial_bin_file[500] = "radial_binning_cov.csv";
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "/mnt/store1/oliverphilcox/QPM_xi/QPM_mean.xi"; //3PCF_SE/xi_test.xi";//
+	const char default_corname[500] = "xi_n45_m10_11.dat";
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
-    const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/BAO_RascalC/rascalC_binning_file.csv";
+    const char default_radial_bin_file_cf[500] = "radial_binning_corr.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm = 600258;
+    Float nofznorm = 0;
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/BAO_RascalC/tmp_out";
+    const char default_out_file[500] = "outfile/";
     
     // The number of mu bins in the correlation function
-    int mbin_cf = 24;
+    int mbin_cf = 10;
     
     // The number of threads to run on
 	int nthread = 20;
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
-	int nside = 101;
+	int nside = 251;
     
     // Whether or not we are using a periodic box
-	bool perbox = true;
+	bool perbox = false;
 
     //---------- (r,mu) PARAMETERS ------------------------------------------
     
 	// The number of mu bins
-	int mbin = 120;
+	int mbin = 10;
     
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/RR_counts_n35_m30_11.txt";
+    const char default_RR_bin_file[500] = "binned_pair_counts_n35_m10_j169_11.dat";
     
     //---------- JACKKNIFE PARAMETERS ---------------------------------------
     
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "";
+    const char default_jk_weight_file[500] = "jackknife_weights_n35_m10_j169_11.dat";
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 2; // max Legendre moment (must be even unless computing 3PCF)
+    int max_l = 4; // max Legendre moment (must be even unless computing 3PCF)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
     const char default_phi_file[500] = "/mnt/store1/oliverphilcox/BAO_RascalC/survey_correction_function_periodic.csv";
     
-    //-------- POWER PARAMETERS ---------------------------------------------
+    //-------- POWER PARAMETERS (not yet publicly released) ------------------
     
     Float R0 = 100; // truncation radius in Mpc/h
-    Float power_norm = 4.246213506653083; // normalization of the power spectrum
+    Float power_norm = 4.; // normalization of the power spectrum
     
     char *inv_phi_file = NULL; // Inverse survey correction function multipole coefficient file 
-    const char default_inv_phi_file[500] = "/mnt/store1/oliverphilcox/PowerSpectra/InvPhiCoeff_DR12.txt";
-    
+    const char default_inv_phi_file[500] = "";
     
     //---------- PRECISION PARAMETERS ---------------------------------------
 	
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=20;
+    int max_loops=10;
     
     // Number of random cells to draw at each stage
     int N2 = 10; // number of j cells per i cell
     int N3 = 10; // number of k cells per j cell
     int N4 = 10; // number of l cells per k cell
 
-    //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
+    //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------
     
-    int N5 = 8; // number of m cells per l cell
-    int N6 = 8; // number of n cells per m cell
+    int N5 = 10; // number of m cells per l cell
+    int N6 = 10; // number of n cells per m cell
     
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
     
@@ -129,11 +128,11 @@ public:
     
     //-------- LEGENDRE MULTI-FIELD PARAMETERS -------------------------------
     
+    const char default_phi_file12[500] = "";
+    char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
+    
     char *phi_file2 = NULL; // (Normalized) survey correction function survey_22
     const char default_phi_file2[500] = "";
-    
-    char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
-    const char default_phi_file12[500] = "";
     
     // ------- POWER MULTI-FIELD PARAMETERS ----------------------------------
     
@@ -160,16 +159,16 @@ public:
 	Float mumax = 1.0;
     
     // Number of loops over which to refine the correlation function
-    int cf_loops = 0;
+    int cf_loops = 10;
     
     // The periodicity of the position-space cube.
-	Float boxsize = 1100.; // this is only used if the input particles are made randomly
+	Float boxsize = 200.; // this is only used if the input particles are made randomly
     
 	// The particles will be read from the unit cube, but then scaled by boxsize.
 	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
 
 	// The radius beyond which the correlation function is set to zero
-	Float xicutoff = 250.;
+	Float xicutoff = 400.;
     
 	// The maximum number of points to read
 	uint64 nmax = 1000000000000;
@@ -183,10 +182,10 @@ public:
 	int qinvert = 0, qbalance = 0;
     
 	// If set, we'll just throw random periodic points instead of reading the file
-	int make_random = 1;
+	int make_random = 0;
 
 	// Will be number of particles in a random distribution, but gets overwritten if reading from a file.
-	int np = 3000000; // NB: This is only used for grid creation so we don't need a separate variable for the second set of randoms
+	int np = -1; // NB: This is only used for grid creation so we don't need a separate variable for the second set of randoms
 
 	// The index from which on to invert the sign of the weights
 	int rstart = 0;

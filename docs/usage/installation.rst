@@ -7,6 +7,8 @@ To install RascalC, simply clone the Github repository and compile the C++ code 
     cd RascalC
     make
 
+**NB**: RascalC can be run in various modes by adding compiler flags in the ``Makefile``. See :doc:`getting-started` and :doc:`main-code` for more information.
+    
 Once RascalC is installed, see the :doc:`getting-started` and :doc:`tutorial` sections.
 
 .. _dependencies:

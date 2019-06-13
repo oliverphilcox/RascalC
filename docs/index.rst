@@ -10,6 +10,9 @@ The main estimators are described in `O'Connell et al. 2016 <https://arxiv.org/a
 
 The source code is publicly available on `Github <https://github.com/oliverphilcox/RascalC>`_ and builds upon the Python package `Rascal <https://github.com/rcoconnell/Rascal>`_. For general usage, a comprehensive :doc:`tutorial` is provided.
 
+.. todo:: 
+    add Legendre python scripts + 3PCF python scripts + incorporate these in (e.g. in file-types)
+
 
 .. toctree::
    :maxdepth: 2

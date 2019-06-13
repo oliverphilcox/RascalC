@@ -2,7 +2,7 @@ Usage Tutorial
 ===============
 
 
-We present a basic example of the use of the RascalC code for a single field. Multiple field cases proceed similarly. Detailed documentation for all functions is given in associated pages, as overviewed in the :doc:`getting-started` pages.
+We present a basic example of the use of the RascalC code for a single field, computing the 2PCF in :math:`(r,\mu)` bins, and calibrating for the non-Gaussianity parameter using jackknifes. Multiple field cases proceed similarly. Detailed documentation for all functions is given in associated pages, as overviewed in the :doc:`getting-started` pages. Note that we here run the main code in the JACKKNIFE mode.
 
 Here, we compute the covariance matrix for a single `QPM <https://arxiv.org/pdf/1309.5532.pdf>`_ mock dataset. We'll work in the directory in which RascalC is installed for simplicity.
 
@@ -135,20 +135,9 @@ There's two ways to run the code here; firstly we could edit parameters in the `
     // Number of galaxies in first dataset
     Float nofznorm=642051;
     
-    // Name of the jackknife weight file
-    char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/weights/jackknife_weights_n36_m12_j169_11.dat";
-    
-    // Name of the RR bin file
-    char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/weights/binned_pair_counts_n36_m12_j169_11.dat";
-    
     // Output directory 
     char *out_file = NULL;
     const char default_out_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/";
-    
-    // The number of mu bins
-    int mbin = 12;
     
     // The number of mu bins in the correlation function
     int mbin_cf = 120;
@@ -160,6 +149,25 @@ There's two ways to run the code here; firstly we could edit parameters in the `
     // This uses the maximum width of the cuboidal box.
     int nside = 251;
 
+    // Whether or not we are using a periodic box
+    bool perbox = false;
+    
+    //--------- (r,mu) PARAMETERS -------------------------------------------
+    
+    // The number of mu bins
+    int mbin = 12;
+    
+    
+    // Name of the RR bin file
+    char *RR_bin_file = NULL; // RR_{aA}^{11} file
+    const char default_RR_bin_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/weights/binned_pair_counts_n36_m12_j169_11.dat";
+    
+    //--------- JACKKNIFE PARAMETERS -----------------------------------------
+    
+    // Name of the jackknife weight file
+    char *jk_weight_file = NULL; // w_{aA}^{11} weights
+    const char default_jk_weight_file[500] = "/mnt/store1/oliverphilcox/Mock1QPM2/weights/jackknife_weights_n36_m12_j169_11.dat";
+    
     ....
     
     //---------- PRECISION PARAMETERS ---------------------------------------
@@ -179,7 +187,7 @@ Here we're using 10 loops (to get 10 independent estimates of the covariance mat
     bash clean
     make
  
-The first line simply cleans the pre-existing ``./cov`` file, if present and the second compiles ``grid_covariance.cpp`` using the Makefile (using the g++ compiler by default). If we were using periodic data we'd need to set the ``-DPERIODIC`` flag in the Makefile before running this step. Similarly, we could remove the ``-DOPENMP`` flag to run single threaded. The code is then run with the default parameters;
+The first line simply cleans the pre-existing ``./cov`` file, if present and the second compiles ``grid_covariance.cpp`` using the Makefile (using the g++ compiler by default). We have edited the Makefile to add the ``-DJACKKNIFE`` flag to ensure we compute jackknife covariances here. If we were using periodic data we'd need to set the ``-DPERIODIC`` flag in the Makefile before running this step. Similarly, we could remove the ``-DOPENMP`` flag to run single threaded. The code is then run with the default parameters;
 
 .. code-block:: bash
 

@@ -25,7 +25,7 @@ This converts a set of input particles (either random particle or galaxy positio
 
 Adding Jackknives
 -----------------
-This function assigns each particle (either random particles or galxy positions) to a jackknife region, j, by assigning a HEALPix pixel number to each datapoint, with a given value of NSIDE. Data is saved as an ASCII file with {x,y,z,w,j} columns. 
+This function assigns each particle (either random particles or galxy positions) to a jackknife region, j, by assigning a HEALPix pixel number to each datapoint, with a given value of NSIDE. Data is saved as an ASCII file with {x,y,z,w,j} columns. *NB*: This is only required for the JACKKNIFE mode, and the code will simply ignore the jackknife numbers (if present) if run in other modes.
 
 **Usage**::
 

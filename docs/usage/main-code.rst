@@ -4,9 +4,11 @@ Covariance Matrix Estimation
 Overview
 ----------
 
-This is the main section of RascalC, where a covariance matrix estimates are computed via Monte Carlo integration from a given set of input particles. Depending on the number of input fields the code will compute either components for a single covariance matrix or all required components for 6 cross-covariance matrices. 
+This is the main section of RascalC, where 2PCF or 3PCF covariance matrix estimates are computed via Monte Carlo integration from a given set of input particles. For the 2PCF, depending on the number of input fields the code will compute either components for a single covariance matrix or all required components for 6 cross-covariance matrices (i.e. for multi-tracer analysis). 
 
-**NB**: Before running this code, the jackknife weights and binned pair counts must be computed 
+**NB**: Before running this code, the jackknife weights and binned pair counts must be computed via the :doc:`jackknife-weights` script.
+
+.. todo:: write which scripts we need for Legendre / default / 3PCF modes.
 
 .. _particle-grid:
 
@@ -23,11 +25,13 @@ Covariance Matrix Precision
 The precision of covariance matrix estimators can be user-controlled in the RascalC code. To understand these parameters we must briefly outline the selection of random quads of particles (denoted :math:`\{i,j,k,l\}`) used in the Monte Carlo integration. The particle selection algorithm has the following form:
 
 1. Loop over all :math:`i`-particles :math:`N_\mathrm{loops}` times. Each loop is independent and can be run on separate cores.
-2. For each :math:`i` particle, we pick :math:`N_2` :math:`j`-particles at random, according to some selection rule. Here we compute the 2-point contribution to the covariance matrix.
+2. For each :math:`i` particle, we pick :math:`N_2` :math:`j`-particles at random, according to some selection rule. Here we compute the 2-point contribution to the covariance matrix, if we are computing a 2PCF covariance.
 3. For each :math:`j` particle, we pick :math:`N_3` :math:`k`-particles at random, according to some selection rule. Here we compute the 3-point contribution to the covariance matrix.
 4. For each :math:`k` particle, we pick :math:`N_4` :math:`l`-particles at random, according to some selection rule. Here we compute the 4-point contribution to the covariance matrix.
+5. *(3PCF mode only)*: For each :math:`l` particle, we pick :math:`N_5` :math:`m`-particles at random, according to some selection rule. Here we compute the 5-point contribution to the 3PCF covariance matrix.
+6. *(3PCF mode only)*: For each :math:`m` particle, we pick :math:`N_6` :math:`n`-particles at random, according to some selection rule. Here we compute the 6-point contribution to the 3PCF covariance matrix.
 
-By setting the parameters :math:`(N_\mathrm{loops},N_2, N_3, N_4)` we can control the precision of each matrix component. Standard values of :math:`N_2\sim N_3\sim N_4 \sim 10` normally work well. Each loop of the code produces an independent estimate of the full covariance matrix, which can be used to create accurate inverse matrices and effective number of mock calculations. The covariance converges relatively fast, so setting :math:`N_\mathrm{loops}` 
+By setting the parameters :math:`(N_\mathrm{loops},N_2, N_3, N_4,[N_5,N_6])` we can control the precision of each matrix component. Standard values of :math:`N_2\sim N_3\sim N_4 [\sim N_5 \sim N_6] \sim 10` normally work well. Each loop of the code produces an independent estimate of the full covariance matrix, which can be used to create accurate inverse matrices and effective number of mock calculations. The covariance converges relatively fast, so setting :math:`N_\mathrm{loops}` 
 to a few times the number of cores should work well. Values of :math:`N_\mathrm{loops}\gtrsim 100` should be avoided to stop file sizes and reconstruction times becoming large.
 
 Usage
@@ -39,11 +43,17 @@ The code is used as follows, with the command line options specified below::
     make 
     ./cov [OPTIONS]
 
-The first line removes any pre-existing C++ file before it is recompiled in line 2 to produce the ``./cov`` file. The Makefile may need to be altered depending on the particular computational configuration used. The default Makefile is for a standard Unix installation, with the ``Makefile_mac`` file giving a sample Makefile for a Mac installation.
+The first line removes any pre-existing C++ file before it is recompiled in line 2 to produce the ``./cov`` file. The Makefile may need to be altered depending on the particular computational configuration used. The default Makefile is for a standard Unix installation, with the ``Makefile_mac`` file giving a sample Makefile for a Mac installation. This uses the following optional flags in the Makefile;
 
-To run single threaded, simply remove the ``-DOPENMP`` flag (and any references to the OpenMP installation e.g. ``-lgomp`` and ``-fopenmp``) in the Makefile. For periodic random particle files (such as those produced by simulations), the code should be compiled with the ``-DPERIODIC`` flag in the Makefile. This is turned off by default.
+- ``-DOPENMP``: (Recommended) Run code in parallel with OpenMP, using the OpenMP installation specfied by the ``-lgomp`` and ``-fopenmp`` flags.
+- ``-DPERIODIC``: Use periodic boundary conditions (appropriate for a cubic simulation box, but not mock surveys). 
+- ``-DJACKKNIFE``: Compute both full-survey and jackknife 2PCF covariance matrix terms in :math:`(r,\mu)` binning, allowing for shot-noise-rescaling calibration from the survey itself.
+- ``-DLEGENDRE``: Compute the full-survey covariance matrix terms for (even) Legendre multipoles of the 2PCF. 
+- ``-DTHREE_PCF``: Compute the full-survey covariance matrix terms for (even and odd) Legendre multipoles of the isotropic 3PCF.
 
 **NB**: For a summary of input command line parameters, simply run ``./cov`` with no arguments.
+
+.. todo:: GOT TO HERE!!
 
 Options
 ~~~~~~~
@@ -58,35 +68,57 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-cor`` (*corname*): Input correlation function estimate for the first set of particles in ASCII format, as specified in :ref:`file-inputs`. This can be user defined or created by :ref:`full-correlations`.
 - ``-binfile_cf`` (*radial_bin_file_cf*): Radial binning ASCII file for the correlation function (see :ref:`file-inputs`) specifying upper and lower bounds of each radial bin.
 - ``-norm`` (*nofznorm*): Number of galaxies in the first set of tracer particles. This is used to rescale the random particle covariances.
-- ``-jackknife`` (*jk_weight_file*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_11.dat`` file containing the jackknife weights for each bin (:math:`w_{aA}^{11}`), as created by the :file:`jackknife_weights` scripts.
-- ``-RRbin`` (*RR_bin_file*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_11.dat`` ASCII file containing the summed jackknife pair counts in each bin (:math:`RR_{aA}^{11}`), created by the :file:`jackknife_weights` scripts.
 - ``-output`` (*out_file*): Output directory in which to store covariance matrix estimates. This directory will be created if not already present. **Beware**: the code can produce a large volume of output (:math:`\sim 1` GB for a standard run with one field and :math:`\sim1000` bins). 
-- ``-mbin`` (*mbin*): Number of :math:`\mu` bins used. This must match that used to create the jackknife weights. 
 - ``-mbin_cf`` (*mbin_cf*): Number of :math:`\mu` bins used for the correlation function. 
 - ``-nside`` (*nside*): Number of cubic cells to use along the longest dimension of the grid encompassing the random particles, i.e. :math:`N_\mathrm{side}`. See :ref:`particle-grid` note for usage.
 - ``-nthread`` (*nthread*): Number of parallel processing threads used if code is compiled with OpenMPI.
 - ``-perbox`` (*perbox*): Whether or not we are using a periodic box.
 
-**Additional Multi Field Parameters**:
+**DEFAULT and JACKKNIFE mode Binning Parameters**:
+- ``-mbin`` (*mbin*): Number of :math:`\mu` bins used. This must match that used to create the jackknife weights. 
+- ``-RRbin`` (*RR_bin_file*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_11.dat`` ASCII file containing the summed pair counts in each bin (:math:`RR_{aA}^{11}`), created by the :file:`jackknife_weights` scripts.
+
+**JACKKNIFE mode Parameters**:
+
+- ``-jackknife`` (*jk_weight_file*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_11.dat`` file containing the jackknife weights for each bin (:math:`w_{aA}^{11}`), as created by the :file:`jackknife_weights` scripts.
+
+**LEGENDRE and 3PCF mode Parameters**:
+
+- ``max_l`` (*max_l*): Maximum Legendre moment to compute. This must be even in the LEGENDRE mode.
+- ``phi_file`` (*phi_file*): Location of the file containing the survey correction function parameters, as created by the XXX script.
+
+.. todo:: add location of phi-file creation script and for multi-fields below
+
+
+**Precision Parameters**
+
+- ``-maxloops`` (*max_loops*): This is the number of matrix subsamples to compute. See :ref:`covariance-precision` note for usage guidelines. (Default: 10)
+- ``-N2``, ``-N3``, ``-N4`` (*N2*, *N3*, *N4*): The parameters controlling how many random particles to select at each stage. See :ref:`covariance-precision` note above. (Default: 10)
+- ``-N5``, ``-N5`` (*N5*, *N6*): As above, but for the 3PCF mode only. (Default: 10)
+
+**General Multi Field Parameters**:
 
 - ``-in2`` (*fname2*): Input ASCII random particle file for the second set of tracer particles.
 - (*nofznorm2*): Total number of galaxies in the second set of tracer particles.
 - ``-cor12`` (*corname12*): Input cross correlation function file between the two sets of random particles, as created by :ref:`full-correlations`.
 - ``-cor2`` (*corname2*): Input autocorrelation function for the second set of particles, either user-defined or created by :ref:`full-correlations`.
 - ``-norm2`` (*nofznorm2*): Number of galaxies in the second set of tracer particles. This is used to rescale the random particle covariances.
+
+**DEFAULT and JACKKNIFE mode Multi Field Parameters**:
+
 - ``-jackknife12`` (*jk_weight_file12*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_12.dat`` file containing the jackknife weights for each bin for the combination of random particle sets 1 and 2 (:math:`w_{aA}^{12}`), as created by the :file:`jackknife_weights` scripts.
 - ``-jackknife2`` (*jk_weight_file2*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_22.dat`` file containing the jackknife weights for each bin for the second set of random particles (:math:`w_{aA}^{22}`), as created by the :file:`jackknife_weights` scripts.
 - ``-RRbin12`` (*RR_bin_file12*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_12.dat`` ASCII file containing the summed jackknife pair counts in each bin for the combination of random particle sets 1 and 2 (:math:`RR_{aA}^{12}`), created by the :file:`jackknife_weights` scripts.
 - ``-RRbin2`` (*RR_bin_file2*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_22.dat`` ASCII file containing the summed jackknife pair counts in each bin for the combination of random particle sets 1 and 2 (:math:`RR_{aA}^{22}`), created by the :file:`jackknife_weights` scripts.
 
-**Precision Parameters**
+**LEGENDRE mode Multi Field Parameters**:
 
-- ``-maxloops`` (*max_loops*): This is the number of matrix subsamples to compute. See :ref:`covariance-precision` note for usage guidelines. (Default: 10)
-- ``-N2``, ``-N3``, ``-N4`` (*N2*, *N3*, *N4*): The parameters controlling how many random particles to select at each stage. See :ref:`covariance-precision` note above. (Default: 10)
+- ``phi_file12`` (*phi_file12*): Location of the file containing the survey correction function parameters for the for the second field, as created by the XXX script.
+- ``phi_file2`` (*phi_file2*): Location of the file containing the survey correction function parameters for the for the combination of fields 1 and 2, as created by the XXX script.
 
 **Optional Parameters**
 
-- ``-mumin`` (*mumin*): Minimum :math:`\mu` binning to use in the analysis. (Default: 0) 
+- ``-mumin`` (*mumin*): Minimum :math:`\mu` binning to use in the analysis. (Default: 0, or -1 in 3PCF mode) 
 - ``-mumax`` (*mumax*): Maximum :math:`\mu` binning to use in the analysis. (Default: 1)
 - ``-cf_loops`` (*cf_loops*): Number of iterations over which to refine the correlation functions.
 - (*perbox*): Boolean controlling whether we are using a periodic box. (Default: False)
@@ -106,14 +138,23 @@ Input parameters for the RascalC code may be specified by passing options on the
 Code Output
 -----------
 
-In the specified output directory, RascalC creates two directories; ``CovMatricesAll/`` and ``CovMatricesJack`` containing total and jackknife covariance matrix estimates respectively. These contain multiple estimates of the each part of the total matrix and should be reconstructed using the :doc:`post-processing` scripts.
+In the specified output directory, RascalC creates the directories ``3PCFCovMatricesAll/`` (3PCF mode), ``CovMatricesAll/`` (DEFAULT, LEGENDRE and JACKKNIFE modes) and ``CovMatricesJack/`` (JACKKNIFE mode) containing the relevant output matrix estimates. These contain multiple estimates of the each part of the total matrix and should be reconstructed using the :doc:`post-processing` scripts.
 
-The full output files take the following form (for N radial bins, M radial bins and J non-zero jackknife regions, with FIELDS specifying the utilized tracer fields):
+The full output files take the following form (for N radial bins, M angular bins, maximum Legendre bin L and J non-zero jackknife regions, with FIELDS specifying the utilized tracer fields):
 
+*3PCF or LEGENDRE mode*:
+
+- ``c{X}_n{N}_l{L}_{FIELDS}_{I}.txt``: I-th estimate of the X-point covariance matrix estimates, i.e. :math:`{}^X\mathbf{C}`. The summed covariance matrix terms have the suffix 'full'.
+- ``binct_c{X}_n{N}_l{L}_{FIELDS}_{I}.txt``: Total used counts per bin for the X-point covariance matrix.
+- ``total_counts_n{N}_l{L}_{FIELDS}_{I}``: Total number of sets of particles attempted for the summed integral.
+
+*DEFAULT or JACKKNIFE mode*:
  - ``c{X}_n{N}_m{M}_j{J}_{FIELDS}_{I}.txt``: I-th estimate of the X-point covariance matrix estimates, i.e. :math:`C_{X,ab}` The summed covariance matrix has the suffix 'full'. 
  - ``RR_n{N}_m{M}_{FIELDS}_{I}.txt``: I-th estimate of the (non-jackknife) :math:`RR_{ab}^{XY}` pair counts which can be compared with Corrfunc.
  - ``binct_c{X}_n{N}_m{M}_{FIELDS}.txt``: Total used counts per bin for the X-point covariance matrix.
  - ``total_counts_n{N}_m{M}_{FIELDS}.txt``: Total number of pairs, triples and quads attempted for the summed integral.
+ 
+ *JACKKNIFE mode only*:
  - ``RR{P}_n{N}_m{M}_{FIELDS}.txt``: Estimate of :math:`RR_{ab}` pair count for particles in random-subset P (:math:`P\in[1,2]`).  This is used to compute the disconnected jackknife matrix term.
  - ``EE{P}_n{N}_m{M}_{FIELDS}.txt``: Estimate of :math:`EE_{ab}` :math:`\xi`-weighted pair count for particles in random-subset P. This is also used for the disconnected jackknife matrix term.
 

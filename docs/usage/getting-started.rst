@@ -11,9 +11,9 @@ Computation Modes
 The RascalC code may be run a variety of modes, which compute the covariances of different statistics. These are enabled via compilation flags, set in the Makefile (see :doc:`main-code` for usage). The various modes are outlined below:
 
 1. **DEFAULT** (No compiler flags): Compute the full-survey covariance of the anisotropic two-point correlation function (2PCF) in :math:`(r,\mu)` bins.
-2. **JACKKNIFE** (```-DJACKKNIFE``` flag): Compute the jackknife covariance matrix of the anisotropic 2PCF in :math:`(r,\mu)` bins. This can be compared to the sample jackknife matrix to compute the shot-noise rescaling parameter :math:`\alpha`.
-3. **LEGENDRE** (```-DLEGENDRE``` flag): Compute the full-survey covariance of (even) Legendre multipoles of the 2PCF. *NB*: We do not provide functionality to compute the jackknife covariance in Legendre multipole bins, since this has a more complex functional form. However, the shot-noise rescaling parameter :math:`\alpha` can be found from :math:`(r,\mu)` jackknife covariance matrix fitting and applied to the output full-survey Legendre-binned matrix.
-4. **3PCF** (```-DTHREE_PCF``` flag): Compute the full-survey covariance of (odd and even) Legendre multipoles of the isotropic three-point correlation function (3PCF).
+2. **JACKKNIFE** (``-DJACKKNIFE`` flag): Compute the full-survey and jackknife covariance matrices of the anisotropic 2PCF in :math:`(r,\mu)` bins. The theoretical jackknife matrix can be compared to the sample jackknife matrix to compute the shot-noise rescaling parameter :math:`\alpha`.
+3. **LEGENDRE** (``-DLEGENDRE`` flag): Compute the full-survey covariance of (even) Legendre multipoles of the 2PCF. *NB*: We do not provide functionality to compute the jackknife covariance in Legendre multipole bins, since this has a more complex functional form. However, the shot-noise rescaling parameter :math:`\alpha` can be found from :math:`(r,\mu)` jackknife covariance matrix fitting and applied to the output full-survey Legendre-binned matrix.
+4. **3PCF** (``-DTHREE_PCF`` flag): Compute the full-survey covariance of (odd and even) Legendre multipoles of the isotropic three-point correlation function (3PCF).
 
 .. _pipeline_outline:
 
@@ -83,5 +83,6 @@ The required input files and formats are described below. Note that several of t
     - They are saved in ``.dat`` files with the name ``binned_pair_counts_n{N}_m{M}_{INDEX}.dat`` where N and M specify the number of radial and angular bins respectively. INDEX specifies which fields are being used (e.g. 12 specifies the cross-weights between fields 1 and 2).
     
 
-    .. todo::
+.. todo::
     Check what scripts create random counts in default mode
+    Also add new inputs for Legendre modes

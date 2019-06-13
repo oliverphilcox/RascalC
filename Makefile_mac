@@ -3,8 +3,11 @@
 CC = gcc
 CFLAGS = -O3 -Wall
 CXXFLAGS = -O3 -Wall -DOPENMP
-# disable OPENMP to run single threaded
+#-DOPENMP  # use this to run multi-threaded with OPENMP
 #-DPERIODIC # use this to enable periodic behavior
+#-DLEGENDRE # use this to compute 2PCF covariances in Legendre bins
+#-DJACKKNIFE # use this to compute (r,mu)-space 2PCF covariances and jackknife covariances
+#-DTHREE_PCF # use this to compute 3PCF autocovariances
 
 # Here we load the OpenMP mac package from LLVM
 # This may need to be modified to match the local OpenMP installation
