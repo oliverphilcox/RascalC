@@ -3,6 +3,23 @@ Getting Started
 
 RascalC computes covariance matrix estimates from a given correlation function and set of random particles. Here, we give a broad overview of the procedure and the relevant :ref:`file-inputs`. A :doc:`tutorial` is provided to demonstrate basic use of the code pipeline.
 
+.. _computation_modes:
+
+Computation Modes
+------------------
+
+The RascalC code may be run a variety of modes, which compute the covariances of different statistics. These are enabled via compilation flags, set in the Makefile (see :doc:`main-code` for usage). The various modes are outlined below:
+
+1. **Default**: (No compiler flags)
+2. **JACKKNIFE**: (```-DPERIOIC``` flag)
+3. **LEGENDRE**: (```-DLEGENDRE``` flag)
+4. **3PCF**: (```-DTHREE_PCF``` flag)
+
+.. _pipeline_outline:
+
+Outline of Pipeline
+--------------------
+
 In order to compute the covariance matrices there are several steps:
 
 1. :doc:`pre-processing` (*Optional*):
