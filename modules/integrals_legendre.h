@@ -139,7 +139,7 @@ public:
                 tmp_xi = cf12->xi(rij_mag, rij_mu); // correlation function for i-j
                 
                 // Save into arrays for later
-                bin[i]=tmp_bin;
+                bin[i] = tmp_bin;
                 wij[i] = tmp_weight;
                 
                 
@@ -354,7 +354,7 @@ public:
         Float v_a,v_b,normalization;
         
         for(int i=0; i<nbin*mbin;i++){
-            legendre_p = (i%mbin)*2; // first legendre index
+            legendre_p = (i%mbin)*2.; // first legendre index
             v_a = 4.*M_PI/3.*(pow(r_high[i/mbin],3)-pow(r_low[i/mbin],3));
             
             for(int j=0;j<nbin*mbin;j++){

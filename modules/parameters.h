@@ -13,11 +13,11 @@ public:
     
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_10x.xyzwj";//3PCF_QPM_v3/ran_0";///qpm_randoms_10x.xyzwj";//randoms_10x.xyzwj"; 
+	const char default_fname[500] = "";///mnt/store1/oliverphilcox/PowerSpectra/qpm_randoms_10x.xyzwj";//3PCF_QPM_v3/ran_0";///qpm_randoms_10x.xyzwj";//randoms_10x.xyzwj"; 
     
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/3PCF_QPM_v3/binning_file_15.csv";//all_linear_binning.csv";///SE_binning_n15.csv";//PowerSpectra/k_binning2.csv";//k_binning2.csv";
+    const char default_radial_bin_file[500] = "/mnt/store1/oliverphilcox/BAO_RascalC/rascalC_binning_file.csv";///3PCF_QPM_v3/binning_file_15.csv";
     
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
@@ -25,27 +25,27 @@ public:
     
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
-    const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/Legendre2PCF/radial_binning_corr.csv";
+    const char default_radial_bin_file_cf[500] = "/mnt/store1/oliverphilcox/BAO_RascalC/rascalC_binning_file.csv";
     
     // Number of galaxies in first dataset
-    Float nofznorm = 651506;
+    Float nofznorm = 600258;
     
     // Output directory 
     char *out_file = NULL;
-    const char default_out_file[500] = "/mnt/store1/oliverphilcox/3PCF_QPM_v3/";
+    const char default_out_file[500] = "/mnt/store1/oliverphilcox/BAO_RascalC/tmp_out";
     
     // The number of mu bins in the correlation function
-    int mbin_cf = 12;
+    int mbin_cf = 24;
     
     // The number of threads to run on
 	int nthread = 20;
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
-	int nside = 201;
+	int nside = 101;
     
     // Whether or not we are using a periodic box
-	bool perbox = false;
+	bool perbox = true;
 
     //---------- (r,mu) PARAMETERS ------------------------------------------
     
@@ -64,10 +64,10 @@ public:
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 6; // max Legendre moment (must be even unless computing 3PCF)
+    int max_l = 2; // max Legendre moment (must be even unless computing 3PCF)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
-    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/3PCF_QPM_v3/BinCorrectionFactor_n15_11.txt";
+    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/BAO_RascalC/survey_correction_function_periodic.csv";
     
     //-------- POWER PARAMETERS ---------------------------------------------
     
@@ -84,9 +84,9 @@ public:
     int max_loops=20;
     
     // Number of random cells to draw at each stage
-    int N2 = 8; // number of j cells per i cell
-    int N3 = 8; // number of k cells per j cell
-    int N4 = 8; // number of l cells per k cell
+    int N2 = 10; // number of j cells per i cell
+    int N3 = 10; // number of k cells per j cell
+    int N4 = 10; // number of l cells per k cell
 
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------------
     
@@ -153,7 +153,7 @@ public:
 #ifdef THREE_PCF
     Float mumin = -1.0;
 #else
-	Float mumin = -1.0;
+	Float mumin = 0.0;
 #endif
 
 	// The maximum mu of the largest bin.
@@ -163,13 +163,13 @@ public:
     int cf_loops = 0;
     
     // The periodicity of the position-space cube.
-	Float boxsize = 1500.; // this is only used if the input particles are made randomly
+	Float boxsize = 1100.; // this is only used if the input particles are made randomly
     
 	// The particles will be read from the unit cube, but then scaled by boxsize.
 	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
 
 	// The radius beyond which the correlation function is set to zero
-	Float xicutoff = 400.;
+	Float xicutoff = 250.;
     
 	// The maximum number of points to read
 	uint64 nmax = 1000000000000;
@@ -183,10 +183,10 @@ public:
 	int qinvert = 0, qbalance = 0;
     
 	// If set, we'll just throw random periodic points instead of reading the file
-	int make_random = 0;
+	int make_random = 1;
 
 	// Will be number of particles in a random distribution, but gets overwritten if reading from a file.
-	int np = -1; // NB: This is only used for grid creation so we don't need a separate variable for the second set of randoms
+	int np = 3000000; // NB: This is only used for grid creation so we don't need a separate variable for the second set of randoms
 
 	// The index from which on to invert the sign of the weights
 	int rstart = 0;
@@ -324,6 +324,7 @@ public:
 #ifdef LEGENDRE
         assert(max_l%2==0); // check maximum ell is even
         assert(max_l<=10); // ell>10 not yet implemented!
+        mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
         if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
         if (phi_file2==NULL) {phi_file2 = (char *) default_phi_file2;}
         if (phi_file12==NULL) {phi_file12 = (char *) default_phi_file12;} 
@@ -541,7 +542,7 @@ private:
 	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Number of galaxies in the survey for the second tracer set.\n");
         
 #ifdef LEGENDRE
-        fprintf(stderr, "   -max_l <max_l>: Maximum legendre multipole (must be even)");
+        fprintf(stderr, "   -max_l <max_l>: Maximum legendre multipole (must be even)\n");
         fprintf(stderr, "   -phi_file <filename>: Survey correction function coefficient file\n");
         fprintf(stderr, "\n");
         fprintf(stderr, "   -phi_file12 <filename>: (Optional) Survey correction function coefficient file for fields 1 x 2\n");
