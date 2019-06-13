@@ -38,6 +38,7 @@
 *.dat
 #*.csv
 *.npz
+.ipynb_checkpoint*
 
 # Doc files
 _build
