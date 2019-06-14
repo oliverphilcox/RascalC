@@ -39,22 +39,23 @@ For multi-field cases, we also create a single compressed Python file for the ou
 
 
 .. _post-processing-general:
-
-.. todo:: add in 3PCF
     
-DEFAULT, LEGENDRE and 3PCF mode Reconstruction
+DEFAULT, LEGENDRE and 3PCF mode reconstruction
 -----------------------------------------------
 
-Here we reconstruct the output covariance matrices and associated products, given an input shot-noise rescaling parameter.
+Here we reconstruct the output covariance matrices and associated products, given an input shot-noise rescaling parameter. In 3PCF mode, we do not include the first six-point term, :math:`{}_A^6\mathbf{C}`, as noted in Philcox & Eisenstein (in prep.) since this is expected to be small for a large survey, yet difficult to accurately measure.
+
+**NB**: In 3PCF mode, we require a long integration time for matrix convergence with even a moderate number of bins. If the matrix is not well converged (and invertible) the script will report a precision matrix and effective number of mocks of zero. In many analyses (e.g. Philcox & Eisenstein (in prep.)) the 3PCF covariance is compressed via some metric which improves the convergence. Thus, whilst the full matrix may not be invertible, the compressed version often will be. -
 
 **Usage**
 
-For single fields::
+For a single field::
 
     python python/post_process_default.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING}]
     python python/post_process_legendre.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING}]
+    python python/post_process_3pcf.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING}]
     
-For two fields::
+For multiple fields::
 
     python python/post_process_default_multi.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]
     python python/post_process_legendre_multi.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]
@@ -62,7 +63,7 @@ For two fields::
 
 .. _post-processing-jackknife:
 
-JACKKNIFE mode Reconstruction
+JACKKNIFE mode reconstruction
 ------------------------------
 
 **NB**: This can only be run if the C++ code was run in JACKKNIFE mode for the 2PCF.

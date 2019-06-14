@@ -55,10 +55,10 @@ print("Computing the full precision matrix estimate:")
 c2s,c3s,c4s=[],[],[]
 for i in range(n_samples):
     print("Loading full subsample %d of %d"%(i+1,n_samples))
-    c2,c3,c4=load_matrices(i)
-    c2s.append(c2)
-    c3s.append(c3)
-    c4s.append(c4)
+    c2t,c3t,c4t=load_matrices(i)
+    c2s.append(c2t)
+    c3s.append(c3t)
+    c4s.append(c4t)
 partial_cov=[]
 for i in range(n_samples):
     partial_cov.append(alpha**2.*c2s[i]+alpha*c3s[i]+c4s[i])
