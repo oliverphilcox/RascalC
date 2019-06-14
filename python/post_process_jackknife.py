@@ -6,7 +6,7 @@ import sys,os
 
 # PARAMETERS
 if len(sys.argv)!=7:
-    print("Usage: python post_process.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}")
+    print("Usage: python post_process_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}")
     sys.exit()
         
 jackknife_file = str(sys.argv[1])
@@ -169,7 +169,7 @@ D_value = slogdetD[0]*np.exp(slogdetD[1]/n_bins)
 N_eff_D = (n_bins+1.)/D_value+1.
 print("Total N_eff Estimate: %.4e"%N_eff_D)        
 
-output_name = outdir+'Rescaled_Covariance_Matrices_n%d_m%d_j%d.npz'%(n,m,n_jack)
+output_name = outdir+'Rescaled_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack)
 np.savez(output_name,jackknife_theory_covariance=jack_cov,full_theory_covariance=full_cov,
          jackknife_data_covariance=data_cov,shot_noise_rescaling=alpha_best,
          jackknife_theory_precision=jack_prec,full_theory_precision=full_prec,
