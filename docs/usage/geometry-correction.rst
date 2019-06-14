@@ -1,8 +1,6 @@
 Computing Random Counts and Survey Correction Functions
 ========================================================
 
-.. todo:: Link this into the indexes + getting started etc. 
-
 Here, we describe the scripts provided to compute RR and RRR random counts, in addition to the *survey correction functions*, defined as the ratio of ideal to true RR (RRR) counts for the 2PCF (3PCF). The RR counts are computed using the `Corrfunc <https://corrfunc.readthedocs.io>`_ code of Sinha & Garrison. We additionally provide functionality to compute multi-field RR and survey-correction functions for the 2PCF. Most of the scripts below are in the ``python/`` directory, and must be run before the main C++ code.
 
 **Note on Periodicity**
