@@ -9,7 +9,7 @@ import scipy.spatial as ss
 from scipy.optimize import curve_fit
 
 # PARAMETERS
-if len(sys.argv)!=8:
+if len(sys.argv)!=6 and len(sys.argv)!=9:
     print("Usage: python compute_correction_function_multi.py {GALAXY_FILE} {GALAXY_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]")
     sys.exit()
 gal_file = str(sys.argv[1])
@@ -19,7 +19,7 @@ outdir = str(sys.argv[4])
 periodic = int(sys.argv[5])
 
 if periodic:
-    print("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
+    print("\nAssuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
 else:
     RR_file = str(sys.argv[6])
     RR_file12 = str(sys.argv[7])
@@ -69,7 +69,7 @@ n=len(r_bins)
 
 # Find binning centers
 r_cen = np.mean(r_bins,axis=1)
-vol_r = 4.*np.pi/3.*(r_cen[:,1]**3-r_cen[:,0]**3)
+vol_r = 4.*np.pi/3.*(r_bins[:,1]**3-r_bins[:,0]**3)
     
 if periodic:
     ## Save periodic pair counts simply
@@ -88,18 +88,18 @@ if periodic:
     roots = ['11','12','22']
     phis = [phi_11,phi_12,phi_22]
     
-    for index in roots:
-        outfile = outdir+'BinCorrectionFactor_n%d_m%d_%s.txt'%(n,m,index)
+    for jndex,index in enumerate(roots):
+        outfile = outdir+'BinCorrectionFactor_n%d_periodic_%s.txt'%(n,index)
         with open(outfile,"w+") as out:
             for i in range(n):
                 for j in range(7):
-                    out.write("%.8e"%(phis[i,j]))
+                    out.write("%.8e"%(phis[jndex][i,j]))
                     if j<6:
                         out.write("\t")
                     else:
                         out.write("\n")    
         print("Saved (normalized) output for field %s to %s"%(index,outfile))
-        sys.exit();
+    sys.exit();
   
 ## Continue for aperiodic case
     

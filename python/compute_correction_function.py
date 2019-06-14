@@ -9,7 +9,7 @@ import scipy.spatial as ss
 from scipy.optimize import curve_fit
 
 # PARAMETERS
-if (len(sys.argv)!=5) or (len(sys.argv)!=6):
+if (len(sys.argv)!=5) and (len(sys.argv)!=6):
     print("Usage: python compute_correction_function.py {GALAXY_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS}] ")
     sys.exit()
 gal_file = str(sys.argv[1])
@@ -122,7 +122,11 @@ else:
 
     print("\nFitted with mean fractional error %.1e"%np.mean(errors))
 
-outfile = outdir+'BinCorrectionFactor_n%d_m%d_11.txt'%(n,m)
+if periodic:
+    outfile = outdir+'BinCorrectionFactor_n%d_periodic_11.txt'%(n)
+else:
+    outfile = outdir+'BinCorrectionFactor_n%d_m%d_11.txt'%(n,m)
+    
 with open(outfile,"w+") as out:
     for i in range(n):
         for j in range(7):
