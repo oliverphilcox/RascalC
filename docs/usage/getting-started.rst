@@ -81,10 +81,10 @@ The required input files and formats are described below. Note that several of t
     - They are saved in ``.dat`` files with the name ``jackknife_weights_n{N}_m{M}_j{J}_{INDEX}.dat``, ``jackknife_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` where N and M specify the number of radial and angular bins respectively and J gives the number of non-empty jackknife regions. INDEX specifies which fields are being used (e.g. 12 specifies the cross-weights between fields 1 and 2).
 - *(Required in DEFAULT mode and usually created internally)* **Random Particle Counts**:
     - These specify random particle counts for the entire survey, which are needed to normalize the :math:`(r,\mu)` binned covariances. 
-    - These should be created using the **ADD SCRIPT**.
+    - These should be created using the RR count script described in :doc:`geometry-correction` (and *not* normalized by the summed squared weights).
     - They are saved in ``.dat`` files with the name ``binned_pair_counts_n{N}_m{M}_{INDEX}.dat`` where N and M specify the number of radial and angular bins respectively. INDEX specifies which fields are being used (e.g. 12 specifies the cross-weights between fields 1 and 2).
-    
-
-.. todo::
-    Check what scripts create random counts in default mode
-    Also add new inputs for Legendre modes
+- *(Required in LEGENDRE and 3PCF modes and usually created internally)* **Survey Correction Function Parameters**:
+    - These give the necessary parameters for the main C++ code to reconstruct the survey-correction function, :math:`\Phi(r_a,\mu)` (2PCF) or :math:`\Phi(r_a,r_b,\chi)` (3PCF). 
+    - For multiple input fields, we will have three output bin correction factors of the same format.
+    - These should be created using the survey-correction functions described in :doc:`geometry-correction`, and require the RR or RRR counts to be computed (also described in :doc:`geometry-correction`).
+    - They are saved as ASCII files with the names ``BinCorrectionFactor_n{N}_m{M}.txt`` or ``BinCorrectionFactor3PCF_n{N}_m{M}.txt`` and specify polynomial fitting parameters (2PCF) or the first seven multipoles of :math:`\Phi^{-1}` (3PCF), which are found to well describe the fit. These have one row per radial bin (or pair of bins for the 3PCF), and must be constructed using the same radial binning as for the output covariance matrix.

@@ -6,9 +6,10 @@ Overview
 
 This is the main section of RascalC, where 2PCF or 3PCF covariance matrix estimates are computed via Monte Carlo integration from a given set of input particles. For the 2PCF, depending on the number of input fields the code will compute either components for a single covariance matrix or all required components for 6 cross-covariance matrices (i.e. for multi-tracer analysis). 
 
-**NB**: Before running this code, the jackknife weights and binned pair counts must be computed via the :doc:`jackknife-weights` script.
-
-.. todo:: write which scripts we need for Legendre / default / 3PCF modes.
+**Prerequisites**:
+- In JACKKNIFE mode, the jackknife weights and binned pair counts must be computed via the :doc:`jackknife-weights` script before the C++ code is run.
+- In DEFAULT mode, the RR pair counts must be computed via the :doc:`geometry-correction` script before the C++ code is run.
+- In LEGENDRE and 3PCF modes, the survey correction functions :math:`\Phi` must be computed via the :doc:`geometry-correction` script before the C++ code is run.
 
 .. _particle-grid:
 
@@ -83,10 +84,7 @@ Input parameters for the RascalC code may be specified by passing options on the
 **LEGENDRE and 3PCF mode Parameters**:
 
 - ``max_l`` (*max_l*): Maximum Legendre moment to compute. This must be even in the LEGENDRE mode.
-- ``phi_file`` (*phi_file*): Location of the file containing the survey correction function parameters, as created by the XXX script.
-
-.. todo:: add location of phi-file creation script and for multi-fields below
-
+- ``phi_file`` (*phi_file*): Location of the file containing the survey correction function parameters, as created by the :doc:`geometry-correction` script.
 
 **Precision Parameters**
 
@@ -111,8 +109,8 @@ Input parameters for the RascalC code may be specified by passing options on the
 
 **LEGENDRE mode Multi Field Parameters**:
 
-- ``phi_file12`` (*phi_file12*): Location of the file containing the survey correction function parameters for the for the second field, as created by the XXX script.
-- ``phi_file2`` (*phi_file2*): Location of the file containing the survey correction function parameters for the for the combination of fields 1 and 2, as created by the XXX script.
+- ``phi_file12`` (*phi_file12*): Location of the file containing the survey correction function parameters for the for the second field, as created by the :doc:`geometry-correction` script.
+- ``phi_file2`` (*phi_file2*): Location of the file containing the survey correction function parameters for the for the combination of fields 1 and 2, as created by the :doc:`geometry-correction` script.
 
 **Optional Parameters**
 
