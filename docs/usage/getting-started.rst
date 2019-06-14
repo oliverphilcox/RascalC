@@ -24,10 +24,12 @@ In order to compute the covariance matrices there are several steps:
 
 1. :doc:`pre-processing` (*Optional*):
     We provide a suite of utility functions to convert input files to the correct forms used by RascalC. This includes conversion from (Ra,Dec,redshift) to (x,y,z) coordinate space, creation of binfiles and assignment of HealPix jackknife regions to particles. Alternatively, this step can be skipped if the input files are already of the correct format.
-2. :doc:`jackknife-weights` (*Only required for the JACKKNIFE mode*): 
+2. :doc:`jackknife-weights` (*Only required in JACKKNIFE mode*): 
     Before the main C++ code is run, we compute the weights for each jackknife region, by computing jackknife-specific RR pair counts using `Corrfunc <https://corrfunc.readthedocs.io>`_. This is run via a Python script.
-3. :doc:`correlation-functions` (*Optional*): 
-    This provides functions to compute the jackknife correlation functions :math:`\xi^{J}(r,\mu)` for one or two input fields (using Corrfunc), which are later used to calibrate the shot-noise rescaling parameter(s) in the JACKKNIFE mode. In addition, we provide routines to compute the overall survey correlation functions. These may also be defined by the user instead.
+3a. :doc:`geometry-correction` (*Required in DEFAULT, LEGENDRE and 3PCF modes*):
+    The main C++ code requires either the RR counts (DEFAULT mode) or the survey-geometry correction function :math:`\Phi` (LEGENDRE and 3PCF modes). We provide Python and C++ scripts to compute these, with the correction functions requiring a set of RR or RRR counts to be computed first.
+3b. :doc:`correlation-functions` (*Optional*): 
+    This provides functions to compute the overall survey correlation functions for one or two fields using Corrfunc (which may also be defined by the user). In addition, we provide routines to compute the jackknife correlation functions :math:`\xi^{J}(r,\mu)`, which are later used to calibrate the shot-noise rescaling parameter(s) in the JACKKNIFE mode.
 4. :doc:`main-code`:
     The main C++ code computing the 2PCF or 3PCF individual covariance matrix terms using Monte Carlo integration. For multiple input correlation functions in the 2PCF modes, this computes all relevant terms for the six non-trivial cross-covariance matrices. The covariances are saved as ``.txt`` files which can be reconstructed in Python.
 5. :doc:`post-processing`: 

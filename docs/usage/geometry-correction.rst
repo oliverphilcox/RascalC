@@ -1,5 +1,5 @@
-Computing Random Counts and the Survey Correction Function
-============================================================
+Computing Random Counts and Survey Correction Functions
+========================================================
 
 .. todo:: Link this into the indexes + getting started etc. 
 
@@ -43,6 +43,7 @@ For an analysis using two distinct fields::
 - Output files will be saved as ``RR_counts_n{N}_m{M}_{INDEX}.txt`` for N radial and M angular bins. INDEX specifies which fields are used (e.g. INDEX=12 for the field 1 x field 2 pair count). This is saved as a simple list of :math:`N\times M` values using the indexing :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}*M + \mathrm{bin}_\mathrm{angular}`.
 - This is a very CPU intensive computation since we must compute pair counts between every pair of random particles up to the maximum particle separation. The process can be expedited using multiple CPU cores or a reduced number of random particles (e.g. via the :ref:`particle-subset` script).
 - For two sets of input particles, three sets of weights must be computed for the three possible pairs of two distinct fields, hence the computation time increases by a factor of three.
+
 
 .. _survey_correction_2PCF:
 
@@ -90,9 +91,10 @@ This is a C++ code and is run analogous to the covariance code in :doc:`main-cod
     make 
     ./triple [OPTIONS]
 
-In the associated Makefile we can specify the ``-DPERIODIC`` and ``-DOPENMP`` flags for periodic and OpenMP parallelized compilation respectively. The command line options (and the majority of the code) are the same as for the main code (see descriptions in :doc:`main-code`), and we must specify at least the input random file, :math:`(r,\mu)` binning strategy and accuracy parameters. *NB*: We must set the minimum :math:`\mu` to be -1 here, as there is no :math:`\mu\leftrightarrow-\mu` symmetry unlike for the 2PCF.
+In the associated Makefile we can specify the ``-DPERIODIC`` and ``-DOPENMP`` flags for periodic and OpenMP parallelized compilation respectively. The command line options (and the majority of the code) are the same as for the main code (see descriptions in :doc:`main-code`), and we must specify at least the input random file, :math:`(r,\mu)` binning strategy and accuracy parameters. *NB*: We must set the minimum :math:`\mu` to be -1 here, as there is no :math:`\mu\leftrightarrow-\mu` symmetry unlike for the 2PCF. In addition, the number of angular bins should be relatively large (:math:`\gtrsim 20`) to reduce bias in later conversion of the correction function into Legendre multipole space.
 
 The code outputs a single text file in the specified output directory, named ``RRR_counts_n{N}_m{M}_full.txt`` which contains the RRR counts, normalized by the summed cubed random particle weights. Each estimate is on a separate line, with the indexing :math:`\mathrm{bin}_\mathrm{collapsed} = \left(\mathrm{bin}_{\mathrm{radial},1}\times N + \mathrm{bin}_{\mathrm{radial},2}\right)\times M + \mathrm{bin}_\mathrm{angular}`. These can be read-in by the survey correction function.
+
 
 .. _survey_correction_3PCF:
 
@@ -101,7 +103,7 @@ Computing 3PCF Survey Correction Functions
 
 This script computes the 3-point survey correction function :math:`\Phi(r_a,r_b,\chi)` in each radial bin pair :math:`a,b`, and outputs the multipoles of :math:`\Phi^{-1}` which are reconstructed by the main C++ code in runtime. For convenience, we divide the output :math:`\Phi` by :math:`6V\overline{(nw)^3}`, for survey volume :math:`V`. For the periodic case, the survey correction function is simply unity everywhere, so it is simple to compute. If aperiodic, we require the (normalized) survey RRR pair counts as an input, either from the :ref:`RRR_counts` scripts or elsewhere. 
 
-**NB**: We do not provide functionality for the multi-field 3PCF covariance here.
+**NB**: We do not provide functionality for the multi-field 3PCF covariances here.
 
 Usage
 ~~~~~~
