@@ -7,7 +7,7 @@ import sys,os
 
 # PARAMETERS
 if len(sys.argv)!=9:
-    print("Usage: python post_process_multi.py {XI_JACKKNIFE_FILE_11} {XI_JACKKNIFE_FILE_12} {XI_JACKKNIFE_FILE_22} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}")
+    print("Usage: python post_process_jackknife_multi.py {XI_JACKKNIFE_FILE_11} {XI_JACKKNIFE_FILE_12} {XI_JACKKNIFE_FILE_22} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}")
     sys.exit()
         
 jackknife_file_11 = str(sys.argv[1])
@@ -370,7 +370,7 @@ for j1 in range(2):
                     prec_tot[j1,j2,j3,j4],N_eff[j1,j2,j3,j4],D_est[j1,j2,j3,j4]=compute_precision(c_tot[j1,j2,j3,j4],full_subsamples)
                     prec_j_tot[j1,j2,j3,j4],_,_=compute_precision(cj_tot[j1,j2,j3,j4],jack_subsamples)    
 
-output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_n%d_m%d_j%d.npz'%(n,m,n_jack)
+output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack)
 np.savez(output_name,jackknife_theory_covariance=cj_tot,full_theory_covariance=c_tot,
          jackknife_data_covariance=data_cov,shot_noise_rescaling=alpha_best,
          jackknife_theory_precision=prec_j_tot,full_theory_precision=prec_tot,

@@ -6,12 +6,12 @@ import sys,os
 
 # PARAMETERS
 if len(sys.argv)!=6 and len(sys.argv)!=7:
-    print("Usage: python post_process_legendre.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING}]")
+    print("Usage: python post_process_default.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING}]")
     sys.exit()
         
 file_root = str(sys.argv[1])
 n = int(sys.argv[2])
-max_l = int(sys.argv[3])
+m = int(sys.argv[3])
 n_samples = int(sys.argv[4])
 outdir = str(sys.argv[5])
 if len(sys.argv)==7:
@@ -26,9 +26,9 @@ if not os.path.exists(outdir):
 def load_matrices(index):
     """Load intermediate or full covariance matrices"""
     cov_root = file_root+'CovMatricesAll/'
-    c2 = np.loadtxt(cov_root+'c2_n%d_l%d_11_%s.txt'%(n,max_l,index))
-    c3 = np.loadtxt(cov_root+'c3_n%d_l%d_1,11_%s.txt'%(n,max_l,index))
-    c4 = np.loadtxt(cov_root+'c4_n%d_l%d_11,11_%s.txt'%(n,max_l,index))
+    c2 = np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index))
+    c3 = np.loadtxt(cov_root+'c3_n%d_m%d_1,11_%s.txt'%(n,m,index))
+    c4 = np.loadtxt(cov_root+'c4_n%d_m%d_11,11_%s.txt'%(n,m,index))
     
     # Now symmetrize and return matrices
     return c2,0.5*(c3+c3.T),0.5*(c4+c4.T)
@@ -80,7 +80,7 @@ else:
     N_eff_D = (n_bins+1.)/D_value+1.
     print("Total N_eff Estimate: %.4e"%N_eff_D)        
 
-output_name = outdir+'Rescaled_Covariance_Matrices_Legendre_n%d_l%d.npz'%(n,max_l)
+output_name = outdir+'Rescaled_Covariance_Matrices_Default_n%d_m%d.npz'%(n,m)
 np.savez(output_name,full_theory_covariance=full_cov,
          shot_noise_rescaling=alpha,full_theory_precision=full_prec,
          N_eff=N_eff_D,full_theory_D_matrix=full_D_est,

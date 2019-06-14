@@ -1,12 +1,24 @@
 Post-Processing & Reconstruction
 =================================
 
-These scripts post-process the single- or multi-field integrals computed by the C++ code. This computes the shot-noise rescaling parameter(s), :math:`\alpha_i`, from data derived covariance matrices (from individual jackknife correlation functions computed in the :ref:`jackknife-correlations` script). A variety of analysis products are output as an ``.npz`` file, as described below.
+These scripts post-process the single- or multi-field integrals computed by the C++ code. For the DEFAULT, LEGENDRE and 3PCF modes, the output covariance matrix products (as well as precision matrices and effective number of mocks) are computed and saved to a ``.npz`` file, as described below. This is done for some input shot-noise rescaling parameter :math:`\alpha` (or one for each field, for the multi-field case).
+
+In JACKKNIFE mode, the shot-noise rescaling parameter(s), :math:`\alpha_i`, are computed from data derived covariance matrices (from individual jackknife correlation functions computed in the :ref:`jackknife-correlations` script). As above, a variety of analysis products are output as an ``.npz`` file.
+
+**General Input Parameters**
+
+- {COVARIANCE_DIR}: Directory containing the covariance matrix ``.txt`` files output by the :doc:`main-code` C++ code. This directory should contain the subdirectories ``CovMatricesAll`` and ``CovMatricesJack`` containing the relevant analysis products.
+- {N_R_BINS}: Number of radial  bins used in the analysis.
+- {N_MU_BINS}: Number of angular (:math:`\mu`) bins used in the analysis.
+- {MAX_L}: Maximum Legendre multipole used in the analysis.
+- {N_SUBSAMPLES}: Number of individual matrix subsamples computed in the C++ code. This is the :math:`N_\mathrm{loops}` parameter used in the :ref:`main-code` code. Individual matrix estimates are used to remove quadratic bias from the precision matrix estimates and compute the effective number of degrees of freedom :math:`N_\mathrm{eff}`.
+- {OUTPUT_DIR}: Directory in which to save the analysis products. This will be created if not present.
+
 
 
 .. todo:: Add in Legendre + 3PCF into this + default mode
 
-.. _post-processing-single:
+.. _post-processing-single-jackknife:
 
 
 Jackknife Single-Field Reconstruction 
@@ -26,10 +38,6 @@ This reconstructs output covariance matrices for a single field. Before running 
 
 - {XI_JACKKNIFE_FILE}: Input ASCII file containing the correlation function estimates :math:`\xi^J_A(r,\mu)` for each jackknife region, as created by the :ref:`jackknife-correlations` script. This has the format specified in :ref:`file-inputs`.
 - {WEIGHTS_DIR}: Directory containing the jackknife weights and pair counts, as created by the :doc:`jackknife-weights` script. This must contain ``jackknife_weights_n{N}_m{M}_j{J}_{INDEX}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` using the relevant covariance matrix binning scheme.
-- {COVARIANCE_DIR}: Directory containing the covariance matrix ``.txt`` files output by the :doc:`main-code` C++ code. This directory should contain the subdirectories ``CovMatricesAll`` and ``CovMatricesJack`` containing the relevant analysis products.
-- {N_MU_BINS}: Number of angular (:math:`\mu`) bins used in the analysis.
-- {N_SUBSAMPLES}: Number of individual matrix subsamples computed in the C++ code. This is the :math:`N_\mathrm{loops}` parameter used in the :ref:`main-code` code. Individual matrix estimates are used to remove quadratic bias from the precision matrix estimates and compute the effective number of degrees of freedom :math:`N_\mathrm{eff}`.
-- {OUTPUT_DIR}: Directory in which to save the analysis products. This will be created if not present.
 
 **NB**: This script may take several minutes (to hours) to run if :math:`N_\mathrm{loops}` is larger than a few 10s.
 
@@ -50,7 +58,7 @@ The output file has the following entries:
 - :attr:`N_eff` (Float): Effective number of mocks in the output full covariance matrix, :math:`N_\mathrm{eff}`, computed from :math:`\tilde{D}_{ab}`.
 
 
-.. _post-processing-multi:
+.. _post-processing-multi-jackknife:
 
 
 Jackknife Multi-Field Reconstruction
