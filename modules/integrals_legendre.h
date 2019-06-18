@@ -216,7 +216,7 @@ public:
                     out_bin = tmp_full_bin+q_bin; // output bin
 
                     // Now add to integral with correct kernel
-                    c3[out_bin]+=c3v*correction_factors*poly_ij[p_bin]*polynomials_jk[q_bin];
+                    c3[out_bin]+=c3v*correction_factors*poly_ij[i*mbin+p_bin]*polynomials_jk[q_bin];
                         
                     binct3[out_bin]++; // only count actual contributions to bin
                 }
@@ -262,7 +262,7 @@ public:
                     out_bin = tmp_full_bin+q_bin; // output bin
 
                     // Now add to integral with correct kernel
-                    c4[out_bin]+=c4v*correction_factors*poly_ij[p_bin]*polynomials_kl[q_bin];
+                    c4[out_bin]+=c4v*correction_factors*poly_ij[i*mbin+p_bin]*polynomials_kl[q_bin];
                     binct4[out_bin]++; // only count actual contributions to bin
                 }
             }            
