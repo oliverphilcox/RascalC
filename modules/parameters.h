@@ -42,10 +42,10 @@ public:
 
     // The grid size, which should be tuned to match boxsize and rmax. 
 	// This uses the maximum width of the cuboidal box.
-	int nside = 251;
+	int nside = 101;
     
     // Whether or not we are using a periodic box
-	bool perbox = false;
+	bool perbox = true;
 
     //---------- (r,mu) PARAMETERS ------------------------------------------
     
@@ -64,7 +64,7 @@ public:
     
     //-------- LEGENDRE PARAMETERS -------------------------------------------
     
-    int max_l = 4; // max Legendre moment (must be even unless computing 3PCF)
+    int max_l = 2; // max Legendre moment (must be even unless computing 3PCF)
     
     char *phi_file = NULL; // Survey correction function coefficient file 
     const char default_phi_file[500] = "/mnt/store1/oliverphilcox/BAO_RascalC/survey_correction_function_periodic.csv";
@@ -185,7 +185,7 @@ public:
 	int make_random = 0;
 
 	// Will be number of particles in a random distribution, but gets overwritten if reading from a file.
-	int np = -1; // NB: This is only used for grid creation so we don't need a separate variable for the second set of randoms
+	int np = 3000000; // NB: This is only used for grid creation so we don't need a separate variable for the second set of randoms
 
 	// The index from which on to invert the sign of the weights
 	int rstart = 0;

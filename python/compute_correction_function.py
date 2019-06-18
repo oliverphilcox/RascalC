@@ -45,7 +45,11 @@ n_bar = N_gal/V
 if periodic:
     nw2_bar = n_bar**2*w_bar**2
 else:
-    nw2_bar = np.mean(gal_n**2*gal_w**2)
+    nw2_bar = np.mean(gal_n**2*gal_w**2)  #n_bar**2*np.mean(gal_w**2)#
+
+if nw2_bar==0:
+    print("Are we using FKP weights here? Couldn't compute number density from weights. Exiting.")
+    sys.exit()
 
 # Load in binning files 
 r_bins = np.loadtxt(binfile)
@@ -86,10 +90,14 @@ else:
         Phi_values.append(RR_model(r_bin,mu_cen)/RR_true[r_bin,:])
 
     ## check for order of magnitude consistency
-    if np.mean(Phi_values)>10:
+    if np.mean(Phi_values)>100:
+        print(np.mean(Phi_values))
         raise Exception("RR_true seems to be much smaller than RR_model. Is the input RR correctly normalized?")
-    if np.mean(Phi_values)<0.1:
+    if np.mean(Phi_values)<0.01:
+        print(np.mean(Phi_values))
         raise Exception("RR_true seems to be much larger than RR_model. Is the input RR correctly normalized?")
+
+    print("Mean Phi value (unnormalized) = %.2e"%np.mean(Phi_values))
 
     ## Define Phi model (piecewise continuous polynomial)
     mu_crit=0.75
