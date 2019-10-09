@@ -74,6 +74,7 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-perbox`` (*perbox*): Whether or not we are using a periodic box.
 
 **DEFAULT and JACKKNIFE mode Binning Parameters**:
+
 - ``-mbin`` (*mbin*): Number of :math:`\mu` bins used. This must match that used to create the jackknife weights. 
 - ``-RRbin`` (*RR_bin_file*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_11.dat`` ASCII file containing the summed pair counts in each bin (:math:`RR_{aA}^{11}`), created by the :file:`jackknife_weights` scripts.
 
