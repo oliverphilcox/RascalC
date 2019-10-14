@@ -5,6 +5,6 @@ C++ code to simulate correlation function covariance matrices from large surveys
 
 For full usage, see the ReadTheDocs [documentation](https://rascalc.readthedocs.io/en/latest).
 
-Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/pdf/1904.11070.pdf) (for the angularly binned 2PCF) and Philcox & Eisenstein (in prep.) (for the Legendre-binned 2PCF and 3PCF).
+Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1904.11070) (for the angularly binned 2PCF) and [Philcox & Eisenstein 2019](https://arxiv.org/abs/1910.04764) (for the Legendre-binned 2PCF and 3PCF).
 
 ***New for version 2***: Legendre moment covariances and the 3PCF
