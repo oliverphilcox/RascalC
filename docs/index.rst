@@ -6,7 +6,7 @@ Overview
 
 RascalC is a code to quickly estimate covariance matrices from two- or three-point galaxy correlation functions, written in C++ and Python. Given an input set of random particle locations and a two-point correlation function (or input set of galaxy positions), RascalC produces an estimate of the associated covariance for a given binning strategy, with non-Gaussianities approximated by a 'shot-noise-rescaling' parameter. For the 2PCF, the rescaling parameter can be calibrated by dividing the particles into jackknife regions and comparing sample to theoretical jackknife covariance. RascalC can also be used to compute Legendre-binned covariances and cross-covariances between different two-point correlation functions.
 
-The main estimators are described in `O'Connell et al. 2016 <https://arxiv.org/abs/1510.01740>`_, `O'Connell & Eisenstein 2018 <https://arxiv.org/abs/1808.05978>`_ , `Philcox et al. 2019 <https://arxiv.org/abs/1904.11070>`_ and Philcox & Eisenstein (in prep.) with the third and fourth papers discussing the new algorithms and C++ implementation.
+The main estimators are described in `O'Connell et al. 2016 <https://arxiv.org/abs/1510.01740>`_, `O'Connell & Eisenstein 2018 <https://arxiv.org/abs/1808.05978>`_ , `Philcox et al. 2019 <https://arxiv.org/abs/1904.11070>`_ and `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_ with the third and fourth papers discussing the new algorithms and C++ implementation.
 
 The source code is publicly available on `Github <https://github.com/oliverphilcox/RascalC>`_ and builds upon the Python package `Rascal <https://github.com/rcoconnell/Rascal>`_. For general usage, a comprehensive :doc:`tutorial` is provided.
 
