@@ -268,7 +268,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
 print("\nCOMPUTING xi_11 CORRELATION\n")
 xi_11=compute_xi(random1_RR,random1_DR,data1,N_gal1,N_rand1_RR,N_rand1_DR,cross_term=False,RRname=RRname11,verbose=False)
 print("\nCOMPUTING xi_12 CORRELATION\n")
-xi_12=compute_xi(random1_RR,random1_DR,data1_DR,N_gal1,N_rand1_RR,N_rand1_DR,random2_RR,random2_DR,data2,N_gal2,N_rand2_RR, N_rand2_DR,cross_term=True,RRname=RRname12,verbose=False)
+xi_12=compute_xi(random1_RR,random1_DR,data1,N_gal1,N_rand1_RR,N_rand1_DR,random2_RR,random2_DR,data2,N_gal2,N_rand2_RR, N_rand2_DR,cross_term=True,RRname=RRname12,verbose=False)
 print("\nCOMPUTING xi_22 CORRELATION\n")
 xi_22=compute_xi(random2_RR,random2_DR,data2,N_gal2,N_rand2_RR, N_rand2_DR,cross_term=False,RRname=RRname22,verbose=False)
 
@@ -297,7 +297,7 @@ for index in range(3):
             for j in range(nmu_bins):
                 outfile.write("%.8e "%xi_files[index][i,j])
             outfile.write("\n")
-            
+
 print("All correlation functions computed successfully.")
 
 print("NB: Number of galaxies in field 1 is %d"%N_gal1)
