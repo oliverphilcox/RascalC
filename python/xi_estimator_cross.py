@@ -221,10 +221,11 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
             print("Computing RR pair counts")
             if cross_term:
                 tmpRR=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,rX_RR,rY_RR,rZ_RR,weights1=rW_RR,
-                            X2=rX2_RR,Y2=rY2_RR,Z2=rZ2_RR,weights2=rW2_RR, verbose=verbose,periodic=True)
+                            X2=rX2_RR,Y2=rY2_RR,Z2=rZ2_RR,weights2=rW2_RR,weight_type='pair_product',verbose=verbose,periodic=True)
                 RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']/(np.sum(rW_RR)*np.sum(rW2_RR))
             else:
-                tmpRR=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,rX_RR,rY_RR,rZ_RR,weights1=rW_RR,weight_type='pair_product',verbose=verbose,periodic=True)
+                tmpRR=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,rX_RR,rY_RR,rZ_RR,weights1=rW_RR,
+                            weight_type='pair_product',verbose=verbose,periodic=True)
                 RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']/(np.sum(rW_RR)**2.)
             print("Finished after %d seconds"%(time.time()-init))
 
@@ -255,7 +256,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
             DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']/(np.sum(dW)**2.)
         print("Finished after %d seconds"%(time.time()-init))
 
-    # Now use Landay-Szelay estimator:
+    # Now use Landay-Szalay estimator:
     if cross_term:
         xi_function = DD_counts/RR_counts - D1R2_counts/RR_counts - D2R1_counts/RR_counts + 1.
     else:
