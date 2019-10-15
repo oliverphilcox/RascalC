@@ -25,7 +25,7 @@ outdir=str(sys.argv[12])
 
 if len(sys.argv)==16:
     print("Using pre-defined RR counts")
-    RRname11=str(sys.argv[13])  
+    RRname11=str(sys.argv[13])
     RRname12=str(sys.argv[14])
     RRname22=str(sys.argv[15])
 else:
@@ -34,7 +34,7 @@ else:
     RRname22=""
 
 ## First read in weights and positions:
-dtype = np.double 
+dtype = np.double
 
 def reader(filename,only_length=False):
     """Read in input file"""
@@ -42,16 +42,16 @@ def reader(filename,only_length=False):
     total_lines=0
     for n,line in enumerate(open(filename,"r")):
         total_lines+=1
-    
+
     if only_length:
         return total_line
-    
+
     X,Y,Z,W=[np.zeros(total_lines) for _ in range(4)]
-    
+
     for n, line in enumerate(open(filename, 'r')):
         if n%1000000==0:
             print("Reading line %d of %d from file %s" %(n,total_lines,filename))
-        split_line=np.array(line.split(" "), dtype=float) 
+        split_line=np.array(line.split(" "), dtype=float)
         X[n]=split_line[0];
         Y[n]=split_line[1];
         Z[n]=split_line[2];
@@ -69,7 +69,7 @@ random2_DR = reader(Rname2_DR)
 
 # Total particle numbers
 N_rand1_DR = len(random1_DR[0])
-N_rand2_DR = len(random2_DR[0]) 
+N_rand2_DR = len(random2_DR[0])
 N_gal1 = len(data1[0])
 N_gal2 = len(data2[0])
 
@@ -85,7 +85,7 @@ if len(RRname11)==0:
     else:
         random2_RR = random2_DR
     N_rand1_RR = len(random1_RR[0])
-    N_rand2_RR = len(random2_RR[0]) 
+    N_rand2_RR = len(random2_RR[0])
 else:
     # empty placeholders
     random1_RR = []
@@ -119,7 +119,7 @@ def coord_transform(x,y,z):
     zsq = z ** 2.
 
     com_dist = (xsq + ysq + zsq) ** 0.5
-    s = (xsq + ysq) ** 0.5 
+    s = (xsq + ysq) ** 0.5
 
     if np.isscalar(x) and np.isscalar(y) and np.isscalar(z):
         Ra = math.atan2(y, x)*180./np.pi
@@ -132,7 +132,7 @@ def coord_transform(x,y,z):
 
 def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR=None,random2_DR=None,data2=None,N_gal2=None,N_rand2_RR=None,N_rand2_DR=None,cross_term=False,RRname="",verbose=False):
     """ Compute the Xi estimate for a given pair of fields. If cross_term=True, we use both fields. If RRname is non-empty we use this instead of recomputing RR pair counts."""
-        
+
     # Read in fields
     rX_DR,rY_DR,rZ_DR,rW_DR = random1_DR
     if len(random1_RR)>0:
@@ -144,14 +144,14 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
         if len(random2_RR)>0:
             rX2_RR,rY2_RR,rZ2_RR,rW2_RR = random2_RR
         dX2,dY2,dZ2,dW2 = data2
-        
+
     import time
     init = time.time()
-        
+
     if not periodic:
         # Compute RR, DR and DD counts for the non-periodic case (measuring mu from the radial direction)
         print("Using non-periodic input data");
-        
+
         # Convert coordinates to spherical coordinates
         r_com_dist_DR,r_Ra_DR,r_Dec_DR = coord_transform(rX_DR,rY_DR,rZ_DR);
         d_com_dist,d_Ra,d_Dec = coord_transform(dX,dY,dZ);
@@ -160,7 +160,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
             d_com_dist2,d_Ra2,d_Dec2 = coord_transform(dX2,dY2,dZ2);
 
         from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
-        
+
         # Now compute RR counts
         if len(RRname)!=0:
             RR_counts = np.loadtxt(RRname) # read pre-computed RR counts
@@ -173,13 +173,13 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
             if cross_term:
                 r_com_dist2_RR,r_Ra2_RR,r_Dec2_RR = coord_transform(rX2_RR,rY2_RR,rZ2_RR);
                 tmpRR=DDsmu_mocks(0,2,nthreads,mu_max,nmu_bins,binfile,r_Ra_RR,r_Dec_RR,r_com_dist_RR,weights1=rW_RR,
-                                 RA2=r_Ra2_RR,DEC2 = r_Dec2_RR, CZ2 = r_com_dist2_RR, weights2 = rW2_RR, weight_type='pair_product',verbose=verbose,is_comoving_dist=True) 
+                                 RA2=r_Ra2_RR,DEC2 = r_Dec2_RR, CZ2 = r_com_dist2_RR, weights2 = rW2_RR, weight_type='pair_product',verbose=verbose,is_comoving_dist=True)
                 RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']/ (np.sum(rW_RR)*np.sum(rW2_RR))
             else:
                 tmpRR=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,r_Ra_RR,r_Dec_RR,r_com_dist_RR,weights1=rW_RR,weight_type='pair_product',verbose=verbose,is_comoving_dist=True)
                 RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']/ (np.sum(rW_RR)**2.)
         print("Finished after %d seconds"%(time.time()-init))
-        
+
         # Now compute DR counts
         print("Computing DR pair counts")
         if cross_term:
@@ -194,7 +194,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
                                 RA2=r_Ra_DR, DEC2=r_Dec_DR, CZ2 = r_com_dist_DR, weights2 = rW_DR, verbose=verbose,is_comoving_dist=True)
             DR_counts = tmpDR[:]['npairs']*tmpDR[:]['weightavg']/(np.sum(rW_DR)*np.sum(dW))
         print("Finished after %d seconds"%(time.time()-init))
-        
+
         # Now compute DD counts
         print("Compute DD pair counts")
         if cross_term:
@@ -205,12 +205,12 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
             tmpDD=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,weights1=dW,weight_type='pair_product',verbose=verbose,is_comoving_dist=True)
             DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']/(np.sum(dW)**2.)
         print("Finished after %d seconds"%(time.time()-init))
-        
+
     else:
         # Compute RR counts for the periodic case (measuring mu from the Z-axis)
         print("Using periodic input data");
         from Corrfunc.theory.DDsmu import DDsmu
-        
+
         # Now compute RR counts
         if len(RRname)!=0:
             RR_counts = np.loadtxt(RRname) # read pre-computed RR counts
@@ -227,7 +227,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
                 tmpRR=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,rX_RR,rY_RR,rZ_RR,weights1=rW_RR,weight_type='pair_product',verbose=verbose,periodic=True)
                 RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg']/(np.sum(rW_RR)**2.)
             print("Finished after %d seconds"%(time.time()-init))
-            
+
         # Now compute DR counts
         print("Computing DR pair counts")
         if cross_term:
@@ -242,15 +242,19 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
                             X2=rX_DR, Y2=rY_DR, Z2 = rZ_DR, weights2 = rW_DR, verbose=verbose,periodic=True)
             DR_counts = tmpDR[:]['npairs']*tmpDR[:]['weightavg']/(np.sum(dW)*np.sum(rW_DR))
         print("Finished after %d seconds"%(time.time()-init))
-        
+
         # Now compute DD counts
         print("Compute DD pair counts")
         if cross_term:
             tmpDD=DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,
                         X2=dX2,Y2=dY2,Z2=dZ2,weights2=dW2,weight_type='pair_product',verbose=verbose,periodic=True)
-        DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']/(np.sum(dW)**2.)
+            DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']/(np.sum(dW)*np.sum(dW2))
+        else:
+            tmpDD=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,
+                        weight_type='pair_product',verbose=verbose,periodic=True)
+            DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']/(np.sum(dW)**2.)
         print("Finished after %d seconds"%(time.time()-init))
-        
+
     # Now use Landay-Szelay estimator:
     if cross_term:
         xi_function = DD_counts/RR_counts - D1R2_counts/RR_counts - D2R1_counts/RR_counts + 1.
@@ -264,7 +268,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
 print("\nCOMPUTING xi_11 CORRELATION\n")
 xi_11=compute_xi(random1_RR,random1_DR,data1,N_gal1,N_rand1_RR,N_rand1_DR,cross_term=False,RRname=RRname11,verbose=False)
 print("\nCOMPUTING xi_12 CORRELATION\n")
-xi_12=compute_xi(random1_RR,random1_DR,data1_DR,N_gal1,N_rand1_RR,N_rand1_DR,random2_RR,random2_DR,data2,N_gal2,N_rand2_RR, N_rand2_DR,cross_term=True,RRname=RRname12,verbose=False)
+xi_12=compute_xi(random1_RR,random1_DR,data1,N_gal1,N_rand1_RR,N_rand1_DR,random2_RR,random2_DR,data2,N_gal2,N_rand2_RR, N_rand2_DR,cross_term=True,RRname=RRname12,verbose=False)
 print("\nCOMPUTING xi_22 CORRELATION\n")
 xi_22=compute_xi(random2_RR,random2_DR,data2,N_gal2,N_rand2_RR, N_rand2_DR,cross_term=False,RRname=RRname22,verbose=False)
 
@@ -293,7 +297,7 @@ for index in range(3):
             for j in range(nmu_bins):
                 outfile.write("%.8e "%xi_files[index][i,j])
             outfile.write("\n")
-            
+
 print("All correlation functions computed successfully.")
 
 print("NB: Number of galaxies in field 1 is %d"%N_gal1)
