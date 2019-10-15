@@ -26,42 +26,42 @@ public:
 		// Sampling of short distance
 		ransampl_ws* cube;
 
-    public: 
+    public:
         void copy(RandomDraws *rd){
             // Copy a random draws object and allocate the sampler.
             // NB: We don't redefine corr here as it is unused post-initialization
-            
+
             nside=rd->nside;
             nsidecube=rd->nsidecube;
             boxside=rd->boxside;
-            
+
             // Allocate memory:
             int x_size=pow(nside,3);
             int xcube_size = pow(nsidecube,3);
             x = (double *)malloc(sizeof(double)*x_size);
 			xcube = (double *)malloc(sizeof(double)*xcube_size);
-            
+
             // Read in x, xcube arrays:
             for(int i=0;i<x_size;i++) x[i]=rd->x[i];
             for(int i=0;i<xcube_size;i++) xcube[i]=rd->xcube[i];
-            
+
             // Set up actual samplers
             ws = ransampl_alloc(x_size);
             ransampl_set(ws, x);
-            
+
             // Set up actual sampler
             cube = ransampl_alloc(xcube_size);
-            ransampl_set(cube, xcube);            
+            ransampl_set(cube, xcube);
         }
-        
-        
-        
+
+
+
     public:
 	    RandomDraws(){
-            //empty constructor            
+            //empty constructor
         }
-        
-        RandomDraws(CorrelationFunction *fun,Parameters *par,const double *xin, long np){ 
+
+        RandomDraws(CorrelationFunction *fun,Parameters *par,const double *xin, long np){
 
 		long n=np;
 		corr=fun;
@@ -69,8 +69,8 @@ public:
         // Define grid of nside up to the maximum xi cut-off scale (as a cubic grid)
         Float box_max = fmax(fmax(par->rect_boxsize.x,par->rect_boxsize.y),par->rect_boxsize.z);
         boxside=box_max/par->nside;
-        nside=2*ceil(par->xicutoff/boxside)+1; 
-        
+        nside=2*ceil(par->xicutoff/boxside)+1;
+
 		// If precalculated grid has been saved, load it
 		if (par->loadname!=NULL&&(xin==NULL||np==0)){
 			int len = strlen(par->loadname);
@@ -86,7 +86,7 @@ public:
 			}
 			if(n==0){
                 printf("\n# Computing the probability grid\n");
-				integData2(&x,&n,xi_integrand,nside,boxside); 
+				integData2(&x,&n,xi_integrand,nside,boxside);
                 printf("# Probability grid computation complete\n");
             }
 		}
@@ -94,7 +94,7 @@ public:
 			// If no correlation function is given to copy, do integration
 			if (xin==NULL||np==0){
 				printf("\n# Computing the probability grid");
-                integData2(&x,&n,xi_integrand,nside,boxside); 
+                integData2(&x,&n,xi_integrand,nside,boxside);
                 printf("# Probability grid computation complete\n");
                 }
 			else
@@ -121,7 +121,7 @@ public:
 		for(int i=0;i<n;i++){
 			x[i]/=sum;
 		}
-		
+
 
 //		Initialize second sampler
 
@@ -148,7 +148,7 @@ public:
 		for(int i=0;i<nn;i++){
 			xcube[i]/=sum;
 		}
-        
+
 		}
 
 
@@ -175,7 +175,7 @@ public:
 
 		// Undo 1d back to 3-d indexing
 		integer3 cubifyindex(int nside,int n){
-            
+
 			assert(n>=0&&n<pow(nside,3));
 
 			integer3 cid;
@@ -183,7 +183,7 @@ public:
 			n = n/nside;
 			cid.y = n%nside-((nside-1)/2);
 			cid.x = n/nside-((nside-1)/2);
-		
+
 			return cid;
 		}
 
@@ -229,15 +229,15 @@ public:
 			fclose(fp);
 
 		}
-		
+
 		void integData2(double **x, long *np, integrand xi_fun, int nside, double boxside){
-            // Implements the 1d integration of the xi_integrand over all possible distances between 
+            // Implements the 1d integration of the xi_integrand over all possible distances between
             // points in two boxes in a grid (one of them being the central box)
             // of nside*nside*nside with the boxes having the sidelength boxside
-            
+
             // Number of points in grid
             (*np)=(int)pow(nside,3);
-            
+
             // Array to house probabilities
 			*x = (double *)malloc(sizeof(double)*(*np));
 
@@ -246,13 +246,13 @@ public:
 #ifdef OPENMP
 #pragma omp parallel
 #endif
-        {            
+        {
             int len=(nside-1)/2; // This works because nside has been required to be odd
             Float n, R = boxside/2;
 
             // Define integration limits (using some large upper limit)
             double xmin[1]={0}, xmax[1]={2*boxside*len}, val, err, param[2]={R,0};
-            
+
 #ifdef OPENMP
 #pragma omp for schedule(dynamic,32)
 #endif
@@ -262,15 +262,15 @@ public:
                         //NB: This for-loop recomputes a lot of values but its speed makes this irrelevant
                         n = sqrt(pow(i,2)+pow(k,2)+pow(l,2))*boxside; // distance from origin
                         param[1]=n;
-                        
+
                         hcubature(1, xi_fun, &param[0], 1, xmin, xmax, 0, 0, 1e-5, ERROR_INDIVIDUAL, &val, &err);
-                        
+
 #ifdef POWER
                         val*=(1.+5.*pow(boxside/(boxside+n),2));//pow(n+0.1,-2.5);
 #endif
-                        
+
                         //printf("\nn: %.1f, prob: %.2e, err: %.2e",n,val,err);
-                        
+
                         // Insert the calculated value to its grid position
                         for(int is=-1;is<=1;is+=2){
                             for(int ks=-1;ks<=1;ks+=2){
@@ -288,15 +288,15 @@ public:
             }
         }
         }
-        
+
         void compute_r2_prob(double **x, long *np, int nside, double boxside){
-            // Compute the expected probability of the 1/r^2 kernel over all possible 
+            // Compute the expected probability of the 1/r^2 kernel over all possible
             // distances between points in two boxes in a grid (one of them being the central box)
             // of nside*nside*nside with the boxes having the sidelength boxside
-            
+
             // Number of points in grid
             (*np)=(int)pow(nside,3);
-            
+
             // Array to house probabilities
 			*x = (double *)malloc(sizeof(double)*(*np));
 
@@ -312,7 +312,7 @@ public:
                         // Compute the relevant probability
                         n = sqrt(pow(i,2)+pow(k,2)+pow(l,2))*boxside; // distance from origin
                         prob = r2prob(n,boxside);
-                        
+
                         // Insert the calculated value to its grid position
                         for(int is=-1;is<=1;is+=2){
                             for(int ks=-1;ks<=1;ks+=2){
@@ -328,7 +328,7 @@ public:
                 }
             }
         }
-        
+
         void copyData(double **x, long *n,const double *xin){
 			// Copy probability grid
 			(*x) = (double *)malloc(sizeof(double)*(*n));
@@ -401,44 +401,45 @@ public:
 		}
 
 	public:
-        
+
     static int xi_integrand(unsigned ndim, const double *x, void *fdata, unsigned fdim, double *fval){
         // Integrand for the 1d probability grid integral weighted by xi(r) (in correct cubature format).
         double* param = (double *) fdata;
-        
+
         // Read in parameters
         const double R = param[0];
         const double n = param[1];
-        
+
         // Compute integrand
         Float factor_1 = pow((x[0]+n)/(2*R),2);
         Float factor_2 = pow((x[0]-n)/(2*R),2);
-        
+
         Float tmp_xi = corr->xi(x[0]);
-        if(tmp_xi<1e-10){ // need positive 2PCF here
+
+				if(tmp_xi<1e-10){ // need positive 2PCF here
             tmp_xi=10./pow(x[0],2.);
         }
         if(n<=0){
             // Replace expression by Taylor series in this limit
             fval[0]= (pow(x[0],2)*tmp_xi)/ (pow(R,3))*exp(-pow(x[0]/(2*R),2));
-        } else{ 
+        } else{
             // Use full expression for non-zero n
             fval[0] = x[0]/ (R*n) * (exp(-factor_2)-exp(-factor_1))*tmp_xi;
         }
-        
+
         return 0;
     }
-    
+
     Float r2prob(const Float n, const Float a){
         // Return the (unnormalized) 1d probability for picking a cell at distance n from the center of the grid
         // This uses a 1/r^2 kernel giving a semi-analytic form involving a Dawson function.
         // a is the cubic-boxsize. (Here used as a spherical gaussian window)
-        
+
         // Return limit as n tends to zero to avoid infinities
 #ifdef POWER
         return 1./pow(a+n,3);//output*(1.+10.*pow(a/(a+n),3));//+pow(n,-20.)*pow(100000000+n,-5.);
 #else
-        Float output; 
+        Float output;
         if(n<=0){
             output=pow(a,-2);
         } else {
@@ -447,7 +448,7 @@ public:
         return output;
 #endif
     }
-    
+
 };
-    
+
 #endif

@@ -8,146 +8,146 @@ class Parameters{
 
 public:
 	// Important variables to set!  Here are the defaults:
-	
+
     //---------- ESSENTIAL PARAMETERS -----------------
-    
+
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	-const char default_fname[500] = "random_file.xyzwj";
-    
+	const char default_fname[500] = "random_file.xyzwj";
+
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
     const char default_radial_bin_file[500] = "radial_binning_cov.csv";
-    
+
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
 	const char default_corname[500] = "xi_n45_m10_11.dat";
-    
+
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
     const char default_radial_bin_file_cf[500] = "radial_binning_corr.csv";
-    
+
     // Number of galaxies in first dataset
-    Float nofznorm = 0;
-    
-    // Output directory 
+    Float nofznorm = 1572030;
+
+    // Output directory
     char *out_file = NULL;
     const char default_out_file[500] = "outfile/";
-    
+
     // The number of mu bins in the correlation function
-    int mbin_cf = 10;
-    
+    int mbin_cf = 100;
+
     // The number of threads to run on
 	int nthread = 20;
 
-    // The grid size, which should be tuned to match boxsize and rmax. 
+    // The grid size, which should be tuned to match boxsize and rmax.
 	// This uses the maximum width of the cuboidal box.
-	int nside = 101;
-    
+	int nside = 69;
+
     // Whether or not we are using a periodic box
 	bool perbox = true;
 
     //---------- (r,mu) PARAMETERS ------------------------------------------
-    
+
 	// The number of mu bins
 	int mbin = 10;
-    
+
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
     const char default_RR_bin_file[500] = "binned_pair_counts_n35_m10_j169_11.dat";
-    
+
     //---------- JACKKNIFE PARAMETERS ---------------------------------------
-    
+
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
     const char default_jk_weight_file[500] = "jackknife_weights_n35_m10_j169_11.dat";
-    
+
     //-------- LEGENDRE PARAMETERS -------------------------------------------
-    
+
     int max_l = 2; // max Legendre moment (must be even unless computing 3PCF)
-    
-    char *phi_file = NULL; // Survey correction function coefficient file 
-    const char default_phi_file[500] = "/mnt/store1/oliverphilcox/BAO_RascalC/survey_correction_function_periodic.csv";
-    
+
+    char *phi_file = NULL; // Survey correction function coefficient file
+    const char default_phi_file[500] = "BinCorrectionFactor_n25_periodic_11.txt";
+
     //-------- POWER PARAMETERS (not yet publicly released) ------------------
-    
+
     Float R0 = 100; // truncation radius in Mpc/h
     Float power_norm = 4.; // normalization of the power spectrum
-    
-    char *inv_phi_file = NULL; // Inverse survey correction function multipole coefficient file 
+
+    char *inv_phi_file = NULL; // Inverse survey correction function multipole coefficient file
     const char default_inv_phi_file[500] = "";
-    
+
     //---------- PRECISION PARAMETERS ---------------------------------------
-	
+
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops=10;
-    
+
     // Number of random cells to draw at each stage
     int N2 = 10; // number of j cells per i cell
     int N3 = 10; // number of k cells per j cell
     int N4 = 10; // number of l cells per k cell
 
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------
-    
+
     int N5 = 10; // number of m cells per l cell
     int N6 = 10; // number of n cells per m cell
-    
+
     //------------------ GENERAL MULTI-FIELD PARAMETERS ----------------------
-    
+
     // Second set of random particles
     char *fname2 = NULL;
-    const char default_fname2[500] = ""; 
-    
+    const char default_fname2[500] = "";
+
     // Correlation functions
     char *corname2 = NULL; // xi_22 file
     const char default_corname2[500] = "";
-    
+
     char *corname12 = NULL; // xi_12 file
     const char default_corname12[500] = "";
-    
+
     // Number of galaxies in second dataset
-    Float nofznorm2=0; // 
-    
+    Float nofznorm2=339843; //
+
     //---------- (r,mu) MULTI-FIELD PARAMETERS ------------------------------
-    
-    // Summed pair count files 
+
+    // Summed pair count files
     char *RR_bin_file12 = NULL; // RR_{aA}^{12} file
     const char default_RR_bin_file12[500] = "";
-    
+
     char *RR_bin_file2 = NULL; // RR_{aA}^{22} file
     const char default_RR_bin_file2[500] = "";
-    
+
     //-------- JACKKNIFE MULTI-FIELD PARAMETERS ------------------------------
-    
+
     // Jackknife weight files
     char *jk_weight_file12 = NULL; // w_{aA}^{12} weights
     const char default_jk_weight_file12[500] = "";
-    
+
     char *jk_weight_file2 = NULL; // w_{aA}^{22} weights
     const char default_jk_weight_file2[500] = "";
-    
+
     //-------- LEGENDRE MULTI-FIELD PARAMETERS -------------------------------
-    
+
     const char default_phi_file12[500] = "";
     char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
-    
+
     char *phi_file2 = NULL; // (Normalized) survey correction function survey_22
     const char default_phi_file2[500] = "";
-    
+
     // ------- POWER MULTI-FIELD PARAMETERS ----------------------------------
-    
+
     char *inv_phi_file2 = NULL; // (Normalized) inverse survey correction function multipoles survey_22
     const char default_inv_phi_file2[500] = "";
-    
+
     char *inv_phi_file12 = NULL; // (Normalized) inverse survey correction function multipoles survey_12
     const char default_inv_phi_file12[500] = "";
-    
+
     Float power_norm12 = 0; // power spectrum normalization for field 1 x 2
-    
+
     Float power_norm2 = 0; // power spectrum normalization for field 2 x 2
-    
+
     //-------- OTHER PARAMETERS ----------------------------------------------
-    
+
 	// The minimum mu of the smallest bin.
 #ifdef THREE_PCF
     Float mumin = -1.0;
@@ -157,30 +157,30 @@ public:
 
 	// The maximum mu of the largest bin.
 	Float mumax = 1.0;
-    
+
     // Number of loops over which to refine the correlation function
     int cf_loops = 10;
-    
+
     // The periodicity of the position-space cube.
 	Float boxsize = 200.; // this is only used if the input particles are made randomly
-    
+
 	// The particles will be read from the unit cube, but then scaled by boxsize.
 	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
 
 	// The radius beyond which the correlation function is set to zero
 	Float xicutoff = 400.;
-    
+
 	// The maximum number of points to read
 	uint64 nmax = 1000000000000;
-	
+
     // The location and name of a integrated grid of probabilities to be saved
 	char *savename = NULL;
     // The location and name of a integrated grid of probabilities to be loaded
-	char *loadname = NULL; //	
-	
+	char *loadname = NULL; //
+
 	// Whether to balance the weights or multiply them by -1
 	int qinvert = 0, qbalance = 0;
-    
+
 	// If set, we'll just throw random periodic points instead of reading the file
 	int make_random = 0;
 
@@ -192,24 +192,24 @@ public:
 
 	//---------------- INTERNAL PARAMETERS -----------------------------------
     // (no more user defined parameters below this line)
-    
-	// The periodicity of the position-space cuboid in 3D. 
+
+	// The periodicity of the position-space cuboid in 3D.
     Float3 rect_boxsize = {boxsize,boxsize,boxsize}; // this is overwritten on particle read-in
-    
+
     Float cellsize;
-    
+
     // Radial binning parameters (will be set from file)
     int nbin=0,nbin_cf=0;
     Float rmin, rmax, rmin_cf,rmax_cf;
     Float * radial_bins_low, * radial_bins_low_cf;
     Float * radial_bins_high, * radial_bins_high_cf;
-    
+
     // Variable to decide if we are using multiple tracers:
     bool multi_tracers;
-    
+
     // Constructor
 	Parameters(int argc, char *argv[]){
-        
+
 	    if (argc==1) usage();
 	    int i=1;
 	    while (i<argc) {
@@ -293,8 +293,8 @@ public:
 		}
 		i++;
 	    }
-	    
-	        
+
+
 #ifdef PERIODIC
         if (perbox!=true){
             printf("\nC++ code compiled with periodic flag, but periodic box parameter is not set! Exiting.\n\n");
@@ -309,30 +309,30 @@ public:
 	    // compute smallest and largest boxsizes
 	    Float box_min = fmin(fmin(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
 	    Float box_max = fmax(fmax(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
-	    
+
 	    assert(i==argc);  // For example, we might have omitted the last argument, causing disaster.
 
 	    assert(nside%2!=0); // The probability integrator needs an odd grid size
-	
+
 	    assert(nofznorm>0); // need some galaxies!
 #ifndef THREE_PCF
 	    //assert(mumin>=0); // We take the absolte value of mu
 #endif
 	    assert(mumax<=1); // mu > 1 makes no sense
-        
+
 #ifdef LEGENDRE
         assert(max_l%2==0); // check maximum ell is even
         assert(max_l<=10); // ell>10 not yet implemented!
         mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
         if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
         if (phi_file2==NULL) {phi_file2 = (char *) default_phi_file2;}
-        if (phi_file12==NULL) {phi_file12 = (char *) default_phi_file12;} 
+        if (phi_file12==NULL) {phi_file12 = (char *) default_phi_file12;}
 #elif defined POWER
         assert(max_l%2==0); // check maximum ell is even
         assert(max_l<=10); // ell>10 not yet implemented!
         if (inv_phi_file==NULL) {inv_phi_file = (char *) default_inv_phi_file;} // no phi file specified
         if (inv_phi_file2==NULL) {inv_phi_file2 = (char *) default_inv_phi_file2;}
-        if (inv_phi_file12==NULL) {inv_phi_file12 = (char *) default_inv_phi_file12;} 
+        if (inv_phi_file12==NULL) {inv_phi_file12 = (char *) default_inv_phi_file12;}
         mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
         if(R0<40){
             printf("\nTruncation radius (%.0f Mpc/h) is too small for accurate power computation. Exiting.\n\n",R0);
@@ -350,7 +350,7 @@ public:
 	    if (jk_weight_file==NULL) jk_weight_file = (char *) default_jk_weight_file; // No jackknife name was given
 	    if (jk_weight_file12==NULL) jk_weight_file12 = (char *) default_jk_weight_file12; // No jackknife name was given
 	    if (jk_weight_file2==NULL) jk_weight_file2 = (char *) default_jk_weight_file2; // No jackknife name was given
-		
+
 	    if (RR_bin_file==NULL) RR_bin_file = (char *) default_RR_bin_file; // no binning file was given
 	    if (RR_bin_file12==NULL) RR_bin_file12 = (char *) default_RR_bin_file12; // no binning file was given
 	    if (RR_bin_file2==NULL) RR_bin_file2 = (char *) default_RR_bin_file2; // no binning file was given
@@ -362,14 +362,14 @@ public:
         if (rescale<=0.0) rescale = box_max;   // This would allow a unit cube to fill the periodic volume
 	    if (corname==NULL) { corname = (char *) default_corname; }// No name was given
 	    if (out_file==NULL) out_file = (char *) default_out_file; // no output savefile
-	    if (radial_bin_file==NULL) {radial_bin_file = (char *) default_radial_bin_file;} // No radial binning 
-	    if (radial_bin_file_cf==NULL) {radial_bin_file_cf = (char *) default_radial_bin_file_cf;} // No radial binning 
-	    
+	    if (radial_bin_file==NULL) {radial_bin_file = (char *) default_radial_bin_file;} // No radial binning
+	    if (radial_bin_file_cf==NULL) {radial_bin_file_cf = (char *) default_radial_bin_file_cf;} // No radial binning
+
 	    if (fname==NULL) fname = (char *) default_fname;   // No name was given
 	    if (fname2==NULL) fname2 = (char *) default_fname2;   // No name was given
 	    if (corname2==NULL) { corname2 = (char *) default_corname2; }// No name was given
 	    if (corname12==NULL) { corname12 = (char *) default_corname12; }// No name was given
-	    
+
 	    // Decide if we are using multiple tracers:
 	    if (strlen(fname2)!=0){
 #if (defined LEGENDRE || defined POWER)
@@ -418,7 +418,7 @@ public:
             nofznorm2=nofznorm;
             corname12=corname;
             corname2=corname;
-        }            
+        }
 #else
             if ((strlen(RR_bin_file12)==0)||(strlen(RR_bin_file2)==0)){
                 printf("Two random particle sets input but not enough RR pair count files! Exiting.");
@@ -476,16 +476,16 @@ public:
 #endif
 
 
-	    
+
 	    create_directory();
-        
+
 	    // Read in the radial binning
 	    read_radial_binning(radial_bin_file);
         printf("Read in %d radial bins in range (%.0f, %.0f) successfully.\n",nbin,rmin,rmax);
-        
+
         read_radial_binning_cf(radial_bin_file_cf);
         printf("Read in %d radial bins in range (%.0f, %.0f) successfully.\n",nbin_cf,rmin_cf,rmax_cf);
-        
+
 	    assert(box_min>0.0);
 	    assert(rmax>0.0);
 	    assert(nside>0);
@@ -531,19 +531,19 @@ private:
         fprintf(stderr, "   -mbin <mbin>:  The number of mu bins (spaced linearly).\n");
 #endif
 	    fprintf(stderr, "   -mbin_cf <mbin_cf>:  The number of mu bins in the correlation function (spaced linearly).\n");
-        fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");   
+        fprintf(stderr, "   -output: (Pre-existing) directory to save output covariance matrices into\n");
 	    fprintf(stderr, "   -nside <nside>: The grid size for accelerating the pair count.  Default 250.\n");
 	    fprintf(stderr, "          Recommend having several grid cells per rmax.\n");
         fprintf(stderr, "          There are {nside} cells along the longest dimension of the periodic box.\n");
 	    fprintf(stderr, "   -nthread <nthread>: The number of CPU threads ot use for parallelization.\n");
         fprintf(stderr, "   -perbox <perbox>: Boolean, whether the box is periodic is not\n");
         fprintf(stderr, "\n");
-        
+
 	    fprintf(stderr, "   -in2 <file>: (Optional) The input random particle file for particle-set 2 (space-separated x,y,z,w).\n");
 	    fprintf(stderr, "   -cor12 <file>: (Optional) File location of input xi_{12} cross-correlation function file.\n");
 	    fprintf(stderr, "   -cor2 <file>: (Optional) File location of input xi_2 correlation function file.\n");
 	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Number of galaxies in the survey for the second tracer set.\n");
-        
+
 #ifdef LEGENDRE
         fprintf(stderr, "   -max_l <max_l>: Maximum legendre multipole (must be even)\n");
         fprintf(stderr, "   -phi_file <filename>: Survey correction function coefficient file\n");
@@ -603,7 +603,7 @@ private:
 
 	    exit(1);
 	}
-	
+
 	void create_directory(){
         // Initialize output directory:
 	    // First create whole directory if it doesn't exist:
@@ -622,7 +622,7 @@ private:
             }
         // Check if this was successful:
         struct stat info;
-        
+
         if( stat( cname, &info ) != 0 ){
             printf( "\nCreation of directory %s failed\n", cname);
             exit(1);
@@ -639,11 +639,11 @@ private:
         }
 #endif
     }
-    
+
     void read_radial_binning_cf(char* binfile_name){
         // Read the radial binning file for a correlation function
         char line[100000];
-    
+
         FILE *fp;
         fp = fopen(binfile_name,"r");
         if (fp==NULL){
@@ -651,7 +651,7 @@ private:
             abort();
         }
         fprintf(stderr,"\nReading radial correlation function binning file '%s'\n",binfile_name);
-        
+
         // Count lines to construct the correct size
         while (fgets(line,10000,fp)!=NULL){
             if (line[0]=='#') continue; // comment line
@@ -660,27 +660,27 @@ private:
             }
             printf("\n# Found %d radial bins in the correlation function binning file\n",nbin_cf);
             rewind(fp); // restart file
-            
+
             // Now allocate memory to the weights array
             int ec=0;
             ec+=posix_memalign((void **) &radial_bins_low_cf, PAGE, sizeof(Float)*nbin_cf);
             ec+=posix_memalign((void **) &radial_bins_high_cf, PAGE, sizeof(Float)*nbin_cf);
             assert(ec==0);
-            
+
             int line_count=0; // line counter
             int counter=0; // counts which element in line
-            
+
             // Read in values to file
             while (fgets(line,100000,fp)!=NULL) {
                 // Select required lines in file
                 if (line[0]=='#') continue;
                 if (line[0]=='\n') continue;
-                
+
                 // Split into variables
                 char * split_string;
                 split_string = strtok(line, "\t");
                 counter=0;
-                
+
                 // Iterate over line
                 while (split_string!=NULL){
                     if(counter==0){
@@ -697,21 +697,21 @@ private:
                     counter++;
                 }
                 line_count++;
-                
+
             }
-            
+
             rmin_cf = radial_bins_low_cf[0];
             rmax_cf = radial_bins_high_cf[line_count-1];
             assert(line_count==nbin_cf);
     }
-        
-        
-	    
+
+
+
 
     void read_radial_binning(char* binfile_name){
         // Read the radial binning file and determine the number of bins
         char line[100000];
-    
+
         FILE *fp;
         fp = fopen(binfile_name,"r");
         if (fp==NULL){
@@ -719,7 +719,7 @@ private:
             abort();
         }
         fprintf(stderr,"\nReading radial binning file '%s'\n",binfile_name);
-        
+
         // Count lines to construct the correct size
         while (fgets(line,10000,fp)!=NULL){
             if (line[0]=='#') continue; // comment line
@@ -728,27 +728,27 @@ private:
             }
             printf("\n# Found %d radial bins in the file\n",nbin);
             rewind(fp); // restart file
-            
+
             // Now allocate memory to the weights array
             int ec=0;
             ec+=posix_memalign((void **) &radial_bins_low, PAGE, sizeof(Float)*nbin);
             ec+=posix_memalign((void **) &radial_bins_high, PAGE, sizeof(Float)*nbin);
             assert(ec==0);
-            
+
             int line_count=0; // line counter
             int counter=0; // counts which element in line
-            
+
             // Read in values to file
             while (fgets(line,100000,fp)!=NULL) {
                 // Select required lines in file
                 if (line[0]=='#') continue;
                 if (line[0]=='\n') continue;
-                
+
                 // Split into variables
                 char * split_string;
                 split_string = strtok(line, "\t");
                 counter=0;
-                
+
                 // Iterate over line
                 while (split_string!=NULL){
                     if(counter==0){
@@ -766,7 +766,7 @@ private:
                 }
                 line_count++;
             }
-            
+
             rmin = radial_bins_low[0];
             rmax = radial_bins_high[line_count-1];
             assert(line_count==nbin);
