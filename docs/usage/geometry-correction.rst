@@ -13,7 +13,7 @@ The codes below can be run for datasets created with either periodic or non-peri
 Estimating RR pair counts
 --------------------------
 
-This is required to normalize the covariances in DEFAULT mode, and to compute the survey-correction-function in LEGENDRE mode (for aperiodic surveys only). In JACKKNIFE mode, the scripts in :doc:`jackknife-weights` should be used instead.
+This is required to normalize the covariances in DEFAULT mode, and to compute the survey-correction-function in LEGENDRE mode (for **aperiodic** surveys only). In JACKKNIFE mode, the scripts in :doc:`jackknife-weights` should be used instead.
 
 Usage
 ~~~~~~~
@@ -56,7 +56,7 @@ Usage
 For a single field analysis::
 
     python python/compute_correction_function.py {GALAXY_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS}]
-    
+
 For an analysis using two distinct fields::
 
     python python/compute_correction_function_multi.py {GALAXY_FILE} {GALAXY_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]
@@ -80,13 +80,13 @@ See the :ref:`RR_counts` parameters above. Additionally;
 Estimating RRR triple counts
 -----------------------------
 
-We provide a simple code to compute the RRR triple counts, required to find the 3PCF survey correction function for aperiodic survey geometries. (This is not required for periodic surveys). This is a stochastic estimator (similar to the main C++ covariance matrix code) and does *not* exhaustively count all triples of particles. For heavy usage, an exhaustive code such as the :math:`\mathcal{O}(N^2)` algorithm of `Slepian & Eisenstein (2015) <https://arxiv.org/abs/1506.02040>`_ would be more appropriate. 
+We provide a simple code to compute the RRR triple counts, required to find the 3PCF survey correction function for aperiodic survey geometries. (This is not required for periodic surveys). This is a stochastic estimator (similar to the main C++ covariance matrix code) and does *not* exhaustively count all triples of particles. For heavy usage, an exhaustive code such as the :math:`\mathcal{O}(N^2)` algorithm of `Slepian & Eisenstein (2015) <https://arxiv.org/abs/1506.02040>`_ would be more appropriate.
 
 This is a C++ code and is run analogous to the covariance code in :doc:`main-code`. To compile and run use the following::
 
     cd triple_counts
     bash clean
-    make 
+    make
     ./triple [OPTIONS]
 
 In the associated Makefile we can specify the ``-DPERIODIC`` and ``-DOPENMP`` flags for periodic and OpenMP parallelized compilation respectively. The command line options (and the majority of the code) are the same as for the main code (see descriptions in :doc:`main-code`), and we must specify at least the input random file, :math:`(r,\mu)` binning strategy and accuracy parameters. *NB*: We must set the minimum :math:`\mu` to be -1 here, as there is no :math:`\mu\leftrightarrow-\mu` symmetry unlike for the 2PCF. In addition, the number of angular bins should be relatively large (:math:`\gtrsim 20`) to reduce bias in later conversion of the correction function into Legendre multipole space.
@@ -99,16 +99,16 @@ The code outputs a single text file in the specified output directory, named ``R
 Computing 3PCF Survey Correction Functions
 -------------------------------------------
 
-This script computes the 3-point survey correction function :math:`\Phi(r_a,r_b,\chi)` in each radial bin pair :math:`a,b`, and outputs the multipoles of :math:`\Phi^{-1}` which are reconstructed by the main C++ code in runtime. For convenience, we divide the output :math:`\Phi` by :math:`6V\overline{(nw)^3}`, for survey volume :math:`V`. For the periodic case, the survey correction function is simply unity everywhere, so it is simple to compute. If aperiodic, we require the (normalized) survey RRR pair counts as an input, either from the :ref:`RRR_counts` scripts or elsewhere. 
+This script computes the 3-point survey correction function :math:`\Phi(r_a,r_b,\chi)` in each radial bin pair :math:`a,b`, and outputs the multipoles of :math:`\Phi^{-1}` which are reconstructed by the main C++ code in runtime. For convenience, we divide the output :math:`\Phi` by :math:`6V\overline{(nw)^3}`, for survey volume :math:`V`. For the periodic case, the survey correction function is simply unity everywhere, so it is simple to compute. If aperiodic, we require the (normalized) survey RRR pair counts as an input, either from the :ref:`RRR_counts` scripts or elsewhere.
 
 **NB**: We do not provide functionality for the multi-field 3PCF covariances here.
 
 Usage
 ~~~~~~
  ::
- 
+
     python python/compute_3pcf_correction_function.py {GALAXY_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RRR_COUNTS}]
-    
+
 **Input Parameters**:
 
 See the :ref:`RR_counts` parameters above. Additionally;
@@ -118,6 +118,6 @@ See the :ref:`RR_counts` parameters above. Additionally;
 **Notes**:
 
 - **NB:** For aperiodic data, this assumes that the weights are FKP weights, such that they can be used to find the random number density at each galaxy position. This is not assumed for periodic data (where number density is constant everywhere).
-- Output files are saved as ``BinCorrectionFactor3PCF_n{N}_m{M}.txt`` (aperiodic) or ``BinCorrectionFactor3PCF_n{N}_periodic.txt`` (periodic) for N radial (and M angular) bins. 
+- Output files are saved as ``BinCorrectionFactor3PCF_n{N}_m{M}.txt`` (aperiodic) or ``BinCorrectionFactor3PCF_n{N}_periodic.txt`` (periodic) for N radial (and M angular) bins.
 - File format is a list of :math:`N^2` rows (for N radial bins) with 7 columns specfiying the first seven multipoles of the (normalized) inverse :math:`\Phi` multipoles. This is automatically read by the main C++ code.
 - For a periodic data-set, we output a set of parameters which will lead to the survey correction function being reconstructed as unity everywhere.
