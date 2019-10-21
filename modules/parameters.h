@@ -96,17 +96,17 @@ public:
 
     // Second set of random particles
     char *fname2 = NULL;
-    const char default_fname2[500] = "all_ran.dat";//"";
+    const char default_fname2[500] = "";
 
     // Correlation functions
     char *corname2 = NULL; // xi_22 file
-    const char default_corname2[500] = "xi_n200_m20_22.dat";//"";
+    const char default_corname2[500] = "";
 
     char *corname12 = NULL; // xi_12 file
-    const char default_corname12[500] = "xi_n200_m20_12.dat";//"";
+    const char default_corname12[500] = "";
 
     // Number of galaxies in second dataset
-    Float nofznorm2=3398430; //
+    Float nofznorm2=0; //
 
     //---------- (r,mu) MULTI-FIELD PARAMETERS ------------------------------
 
@@ -128,11 +128,11 @@ public:
 
     //-------- LEGENDRE MULTI-FIELD PARAMETERS -------------------------------
 
-    const char default_phi_file12[500] = "BinCorrectionFactor_n25_periodic_12.txt";//"";
+    const char default_phi_file12[500] = "";
     char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
 
     char *phi_file2 = NULL; // (Normalized) survey correction function survey_22
-    const char default_phi_file2[500] = "BinCorrectionFactor_n25_periodic_22.txt";//"";
+    const char default_phi_file2[500] = "";
 
     // ------- POWER MULTI-FIELD PARAMETERS ----------------------------------
 
