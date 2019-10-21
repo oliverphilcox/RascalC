@@ -1,4 +1,4 @@
-## Script to compute estimate of the single correlation function xi(r,mu) for an entire survey via the Landay-Szelay estimator for a single set of random particles. 
+## Script to compute estimate of the single correlation function xi(r,mu) for an entire survey via the Landay-Szelay estimator for a single set of random particles.
 ## We allow for two sets of random particles to be used, to allow for different number of random particles in the RR and DR estimation.
 ## If the periodic flag is set, we assume a periodic simulation and measure mu from the Z-axis.
 
@@ -27,7 +27,7 @@ else:
     RRname=""
 
 ## First read in weights and positions:
-dtype = np.double 
+dtype = np.double
 
 # Read first set of randoms
 print("Counting lines in DR random file")
@@ -41,16 +41,16 @@ print("Reading in DR random data");
 for n, line in enumerate(open(RnameDR, 'r')):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines))
-    split_line=np.array(line.split(" "), dtype=float) 
+    split_line=np.array(line.split(), dtype=float)
     rX_DR[n]=split_line[0];
     rY_DR[n]=split_line[1];
     rZ_DR[n]=split_line[2];
     rW_DR[n]=split_line[3];
-    
+
 N_randDR = len(rX_DR) # number of particles
 
 if len(RRname)==0:
-    # Read in RR random file    
+    # Read in RR random file
     if RnameDR!=RnameRR:
         print("Counting lines in RR random file")
         total_lines=0
@@ -63,13 +63,13 @@ if len(RRname)==0:
         for n, line in enumerate(open(RnameRR, 'r')):
             if n%1000000==0:
                 print("Reading line %d of %d" %(n,total_lines))
-            split_line=np.array(line.split(" "), dtype=float) 
+            split_line=np.array(line.split(), dtype=float)
             rX_RR[n]=split_line[0];
             rY_RR[n]=split_line[1];
             rZ_RR[n]=split_line[2];
             rW_RR[n]=split_line[3];
 
-        N_randRR = len(rX_RR) 
+        N_randRR = len(rX_RR)
     else:
         rX_RR=rX_DR
         rY_RR=rY_DR
@@ -95,7 +95,7 @@ print("Reading in galaxy data");
 for n, line in enumerate(open(Dname, 'r')):
     if n%1000000==0:
         print("Reading line %d of %d" %(n,total_lines))
-    split_line=np.array(line.split(" "), dtype=float) 
+    split_line=np.array(line.split(), dtype=float)
     dX[n]=split_line[0];
     dY[n]=split_line[1];
     dZ[n]=split_line[2];
@@ -129,7 +129,7 @@ if not periodic:
         zsq = z ** 2.
 
         com_dist = (xsq + ysq + zsq) ** 0.5
-        s = (xsq + ysq) ** 0.5 
+        s = (xsq + ysq) ** 0.5
 
         if np.isscalar(x) and np.isscalar(y) and np.isscalar(z):
             Ra = math.atan2(y, x)*180./np.pi
@@ -145,10 +145,10 @@ if not periodic:
     d_com_dist,d_Ra,d_Dec = coord_transform(dX,dY,dZ);
 
     from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
-    
+
     import time
     init=time.time()
-    
+
     # Now compute RR counts
     if len(RRname)!=0:
         RR_counts = np.loadtxt(RRname) # read pre-computed RR counts
@@ -169,22 +169,22 @@ if not periodic:
     DR_counts = tmpDR[:]['npairs']*tmpDR[:]['weightavg']
     DR_counts/= np.sum(rW_DR)*np.sum(dW)
     print("Finished after %d seconds"%(time.time()-init))
-    
+
     # Now compute DD counts
     print("Compute DD pair counts")
     tmpDD=DDsmu_mocks(1,2,nthreads,mu_max,nmu_bins,binfile,d_Ra,d_Dec,d_com_dist,weights1=dW,weight_type='pair_product',verbose=False,is_comoving_dist=True)
     DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']
     DD_counts/= np.sum(dW)**2.
     print("Finished after %d seconds"%(time.time()-init))
-    
+
 else:
     # Compute RR counts for the periodic case (measuring mu from the Z-axis)
     print("Using periodic input data");
     from Corrfunc.theory.DDsmu import DDsmu
-    
+
     import time
     init = time.time()
-    
+
     # Now compute RR counts
     if len(RRname)!=0:
         RR_counts = np.loadtxt(RRname) # read pre-computed RR counts
@@ -197,7 +197,7 @@ else:
         RR_counts = tmpRR[:]['npairs']*tmpRR[:]['weightavg'] # sum of weights over bin
         RR_counts/= np.sum(rW_RR)**2.
         print("Finished after %d seconds"%(time.time()-init))
-    
+
     # Now compute DR counts
     print("Computing DR pair counts")
     tmpDR = DDsmu(0,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,weight_type='pair_product',
@@ -205,14 +205,14 @@ else:
     DR_counts = tmpDR[:]['npairs']*tmpDR[:]['weightavg']
     DR_counts/=np.sum(rW_DR)*np.sum(dW)
     print("Finished after %d seconds"%(time.time()-init))
-    
+
     # Now compute DD counts
     print("Compute DD pair counts")
     tmpDD=DDsmu(1,nthreads,binfile,mu_max,nmu_bins,dX,dY,dZ,weights1=dW,weight_type='pair_product',verbose=True,periodic=True)
     DD_counts = tmpDD[:]['npairs']*tmpDD[:]['weightavg']
     DD_counts/=np.sum(dW)**2.
     print("Finished after %d seconds"%(time.time()-init))
-    
+
 # Now use Landay-Szelay estimator:
 xi_function = DD_counts/RR_counts - 2.*DR_counts/RR_counts + 1.
 
@@ -240,7 +240,7 @@ with open(outdir+outname,"w+") as outfile:
         for j in range(nmu_bins):
             outfile.write("%.8e "%xi_reshape[i,j])
         outfile.write("\n")
-        
+
 print("Correlation function written successfully to %s"%(outdir+outname))
 
 print("NB: Number of galaxies is %d"%N_gal)
