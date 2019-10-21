@@ -13,7 +13,7 @@ public:
 
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "random_file.xyzwj";
+	const char default_fname[500] = "all_ran_cut.dat";//"random_file.xyzwj";
 
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
@@ -21,28 +21,28 @@ public:
 
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "xi_n45_m10_11.dat";
+	const char default_corname[500] = "xi_n200_m20_11.dat";//"xi_n45_m10_11.dat";
 
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
     const char default_radial_bin_file_cf[500] = "radial_binning_corr.csv";
 
     // Number of galaxies in first dataset
-    Float nofznorm = 1572030;
+    Float nofznorm = 156800;
 
     // Output directory
     char *out_file = NULL;
-    const char default_out_file[500] = "outfile/";
+    const char default_out_file[500] = "./";
 
     // The number of mu bins in the correlation function
-    int mbin_cf = 100;
+    int mbin_cf = 20;
 
     // The number of threads to run on
-	int nthread = 20;
+	int nthread = 10;
 
     // The grid size, which should be tuned to match boxsize and rmax.
 	// This uses the maximum width of the cuboidal box.
-	int nside = 69;
+	int nside = 71;
 
     // Whether or not we are using a periodic box
 	bool perbox = true;
@@ -50,11 +50,11 @@ public:
     //---------- (r,mu) PARAMETERS ------------------------------------------
 
 	// The number of mu bins
-	int mbin = 10;
+	int mbin = 20;
 
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "binned_pair_counts_n35_m10_j169_11.dat";
+    const char default_RR_bin_file[500] = "";//"binned_pair_counts_n35_m10_j169_11.dat";
 
     //---------- JACKKNIFE PARAMETERS ---------------------------------------
 
@@ -96,17 +96,17 @@ public:
 
     // Second set of random particles
     char *fname2 = NULL;
-    const char default_fname2[500] = "";
+    const char default_fname2[500] = "all_ran.dat";//"";
 
     // Correlation functions
     char *corname2 = NULL; // xi_22 file
-    const char default_corname2[500] = "";
+    const char default_corname2[500] = "xi_n200_m20_22.dat";//"";
 
     char *corname12 = NULL; // xi_12 file
-    const char default_corname12[500] = "";
+    const char default_corname12[500] = "xi_n200_m20_12.dat";//"";
 
     // Number of galaxies in second dataset
-    Float nofznorm2=339843; //
+    Float nofznorm2=3398430; //
 
     //---------- (r,mu) MULTI-FIELD PARAMETERS ------------------------------
 
@@ -128,11 +128,11 @@ public:
 
     //-------- LEGENDRE MULTI-FIELD PARAMETERS -------------------------------
 
-    const char default_phi_file12[500] = "";
+    const char default_phi_file12[500] = "BinCorrectionFactor_n25_periodic_12.txt";//"";
     char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
 
     char *phi_file2 = NULL; // (Normalized) survey correction function survey_22
-    const char default_phi_file2[500] = "";
+    const char default_phi_file2[500] = "BinCorrectionFactor_n25_periodic_22.txt";//"";
 
     // ------- POWER MULTI-FIELD PARAMETERS ----------------------------------
 
