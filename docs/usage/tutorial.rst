@@ -216,6 +216,7 @@ For a single field analysis, this is run as follows, specifying the jackknife co
 (See :ref:`post-processing-general`).
 
 The output is a single compressed Python ``.npz`` file which contains the following analysis products:
+
     - Optimal shot-noise rescaling parameter :math:`\alpha^*`
     - Full theory covariance matrix :math:`C_{ab}(\alpha^*)`
     - Jackknife theory covariance matrix :math:`C^J_{ab}(\alpha^*)`
