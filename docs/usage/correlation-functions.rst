@@ -13,9 +13,7 @@ To compute the covariance matrix estimates :math:`\hat{C}_{ab}` we require some 
 
 In the periodic case, we use the standard estimator :math:`\xi^{XY}_a = \widehat{DD}_a^{XY}/\widehat{RR}_a^{XY}-1` for bin :math:`a` and fields :math:`X, Y`. Here :math:`\widehat{DD}` and :math:`\widehat{RR}` represent pair counts (normalized by the product of summed weights :math:`\sum_{i\in X}w_i^X\sum_{j\in Y}w_j^Y`), with the random-random counts being computed analytically. Note that periodicity corresponds to measuring :math:`\mu` from the :math:`z` axis respectively (as opposed to the radial axis), and is appropriate e.g. for the outputs of a cosmological box simulation. The -DPERIODIC flag should be set on compilation of the full C++ code in :doc:`main-code`.
 
-For the aperiodic case, the estimations are computed via the Landy-Szalay (1993) estimator, using :math:`\xi^{XY}_a = (\widehat{DD}_a^{XY} - \widehat{DR}_a^{XY} - \widehat{DR}_a^{YX} + \widehat{RR}_a^{XY})/\widehat{RR}_a^{XY}`, requiring an input random particle catalog to compute random-random and data-random counts numerically.
-
-In this case, the script takes two sets of random particle files (per galaxy field); one is to compute :math:`DR` counts and the other is to compute :math:`RR` counts. This allows for a larger number of randoms to be used for :math:`DR` counts, as is often useful. We recommend using 10x randoms for the :math:`RR` counts and 50x randoms for the :math:`DR` counts.
+For the aperiodic case, the estimations are computed via the Landy-Szalay (1993) estimator, using :math:`\xi^{XY}_a = (\widehat{DD}_a^{XY} - \widehat{DR}_a^{XY} - \widehat{DR}_a^{YX} + \widehat{RR}_a^{XY})/\widehat{RR}_a^{XY}`, requiring an input random particle catalog to compute random-random and data-random counts numerically. In this case, the script takes two sets of random particle files (per galaxy field); one is to compute :math:`DR` counts and the other is to compute :math:`RR` counts. This allows for a larger number of randoms to be used for :math:`DR` counts, as is often useful. We recommend using 10x randoms for the :math:`RR` counts and 50x randoms for the :math:`DR` counts.
 
 The scripts output a (set of) correlation function(s) in a supplied directory. These give estimates of the correlation function averaged over some :math:`r,\mu` bin. Note that the binned correlation function estimates :math:`\hat\xi^{XY}_a` cannot simply placed at the bin-centers and interpolated to give a smooth :math:`\xi^{XY}(r,\mu)` estimate; within the main RascalC code we use an iterative approach to convert these estimates into interpolation points for the smooth :math:`\xi^{XY}(r,\mu)`.
 
@@ -26,9 +24,10 @@ For analysis of a periodic box (e.g. from an N-body simulation output)::
     python python/xi_estimator_periodic.py {GALAXY_FILE} {RADIAL_BIN_FILE_DR} {RADIAL_BIN_FILE_RR} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts}]
 
 For an analysis of an aperiodic data-set (e.g. mock galaxy catalogs or observational data)::
+
     python python/xi_estimator_aperiodic.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR}  {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR}] [{RR_counts_11} {RR_counts_12} {RR_counts_22}]
 
-**NB**: If a second galaxy (and random) file is specified, the script will compute all three non-trivial (cross-)correlations between the two fields, giving a runtime of :math:`\sim` 3 times that of ``xi_estimator.py``. The two fields should be distinct to avoid issues with double counting. If this is not specified, the script will simply compute the auto-correlation function of the single set of galaxies.
+**NB**: If a second galaxy (and random) file is specified, the script will compute all three non-trivial (cross-)correlations between the two fields, giving a runtime of :math:`\sim` 3 times that of the single-field case. The two fields should be distinct to avoid issues with double counting. If this is not specified, the script will simply compute the auto-correlation function of the single set of galaxies.
 
 **Input Parameters**
 
