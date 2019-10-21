@@ -3,7 +3,7 @@ Tutorial: Periodic Data and Legendre Multipoles
 
 We present a basic example of the use of the RascalC code on a periodic dataset, such as the output of an N-body simulation. Here we'll restrict to a single-field analysis (using only a single set of tracer galaxies), but the multiple field case proceeds similarly. Our goal is to compute the covariance matrix of the monopole and quadrupole correlation functions :math:`\xi_0(r)` and :math:`\xi_2(r)`, as described in `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_. For this we will use the code in LEGENDRE mode. Detailed documentation for all functions is given in associated pages, as overviewed in the :doc:`getting-started` pages. Note that we here run the main code in the JACKKNIFE mode, and work in the RascalC installation directory for simplicity.
 
-An additional tutorial (:doc:`tutorial`) shows the usage of RascalC for an *aperiodic* dataset (e.g. a galaxy survey) in :math:`(r,\mu)` co-ordinates. This also includes descriptions of the shot-noise rescaling procedure used to incorporate non-Gaussianity in our covariances. In this tutorial, we will assume full Gaussianity, setting the shot-noise rescaling parameter to :math:`alpha=1`. To include non-Gaussianity, we simply need to run RascalC in JACKKNIFE mode first to estimate :math:`alpha` (as in :ref:`tutorial`), then run it in LEGENDRE mode, using the measured value of :math:`alpha` in post-processing.
+An additional tutorial (:doc:`tutorial`) shows the usage of RascalC for an *aperiodic* dataset (e.g. a galaxy survey) in :math:`(r,\mu)` co-ordinates. This also includes descriptions of the shot-noise rescaling procedure used to incorporate non-Gaussianity in our covariances. In this tutorial, we will assume full Gaussianity, setting the shot-noise rescaling parameter to :math:`\alpha=1`. To include non-Gaussianity, we simply need to run RascalC in JACKKNIFE mode first to estimate :math:`\alpha` (as in :ref:`tutorial`), then run it in LEGENDRE mode, using the measured value of :math:`\alpha` in post-processing.
 
 1) Pre-Processing
 ------------------
@@ -12,7 +12,7 @@ An additional tutorial (:doc:`tutorial`) shows the usage of RascalC for an *aper
 
 - ``nbody_simulation.txt``: Galaxy positions and weights for the periodic mock dataset in (x,y,z,weight) format (in Mpc/h). We assume this to have a cubic-box geometry.
 
-First, we will create a set of *random particles* in a box of the same shape as our simulation data-set. These will be used as sampling points for our covariance matrix estimator. The simulation had boxsize :math:`L = 1000\,h^{-1}\mathrm{Mpc}` with :math:`N_\mathrm{gal}=156800` galaxies, so we'll create a random set with the same boxsize and :math:`N_\mathrm{rand} = N_\mathrm{gal}` particles. This can be done with the simple Python script
+First, we will create a set of *random particles* in a box of the same shape as our simulation data-set. These will be used as sampling points for our covariance matrix estimator. The simulation had boxsize :math:`L = 1000\,h^{-1}\mathrm{Mpc}` with :math:`N_\mathrm{gal}=156800` galaxies, so we'll create a random set with the same boxsize and :math:`N_\mathrm{rand} = 10 N_\mathrm{gal}` particles. This can be done with the simple Python script
 
 .. code-block:: python
 
@@ -34,16 +34,15 @@ This is particularly easy here since N-body simulations have uniform selection f
 
 Let's create the radial binning files next. We'll create two binning files; one for the correlation functions and one for the covariance matrix.
 
-For the covariance matrix, we'll use a linear binning file with :math:`\Delta r = 5` for :math:`r\in[20,200]` and for the correlation function we'll use a linear binning file with :math:`\Delta r = 1` for :math:`r\in[0,200]`. **NB**: The correlation function binning file must extend down to :math:`r = 0`::
+For the covariance matrix, we'll use a linear binning file with :math:`\Delta r = 5` for :math:`r\in[25,150]` and for the correlation function we'll use a linear binning file with :math:`\Delta r = 1` for :math:`r\in[0,200]`. **NB**: The correlation function binning file must extend down to :math:`r = 0`::
 
-    python python/write_binning_file_linear.py 36 20 200 radial_binning_cov.csv
+    python python/write_binning_file_linear.py 25 25 150 radial_binning_cov.csv
     python python/write_binning_file_linear.py 200 0 200 radial_binning_corr.csv
 
 (See :ref:`write-binning-file`).
 
-Here we're using 36 radial bins for the covariance matrix. Let's have a look at the covariance binning file::
+Here we're using 25 radial bins for the covariance matrix. Let's have a look at the covariance binning file::
 
-    20.00000000     25.00000000
     25.00000000     30.00000000
     30.00000000     35.00000000
     35.00000000     40.00000000
@@ -67,7 +66,7 @@ Using the galaxy position file, we can obtain estimates of the 2-point correlati
 
 This uses Corrfunc to perform pair counting and computes :math:`\xi_a` for each bin, :math:`a`, via the standard :math:`DD/RR-1` estimator. Here we're running on 10 cores, assuming a box-size of :math:`L = 1000\,h^{-1}\mathrm{Mpc}`, and the output is saved as ``xi/xi_n200_m20_periodic_11.dat`` in the format specified in :ref:`file-inputs`. We'll use this full correlation function to compute the theoretical covariance matrix later on.
 
-The main C++ code requires an input *survey correction function* to account for non-trivial survey geometries. For a periodic box, the correction function :`\Phi(r_a,\mu)` is constant, but the normalization carries important information including the survey volume and number density. This is simply computed via::
+The main C++ code requires an input *survey correction function* to account for non-trivial survey geometries. For a periodic box, the correction function :math:`\Phi(r_a,\mu)` is constant, but the normalization carries important information including the survey volume and number density. This is simply computed via::
 
     python python/compute_correction_function.py nbody_simulation.txt radial_binning_cov.csv ./ 1
 
@@ -170,22 +169,23 @@ It's often just easier to edit the ``modules/parameter.h`` file, but the latter 
 
 This runs in under an hour on 10 cores here, giving output matrix components saved in the ``CovMatricesFull`` directory as ``.txt`` files. We'll now reconstruct these.
 
-5) Post-Processing
+4) Post-Processing
 -------------------
 
 Although the C++ code computes all the relevant parts of the covariance matrices, it doesn't perform any reconstruction, since this is much more easily performed in Python. Post-processing is used to add together the relevant matrix outputs, constructing the full covariance and precision matrices.
 
-For a single field analysis, this is run as follows, specifying the jackknife correlation functions, output covariance term directory and weights. Since we used :math:`N_\mathrm{loops}=10` above, we'll set this as the number of subsamples here::
+For a single field analysis, this is run as follows, specifying the jackknife correlation functions, output covariance term directory and weights::
 
     python python/post_process_legendre.py ./ 25 2 10 ./ 1.
 
 (See :ref:`post-processing-general`).
 
-Here the first parameter gives the directory where the RascalC products are stored (i.e. the location of the ```CovMatricesFull`` directory), whilst the remained specify number of radial bins, maximum Legendre multipole, number of matrix estimates computed (equal to the ``-maxloops`` parameter in the C++ code) and the output directory. The *optional* last parameter is the shot-noise rescaling parameter. This cannot be computed from Legendre multipole binned data; to include it we must run the code in JACKKNIFE mode first then use the derived shot-noise rescaling parameter in the LEGENDRE mode post-processing (see :ref:`tutorial` for a tutorial on JACKKNIFE mode computations.)
+Here the first parameter gives the directory where the RascalC products are stored (i.e. the location of the ```CovMatricesFull`` directory), whilst the remained specify number of radial bins, maximum Legendre multipole, number of matrix estimates computed (equal to the ``-maxloops`` parameter in the C++ code) and the output directory. The *optional* last parameter is the shot-noise rescaling parameter. This cannot be computed from Legendre multipole binned data; to include it we must run the code in JACKKNIFE mode first then use the derived shot-noise rescaling parameter in the LEGENDRE mode post-processing (see :doc:`tutorial` for a tutorial on JACKKNIFE mode computations.)
 
 If the covariance matrix terms have not converged sufficiently well (leading to a non-invertable covariance matrix) the Python code will exit prematurely and *not* give a reconstructed output file. This indicates that the main C++ code should be run for longer or with a larger number of random particles.
 
 The output is a single compressed Python ``.npz`` file named ``Rescaled_Covariance_Matrices_Legendre_n25_l2.npz`` which contains the following analysis products:
+
     - Full theory covariance matrix :math:`C_{ab}(\alpha^*)`
     - Utilized shot-noise rescaling parameter :math:`\alpha^*` (either user-input or set to unity)
     - Effective number of mocks :math:`N_\mathrm{eff}`
