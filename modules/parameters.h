@@ -264,6 +264,10 @@ public:
         else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
         else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
         else if (!strcmp(argv[i],"-jackknife2")) jk_weight_file2=argv[++i];
+				else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
+		    else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
+				else if (!strcmp(argv[i],"-RRbin12")) RR_bin_file12=argv[++i];
+				else if (!strcmp(argv[i],"-RRbin2")) RR_bin_file2=argv[++i];
 #elif defined THREE_PCF
         else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
@@ -271,7 +275,7 @@ public:
         else if (!strcmp(argv[i],"-N6")) N6=atof(argv[++i]);
 #else
 		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
-        else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
+    else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin12")) RR_bin_file12=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin2")) RR_bin_file2=argv[++i];
 #endif
