@@ -8,7 +8,7 @@ import sys,os
 if len(sys.argv)!=6 and len(sys.argv)!=8:
     print("Usage: python post_process_legendre_multi.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]")
     sys.exit()
-        
+
 file_root = str(sys.argv[1])
 n = int(sys.argv[2])
 max_l = int(sys.argv[3])
@@ -32,7 +32,6 @@ I2 = [1,2,2,2,1,1,2]
 I3 = [1,1,2,1,2,2,2]
 I4 = [1,1,1,2,2,2,2]
 
-
 def matrix_readin(suffix='full'):
     """Read in multi-field Legendre covariance matrices. This returns lists of covariance matrices"""
 
@@ -45,23 +44,23 @@ def matrix_readin(suffix='full'):
         index4="%d%d,%d%d"%(I1[ii],I2[ii],I3[ii],I4[ii])
         index3="%d,%d%d"%(I2[ii],I1[ii],I3[ii])
         index2="%d%d"%(I1[ii],I2[ii])
-        
+
         j1,j2,j3,j4=I1[ii]-1,I2[ii]-1,I3[ii]-1,I4[ii]-1 # internal indexing
 
         # Define input files
         file_root_all=file_root+'CovMatricesAll/'
         jndex=index2
-        
+
         if suffix=='full':
             counts_file = file_root_all+'total_counts_n%d_l%d_%s.txt'%(n,max_l,index4)
             # Load total number of counts
             total_counts=np.loadtxt(counts_file)
             print("Reading in integral components for C_{%s}, which used %.2e pairs, %.2e triples and %.2e quads of particles"%(index4,total_counts[0],total_counts[1],total_counts[2]))
-        else: 
+        else:
             print("Reading in integral components for C_{%s}, iteration %s"%(index4,suffix))
-         
+
         # Load full integrals
-        c2=np.diag(np.loadtxt(file_root_all+'c2_n%d_l%d_%s_%s.txt' %(n,max_l,index2,suffix)))
+        c2=np.loadtxt(file_root_all+'c2_n%d_l%d_%s_%s.txt' %(n,max_l,index2,suffix))
         c3=np.loadtxt(file_root_all+'c3_n%d_l%d_%s_%s.txt' %(n,max_l,index3,suffix))
         c4=np.loadtxt(file_root_all+'c4_n%d_l%d_%s_%s.txt' %(n,max_l,index4,suffix))
 
@@ -72,7 +71,7 @@ def matrix_readin(suffix='full'):
             c4s[j1,j2,j3,j4]+=0.5*c4 # to account for xi_ik xi_jl = xi_il xi_jk assumption
         else:
             c4s[j1,j2,j3,j4]=c4
-        
+
         # Add symmetries (automatically accounts for xi assumption):
         if j1!=j3:
             c3s[j2,j3,j1]=c3
@@ -90,7 +89,7 @@ def matrix_readin(suffix='full'):
                 c4s[j3,j4,j2,j1]=c4.T
                 if j3!=j4:
                     c4s[j4,j3,j2,j1]=c4.T
-                    
+
     def construct_fields(j1,j2,j3,j4,alpha1,alpha2):
         # Reconstruct the full field for given input fields and rescaling parameters
 
@@ -104,7 +103,7 @@ def matrix_readin(suffix='full'):
         return full
 
     c_tot = np.zeros([2,2,2,2,n*m,n*m])
-    
+
     for j1 in range(2):
         for j2 in range(2):
             for j3 in range(2):
@@ -153,7 +152,7 @@ for j1 in range(2):
                     full_subsamples = [c_sub[j1,j2,j3,j4] for c_sub in c_subsamples]
                     prec_tot[j1,j2,j3,j4],N_eff[j1,j2,j3,j4],D_est[j1,j2,j3,j4]=compute_precision(c_tot[j1,j2,j3,j4],full_subsamples)
                     if N_eff[j1,j2,j3,j4]==0:
-                        print("N_eff is negative for C^{%d%d,%d%d}! Setting to zero"%(j1+1,j2+1,j3+1,j4+1))
+                        print("Matrices have not converged and N_eff is negative for C^{%d%d,%d%d}! Setting to zero"%(j1+1,j2+1,j3+1,j4+1))
 
 output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_Legendre_n%d_l%d.npz'%(n,max_l)
 np.savez(output_name,full_theory_covariance=c_tot,

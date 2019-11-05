@@ -192,4 +192,6 @@ The output is a single compressed Python ``.npz`` file named ``Rescaled_Covarian
     - Full quadratic bias :math:`\tilde{D}_{ab}` matrix
     - Individual full covariance matrix estimates :math:`C_{ab}^{(i)}(\alpha^*)`
 
+Each matrix is stored as a two-dimensional array, with each index specifying both the radial bin and Legendre multipole. The elements are ordered first by Legendre multipole then by radial bin, such that the first elements is the :math:`\ell=0` element in the first radial bin, the second is the :math:`\ell=2` element in the first radial bin, etc. 
+
 This completes the analysis!
