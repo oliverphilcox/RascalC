@@ -8,7 +8,7 @@ import sys,os
 if len(sys.argv)!=6 and len(sys.argv)!=7:
     print("Usage: python post_process_default.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING}]")
     sys.exit()
-        
+
 file_root = str(sys.argv[1])
 n = int(sys.argv[2])
 m = int(sys.argv[3])
@@ -29,7 +29,7 @@ def load_matrices(index):
     c2 = np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index))
     c3 = np.loadtxt(cov_root+'c3_n%d_m%d_1,11_%s.txt'%(n,m,index))
     c4 = np.loadtxt(cov_root+'c4_n%d_m%d_11,11_%s.txt'%(n,m,index))
-    
+
     # Now symmetrize and return matrices
     return c2,0.5*(c3+c3.T),0.5*(c4+c4.T)
 
@@ -68,7 +68,7 @@ for i in range(n_samples):
     tmp+=np.matmul(np.linalg.inv(c_excl_i),partial_cov[i])
 full_D_est=(n_samples-1.)/n_samples * (-1.*np.eye(n_bins) + tmp/n_samples)
 full_prec = np.matmul(np.eye(n_bins)-full_D_est,np.linalg.inv(full_cov))
-print("Full precision matrix estimate computed")    
+print("Full precision matrix estimate computed")
 
 # Now compute effective N:
 slogdetD=np.linalg.slogdet(full_D_est)
@@ -78,7 +78,7 @@ if slogdetD[0]<0:
     N_eff_D = 0.
 else:
     N_eff_D = (n_bins+1.)/D_value+1.
-    print("Total N_eff Estimate: %.4e"%N_eff_D)        
+    print("Total N_eff Estimate: %.4e"%N_eff_D)
 
 output_name = outdir+'Rescaled_Covariance_Matrices_Default_n%d_m%d.npz'%(n,m)
 np.savez(output_name,full_theory_covariance=full_cov,
