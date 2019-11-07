@@ -21,7 +21,7 @@ The scripts output a (set of) correlation function(s) in a supplied directory. T
 
 For analysis of a periodic box (e.g. from an N-body simulation output)::
 
-    python python/xi_estimator_periodic.py {GALAXY_FILE} {RADIAL_BIN_FILE} {BOXSIZE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2}]
+    python python/xi_estimator_periodic.py {GALAXY_FILE} {RADIAL_BIN_FILE_DR} {RADIAL_BIN_FILE_RR} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts}]
 
 For an analysis of an aperiodic data-set (e.g. mock galaxy catalogs or observational data)::
 
@@ -36,7 +36,6 @@ For an analysis of an aperiodic data-set (e.g. mock galaxy catalogs or observati
 - *(Aperiodic Only)*: {RANDOM_FILE_RR}, {RANDOM_FILE_2_RR}: Input ASCII file containing random particle positions and weights to be used for RR pair counting (with filetype as for the galaxy files). **NB**: If pre-computed RR pair counts are specified only the length of the RR random file is used by the code (for normalization).
 - {RADIAL_BIN_FILE}: ASCII file specifying the radial bins for :math:`\xi(r,\mu)`, as described in :ref:`file-inputs`. This can be user-defined or created by the :ref:`write-binning-file` scripts.  **NB**: This bin-file specifies the bins for the *correlation function*, which may be distinct from the *covariance-matrix* bins. In particular, the lowest bin should extend to :math:`r = 0`.
 - {MU_MAX}: Maximum :math:`\mu = \cos\theta` used in the angular binning.
-- *(Periodic Only)*: {BOXSIZE}: Side length of simulation box in comoving :math:`h^{-1}\mathrm{Mpc}` units.
 - {N_MU_BINS}: Number of angular bins used in the range :math:`[0,\mu_\mathrm{max}]`.
 - {NTHREADS}: Number of CPU threads to use for pair counting parallelization.
 - {OUTPUT_DIR}: Directory in which to house the correlation functions. This will be created if not in existence.
