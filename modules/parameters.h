@@ -13,32 +13,32 @@ public:
 
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "all_ran_cut.dat";//"random_file.xyzwj";
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/Yuting/LRG_randoms_10x.txt";
 
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "radial_binning_cov.csv";
+    const char default_radial_bin_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/radial_binning_cov.csv";
 
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "xi_n200_m20_11.dat";//"xi_n45_m10_11.dat";
+	const char default_corname[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v3_low/xi_n100_m10_periodic_11.dat";
 
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
-    const char default_radial_bin_file_cf[500] = "radial_binning_corr.csv";
+    const char default_radial_bin_file_cf[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v3_low/radial_binning_corr_low.csv";
 
     // Number of galaxies in first dataset
-    Float nofznorm = 156800;
+    Float nofznorm =156800;
 
     // Output directory
     char *out_file = NULL;
-    const char default_out_file[500] = "./";
+    const char default_out_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v3_low/";
 
     // The number of mu bins in the correlation function
-    int mbin_cf = 20;
+    int mbin_cf = 10;
 
     // The number of threads to run on
-	int nthread = 10;
+	int nthread = 30;
 
     // The grid size, which should be tuned to match boxsize and rmax.
 	// This uses the maximum width of the cuboidal box.
@@ -54,20 +54,20 @@ public:
 
      // Name of the RR bin file
     char *RR_bin_file = NULL; // RR_{aA}^{11} file
-    const char default_RR_bin_file[500] = "";//"binned_pair_counts_n35_m10_j169_11.dat";
+    const char default_RR_bin_file[500] = "";
 
     //---------- JACKKNIFE PARAMETERS ---------------------------------------
 
     // Name of the jackknife weight file
     char *jk_weight_file = NULL; // w_{aA}^{11} weights
-    const char default_jk_weight_file[500] = "jackknife_weights_n35_m10_j169_11.dat";
+    const char default_jk_weight_file[500] = "";
 
     //-------- LEGENDRE PARAMETERS -------------------------------------------
 
     int max_l = 2; // max Legendre moment (must be even unless computing 3PCF)
 
     char *phi_file = NULL; // Survey correction function coefficient file
-    const char default_phi_file[500] = "BinCorrectionFactor_n25_periodic_11.txt";
+    const char default_phi_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/BinCorrectionFactor_n25_periodic_11.txt";
 
     //-------- POWER PARAMETERS (not yet publicly released) ------------------
 
@@ -80,12 +80,12 @@ public:
     //---------- PRECISION PARAMETERS ---------------------------------------
 
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=10;
+    int max_loops=8;
 
     // Number of random cells to draw at each stage
-    int N2 = 10; // number of j cells per i cell
-    int N3 = 10; // number of k cells per j cell
-    int N4 = 10; // number of l cells per k cell
+    int N2 = 8; // number of j cells per i cell
+    int N3 = 8; // number of k cells per j cell
+    int N4 = 8; // number of l cells per k cell
 
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------
 
@@ -96,17 +96,17 @@ public:
 
     // Second set of random particles
     char *fname2 = NULL;
-    const char default_fname2[500] = "";
+    const char default_fname2[500] = "/mnt/store1/oliverphilcox/Yuting/ELG_randoms_1x.txt";
 
     // Correlation functions
     char *corname2 = NULL; // xi_22 file
-    const char default_corname2[500] = "";
+    const char default_corname2[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v3_low/xi_n100_m10_periodic_22.dat";
 
     char *corname12 = NULL; // xi_12 file
-    const char default_corname12[500] = "";
+    const char default_corname12[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v3_low/xi_n100_m10_periodic_12.dat";
 
     // Number of galaxies in second dataset
-    Float nofznorm2=0; //
+    Float nofznorm2=3398430; //
 
     //---------- (r,mu) MULTI-FIELD PARAMETERS ------------------------------
 
@@ -128,11 +128,11 @@ public:
 
     //-------- LEGENDRE MULTI-FIELD PARAMETERS -------------------------------
 
-    const char default_phi_file12[500] = "";
+    const char default_phi_file12[500] = "/home/oliverphilcox/eBOSS_MockChallenge/BinCorrectionFactor_n25_periodic_12.txt";
     char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
 
     char *phi_file2 = NULL; // (Normalized) survey correction function survey_22
-    const char default_phi_file2[500] = "";
+    const char default_phi_file2[500] = "/home/oliverphilcox/eBOSS_MockChallenge/BinCorrectionFactor_n25_periodic_22.txt";
 
     // ------- POWER MULTI-FIELD PARAMETERS ----------------------------------
 
@@ -264,10 +264,6 @@ public:
         else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
         else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
         else if (!strcmp(argv[i],"-jackknife2")) jk_weight_file2=argv[++i];
-				else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
-		    else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
-				else if (!strcmp(argv[i],"-RRbin12")) RR_bin_file12=argv[++i];
-				else if (!strcmp(argv[i],"-RRbin2")) RR_bin_file2=argv[++i];
 #elif defined THREE_PCF
         else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
@@ -275,7 +271,7 @@ public:
         else if (!strcmp(argv[i],"-N6")) N6=atof(argv[++i]);
 #else
 		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
-    else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
+        else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin12")) RR_bin_file12=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin2")) RR_bin_file2=argv[++i];
 #endif
