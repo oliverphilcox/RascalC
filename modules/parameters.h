@@ -13,7 +13,7 @@ public:
 
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/Yuting/LRG_randoms_10x.txt";
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/Yuting/LRG_randoms_v2_10x.txt";
 
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
@@ -32,7 +32,7 @@ public:
 
     // Output directory
     char *out_file = NULL;
-    const char default_out_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v3_low/";
+    const char default_out_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v7/";
 
     // The number of mu bins in the correlation function
     int mbin_cf = 10;
@@ -80,12 +80,12 @@ public:
     //---------- PRECISION PARAMETERS ---------------------------------------
 
     // Maximum number of iterations to compute the C_ab integrals over
-    int max_loops=8;
+    int max_loops = 40;
 
     // Number of random cells to draw at each stage
-    int N2 = 8; // number of j cells per i cell
-    int N3 = 8; // number of k cells per j cell
-    int N4 = 8; // number of l cells per k cell
+    int N2 = 20; // number of j cells per i cell
+    int N3 = 40; // number of k cells per j cell
+    int N4 = 80; // number of l cells per k cell
 
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------
 
@@ -96,7 +96,7 @@ public:
 
     // Second set of random particles
     char *fname2 = NULL;
-    const char default_fname2[500] = "/mnt/store1/oliverphilcox/Yuting/ELG_randoms_1x.txt";
+    const char default_fname2[500] = "/mnt/store1/oliverphilcox/Yuting/ELG_randoms_v2_1x.txt";
 
     // Correlation functions
     char *corname2 = NULL; // xi_22 file
