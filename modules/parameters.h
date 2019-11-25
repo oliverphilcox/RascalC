@@ -13,7 +13,11 @@ public:
 
     // The name of the input random particle files (first set)
 	char *fname = NULL;
+<<<<<<< HEAD
 	const char default_fname[500] = "/mnt/store1/oliverphilcox/Yuting/LRG_randoms_v2_10x.txt";
+=======
+	const char default_fname[500] = "/mnt/store1/oliverphilcox/Yuting/LRG_randoms_10x.txt";
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
 
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
@@ -32,7 +36,11 @@ public:
 
     // Output directory
     char *out_file = NULL;
+<<<<<<< HEAD
     const char default_out_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v7/";
+=======
+    const char default_out_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v3_low/";
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
 
     // The number of mu bins in the correlation function
     int mbin_cf = 10;
@@ -80,12 +88,21 @@ public:
     //---------- PRECISION PARAMETERS ---------------------------------------
 
     // Maximum number of iterations to compute the C_ab integrals over
+<<<<<<< HEAD
     int max_loops = 40;
 
     // Number of random cells to draw at each stage
     int N2 = 20; // number of j cells per i cell
     int N3 = 40; // number of k cells per j cell
     int N4 = 80; // number of l cells per k cell
+=======
+    int max_loops=8;
+
+    // Number of random cells to draw at each stage
+    int N2 = 8; // number of j cells per i cell
+    int N3 = 8; // number of k cells per j cell
+    int N4 = 8; // number of l cells per k cell
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
 
     //------------------ EXTRA 3PCF AUTOCOVARIANCE PARAMETERS ----------------
 
@@ -96,7 +113,11 @@ public:
 
     // Second set of random particles
     char *fname2 = NULL;
+<<<<<<< HEAD
     const char default_fname2[500] = "/mnt/store1/oliverphilcox/Yuting/ELG_randoms_v2_1x.txt";
+=======
+    const char default_fname2[500] = "/mnt/store1/oliverphilcox/Yuting/ELG_randoms_1x.txt";
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
 
     // Correlation functions
     char *corname2 = NULL; // xi_22 file

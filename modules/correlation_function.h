@@ -12,10 +12,17 @@ class CorrelationFunction{
         double *x,*y,*z;
         double rmin,rmax,mumin,mumax;
         bool mudim;
+<<<<<<< HEAD
         gsl_interp_accel *xa, *ya, *x1a;
         gsl_interp2d* interp_2d;
         gsl_spline* corfu1d;
 
+=======
+        gsl_interp_accel *xa, *ya, *x1a;        
+        gsl_interp2d* interp_2d;
+        gsl_spline* corfu1d;
+        
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
     public:
         double xi(double r, double mu){
             // 2D correlation function in radius and angular bins
@@ -48,7 +55,11 @@ class CorrelationFunction{
             else
                 return xi(r);
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
         double xi(double r){
             // Radial correlation function
             // xi values beyond the maximal radius in the correlation function file read in are extrapolated as a simple 1/r^4 power law
@@ -86,7 +97,11 @@ class CorrelationFunction{
             char * pch;
             int n=0,m=0;
             double x0;
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
             FILE *fp;
             fp = fopen(filename, "r");
             if (fp==NULL) {
@@ -160,7 +175,11 @@ class CorrelationFunction{
             }
 
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
     public:
         void copy_function(CorrelationFunction *cf){
         // Copy a preexisting correlation function into this object
@@ -171,12 +190,20 @@ class CorrelationFunction{
             mumin=cf->mumin;
             mumax=cf->mumax;
             mudim=cf->mudim;
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
             // Allocate memory
             x = (double *)malloc(sizeof(double)*xsize);
             y = (double *)malloc(sizeof(double)*ysize);
             z = (double *)malloc(sizeof(double)*xsize*ysize);
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
             // Read in x,y,z grids
             int ct=0;
             for(int i=0;i<xsize;i++){
@@ -187,7 +214,11 @@ class CorrelationFunction{
                 }
             }
             for(int j=0;j<ysize;j++) y[j]=cf->y[j];
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
             // activate the interpolator function here
             interpolate();
         }
@@ -260,6 +291,7 @@ class CorrelationFunction{
             corr->copy(xsize,ysize,&x,&y,&z,rmin,rmax,mumin,mumax,mudim);
             interpolate();
         }
+<<<<<<< HEAD
 
 
     CorrelationFunction(const char *filename, int mbin, double dmu){
@@ -274,15 +306,31 @@ class CorrelationFunction{
 
         if(ysize<=1&&mbin>1){
             fprintf(stderr,"Requested %d mu-bins but correlation function file only has %d columns.\n",mbin,ysize);
+=======
+        
+
+    CorrelationFunction(const char *filename, int mbin, double dmu){
+        // Construct from input file
+        
+        readData(filename,&x,&y,&z,&xsize,&ysize);
+
+        if(ysize<=1&&mbin>1){
+            fprintf(stderr,"Requested %d mu-bins but correlation function file only has %d column.",mbin,ysize);
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
             abort();
         }
 
         mudim=!(mbin==1&&dmu==1.);
         rmin=x[0];
         rmax=x[xsize-1];
+<<<<<<< HEAD
 
         // Mu range hardcoded to be between 0 and 1
         mumin=0.;
+=======
+        // Mu range hardcoded to be between 0 and 1
+        mumin=0.0;
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
         mumax=1.;
 
         // Multiply correlation function by r^2 for smoother interpolation
@@ -297,6 +345,7 @@ class CorrelationFunction{
         interpolate();
 
     }
+<<<<<<< HEAD
 
     CorrelationFunction(Float* xi_array, Float * r_array, Float* mu_array, int nbin, int mbin){
         // Construct from input array
@@ -307,10 +356,25 @@ class CorrelationFunction{
         mumax=mu_array[mbin-1];
         mudim=mu_array[1]-mu_array[0];
 
+=======
+    
+    CorrelationFunction(Float* xi_array, Float * r_array, Float* mu_array, int nbin, int mbin){
+        // Construct from input array
+    
+        xsize=nbin;
+        ysize=mbin;
+        rmin=r_array[0];
+        rmax=r_array[nbin-1];
+        mumin=mu_array[0];
+        mumax=mu_array[mbin-1];
+        mudim=mu_array[1]-mu_array[0];
+        
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
         // Allocate memory
         x = (double *)malloc(sizeof(double)*xsize);
         y = (double *)malloc(sizeof(double)*ysize);
         z = (double *)malloc(sizeof(double)*xsize*ysize);
+<<<<<<< HEAD
 
         // Read in x,y,z grids
         x[0]=0;
@@ -320,10 +384,20 @@ class CorrelationFunction{
             x[i]=r_array[i-1];
             for(int j=0;j<ysize;j++){
                 z[ct+ysize]=xi_array[ct]*pow(x[i],2.); // also multiply by r^2
+=======
+        
+        // Read in x,y,z grids
+        int ct=0;
+        for(int i=0;i<xsize;i++){
+            x[i]=r_array[i];
+            for(int j=0;j<ysize;j++){
+                z[ct]=xi_array[ct]*pow(x[i],2.); // also multiply by r^2
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
                 ct++;
             }
         }
         assert(ct==nbin*mbin);
+<<<<<<< HEAD
 
         // Define r ranges (including zero)
         rmin=x[0];
@@ -334,6 +408,13 @@ class CorrelationFunction{
         // activate the interpolator function here
         interpolate();
 
+=======
+        
+        for(int j=0;j<ysize;j++) y[j]=mu_array[j];
+        
+        // activate the interpolator function here
+        interpolate();    
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
     }
 
     ~CorrelationFunction() {

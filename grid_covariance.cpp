@@ -79,9 +79,15 @@ STimer TotalTime;
 
 
 int main(int argc, char *argv[]) {
+<<<<<<< HEAD
 
 	Parameters par=Parameters(argc,argv);
 
+=======
+    
+	Parameters par=Parameters(argc,argv);
+        
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
     int max_no_functions=1; // required number of xi / random_draws / jackknife_weight functions
     int no_fields=1; // number of different fields used
     if(par.multi_tracers==true){
@@ -91,14 +97,22 @@ int main(int argc, char *argv[]) {
 #if (defined LEGENDRE)||(defined THREE_PCF)||(defined POWER)
     // Define all possible survey correction functions
     SurveyCorrection all_survey[max_no_functions]; // create empty functions
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
 #ifdef THREE_PCF
     SurveyCorrection tmp_sc(&par);
     all_survey[0].copy(&tmp_sc); // save into global memory
 #else
     SurveyCorrection tmp_sc(&par,1,1);
     all_survey[0].copy(&tmp_sc); // save into global memory
+<<<<<<< HEAD
 
+=======
+   
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
     if(par.multi_tracers==true){
         SurveyCorrection tmp_sc12(&par,1,2), tmp_sc2(&par,2,2);
         all_survey[1].copy(&tmp_sc2);
@@ -109,20 +123,36 @@ int main(int argc, char *argv[]) {
     // Read in jackknife weights and RR pair counts (if JACKKNIFE is not defined just includes RR counts)
     JK_weights all_weights[max_no_functions]; // create empty functions
 
+<<<<<<< HEAD
 
     JK_weights tmp(&par,1,1);
     all_weights[0].copy(&tmp); // save into global memory
 
+=======
+    
+    JK_weights tmp(&par,1,1);
+    all_weights[0].copy(&tmp); // save into global memory
+    
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
     if(par.multi_tracers==true){
         JK_weights tmp12(&par,1,2), tmp2(&par,2,2);
         all_weights[1].copy(&tmp2);
         all_weights[2].copy(&tmp12);
+<<<<<<< HEAD
     }
 #endif
 
     // Now read in particles to grid:
     Grid all_grid[no_fields]; // create empty grids
 
+=======
+    }    
+#endif
+    
+    // Now read in particles to grid:
+    Grid all_grid[no_fields]; // create empty grids
+    
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
     for(int index=0;index<no_fields;index++){
         Float3 shift;
         Particle *orig_p;
@@ -146,7 +176,11 @@ int main(int argc, char *argv[]) {
         // set as periodic if we make the random particles
         par.perbox = true;
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
         if (par.qinvert) invert_weights(orig_p, par.np);
         if (par.qbalance) balance_weights(orig_p, par.np);
 
@@ -178,12 +212,21 @@ int main(int argc, char *argv[]) {
 
         // Now save grid to global memory:
         all_grid[index].copy(&tmp_grid);
+<<<<<<< HEAD
 
         free(orig_p); // Particles are now only stored in grid
 
         fflush(NULL);
     }
 
+=======
+        
+        free(orig_p); // Particles are now only stored in grid
+        
+        fflush(NULL);
+    }
+    
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
 #if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)
     // Now rescale weights based on number of particles (whether or not using jackknives)
     all_weights[0].rescale(all_grid[0].norm,all_grid[0].norm);
@@ -192,6 +235,7 @@ int main(int argc, char *argv[]) {
         all_weights[2].rescale(all_grid[0].norm,all_grid[1].norm);
     }
 #endif
+<<<<<<< HEAD
 
     // Now define all possible correlation functions and random draws:
     CorrelationFunction all_cf[max_no_functions];
@@ -204,12 +248,27 @@ int main(int argc, char *argv[]) {
 
     if(par.multi_tracers==true){
         CorrelationFunction tmp_cf12(par.corname12,par.mbin_cf,par.mumax-par.mumin), tmp_cf2(par.corname2,par.mbin_cf,par.mumax-par.mumin);
+=======
+    
+    // Now define all possible correlation functions and random draws:
+    CorrelationFunction all_cf[max_no_functions];
+    RandomDraws all_rd[max_no_functions];
+    
+    CorrelationFunction tmp_cf(par.corname,par.mbin,par.mumax-par.mumin);
+    all_cf[0].copy_function(&tmp_cf);
+    RandomDraws tmp_rd(&tmp_cf,&par,NULL,0);
+    all_rd[0].copy(&tmp_rd);
+    
+    if(par.multi_tracers==true){
+        CorrelationFunction tmp_cf12(par.corname12,par.mbin,par.mumax-par.mumin), tmp_cf2(par.corname2,par.mbin,par.mumax-par.mumin);
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
         all_cf[1].copy_function(&tmp_cf2);
         all_cf[2].copy_function(&tmp_cf12);
         RandomDraws rd2(&tmp_cf2,&par,NULL,0), rd12(&tmp_cf12,&par,NULL,0);
         all_rd[1].copy(&rd2);
         all_rd[2].copy(&rd12);
     }
+<<<<<<< HEAD
 
     // Rescale correlation functions
     rescale_correlation rescale(&par);
@@ -220,6 +279,18 @@ int main(int argc, char *argv[]) {
     compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],1); // final digit is iteration number
     compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],2);
 
+=======
+    
+    // Rescale correlation functions
+    rescale_correlation rescale(&par);
+    rescale.refine_wrapper(&par, all_grid, all_cf, all_rd, max_no_functions);
+    
+#ifdef THREE_PCF
+    // Compute threePCF integrals
+    compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],0); // final digit is iteration number
+    compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],1); 
+        
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
 #elif (defined LEGENDRE || defined POWER)
     // Compute integrals
     compute_integral(all_grid,&par,all_cf,all_rd,all_survey,1,1,1,1,1); // final digit is iteration number
@@ -253,3 +324,8 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
