@@ -51,11 +51,7 @@ public:
     }
 private:
     inline int getbin(Float r, Float mu){
-<<<<<<< HEAD
         // Linearizes 2D indices - needs CORRELATION FUNCTION bins here, not covariance binning (i.e. should extend to zero)
-=======
-        // Linearizes 2D indices - needs CORRELATION FUNCTION bins here, not covariance binnin (i.e. should extend to zero)
->>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
 
         // First define which r bin we are in;
         int which_bin = -1; // default if outside bins
@@ -83,10 +79,6 @@ public:
             if(prim_ids[i]==pj_id){
                 continue; // don't self-count
             }
-<<<<<<< HEAD
-=======
-
->>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
             pi = pi_list[i]; // first particle
             integral->cleanup_l(pi.pos,pj.pos,rij_mag,rij_mu); // define |r_ij| and ang(r_ij)
             tmp_bin = getbin(rij_mag, rij_mu); // bin for each particle
@@ -292,12 +284,8 @@ public:
         // Compute ratios
         Float true_xi,old_xi;
         for(int i=0;i<nbin;i++){
-<<<<<<< HEAD
           for(int j=0;j<mbin;j++){
-=======
-            for(int j=0;j<mbin;j++){
->>>>>>> 1822107b9340b8e7d0ce82303f62cf7b35d03f8c
-                old_xi = old_cf->xi(r_centers[i],mu_centers[j]);
+                 old_xi = old_cf->xi(r_centers[i],mu_centers[j]);
                 true_xi = true_cf->xi(r_centers[i],mu_centers[j]);
                 // Rescale value
                 new_xi_array[i*mbin+j]=true_xi/full_xi_function.cf_estimate[i*mbin+j]*old_xi;
