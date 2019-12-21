@@ -47,4 +47,4 @@ Main Authors:
 
 Please cite `O'Connell et al. 2016 <https://arxiv.org/abs/1510.01740>`_, `O'Connell & Eisenstein 2018 <https://arxiv.org/abs/1808.05978>`_ , `Philcox et al. 2019 <https://arxiv.org/abs/1904.11070>`_ and `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_ when using this code in your research.
 
-Note that many of the code modules and convenience functions are shared with the small-scale power spectrum estimator code `HIPSTER <https://HIPSTER.readthedocs.io>`_ developed by Oliver Philcox and Daniel Eisenstein.
+Note that many of the code modules and convenience functions are shared with the small-scale power spectrum estimator code `HIPSTER <https://HIPSTER.readthedocs.io>`_, developed by Oliver Philcox and Daniel Eisenstein.
