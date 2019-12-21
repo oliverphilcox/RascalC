@@ -8,7 +8,7 @@ To install RascalC, simply clone the Github repository and compile the C++ code 
     make
 
 **NB**: RascalC can be run in various modes by adding compiler flags in the ``Makefile``. See :doc:`getting-started` and :doc:`main-code` for more information.
-    
+
 Once RascalC is installed, see the :doc:`getting-started` and :doc:`tutorial` sections.
 
 .. _dependencies:
@@ -33,3 +33,18 @@ For the Python pre- and post-processing we require:
 
 These can be simply installed with pip or conda.
 
+.. _acknowledgements:
+
+Acknowledgements
+-----------------
+
+Main Authors:
+
+- Oliver H. E. Philcox (Princeton / Harvard)
+- Daniel J. Eisenstein (Harvard)
+- Ross O'Connell (CMU)
+- Alexander Wiegand
+
+Please cite `O'Connell et al. 2016 <https://arxiv.org/abs/1510.01740>`_, `O'Connell & Eisenstein 2018 <https://arxiv.org/abs/1808.05978>`_ , `Philcox et al. 2019 <https://arxiv.org/abs/1904.11070>`_ and `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_ when using this code in your research.
+
+Note that many of the code modules and convenience functions are shared with the small-scale power spectrum estimator code `HIPSTER <https://HIPSTER.readthedocs.io>`_ developed by Oliver Philcox and Daniel Eisenstein.
