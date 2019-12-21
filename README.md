@@ -9,12 +9,11 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 
 ***New for version 2***: Legendre moment covariances and the 3PCF
 
-
 ## Authors
 
-- Oliver Philcox (Princeton)
+- Oliver Philcox (Princeton / Harvard)
 - Daniel Eisenstein (Harvard)
 - Ross O'Connell (Pittsburgh)
 - Alexander Wiegand (Garching)
 
-We thank Yuting Wang and Ryuichiro Hada for alerting us to minor issues with the code and documentation.
+We thank Yuting Wang and Ryuichiro Hada for pointing out minor issues in the code and documentation.

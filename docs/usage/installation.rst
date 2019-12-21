@@ -42,8 +42,8 @@ Main Authors:
 
 - Oliver H. E. Philcox (Princeton / Harvard)
 - Daniel J. Eisenstein (Harvard)
-- Ross O'Connell (CMU)
-- Alexander Wiegand
+- Ross O'Connell (Pittsburgh)
+- Alexander Wiegand (Garching)
 
 Please cite `O'Connell et al. 2016 <https://arxiv.org/abs/1510.01740>`_, `O'Connell & Eisenstein 2018 <https://arxiv.org/abs/1808.05978>`_ , `Philcox et al. 2019 <https://arxiv.org/abs/1904.11070>`_ and `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_ when using this code in your research.
 
