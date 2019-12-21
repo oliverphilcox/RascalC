@@ -6,12 +6,13 @@ import sys,os
 
 # PARAMETERS
 if len(sys.argv)!=6 and len(sys.argv)!=8:
-    print("Usage: python post_process_default_multi.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]")
+    print("Usage: python post_process_legendre_multi.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]")
     sys.exit()
 
 file_root = str(sys.argv[1])
 n = int(sys.argv[2])
-m = int(sys.argv[3])
+max_l = int(sys.argv[3])
+m = max_l//2+1
 n_samples = int(sys.argv[4])
 outdir = str(sys.argv[5])
 if len(sys.argv)==8:
