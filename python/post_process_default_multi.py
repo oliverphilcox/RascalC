@@ -1,4 +1,4 @@
-## Script to post-process the single-field Legendre binned integrals computed by the C++ code. This computes the shot-noise rescaling parameter, alpha, from a data derived covariance matrix.
+## Script to post-process the single-field Legendre binned integrals computed by the C++ code, given a shot-noise rescaling parameter alpha.
 ## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 
 import numpy as np
@@ -8,7 +8,7 @@ import sys,os
 if len(sys.argv)!=6 and len(sys.argv)!=8:
     print("Usage: python post_process_default_multi.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]")
     sys.exit()
-        
+
 file_root = str(sys.argv[1])
 n = int(sys.argv[2])
 m = int(sys.argv[3])
@@ -33,7 +33,7 @@ I4 = [1,1,1,2,2,2,2]
 
 
 def matrix_readin(suffix='full'):
-    """Read in multi-field Legendre covariance matrices. This returns lists of covariance matrices"""
+    """Read in multi-field covariance matrices. This returns lists of covariance matrices and a combined covariance matrix."""
 
     ## Define arrays for covariance matrices
     c2s=np.zeros([2,2,n*m,n*m])
@@ -44,25 +44,34 @@ def matrix_readin(suffix='full'):
         index4="%d%d,%d%d"%(I1[ii],I2[ii],I3[ii],I4[ii])
         index3="%d,%d%d"%(I2[ii],I1[ii],I3[ii])
         index2="%d%d"%(I1[ii],I2[ii])
-        
+
         j1,j2,j3,j4=I1[ii]-1,I2[ii]-1,I3[ii]-1,I4[ii]-1 # internal indexing
 
         # Define input files
         file_root_all=file_root+'CovMatricesAll/'
         jndex=index2
-        
+
         if suffix=='full':
             counts_file = file_root_all+'total_counts_n%d_m%d_%s.txt'%(n,m,index4)
             # Load total number of counts
             total_counts=np.loadtxt(counts_file)
             print("Reading in integral components for C_{%s}, which used %.2e pairs, %.2e triples and %.2e quads of particles"%(index4,total_counts[0],total_counts[1],total_counts[2]))
-        else: 
-            print("Reading in integral components for C_{%s}, iteration %s"%(index4,suffix))
-         
+        else:
+            pass
+            #print("Reading in integral components for C_{%s}, iteration %s"%(index4,suffix))
+
         # Load full integrals
         c2=np.diag(np.loadtxt(file_root_all+'c2_n%d_m%d_%s_%s.txt' %(n,m,index2,suffix)))
         c3=np.loadtxt(file_root_all+'c3_n%d_m%d_%s_%s.txt' %(n,m,index3,suffix))
         c4=np.loadtxt(file_root_all+'c4_n%d_m%d_%s_%s.txt' %(n,m,index4,suffix))
+
+        # Add input symmetries
+        if(j1==j2):
+            c2 = 0.5*(c2+c2.T)
+        if(j1==j3):
+            c3 = 0.5*(c3+c3.T)
+        if((j1==j3)and(j2==j4)):
+            c4 = 0.5*(c4+c4.T)
 
         # Now save components
         c2s[j1,j2]=c2
@@ -71,7 +80,7 @@ def matrix_readin(suffix='full'):
             c4s[j1,j2,j3,j4]+=0.5*c4 # to account for xi_ik xi_jl = xi_il xi_jk assumption
         else:
             c4s[j1,j2,j3,j4]=c4
-        
+
         # Add symmetries (automatically accounts for xi assumption):
         if j1!=j3:
             c3s[j2,j3,j1]=c3
@@ -89,7 +98,7 @@ def matrix_readin(suffix='full'):
                 c4s[j3,j4,j2,j1]=c4.T
                 if j3!=j4:
                     c4s[j4,j3,j2,j1]=c4.T
-                    
+
     def construct_fields(j1,j2,j3,j4,alpha1,alpha2):
         # Reconstruct the full field for given input fields and rescaling parameters
 
@@ -102,29 +111,34 @@ def matrix_readin(suffix='full'):
         full=c4s[j1,j2,j3,j4]+0.25*alpha1*(d_xw*c3s[j1,j2,j3]+d_xz*c3s[j1,j2,j4])+0.25*alpha2*(d_yw*c3s[j2,j1,j3]+d_yz*c3s[j2,j1,j4])+0.5*alpha1*alpha2*(d_xw*d_yz+d_xz*d_yw)*c2s[j1,j2]
         return full
 
-    c_tot = np.zeros([2,2,2,2,n*m,n*m])
-    
-    for j1 in range(2):
-        for j2 in range(2):
-            for j3 in range(2):
-                for j4 in range(2):
-                    c_tot[j1,j2,j3,j4]=construct_fields(j1,j2,j3,j4,alpha_1,alpha_2)
+    # Index in ordering (P_11,P_12,P_22)
+    cov_indices = [[0,0],[0,1],[1,1]]
 
-    return c_tot
+    c_tot = np.zeros([3,3,n*m,n*m]) # array with each individual covariance accessible
+    c_comb = np.zeros([3*n*m,3*n*m]) # full array suitable for inversion
+
+    for j1 in range(3):
+        ind1,ind2 = cov_indices[j1]
+        for j2 in range(3):
+            ind3,ind4 = cov_indices[j2]
+            tmp=construct_fields(ind1,ind2,ind3,ind4,alpha_1,alpha_2)
+            c_tot[j1,j2] = tmp
+            c_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmp
+
+    return c_tot,0.5*(c_comb+c_comb.T) # add all remaining symmetries
 
 # Load full matrices
-c_tot = matrix_readin()
-n_bins = len(c_tot[0,0,0,0])
+c_tot, c_comb = matrix_readin()
+n_bins = len(c_tot[0,0])
 
-# Load subsampled matrices
+# Load subsampled matrices (all submatrices combined)
 c_subsamples=[]
 for i in range(n_samples):
-    tmp=matrix_readin(i)
+    _,tmp=matrix_readin(i)
     c_subsamples.append(tmp)
 
 # Now compute all precision matrices
-prec_tot = np.zeros_like(c_tot)
-iden = np.eye(len(c_tot[0,0,0,0]))
+iden = np.eye(len(c_comb))
 
 N_eff = np.zeros([2,2,2,2])
 D_est = np.zeros_like(c_tot)
@@ -145,19 +159,13 @@ def compute_precision(entire_matrix,subsamples):
     return precision,N_eff_D,D_est
 
 print("Computing precision matrices and N_eff")
-for j1 in range(2):
-        for j2 in range(2):
-            for j3 in range(2):
-                for j4 in range(2):
-                    full_subsamples = [c_sub[j1,j2,j3,j4] for c_sub in c_subsamples]
-                    prec_tot[j1,j2,j3,j4],N_eff[j1,j2,j3,j4],D_est[j1,j2,j3,j4]=compute_precision(c_tot[j1,j2,j3,j4],full_subsamples)
-                    if N_eff[j1,j2,j3,j4]==0:
-                        print("N_eff is negative for C^{%d%d,%d%d}! Setting to zero"%(j1+1,j2+1,j3+1,j4+1))
+prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
 
 output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_Legendre_n%d_m%d.npz'%(n,m)
-np.savez(output_name,full_theory_covariance=c_tot,
+np.savez(output_name,full_theory_covariance=c_comb,
+         all_covariances = c_tot,
          shot_noise_rescaling=[alpha_1,alpha_2],
-         full_theory_precision=prec_tot,
+         full_theory_precision=prec_comb,
          N_eff=N_eff, full_theory_D_matrix = D_est,
          individual_theory_covariances = c_subsamples)
 

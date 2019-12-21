@@ -1,5 +1,5 @@
 ## Script to post-process the multi-field integrals computed by the C++ code. This computes the shot-noise rescaling parameters, alpha_i, from data derived covariance matrices.
-## We output the data and theory jackknife covariance matrices, in addition to full theory covariance matrices and (quadratic-bias corrected) precision matrices. 
+## We output the data and theory jackknife covariance matrices, in addition to full theory covariance matrices and (quadratic-bias corrected) precision matrices.
 ## The effective number of samples, N_eff, is also computed.
 
 import numpy as np
@@ -9,7 +9,7 @@ import sys,os
 if len(sys.argv)!=9:
     print("Usage: python post_process_jackknife_multi.py {XI_JACKKNIFE_FILE_11} {XI_JACKKNIFE_FILE_12} {XI_JACKKNIFE_FILE_22} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}")
     sys.exit()
-        
+
 jackknife_file_11 = str(sys.argv[1])
 jackknife_file_12 = str(sys.argv[2])
 jackknife_file_22 = str(sys.argv[3])
@@ -43,17 +43,16 @@ xi_jack_all = [xi_jack_11,xi_jack_22]
 good_jk=np.unique(np.where(np.isfinite(xi_jack_11)&np.isfinite(xi_jack_22)&np.isfinite(xi_jack_12))[0])
 print("Using %d out of %d jackknives"%(len(good_jk),n_jack))
 
-# Initialize full data covariance matrix
-data_cov = np.zeros([2,2,2,2,n_bins,n_bins])
+# Initialize full data covariance matrix (ordering [xi_11, xi_12, xi_22])
+data_cov = np.zeros([3*n_bins,3*n_bins])
 
-xi_all = np.zeros([2,2,len(good_jk),n_bins])
+xi_all = np.zeros([len(good_jk),3*n_bins])
 weights_all = np.zeros_like(xi_all)
 
 # Load in all xi functions
-xi_all[0,0]=xi_jack_11[good_jk]
-xi_all[0,1]=xi_jack_12[good_jk]
-xi_all[1,0]=xi_jack_12[good_jk]
-xi_all[1,1]=xi_jack_22[good_jk]
+xi_all[:,:n_bins]=xi_jack_11[good_jk]
+xi_all[:,n_bins:2*nbins]=xi_jack_12[good_jk]
+xi_all[:,2*n_bins:]=xi_jack_22[good_jk]
 
 # Load in all weights:
 weight_file11 = weight_dir+'jackknife_weights_n%d_m%d_j%d_11.dat'%(n,m,n_jack)
@@ -62,30 +61,23 @@ weight_file22 = weight_dir+'jackknife_weights_n%d_m%d_j%d_22.dat'%(n,m,n_jack)
 weights11 = np.loadtxt(weight_file11)[:,1:]
 weights12 = np.loadtxt(weight_file12)[:,1:]
 weights22 = np.loadtxt(weight_file22)[:,1:]
-weights_all[0,0]=weights11[good_jk]
-weights_all[0,1]=weights12[good_jk]
-weights_all[1,0]=weights12[good_jk]
-weights_all[1,1]=weights22[good_jk]
+weights_all[:,:n_bins]=weights11[good_jk]
+weights_all[:,n_bins:2*n_bins]=weights12[good_jk]
+weights_all[:,2*n_bins:]=weights22[good_jk]
 
-# Compute covariance terms:
-tmp_cov = np.zeros([2,2,len(good_jk),n_bins])
-for j1 in range(2):
-    for j2 in range(2):
-        mean_xi = np.sum(xi_all[j1,j2]*weights_all[j1,j2],axis=0)/np.sum(weights_all[j1,j2],axis=0)
-        tmp_cov[j1,j2] = weights_all[j1,j2]*(xi_all[j1,j2]-mean_xi)
+# Compute full covariance matrix:
+tmp_cov = np.zeros([len(good_jk),3*n_bins])
+mean_xi = np.sum(xi_all*weights_all,axis=0)/np.sum(weights_all,axis=0)
+tmp_cov = weights_all*(xi_all-mean_xi)
 
-print("Computing all data covariance matrices")
+print("Computing full data covariance matrix")
 # Now compute covariance matrix:
-for j1 in range(2):
-    for j2 in range(2):
-        for j3 in range(2):
-            for j4 in range(2):
-                num = np.matmul(tmp_cov[j1,j2].T,tmp_cov[j3,j4])
-                denom = np.matmul(weights_all[j1,j2].T,weights_all[j3,j4])
-                data_cov[j1,j2,j3,j4] = num/(np.ones_like(denom)-denom)
+num = np.matmul(tmp_cov.T,tmp_cov)
+denom = np.matmul(weights_all.T,weights_all)
+data_cov = num/(np.ones_like(denom)-denom)
 
 def load_matrices(index,field,jack=True):
-    """Load intermediate or full autocovariance matrices. 
+    """Load intermediate or full autocovariance matrices.
     The field parameter controls which field covariance matrix to load"""
     if jack:
         cov_root = file_root+'CovMatricesJack/'
@@ -102,7 +94,7 @@ def load_matrices(index,field,jack=True):
         EEaA2 = np.loadtxt(cov_root+'EE2'+suffix2)
         RRaA1 = np.loadtxt(cov_root+'RR1'+suffix2)
         RRaA2 = np.loadtxt(cov_root+'RR2'+suffix2)
-    
+
         # Compute disconnected term
         w_aA1 = RRaA1/np.sum(RRaA1,axis=0)
         w_aA2 = RRaA2/np.sum(RRaA2,axis=0)
@@ -112,9 +104,14 @@ def load_matrices(index,field,jack=True):
         fact = np.ones_like(c4)-np.matmul(np.asmatrix(weights).T,np.asmatrix(weights))
         cx = np.asarray(np.matmul(diff1.T,diff2)/np.matmul(fact,RRaRRb))
         c4+=cx
-    
+
     # Now symmetrize and return matrices
     return c2,0.5*(c3+c3.T),0.5*(c4+c4.T)
+
+# Load autocovariance from data-covariance
+data_cov_11 = data_cov[:n_bins,:n_bins]
+data_cov_22 = data_cov[2*n_bins:,2*n_bins:]
+auto_data_cov = [data_cov_11,data_cov_22]
 
 alpha_best = np.zeros(2)
 
@@ -135,8 +132,8 @@ for i,index in enumerate(indices):
     weights = weights[good_jk]
 
     # Read in data covariance matrix
-    this_data_cov = data_cov[i,i,i,i]
-    
+    this_data_cov = auto_data_cov[i]
+
     # Load in full jackknife theoretical matrices
     print("Loading best estimate of jackknife covariance matrix for field %d"%(i+1))
     c2,c3,c4=load_matrices('full',i+1)
@@ -148,7 +145,7 @@ for i,index in enumerate(indices):
     if min(eig_c4)<-1.*min(eig_c2):
         print("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
         sys.exit()
-    
+
     # Load in partial jackknife theoretical matrices
     c2s,c3s,c4s=[],[],[]
     for j in range(n_samples):
@@ -179,7 +176,7 @@ for i,index in enumerate(indices):
         logdet = np.linalg.slogdet(Psi_alpha)
         if logdet[0]<0:
             # Remove any dodgy inversions
-            return np.inf        
+            return np.inf
         return np.trace(np.matmul(Psi_alpha,this_data_cov))-logdet[1]
 
     # Now optimize for shot-noise rescaling parameter alpha
@@ -187,7 +184,7 @@ for i,index in enumerate(indices):
     from scipy.optimize import fmin
     optimal_alpha = fmin(neg_log_L1,1.)
     print("Optimization complete for field %d - optimal rescaling parameter is alpha_%d = %.6f"%(i+1,i+1,optimal_alpha))
-    
+
     alpha_best[i]=optimal_alpha
 
 # input indices
@@ -204,13 +201,13 @@ def matrix_readin(suffix='full'):
     RRs=np.zeros([2,2,n*m])
     diff1s,diff2s,JK_weights=[np.zeros([2,2,n_jack,n*m]) for _ in range(3)]
     c3s,c3js=[np.zeros([2,2,2,n*m,n*m]) for _ in range(2)]
-    c4s,c4js=[np.zeros([2,2,2,2,n*m,n*m]) for _ in range(2)]  
+    c4s,c4js=[np.zeros([2,2,2,2,n*m,n*m]) for _ in range(2)]
 
     for ii in range(len(I1)):
         index4="%d%d,%d%d"%(I1[ii],I2[ii],I3[ii],I4[ii])
         index3="%d,%d%d"%(I2[ii],I1[ii],I3[ii])
         index2="%d%d"%(I1[ii],I2[ii])
-        
+
         j1,j2,j3,j4=I1[ii]-1,I2[ii]-1,I3[ii]-1,I4[ii]-1 # internal indexing
 
         # Define input files
@@ -221,17 +218,17 @@ def matrix_readin(suffix='full'):
             jndex='12' # to get correct weights
         rr_true_file =weight_dir+'binned_pair_counts_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,jndex)
         weights_file = weight_dir+'jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,jndex)
-        
+
         if suffix=='full':
             counts_file = file_root_all+'total_counts_n%d_m%d_%s.txt'%(n,m,index4)
             # Load total number of counts
             total_counts=np.loadtxt(counts_file)
             print("Reading in integral components for C_{%s}, which used %.2e pairs, %.2e triples and %.2e quads of particles"%(index4,total_counts[0],total_counts[1],total_counts[2]))
-        else: 
+        else:
             print("Reading in integral components for C_{%s}, iteration %s"%(index4,suffix))
-            
+
         # Load jackknife weights
-        weights=np.loadtxt(weights_file)[:,1:] 
+        weights=np.loadtxt(weights_file)[:,1:]
 
         # Load pair counts
         rr_true = np.loadtxt(rr_true_file)
@@ -273,7 +270,7 @@ def matrix_readin(suffix='full'):
         else:
             c4s[j1,j2,j3,j4]=c4
             c4js[j1,j2,j3,j4]=c4j
-        
+
         # Add symmetries (automatically accounts for xi assumption):
         if j1!=j3:
             c3s[j2,j3,j1]=c3
@@ -299,7 +296,7 @@ def matrix_readin(suffix='full'):
                 if j3!=j4:
                     c4s[j4,j3,j2,j1]=c4.T
                     c4js[j4,j3,j2,j1]=c4j.T
-                    
+
     def construct_fields(j1,j2,j3,j4,alpha1,alpha2):
         # Reconstruct the full field for given input fields and rescaling parameters
 
@@ -319,34 +316,40 @@ def matrix_readin(suffix='full'):
         jack=c4js[j1,j2,j3,j4]+0.25*alpha1*(d_xw*c3js[j1,j2,j3]+d_xz*c3js[j1,j2,j4])+0.25*alpha2*(d_yw*c3js[j2,j1,j3]+d_yz*c3js[j2,j1,j4])+0.5*alpha1*alpha2*(d_xw*d_yz+d_xz*d_yw)*c2js[j1,j2]+cxj
         return full,jack
 
-    c_tot = np.zeros([2,2,2,2,n*m,n*m])
-    cj_tot = np.zeros([2,2,2,2,n*m,n*m])
+    # Index in ordering (P_11,P_12,P_22)
+    cov_indices = [[0,0],[0,1],[1,1]]
 
-    for j1 in range(2):
-        for j2 in range(2):
-            for j3 in range(2):
-                for j4 in range(2):
-                    c_tot[j1,j2,j3,j4],cj_tot[j1,j2,j3,j4]=construct_fields(j1,j2,j3,j4,alpha_best[0],alpha_best[1])
+    c_tot = np.zeros([3,3,n*m,n*m]) # array with each individual covariance accessible
+    cj_tot = np.zeros([3,3,n*m,n*m])
+    c_comb = np.zeros([3*n*m,3*n*m]) # full array suitable for inversion
+    cj_comb = np.zeros([3*n*m,3*n*m])
 
-    return c_tot,cj_tot
+    for j1 in range(3):
+        ind1,ind2 = cov_indices[j1]
+        for j2 in range(3):
+            ind3,ind4 = cov_indices[j2]
+            tmp,tmpj=construct_fields(ind1,ind2,ind3,ind4,alpha_1,alpha_2)
+            c_tot[j1,j2] = tmp
+            cj_tot[j1,j2] = tmpj
+            c_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmp
+            cj_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmpj
+
+    return c_tot,0.5*(c_comb+c_comb.T), cj_tot, 0.5*(cj_comb,cj_comb.T) # add all remaining symmetries
 
 # Load full matrices
-c_tot,cj_tot = matrix_readin()
+c_tot,c_comb, cj_tot, cj_comb = matrix_readin()
+n_bins = len(c_tot[0,0])
 
 # Load subsampled matrices
 c_subsamples,cj_subsamples=[],[]
 for i in range(n_samples):
-    tmp=matrix_readin(i)
-    c_subsamples.append(tmp[0])
-    cj_subsamples.append(tmp[1])
+    _,tmp,_,tmpj=matrix_readin(i)
+    c_subsamples.append(tmp)
+    cj_subsamples.append(tmpj)
+
 
 # Now compute all precision matrices
-prec_tot = np.zeros_like(c_tot)
-prec_j_tot = np.zeros_like(cj_tot)
-iden = np.eye(len(c_tot[0,0,0,0]))
-
-N_eff = np.zeros([2,2,2,2])
-D_est = np.zeros_like(c_tot)
+iden = np.eye(len(c_comb))
 
 def compute_precision(entire_matrix,subsamples):
     summ=0.
@@ -355,26 +358,30 @@ def compute_precision(entire_matrix,subsamples):
         summ+=np.matmul(np.linalg.inv(c_excl_i),subsamples[i])
     D_est = (summ/n_samples-iden)*(n_samples-1.)/n_samples
     logdetD = np.linalg.slogdet(D_est)
-    D_value = logdetD[0]*np.exp(logdetD[1]/n_bins)
-    N_eff_D = (n_bins+1.)/D_value+1.
+    if logdetD[0]<0:
+        N_eff_D = 0.
+    else:
+        D_value = logdetD[0]*np.exp(logdetD[1]/n_bins)
+        N_eff_D = (n_bins+1.)/D_value+1.
     precision = np.matmul(iden-D_est,np.linalg.inv(entire_matrix))
     return precision,N_eff_D,D_est
 
 print("Computing precision matrices and N_eff")
-for j1 in range(2):
-        for j2 in range(2):
-            for j3 in range(2):
-                for j4 in range(2):
-                    full_subsamples = [c_sub[j1,j2,j3,j4] for c_sub in c_subsamples]
-                    jack_subsamples = [cj_sub[j1,j2,j3,j4] for cj_sub in cj_subsamples]
-                    prec_tot[j1,j2,j3,j4],N_eff[j1,j2,j3,j4],D_est[j1,j2,j3,j4]=compute_precision(c_tot[j1,j2,j3,j4],full_subsamples)
-                    prec_j_tot[j1,j2,j3,j4],_,_=compute_precision(cj_tot[j1,j2,j3,j4],jack_subsamples)    
+prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
+precj_comb,Nj_eff,Dj_est = compute_precision(cj_comb,cj_subsamples)
 
 output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack)
-np.savez(output_name,jackknife_theory_covariance=cj_tot,full_theory_covariance=c_tot,
-         jackknife_data_covariance=data_cov,shot_noise_rescaling=alpha_best,
-         jackknife_theory_precision=prec_j_tot,full_theory_precision=prec_tot,
-         N_eff=N_eff, full_theory_D_matrix = D_est,
+
+np.savez(output_name,jackknife_theory_covariance=cj_comb,
+         full_theory_covariance=c_comb,
+         all_covariances=c_tot,
+         all_jackknife_covariances=cj_tot,
+         shot_noise_rescaling=alpha_best,
+         full_theory_precision=prec_comb,
+         jackknife_theory_precision=precj_comb,
+         N_eff=N_eff,
+         full_theory_D_matrix=D_est,
+         jackknife_data_covariance=data_cov,
          individual_theory_covariances = c_subsamples)
 
 print("Saved output covariance matrices as %s"%output_name)
