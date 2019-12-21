@@ -8,7 +8,7 @@ RascalC is a code to quickly estimate covariance matrices from two- or three-poi
 
 The main estimators are described in `O'Connell et al. 2016 <https://arxiv.org/abs/1510.01740>`_, `O'Connell & Eisenstein 2018 <https://arxiv.org/abs/1808.05978>`_ , `Philcox et al. 2019 <https://arxiv.org/abs/1904.11070>`_ and `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_ with the third and fourth papers discussing the new algorithms and C++ implementation. RascalC was also used in Philcox & Eisenstein (2019, accepted by MNRAS, `arXiv <https://arxiv.org/abs/1912.01010>`_) to compute the covariance of configuration-space power spectrum estimators.
 
-The source code is publicly available on `Github <https://github.com/oliverphilcox/RascalC>`_ and builds upon the Python package `Rascal <https://github.com/rcoconnell/Rascal>`_. For general usage, comprehensive tutorials (:doc:`tutorial` and :doc:`tutorial_periodic`) are provided.
+The source code is publicly available on `Github <https://github.com/oliverphilcox/RascalC>`_ and builds upon the Python package `Rascal <https://github.com/rcoconnell/Rascal>`_. For general usage, comprehensive tutorials (:doc:`usage/tutorial` and :doc:`usage/tutorial_periodic`) are provided.
 
 .. toctree::
    :maxdepth: 2
