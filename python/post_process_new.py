@@ -157,14 +157,13 @@ def compute_precision(entire_matrix,subsamples):
 
 print("Computing precision matrices and N_eff")
 prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
-print("N_eff = %.2e"%N_eff)
 
 output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_Legendre_n%d_m%d.npz'%(n,m)
 
 np.savez(output_name,
        full_theory_covariance = c_comb,
        shot_noise_rescaling = [alpha_1,alpha_2],
-       full_theory_precision = prec_tot,
+       full_theory_precision = prec_comb,
        N_eff=N_eff,
        full_theory_D_matrix = D_est,
        individual_theory_covariances = c_subsamples)
