@@ -138,13 +138,6 @@ for i in range(n_samples):
     c_subsamples.append(tmp)
 
 # Now compute all precision matrices
-prec_tot = np.zeros_like(c_tot)
-iden = np.eye(len(c_tot[0,0,0,0]))
-
-N_eff = np.zeros([2,2,2,2])
-D_est = np.zeros_like(c_tot)
-
-# Now compute all precision matrices
 iden = np.eye(len(c_comb))
 
 def compute_precision(entire_matrix,subsamples):
