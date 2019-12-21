@@ -48,7 +48,7 @@ def matrix_readin(suffix='full'):
         j1,j2,j3,j4=I1[ii]-1,I2[ii]-1,I3[ii]-1,I4[ii]-1 # internal indexing
 
         # Define input files
-        file_root_all=file_root#+'CovMatricesAll/'
+        file_root_all=file_root+'CovMatricesAll/'
         jndex=index2
 
         if suffix=='full':
@@ -57,21 +57,12 @@ def matrix_readin(suffix='full'):
             total_counts=np.loadtxt(counts_file)
             print("Reading in integral components for C_{%s}, which used %.2e pairs, %.2e triples and %.2e quads of particles"%(index4,total_counts[0],total_counts[1],total_counts[2]))
         else:
-            pass
-            #print("Reading in integral components for C_{%s}, iteration %s"%(index4,suffix))
+            print("Reading in integral components for C_{%s}, iteration %s"%(index4,suffix))
 
         # Load full integrals
         c2=np.loadtxt(file_root_all+'c2_n%d_l%d_%s_%s.txt' %(n,max_l,index2,suffix))
         c3=np.loadtxt(file_root_all+'c3_n%d_l%d_%s_%s.txt' %(n,max_l,index3,suffix))
         c4=np.loadtxt(file_root_all+'c4_n%d_l%d_%s_%s.txt' %(n,max_l,index4,suffix))
-
-        # Add input symmetries
-        if(j1==j2):
-            c2 = 0.5*(c2+c2.T)
-        if(j1==j3):
-            c3 = 0.5*(c3+c3.T)
-        if((j1==j3)and(j2==j4)):
-            c4 = 0.5*(c4+c4.T)
 
         # Now save components
         c2s[j1,j2]=c2
@@ -111,34 +102,32 @@ def matrix_readin(suffix='full'):
         full=c4s[j1,j2,j3,j4]+0.25*alpha1*(d_xw*c3s[j1,j2,j3]+d_xz*c3s[j1,j2,j4])+0.25*alpha2*(d_yw*c3s[j2,j1,j3]+d_yz*c3s[j2,j1,j4])+0.5*alpha1*alpha2*(d_xw*d_yz+d_xz*d_yw)*c2s[j1,j2]
         return full
 
-    # Index in ordering (P_11,P_12,P_22)
-    cov_indices = [[0,0],[0,1],[1,1]]
+    c_tot = np.zeros([2,2,2,2,n*m,n*m])
 
-    c_tot = np.zeros([3,3,n*m,n*m]) # array with each individual covariance accessible
-    c_comb = np.zeros([3*n*m,3*n*m]) # full array suitable for inversion
+    for j1 in range(2):
+        for j2 in range(2):
+            for j3 in range(2):
+                for j4 in range(2):
+                    c_tot[j1,j2,j3,j4]=construct_fields(j1,j2,j3,j4,alpha_1,alpha_2)
 
-    for j1 in range(3):
-        ind1,ind2 = cov_indices[j1]
-        for j2 in range(3):
-            ind3,ind4 = cov_indices[j2]
-            tmp=construct_fields(ind1,ind2,ind3,ind4,alpha_1,alpha_2)
-            c_tot[j1,j2] = tmp
-            c_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmp
-
-    return c_tot,0.5*(c_comb+c_comb.T) # add all remaining symmetries
+    return c_tot
 
 # Load full matrices
-c_tot, c_comb = matrix_readin()
-n_bins = len(c_tot[0,0])
+c_tot = matrix_readin()
+n_bins = len(c_tot[0,0,0,0])
 
-# Load subsampled matrices (all submatrices combined)
+# Load subsampled matrices
 c_subsamples=[]
 for i in range(n_samples):
-    _,tmp=matrix_readin(i)
+    tmp=matrix_readin(i)
     c_subsamples.append(tmp)
 
 # Now compute all precision matrices
-iden = np.eye(len(c_comb))
+prec_tot = np.zeros_like(c_tot)
+iden = np.eye(len(c_tot[0,0,0,0]))
+
+N_eff = np.zeros([2,2,2,2])
+D_est = np.zeros_like(c_tot)
 
 def compute_precision(entire_matrix,subsamples):
     summ=0.
@@ -156,16 +145,20 @@ def compute_precision(entire_matrix,subsamples):
     return precision,N_eff_D,D_est
 
 print("Computing precision matrices and N_eff")
-prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
+for j1 in range(2):
+        for j2 in range(2):
+            for j3 in range(2):
+                for j4 in range(2):
+                    full_subsamples = [c_sub[j1,j2,j3,j4] for c_sub in c_subsamples]
+                    prec_tot[j1,j2,j3,j4],N_eff[j1,j2,j3,j4],D_est[j1,j2,j3,j4]=compute_precision(c_tot[j1,j2,j3,j4],full_subsamples)
+                    if N_eff[j1,j2,j3,j4]==0:
+                        print("Matrices have not converged and N_eff is negative for C^{%d%d,%d%d}! Setting to zero"%(j1+1,j2+1,j3+1,j4+1))
 
-output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_Legendre_n%d_m%d.npz'%(n,m)
-
-np.savez(output_name,
-       full_theory_covariance = c_comb,
-       shot_noise_rescaling = [alpha_1,alpha_2],
-       full_theory_precision = prec_comb,
-       N_eff=N_eff,
-       full_theory_D_matrix = D_est,
-       individual_theory_covariances = c_subsamples)
+output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_Legendre_n%d_l%d.npz'%(n,max_l)
+np.savez(output_name,full_theory_covariance=c_tot,
+         shot_noise_rescaling=[alpha_1,alpha_2],
+         full_theory_precision=prec_tot,
+         N_eff=N_eff, full_theory_D_matrix = D_est,
+         individual_theory_covariances = c_subsamples)
 
 print("Saved output covariance matrices as %s"%output_name)
