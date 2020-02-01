@@ -21,7 +21,7 @@ The scripts output a (set of) correlation function(s) in a supplied directory. T
 
 For analysis of a periodic box (e.g. from an N-body simulation output)::
 
-    python python/xi_estimator_periodic.py {GALAXY_FILE} {RADIAL_BIN_FILE_DR} {RADIAL_BIN_FILE_RR} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_counts}]
+    python python/xi_estimator_periodic.py {GALAXY_FILE} {RADIAL_BIN_FILE} {BOXSIZE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2}]
 
 For an analysis of an aperiodic data-set (e.g. mock galaxy catalogs or observational data)::
 
