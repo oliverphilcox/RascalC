@@ -35,7 +35,6 @@ for n, line in enumerate(open(Dname, 'r')):
 
 dX,dY,dZ,dW=[np.zeros(total_lines) for _ in range(4)]
 
-
 print("Reading in galaxy data");
 for n, line in enumerate(open(Dname, 'r')):
     if n%1000000==0:
@@ -44,7 +43,10 @@ for n, line in enumerate(open(Dname, 'r')):
     dX[n]=split_line[0];
     dY[n]=split_line[1];
     dZ[n]=split_line[2];
-    dW[n]=split_line[3];
+    if len(split_line)>3:
+        dW[n]=split_line[3];
+    else:
+        dW[n]=1.
 
 N_gal = len(dX) # number of particles
 

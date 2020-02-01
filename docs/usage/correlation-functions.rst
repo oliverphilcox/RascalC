@@ -31,7 +31,7 @@ For an analysis of an aperiodic data-set (e.g. mock galaxy catalogs or observati
 
 **Input Parameters**
 
-- {GALAXY_FILE}, {GALAXY_FILE_2}: Input ASCII file(s) containing galaxy positions and weights in {x,y,z,weight,jackknife_ID} format such as that created with the :doc:`pre-processing` scripts.  (Jackknives are not used in this script and may be omitted). This should be in ``.csv``, ``.txt`` or ``.dat`` format with space-separated columns.
+- {GALAXY_FILE}, {GALAXY_FILE_2}: Input ASCII file(s) containing galaxy positions and weights in {x,y,z,weight,jackknife_ID} format such as that created with the :doc:`pre-processing` scripts.  (Jackknives are not used in this script and may be omitted). This should be in ``.csv``, ``.txt`` or ``.dat`` format with space-separated columns. For periodic computation, weights are set to unity if not included.
 - *(Aperiodic Only)*: {RANDOM_FILE_DR}, {RANDOM_FILE_2_DR}: Input ASCII file containing random particle positions and weights to be used for DR pair counting (with filetype as for the galaxy files).
 - *(Aperiodic Only)*: {RANDOM_FILE_RR}, {RANDOM_FILE_2_RR}: Input ASCII file containing random particle positions and weights to be used for RR pair counting (with filetype as for the galaxy files). **NB**: If pre-computed RR pair counts are specified only the length of the RR random file is used by the code (for normalization).
 - {RADIAL_BIN_FILE}: ASCII file specifying the radial bins for :math:`\xi(r,\mu)`, as described in :ref:`file-inputs`. This can be user-defined or created by the :ref:`write-binning-file` scripts.  **NB**: This bin-file specifies the bins for the *correlation function*, which may be distinct from the *covariance-matrix* bins. In particular, the lowest bin should extend to :math:`r = 0`.
