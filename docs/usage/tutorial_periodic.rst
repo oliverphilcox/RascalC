@@ -165,7 +165,7 @@ Alternatively, we could simply pass these arguments on the command line (after t
 
     ./cov -in nbody_randoms_10x.txt -binfile radial_binning_cov.csv -cor xi/xi_n200_m20_periodic_11.dat -binfile_cf radial_binning_corr.csv -norm 156800 -output ./ -mbin_cf 20 -nthread 10 -perbox -max_l 2 -phi_file BinCorrectionFactor_n25_periodic_11.txt -maxloops 10 -N2 10 -N3 20 -N4 40 -cf_loops 0
 
-It's often just easier to edit the ``modules/parameter.h`` file, but the latter approach allows us to change parameters without recompiling the code.
+It's often just easier to edit the ``modules/parameter.h`` file, but the latter approach allows us to change parameters without recompiling the code. *NB*: Sometimes, this will crash with the error `Average particle density exceeds maximum advised particle density'; this is due to the ``-nside`` parameter being too low. To fix this, increase ``-nside`` to a larger (odd) value (default; 71).
 
 This runs in under an hour on 10 cores here, giving output matrix components saved in the ``CovMatricesFull`` directory as ``.txt`` files. We'll now reconstruct these.
 
