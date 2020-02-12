@@ -48,6 +48,25 @@ ASCII files are created specifying the correlation function in the file-format g
 
 **NB**: The code also prints the number of galaxies in each dataset to the terminal, :math:`N_\mathrm{gal}`. This quantity is important for later normalization of the C++ code.
 
+.. _legendre-2pcf:
+
+Computing Legendre Moments of Correlation Functions *(Optional)*
+----------------------------------------------------------------
+
+Having computed the correlation function estimates :math:`\xi(r,\mu)`, we can simply compute the corresponding (even) Legendre multipoles :math:`\xi_\ell(r)`, via the standard definition. Note that these are not used directly by the RascalC code, but they may be useful for the user. These are simply computed via::
+
+    python python/convert_xi_to_multipoles.py {INFILE} {MAX_L} {OUTFILE}
+
+**Input Parameters**
+
+- {INFILE}: Filename of the correlation function file computed by the above script.
+- {MAX_L}: Maximum Legendre multipole required (must be even). The script will compute all even Legendre multipoles of the correlation function up to this value.
+- {OUTFILE}: Name of the output file containing the correlation function moments.
+
+**Output Files**
+
+This creates an ASCII file containing the radial bins and the correlation function multipoles. For an input correlation function with N bins, the file has N rows with each radial bin in a separate row (plus an additional header row). The first element in each row is the radial bin center, then the correlation function multipoles are listed, such that column two contains :math:`\xi_0(r)`, column three contains :math:`\xi_2(r)` etc.
+
 .. _jackknife-correlations:
 
 Jackknife Matrix Correlation Functions *(for the JACKKNIFE mode only)*
