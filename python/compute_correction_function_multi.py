@@ -63,31 +63,31 @@ V2=hull.volume # in (Mpc/h)^3
 n_bar1 = N_gal/V
 n_bar2 = N_gal2/V2
 
-# Load in binning files 
+# Load in binning files
 r_bins = np.loadtxt(binfile)
 n=len(r_bins)
 
 # Find binning centers
 r_cen = np.mean(r_bins,axis=1)
 vol_r = 4.*np.pi/3.*(r_bins[:,1]**3-r_bins[:,0]**3)
-    
+
 if periodic:
     ## Save periodic pair counts simply
-    
+
     phi_11 = np.zeros([n,7])
     phi_12 = np.zeros([n,7])
     phi_22 = np.zeros([n,7])
-    
+
     phi_11[:,0] = 1./(V*n_bar1**2*w_bar1**2)
     phi_11[:,3] = 1./(V*n_bar1**2*w_bar1**2)
     phi_12[:,0] = 1./(V*n_bar1*n_bar2*w_bar1*w_bar2)
     phi_12[:,3] = 1./(V*n_bar1*n_bar2*w_bar1*w_bar2)
     phi_22[:,0] = 1./(V2*n_bar2**2*w_bar2**2)
     phi_22[:,3] = 1./(V2*n_bar2**2*w_bar2**2)
-    
+
     roots = ['11','12','22']
     phis = [phi_11,phi_12,phi_22]
-    
+
     for jndex,index in enumerate(roots):
         outfile = outdir+'BinCorrectionFactor_n%d_periodic_%s.txt'%(n,index)
         with open(outfile,"w+") as out:
@@ -97,12 +97,12 @@ if periodic:
                     if j<6:
                         out.write("\t")
                     else:
-                        out.write("\n")    
+                        out.write("\n")
         print("Saved (normalized) output for field %s to %s"%(index,outfile))
     sys.exit();
-  
+
 ## Continue for aperiodic case
-    
+
 # Load RR counts
 RR_flat = np.loadtxt(RR_file)*np.sum(gal_w)**2. # change normalization here
 m=len(RR_flat)//n
@@ -117,10 +117,10 @@ assert((len(RR_flat12)//n)==m), "Need same bins for all RR files."
 RR_true12 = RR_flat12.reshape((n,m))
 
 # Load mu bins
-mu_cen = np.arange(1/(2*m),1.+1/(2*m),1/m)
+mu_cen = np.arange(1./(2.*m),1.+1./(2.*m),1./m)
 delta_mu = mu_cen[-1]-mu_cen[-2]
-assert(m==len(mu_cen))    
-    
+assert(m==len(mu_cen))
+
 def compute_phi(gal_w1,gal_w2,gal_n1,gal_n2,V,this_RR,index):
     print("\nComputing survey correction factor %s"%index)
     ## Define normalization constant
@@ -128,9 +128,9 @@ def compute_phi(gal_w1,gal_w2,gal_n1,gal_n2,V,this_RR,index):
         this_norm = np.mean(gal_n1**2*gal_w1**2)
     else:
         this_norm = np.mean(gal_n1*gal_w1)*np.mean(gal_n2*gal_w2)
-        
+
     norm = V*this_norm
-    
+
     ## Define RR model
     def RR_model(r_bin,mu):
         return norm*vol_r[r_bin]*delta_mu
@@ -172,7 +172,7 @@ def compute_phi(gal_w1,gal_w2,gal_n1,gal_n2,V,this_RR,index):
         out_params=[a0,a1,a2,b0,b1,b2,b3]
         fit_params.append(out_params)
         errors.append(np.abs(Phi_values[i]-fit_model(mu_cen,good_param))/fit_model(mu_cen,good_param))
-            
+
     fit_params = np.asarray(fit_params)
 
     print("Fitted dataset %s with mean fractional error %.1e"%(index,np.mean(errors)))
@@ -185,7 +185,7 @@ def compute_phi(gal_w1,gal_w2,gal_n1,gal_n2,V,this_RR,index):
                 if j<6:
                     out.write("\t")
                 else:
-                    out.write("\n")    
+                    out.write("\n")
     print("Saved (normalized) output to %s"%outfile)
 
 # Now run this

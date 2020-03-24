@@ -41,6 +41,7 @@ with open(outfile,"w+") as out:
 
     for ell in np.arange(0,max_l+1,2):
         out.write("# ell = %s\t"%ell)
+    out.write("\n")
 
     # Now write data to file with each radial bin in a separate row
     for r_i,r in enumerate(r_bins):

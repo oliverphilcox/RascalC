@@ -45,7 +45,7 @@ public:
 	int nside = 71;
 
     // Whether or not we are using a periodic box
-	bool perbox = true;
+	bool perbox = false;
 
     //---------- (r,mu) PARAMETERS ------------------------------------------
 
@@ -168,7 +168,7 @@ public:
 	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
 
 	// The radius beyond which the correlation function is set to zero
-	Float xicutoff = 400.;
+	Float xicutoff = 250.;
 
 	// The maximum number of points to read
 	uint64 nmax = 1000000000000;
