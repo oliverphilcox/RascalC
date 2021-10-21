@@ -17,10 +17,12 @@ AOBJS	= grid_covariance.o ./cubature/hcubature.o ./ransampl/ransampl.o
 LD	= g++
 LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu -lgsl -lgslcblas -lgomp -fPIE
 
+.PHONY: main clean
+
 main: $(AUNTIE)
 
-$(AUNTIE):	$(AOBJS)
+$(AUNTIE):	$(AOBJS) Makefile
 	$(LD) $(AOBJS) $(LFLAGS) -o $(AUNTIE)
 
 clean:
-	rm grid_covariance
+	rm $(AUNTIE) $(AOBJS)
