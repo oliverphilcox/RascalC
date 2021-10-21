@@ -15,7 +15,7 @@ AUNTIE	= cov
 AOBJS	= grid_covariance.o ./cubature/hcubature.o ./ransampl/ransampl.o
 
 LD	= g++
-LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu -lgsl -lgslcblas -lgomp
+LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu -lgsl -lgslcblas -lgomp -fPIE
 
 main: $(AUNTIE)
 
