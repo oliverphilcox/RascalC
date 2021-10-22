@@ -29,6 +29,7 @@
 
 # Executables
 cov
+triple
 *.exe
 *.out
 *.app
