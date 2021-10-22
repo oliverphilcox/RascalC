@@ -26,5 +26,7 @@ $(AUNTIE):	$(AOBJS) Makefile
 	$(LD) $(AOBJS) $(LFLAGS) -o $(AUNTIE)
 
 clean:
-	rm $(AUNTIE) $(AOBJS)
+	rm -f $(AUNTIE) $(AOBJS) ${ADEPS}
+
+$(AOBJS): Makefile
 -include ${ADEPS}
