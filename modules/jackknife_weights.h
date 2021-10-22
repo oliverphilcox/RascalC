@@ -30,7 +30,7 @@ public:
 #endif
         for(int i=0;i<nbins;i++){
             RR_pair_counts[i]=JK->RR_pair_counts[i];
-#ifdef JACKNKNIFE
+#ifdef JACKKNIFE
             for(int j=0;j<nbins;j++){
                 product_weights[ct]=JK->product_weights[ct];
                 ct++;
