@@ -16,7 +16,7 @@ AOBJS	= grid_covariance.o ./cubature/hcubature.o ./ransampl/ransampl.o
 ADEPS   = ${AOBJS:.o=.d}
 
 LD	= g++
-LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu -lgsl -lgslcblas -lgomp -fPIE
+LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu -lgsl -lgslcblas -lgomp
 
 .PHONY: main clean
 
