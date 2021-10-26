@@ -15,7 +15,7 @@ private:
     Float rmin,rmax,mumin,mumax,dmu; //Ranges in r and mu
     Float *r_high, *r_low; // Max and min of each radial bin
     Float *Ra, *c2, *c3, *c4; // Arrays to accumulate integrals
-    JK_weights *JK12, *JK23, *JK34; // RR counts and jackknife weightts
+    JK_weights *JK12, *JK23, *JK34; // RR counts and jackknife weights
 #ifdef JACKKNIFE
     int n_jack;
     Float *c2j, *c3j, *c4j; // Arrays to accumulate jackknife integrals
