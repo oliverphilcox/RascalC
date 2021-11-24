@@ -28,6 +28,8 @@
 *.lib
 
 # Executables
+cov
+triple
 *.exe
 *.out
 *.app
@@ -44,3 +46,9 @@
 _build
 _static
 _templates
+
+# IPython/Jupyter notebook checkpoints
+.ipynb_checkpoints
+
+# Python cache
+__pycache__
