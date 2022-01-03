@@ -8,8 +8,9 @@ import numpy as np
 if len(sys.argv)!=9:
     if len(sys.argv)!=12:
         if len(sys.argv)!=15:
-            print("Usage: python xi_estimator_aperiodic.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR}  {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR}] [{RR_counts_11} {RR_counts_12} {RR_counts_22}]")
-            sys.exit()
+            if len(sys.argv)!=10:
+                print("Usage: python xi_estimator_aperiodic.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR}  {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR}] [{RR_counts_11} {RR_counts_12} {RR_counts_22}]")
+                sys.exit()
 
 Dname1 = str(sys.argv[1])
 Rname1_DR = str(sys.argv[2])
