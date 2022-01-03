@@ -53,7 +53,7 @@ def reader(filename,only_length=False):
         total_lines+=1
 
     if only_length:
-        return total_line
+        return total_lines
 
     X,Y,Z,W=[np.zeros(total_lines) for _ in range(4)]
 
