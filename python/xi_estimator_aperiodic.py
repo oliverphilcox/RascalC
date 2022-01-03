@@ -34,7 +34,10 @@ if len(sys.argv)==15:
     RRname12=str(sys.argv[13])
     RRname22=str(sys.argv[14])
 else:
-    RRname11=""
+    if len(sys.argv)==10:
+        RRname11 = str(sys.argv[9])
+    else:
+        RRname11=""
     RRname12=""
     RRname22=""
 
@@ -124,12 +127,18 @@ if multifield:
         N_rand1_RR = reader(Rname1_RR,only_length=True)
         N_rand2_RR = reader(Rname2_RR,only_length=True)
 else:
-    if Rname1_DR!=Rname1_RR:
-        # if not already read in
-        random1_RR = reader(Rname1_RR)
+    if len(RRname11)==0:
+        # if RR counts are not provided
+        if Rname1_DR!=Rname1_RR:
+            # if not already read in
+            random1_RR = reader(Rname1_RR)
+        else:
+            random1_RR = random1_DR
+        N_rand1_RR = len(random1_RR[0])
     else:
-        random1_RR = random1_DR
-    N_rand1_RR = len(random1_RR[0])
+        # empty placeholders
+        random1_RR = []
+        N_rand1_RR = reader(Rname1_RR,only_length=True)
 
 print("Number of random particles in field 1: %.1e (DR) %.1e (RR)"%(N_rand1_DR,N_rand1_RR))
 print("Number of galaxies particles in field 1: %.1e"%N_gal1)
