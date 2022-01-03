@@ -3,6 +3,7 @@
 ## If the periodic flag is set, we assume a periodic simulation and measure mu from the Z-axis.
 
 import sys
+import os
 import numpy as np
 
 # PARAMETERS
@@ -101,7 +102,11 @@ else:
         RR_counts/=np.sum(W)**2.
     
     
-outfile = outdir+"RR_counts_n%d_m%d_11.txt"%(nrbins,nmu_bins)
+# Make sure output dir exists 
+if len(outdir)>0:
+    os.makedirs(outdir, exists_ok=1)
+
+outfile = os.path.join(outdir, "RR_counts_n%d_m%d_11.txt"%(nrbins,nmu_bins))
 print("Saving binned pair counts as %s" %outfile);
 with open(outfile,"w+") as RRfile:
     for i in range(len(RR_counts)):

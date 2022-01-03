@@ -3,6 +3,7 @@
 ## If the periodic flag is set, we assume a periodic simulation and measure mu from the Z-axis.
 
 import sys
+import os
 import numpy as np
 
 # PARAMETERS
@@ -147,19 +148,23 @@ else:
         RR_counts22/=np.sum(W2)**2.
     
 
-outfile11 = outdir+"RR_counts_n%d_m%d_11.txt"%(nrbins,nmu_bins)
+# Make sure output dir exists 
+if len(outdir)>0:
+    os.makedirs(outdir, exists_ok=1)
+
+outfile11 = os.path.join(outdir, "RR_counts_n%d_m%d_11.txt"%(nrbins,nmu_bins))
 print("\nSaving field 1 x field 1 binned pair counts as %s" %outfile11);
 with open(outfile11,"w+") as RRfile:
     for i in range(len(RR_counts11)):
         RRfile.write("%.8e\n" %RR_counts11[i])
 
-outfile12 = outdir+"RR_counts_n%d_m%d_12.txt"%(nrbins,nmu_bins)
+outfile12 = os.path.join(outdir, "RR_counts_n%d_m%d_12.txt"%(nrbins,nmu_bins))
 print("Saving field 1 x field 2 binned pair counts as %s" %outfile12);
 with open(outfile12,"w+") as RRfile:
     for i in range(len(RR_counts12)):
         RRfile.write("%.8e\n" %RR_counts12[i])
     
-outfile22 = outdir+"RR_counts_n%d_m%d_22.txt"%(nrbins,nmu_bins)
+outfile22 = os.path.join(outdir, "RR_counts_n%d_m%d_22.txt"%(nrbins,nmu_bins))
 print("Saving field 2 x field 2 binned pair counts as %s" %outfile22);
 with open(outfile22,"w+") as RRfile:
     for i in range(len(RR_counts22)):
