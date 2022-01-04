@@ -150,7 +150,7 @@ else:
 
 # Make sure output dir exists 
 if len(outdir)>0:
-    os.makedirs(outdir, exists_ok=1)
+    os.makedirs(outdir, exist_ok=1)
 
 outfile11 = os.path.join(outdir, "RR_counts_n%d_m%d_11.txt"%(nrbins,nmu_bins))
 print("\nSaving field 1 x field 1 binned pair counts as %s" %outfile11);
