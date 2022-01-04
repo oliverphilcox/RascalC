@@ -214,7 +214,6 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
     # Now compute RR counts
     if len(RRname)!=0:
         RR_counts = np.loadtxt(RRname) # read pre-computed RR counts
-        RR_counts/=(N_rand_RR-1.)*N_rand_RR
         if len(RR_counts)!=nrbins*nmu_bins:
             raise Exception("Incorrect number of bins in RR file. Either provide the relevant file or recompute RR pair counts.")
     else:
