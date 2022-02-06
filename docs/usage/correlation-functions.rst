@@ -25,7 +25,7 @@ For analysis of a periodic box (e.g. from an N-body simulation output)::
 
 For an analysis of an aperiodic data-set (e.g. mock galaxy catalogs or observational data)::
 
-    python python/xi_estimator_aperiodic.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR}  {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR}] [{RR_counts_11} {RR_counts_12} {RR_counts_22}]
+    python python/xi_estimator_aperiodic.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR}  {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR}] [{RR_counts_11}] [{RR_counts_12} {RR_counts_22}]
 
 **NB**: If a second galaxy (and random) file is specified, the script will compute all three non-trivial (cross-)correlations between the two fields, giving a runtime of :math:`\sim` 3 times that of the single-field case. The two fields should be distinct to avoid issues with double counting. If this is not specified, the script will simply compute the auto-correlation function of the single set of galaxies.
 
@@ -39,7 +39,9 @@ For an analysis of an aperiodic data-set (e.g. mock galaxy catalogs or observati
 - {N_MU_BINS}: Number of angular bins used in the range :math:`[0,\mu_\mathrm{max}]`.
 - {NTHREADS}: Number of CPU threads to use for pair counting parallelization.
 - {OUTPUT_DIR}: Directory in which to house the correlation functions. This will be created if not in existence.
-- *(Optional)* {RR_counts_XY}: Pre-computed RR pair counts between fields X and Y. These should be in the format described in :ref:`file-inputs`, and must use the same number of radial and angular bins as specified above. If not specified, these are recomputed by the code. Since the full correlation function typically uses a different binning to the output covariance matrix, we typically cannot use the pair counts computed in :doc:`jackknife-weights` and must recompute them. In addition, these should be normalized by the squared sum of weights :math:`(\sum_i w_i)^2` where :math:`i` runs across all random particles in the dataset. This is currently not supported for single-field analyses.
+- *(Optional)* {RR_counts_XY}: Pre-computed RR pair counts between fields X and Y. These should be in the format described in :ref:`file-inputs`, and must use the same number of radial and angular bins as specified above. If not specified, these are recomputed by the code. Since the full correlation function typically uses a different binning to the output covariance matrix, we typically cannot use the pair counts computed in :doc:`jackknife-weights` and must recompute them. In addition, these should be normalized by the squared sum of weights :math:`(\sum_i w_i)^2` where :math:`i` runs across all random particles in the dataset; this can be achieved with NORMED set to 1 while :ref:`RR_counts`. This is now also supported for single-field analyses, the command line options then shall be::
+
+    python python/xi_estimator_aperiodic.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR}  {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} {RR_counts_11}
 
 
 **Output Files**

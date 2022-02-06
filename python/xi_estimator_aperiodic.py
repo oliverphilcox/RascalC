@@ -8,8 +8,9 @@ import numpy as np
 if len(sys.argv)!=9:
     if len(sys.argv)!=12:
         if len(sys.argv)!=15:
-            print("Usage: python xi_estimator_aperiodic.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR}  {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR}] [{RR_counts_11} {RR_counts_12} {RR_counts_22}]")
-            sys.exit()
+            if len(sys.argv)!=10:
+                print("Usage: python xi_estimator_aperiodic.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR}  {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR}] [{RR_counts_11}] [{RR_counts_12} {RR_counts_22}]")
+                sys.exit()
 
 Dname1 = str(sys.argv[1])
 Rname1_DR = str(sys.argv[2])
@@ -34,7 +35,11 @@ if len(sys.argv)==15:
     RRname12=str(sys.argv[13])
     RRname22=str(sys.argv[14])
 else:
-    RRname11=""
+    if len(sys.argv)==10:
+        print("Using pre-defined RR counts")
+        RRname11 = str(sys.argv[9])
+    else:
+        RRname11=""
     RRname12=""
     RRname22=""
 
@@ -49,7 +54,7 @@ def reader(filename,only_length=False):
         total_lines+=1
 
     if only_length:
-        return total_line
+        return total_lines
 
     X,Y,Z,W=[np.zeros(total_lines) for _ in range(4)]
 
@@ -124,12 +129,18 @@ if multifield:
         N_rand1_RR = reader(Rname1_RR,only_length=True)
         N_rand2_RR = reader(Rname2_RR,only_length=True)
 else:
-    if Rname1_DR!=Rname1_RR:
-        # if not already read in
-        random1_RR = reader(Rname1_RR)
+    if len(RRname11)==0:
+        # if RR counts are not provided
+        if Rname1_DR!=Rname1_RR:
+            # if not already read in
+            random1_RR = reader(Rname1_RR)
+        else:
+            random1_RR = random1_DR
+        N_rand1_RR = len(random1_RR[0])
     else:
-        random1_RR = random1_DR
-    N_rand1_RR = len(random1_RR[0])
+        # empty placeholders
+        random1_RR = []
+        N_rand1_RR = reader(Rname1_RR,only_length=True)
 
 print("Number of random particles in field 1: %.1e (DR) %.1e (RR)"%(N_rand1_DR,N_rand1_RR))
 print("Number of galaxies particles in field 1: %.1e"%N_gal1)
@@ -203,7 +214,6 @@ def compute_xi(random1_RR,random1_DR,data1,N_gal,N_rand_RR, N_rand_DR,random2_RR
     # Now compute RR counts
     if len(RRname)!=0:
         RR_counts = np.loadtxt(RRname) # read pre-computed RR counts
-        RR_counts/=(N_rand_RR-1.)*N_rand_RR
         if len(RR_counts)!=nrbins*nmu_bins:
             raise Exception("Incorrect number of bins in RR file. Either provide the relevant file or recompute RR pair counts.")
     else:
