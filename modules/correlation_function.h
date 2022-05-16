@@ -255,10 +255,23 @@ class CorrelationFunction{
             corr->copy(xsize,ysize,&x,&y,&z,rmin,rmax,mumin,mumax,mudim);
             interpolate();
         }
-    CorrelationFunction(const char *filename, int mbin, double dmu){
+    CorrelationFunction(const char *filename, int nbin, Float *r_low, Float *r_high, int mbin, Float dmu){
         // Construct from input file
 
         readData(filename,&x,&y,&z,&xsize,&ysize);
+
+        if(xsize!=nbin){
+          fprintf(stderr,"%d r-bins found in correlation function file but %d specified in parameters.\n", xsize, nbin);
+          abort();
+        }
+
+        for (int i = 0; i < nbin; i++) {
+            Float r_mid = (r_low[i] + r_high[i])/2;
+            if (fabs(x[i] - r_mid) > 1e-3) {
+                fprintf(stderr,"%d'th r-bin found in correlation function file is %le but %le expected from binning file.\n", i, x[i], r_mid);
+                abort();
+            }
+        }
 
         if(ysize!=mbin){
           fprintf(stderr,"%d mu-bins found in correlation function file but %d specified in parameters.\n",ysize,mbin);
