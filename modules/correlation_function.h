@@ -11,10 +11,11 @@ class CorrelationFunction{
         int xsize, ysize;
         double *x,*y,*z;
         double rmin,rmax,mumin,mumax;
-        bool mudim;
+        bool mudim = 0;
         gsl_interp_accel *xa, *ya, *x1a;
         gsl_interp2d* interp_2d;
         gsl_spline* corfu1d;
+        bool interp_setup = 0;
     public:
         double xi(double r, double mu){
             // 2D correlation function in radius and angular bins
@@ -244,6 +245,7 @@ class CorrelationFunction{
             corfu1d=gsl_spline_alloc(gsl_interp_cspline, xsize);
             gsl_spline_init(corfu1d, x, y1, xsize);
             x1a = gsl_interp_accel_alloc();
+            interp_setup = 1;
         }
     public:
         CorrelationFunction(){
@@ -342,13 +344,15 @@ class CorrelationFunction{
     ~CorrelationFunction() {
         // Destructor
 
-        if(mudim){
+        if (mudim) {
             gsl_interp2d_free(interp_2d);
             gsl_interp_accel_free(xa);
             gsl_interp_accel_free(ya);
         }
-        gsl_spline_free(corfu1d);
-        gsl_interp_accel_free(x1a);
+        if (interp_setup) {
+            gsl_spline_free(corfu1d);
+            gsl_interp_accel_free(x1a);
+        }
     }
 
 };
