@@ -262,15 +262,15 @@ class CorrelationFunction{
 
         readData(filename,&x,&y,&z,&xsize,&ysize);
 
-        if(xsize!=nbin){
+        if (xsize != nbin+1) {
           fprintf(stderr,"%d r-bins found in correlation function file but %d specified in parameters.\n", xsize, nbin);
           abort();
         }
 
         for (int i = 0; i < nbin; i++) {
             Float r_mid = (r_low[i] + r_high[i])/2;
-            if (fabs(x[i] - r_mid) > 1e-3) {
-                fprintf(stderr,"%d'th r-bin found in correlation function file is %le but %le expected from binning file.\n", i, x[i], r_mid);
+            if (fabs(x[i+1] - r_mid) > 1e-3) {
+                fprintf(stderr,"%d'th r-bin found in correlation function file is %le but %le expected from binning file.\n", i, x[i+1], r_mid);
                 abort();
             }
         }
