@@ -263,7 +263,7 @@ class CorrelationFunction{
         readData(filename,&x,&y,&z,&xsize,&ysize);
 
         if (xsize != nbin+1) {
-          fprintf(stderr,"%d r-bins found in correlation function file but %d specified in parameters.\n", xsize, nbin);
+          fprintf(stderr,"%d r-bins found in correlation function file but %d specified in parameters.\n", xsize-1, nbin);
           abort();
         }
 
