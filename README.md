@@ -11,9 +11,9 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 
 ## Authors
 
-- Oliver Philcox (Princeton / Harvard)
+- Oliver Philcox (Princeton / IAS / Harvard)
 - Daniel Eisenstein (Harvard)
 - Ross O'Connell (Pittsburgh)
 - Alexander Wiegand (Garching)
 
-We thank Yuting Wang and Ryuichiro Hada for pointing out minor issues in the code and documentation.
+We thank Yuting Wang, Ryuichiro Hada, and Misha Rashkovetskyi for pointing out and fixing a number of issues with the code and its documentation.
