@@ -80,12 +80,12 @@ def load_matrices(index,jack=True):
 
 # Load in full jackknife theoretical matrices
 print("Loading best estimate of jackknife covariance matrix")
-c2,c3,c4=load_matrices('full')
+c2j,c3j,c4j=load_matrices('full')
 
 # Check matrix convergence
 from numpy.linalg import eigvalsh
-eig_c4 = eigvalsh(c4)
-eig_c2 = eigvalsh(c2)
+eig_c4 = eigvalsh(c4j)
+eig_c2 = eigvalsh(c2j)
 if min(eig_c4)<-1.*min(eig_c2):
     print("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
     sys.exit()
@@ -102,7 +102,7 @@ for i in range(n_samples):
 # Compute inverted matrix
 def Psi(alpha):
     """Compute precision matrix from covariance matrix, removing quadratic order bias terms."""
-    c_tot = c2*alpha**2.+c3*alpha+c4
+    c_tot = c2j*alpha**2.+c3j*alpha+c4j
     partial_cov=[]
     for i in range(n_samples):
         partial_cov.append(alpha**2.*c2s[i]+alpha*c3s[i]+c4s[i])
