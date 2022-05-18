@@ -130,7 +130,7 @@ alpha_best = fmin(neg_log_L1,1.)
 print("Optimization complete - optimal rescaling parameter is %.6f"%alpha_best)
 
 # Compute jackknife and full covariance matrices
-jack_cov = c4+c3*alpha_best+c2*alpha_best**2.
+jack_cov = c4j+c3j*alpha_best+c2j*alpha_best**2.
 jack_prec = Psi(alpha_best)
 c2f,c3f,c4f=load_matrices('full',jack=False)
 full_cov = c4f+c3f*alpha_best+c2f*alpha_best**2.
