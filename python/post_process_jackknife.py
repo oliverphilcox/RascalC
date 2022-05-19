@@ -38,10 +38,11 @@ good_jk=np.unique(np.where(np.isfinite(xi_jack))[0])
 print("Using %d out of %d jackknives"%(len(good_jk),n_jack))
 xi_jack = xi_jack[good_jk]
 weights = weights[good_jk]
+weights /= np.sum(weights, axis=0) # renormalize weights after possibly discarding some jackknives
 
 # Compute data covariance matrix
 print("Computing data covariance matrix")
-mean_xi = np.sum(xi_jack*weights,axis=0)/np.sum(weights,axis=0)
+mean_xi = np.sum(xi_jack*weights,axis=0)
 tmp = weights*(xi_jack-mean_xi)
 data_cov = np.matmul(tmp.T,tmp)
 denom = np.matmul(weights.T,weights)
