@@ -82,6 +82,10 @@ public:
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops = 40;
 
+    // Exit after relative Frobenius difference is less than (convergence_threshold_percent %) for (convergence_ntimes) times
+    Float convergence_threshold_percent = 0.01;
+    int convergence_ntimes = 10;
+
     // Number of random cells to draw at each stage
     int N2 = 20; // number of j cells per i cell
     int N3 = 40; // number of k cells per j cell

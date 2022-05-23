@@ -344,8 +344,8 @@
                 loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;
 
                 // End loops early if convergence has been acheived
-                if (convergence_counter==10){
-                    if (printtime==0) printf("1 percent convergence acheived in C4 10 times, exiting.\n");
+                if (convergence_counter == par->convergence_ntimes){
+                    if (printtime==0) printf("%.2lf percent convergence achieved in C4 %d times, exiting.\n", par->convergence_threshold_percent, par->convergence_ntimes);
                     printtime++;
                     continue;
                     }
@@ -473,7 +473,7 @@
                     Float frob_C2, frob_C3, frob_C4;
 #ifndef JACKKNIFE
                     sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4);
-                    if(frob_C4<0.01) convergence_counter++;
+                    if(frob_C4 < par->convergence_threshold_percent) convergence_counter++;
                     if (n_loops!=0){
                         fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
                     }
