@@ -287,7 +287,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                             weight_type='pair_product',RA2=d_Ra2,DEC2=d_Dec2,CZ2=d_com_dist2,
                                             weights2=dW2,verbose=verbose,is_comoving_dist=True)
                     DD_counts[i,:]+=0.5*cross_DD[:]['npairs']*cross_DD[:]['weightavg']
-                DD_counts[i,:]/=0.5*(np.sum(dW2[filt])*np.sum(dW)+np.sum(dW[filt2])*np.sum(dW2)
+                DD_counts[i,:]/=0.5*(np.sum(dW2[filt])*np.sum(dW)+np.sum(dW[filt2])*np.sum(dW2))
             else:
                 filt = np.where(dJ==j)
                 if len(filt[0])>0:
@@ -337,7 +337,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                            weight_type='pair_product',X2=rX2_RR[filt2],Y2=rY2_RR[filt2],Z2=rZ2_RR[filt2],
                                            weights2=rW2_RR[filt2],verbose=verbose,periodic=True)
                         RR_counts[i,:]+=0.5*cross_RR[:]['npairs']*cross_RR[:]['weightavg']
-                RR_counts[i,:]/=0.5*(np.sum(rW2_RR)*np.sum(rW[filt])+np.sum(rW_RR)*np.sum(rW2_RR[filt2]))
+                    RR_counts[i,:]/=0.5*(np.sum(rW2_RR)*np.sum(rW[filt])+np.sum(rW_RR)*np.sum(rW2_RR[filt2]))
                 else:
                     filt = np.where(rJ_RR==j)
                     if len(filt[0])>0:
@@ -422,7 +422,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                             weight_type='pair_product',X2=dX2,Y2=dY2,Z2=dZ2,
                                             weights2=dW2,verbose=verbose,periodic=True)
                     DD_counts[i,:]+=0.5*cross_DD[:]['npairs']*cross_DD[:]['weightavg']
-                DD_counts[i,:]/=0.5*(np.sum(dW2[filt])*np.sum(dW)+np.sum(dW[filt2])*np.sum(dW2)
+                DD_counts[i,:]/=0.5*(np.sum(dW2[filt])*np.sum(dW)+np.sum(dW[filt2])*np.sum(dW2))
             else:
                 filt = np.where(dJ==j)
                 if len(filt[0])>0:
