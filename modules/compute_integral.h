@@ -379,7 +379,7 @@
                         sec_id = prim_id + delta2;
                         cell_sep2 = grid2->cell_sep(delta2);
                         x = draw_particle(sec_id, particle_j, pid_j, cell_sep2, grid2, sln, locrng, sln1, sln2);
-                        if(x==1) continue; // skip if error
+                        if (x==1) continue; // skip failed draws
 
                         used_cell2+=1; // new cell accepted
 
@@ -409,8 +409,8 @@
                             thi_id = prim_id + delta3;
                             cell_sep3 = grid3->cell_sep(delta3);
                             x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid3,tln,locrng); // draw from third grid
-                            if(x==1) continue;
-                            if(pid_j==pid_k) continue;
+                            if (x==1) continue; // skip failed draws
+                            if ((pid_j==pid_k) && (I2==I3)) continue; // skip jk self-counts
 
                             used_cell3+=1; // new third cell used
 
@@ -432,8 +432,8 @@
                                 // Draw fourth cell from j cell weighted by xi_24(r)
                                 delta4 = rd24->random_xidraw(locrng,&p4);
                                 x = draw_particle_without_class(sec_id+delta4,particle_l,pid_l,cell_sep2+grid4->cell_sep(delta4),grid4,fln,locrng); // draw from 4th grid
-                                if(x==1) continue;
-                                if((pid_l==pid_j)||(pid_l==pid_k)) continue;
+                                if (x==1) continue; // skip failed draws
+                                if (((pid_l==pid_j) && (I4==I2)) || ((pid_l==pid_k) && (I4==I3))) continue; // skip jl and kl self-counts
 
                                 used_cell4+=1; // new fourth cell used
 
