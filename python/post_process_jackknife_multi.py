@@ -326,6 +326,7 @@ def matrix_readin(suffix='full'):
 
     for j1 in range(3):
         ind1,ind2 = cov_indices[j1]
+        alpha_1, alpha_2 = alpha_best[[ind1, ind2]]
         for j2 in range(3):
             ind3,ind4 = cov_indices[j2]
             tmp,tmpj=construct_fields(ind1,ind2,ind3,ind4,alpha_1,alpha_2)
@@ -334,7 +335,7 @@ def matrix_readin(suffix='full'):
             c_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmp
             cj_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmpj
 
-    return c_tot,0.5*(c_comb+c_comb.T), cj_tot, 0.5*(cj_comb,cj_comb.T) # add all remaining symmetries
+    return c_tot,0.5*(c_comb+c_comb.T), cj_tot, 0.5*(cj_comb+cj_comb.T) # add all remaining symmetries
 
 # Load full matrices
 c_tot,c_comb, cj_tot, cj_comb = matrix_readin()
