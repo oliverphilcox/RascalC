@@ -51,7 +51,7 @@ weights_all = np.zeros_like(xi_all)
 
 # Load in all xi functions
 xi_all[:,:n_bins]=xi_jack_11[good_jk]
-xi_all[:,n_bins:2*nbins]=xi_jack_12[good_jk]
+xi_all[:,n_bins:2*n_bins]=xi_jack_12[good_jk]
 xi_all[:,2*n_bins:]=xi_jack_22[good_jk]
 
 # Load in all weights:
