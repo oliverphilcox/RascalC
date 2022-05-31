@@ -204,7 +204,7 @@ all_indices = ['11','12','22']
 for index in range(3):
     weight_file='jackknife_weights_n%d_m%d_j%d_%s.dat'%(nrbins,nmu_bins,N_jack,all_indices[index])
     print("Saving jackknife weight as %s"%weight_file)
-    with open(outdir+weight_file,"w+") as weight_file:
+    with open(os.path.join(outdir, weight_file), "w+") as weight_file:
         for j_id,jackknife_weight in enumerate(all_weights[index]):
             weight_file.write("%s\t" %J_regions[j_id])
             for i in range(len(jackknife_weight)):
@@ -215,13 +215,13 @@ for index in range(3):
                     weight_file.write("\t");
     RR_a_file = 'binned_pair_counts_n%d_m%d_j%d_%s.dat'%(nrbins,nmu_bins,N_jack,all_indices[index])
     print("Saving binned pair counts as %s" %RR_a_file);
-    with open(outdir+RR_a_file,"w+") as RR_file:
+    with open(os.path.join(outdir, RR_a_file), "w+") as RR_file:
         for i in range(len(all_pairs[index])):
             RR_file.write("%s\n" %all_pairs[index][i])
     
     RR_aA_file = 'jackknife_pair_counts_n%d_m%d_j%d_%s.dat'%(nrbins,nmu_bins,N_jack,all_indices[index])
     print("Saving normalized jackknife pair counts as %s"%RR_aA_file)
-    with open(outdir+RR_aA_file,"w+") as jackRR_file:
+    with open(os.path.join(outdir, RR_aA_file), "w+") as jackRR_file:
         for j_id,pair_count in enumerate(all_counts[index]):
             this_jk = J_regions[j_id]
             if index==0:

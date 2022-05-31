@@ -27,8 +27,8 @@ n_bins = xi_jack.shape[1] # total bins
 n_jack = xi_jack.shape[0] # total jackknives
 n = n_bins//m # radial bins
 
-weight_file = weight_dir+'jackknife_weights_n%d_m%d_j%d_11.dat'%(n,m,n_jack)
-RR_file = weight_dir+'binned_pair_counts_n%d_m%d_j%d_11.dat'%(n,m,n_jack)
+weight_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_11.dat'%(n,m,n_jack))
+RR_file = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_11.dat'%(n,m,n_jack))
 
 print("Loading weights file from %s"%weight_file)
 weights = np.loadtxt(weight_file)[:,1:]
@@ -54,9 +54,9 @@ RR=np.loadtxt(RR_file)
 def load_matrices(index,jack=True):
     """Load intermediate or full covariance matrices"""
     if jack:
-        cov_root = file_root+'CovMatricesJack/'
+        cov_root = os.path.join(file_root, 'CovMatricesJack/')
     else:
-        cov_root = file_root+'CovMatricesAll/'
+        cov_root = os.path.join(file_root, 'CovMatricesAll/')
     c2 = np.diag(np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index)))
     c3 = np.loadtxt(cov_root+'c3_n%d_m%d_1,11_%s.txt'%(n,m,index))
     c4 = np.loadtxt(cov_root+'c4_n%d_m%d_11,11_%s.txt'%(n,m,index))
@@ -170,7 +170,7 @@ D_value = slogdetD[0]*np.exp(slogdetD[1]/n_bins)
 N_eff_D = (n_bins+1.)/D_value+1.
 print("Total N_eff Estimate: %.4e"%N_eff_D)        
 
-output_name = outdir+'Rescaled_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack)
+output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack))
 np.savez(output_name,jackknife_theory_covariance=jack_cov,full_theory_covariance=full_cov,
          jackknife_data_covariance=data_cov,shot_noise_rescaling=alpha_best,
          jackknife_theory_precision=jack_prec,full_theory_precision=full_prec,

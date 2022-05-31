@@ -43,7 +43,7 @@ def symmetrize(mat):
 
 def load_matrices(index):
     """Load intermediate or full covariance matrices"""
-    cov_root = file_root+'3PCFCovMatricesAll/'
+    cov_root = os.path.join(file_root, '3PCFCovMatricesAll/')
     c3_0 = np.loadtxt(cov_root+'c3_n%d_l%d_0_%s.txt'%(n,max_l,index))
     c4_0 = np.loadtxt(cov_root+'c4_n%d_l%d_0_%s.txt'%(n,max_l,index))
     c5_0 = np.loadtxt(cov_root+'c5_n%d_l%d_0_%s.txt'%(n,max_l,index))
@@ -116,7 +116,7 @@ for _ in range(1):
         N_eff_D = (n_bins+1.)/D_value+1.
         print("Total N_eff Estimate: %.4e"%N_eff_D)        
 
-output_name = outdir+'Rescaled_Covariance_Matrices_3PCF_n%d_l%d.npz'%(n,max_l)
+output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_3PCF_n%d_l%d.npz'%(n,max_l))
 np.savez(output_name,full_theory_covariance=full_cov,
          shot_noise_rescaling=alpha,full_theory_precision=full_prec,
          N_eff=N_eff_D,full_theory_D_matrix=full_D_est,

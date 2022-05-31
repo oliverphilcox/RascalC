@@ -4,6 +4,7 @@
 ## NB: Assume mu is in [0,1] limit here
 
 import sys
+import os
 import numpy as np
 import scipy.spatial as ss
 from scipy.optimize import curve_fit
@@ -131,9 +132,9 @@ else:
     print("\nFitted with mean fractional error %.1e"%np.mean(errors))
 
 if periodic:
-    outfile = outdir+'BinCorrectionFactor_n%d_periodic_11.txt'%(n)
+    outfile = os.path.join(outdir, 'BinCorrectionFactor_n%d_periodic_11.txt'%(n))
 else:
-    outfile = outdir+'BinCorrectionFactor_n%d_m%d_11.txt'%(n,m)
+    outfile = os.path.join(outdir, 'BinCorrectionFactor_n%d_m%d_11.txt'%(n,m))
     
 with open(outfile,"w+") as out:
     for i in range(n):

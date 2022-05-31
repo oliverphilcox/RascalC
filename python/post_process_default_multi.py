@@ -48,7 +48,7 @@ def matrix_readin(suffix='full'):
         j1,j2,j3,j4=I1[ii]-1,I2[ii]-1,I3[ii]-1,I4[ii]-1 # internal indexing
 
         # Define input files
-        file_root_all=file_root+'CovMatricesAll/'
+        file_root_all = os.path.join(file_root, 'CovMatricesAll/')
         jndex=index2
 
         if suffix=='full':
@@ -161,7 +161,7 @@ def compute_precision(entire_matrix,subsamples):
 print("Computing precision matrices and N_eff")
 prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
 
-output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_Legendre_n%d_m%d.npz'%(n,m)
+output_name =os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Legendre_n%d_m%d.npz'%(n,m))
 np.savez(output_name,full_theory_covariance=c_comb,
          all_covariances = c_tot,
          shot_noise_rescaling=[alpha_1,alpha_2],
