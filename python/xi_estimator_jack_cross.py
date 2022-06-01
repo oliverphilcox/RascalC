@@ -202,7 +202,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                            weight_type='pair_product',RA2=r_Ra2_RR[filt2],DEC2=r_Dec2_RR[filt2],CZ2=r_com_dist2_RR[filt2],
                                            weights2=rW2_RR[filt2],verbose=verbose,is_comoving_dist=True)
                         RR_counts[i,:]+=0.5*cross_RR[:]['npairs']*cross_RR[:]['weightavg']
-                    RR_counts[i,:] /= np.sum(rW2_RR)*np.sum(rW) # normalize by product of sum of weights
+                    RR_counts[i,:] /= np.sum(rW2_RR)*np.sum(rW_RR) # normalize by product of sum of weights
                 else:
                     filt = np.where(rJ_RR==j)
                     if len(filt[0])>0:
@@ -210,7 +210,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                                 weight_type='pair_product',RA2=r_Ra_RR[filt],DEC2=r_Dec_RR[filt],CZ2=r_com_dist_RR[filt],
                                                 weights2=rW_RR[filt],verbose=verbose,is_comoving_dist=True)
                         RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
-                        RR_counts[i,:] /= np.sum(rW_RR)**2 # normalize by product of sum of weights
+                    RR_counts[i,:] /= np.sum(rW_RR)**2 # normalize by product of sum of weights
                 
         print("Finished RR pair counts after %d seconds"%(time.time()-init))
         
