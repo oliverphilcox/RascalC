@@ -62,6 +62,7 @@ N2 = len(X2)
 weight_sum = np.sum(W)
 weight_sum2 = np.sum(W2)
 J_regions = np.unique(np.concatenate([J,J2])) # jackknife regions in use
+J_regions.sort() # sort to ensure same ordering everywhere
 N_jack = len(J_regions) # number of jackknife regions which are non-empty in at least one sample
 
 ## Determine number of radial bins in binning file:

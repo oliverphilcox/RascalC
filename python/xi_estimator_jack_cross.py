@@ -104,6 +104,7 @@ if len(RRname11)==0:
     J_regions = np.unique(np.concatenate([random1_RR[4],random1_DR[4],random2_RR[4],random2_DR[4],data1[4],data2[4]]))
 else:
     J_regions = np.unique(np.concatenate([random1_DR[4],random2_DR[4],data1[4],data2[4]]))
+J_regions.sort() # sort to ensure same ordering everywhere
     
 N_jack = len(J_regions)
 
