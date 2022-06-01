@@ -44,6 +44,7 @@ extensions = [
     'sphinx.ext.githubpages',
     'recommonmark',
     'sphinx.ext.todo',
+    'sphinx.ext.graphviz',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

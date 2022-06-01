@@ -7,6 +7,20 @@ An associated tutorial (:ref:`tutorial_periodic`) shows how to run the code for 
 
 Here, we compute the covariance matrix for a single `QPM <https://arxiv.org/pdf/1309.5532.pdf>`_ mock dataset. We'll work in the directory in which RascalC is installed for simplicity.
 
+For advanced users who would like to do things in parallel when possible, here is a graph showing how each step depends on the results of others:
+
+.. graphviz::
+
+   digraph deps {
+      "convert_to_xyz galaxies" -> "create_jackknives galaxies";
+      "convert_to_xyz randoms" -> "create_jackknives randoms" -> "take_subset_of_particles";
+      {"write_binning_file cov" "take_subset_of_particles"} -> "jackknife_weights";
+      {"write_binning_file corr" "create_jackknives galaxies" "create_jackknives randoms" "take_subset_of_particles"} -> "xi_estimator_aperiodic";
+      {"write_binning_file cov" "create_jackknives galaxies" "create_jackknives randoms" "take_subset_of_particles" "jackknife_weights"} -> "xi_estimator_jack";
+      {"write_binning_file corr" "write_binning_file cov" "take_subset_of_particles" "jackknife_weights" "xi_estimator_aperiodic"} -> "./cov";
+      {"jackknife_weights" "xi_estimator_jack" "./cov"} -> "post_process_jackknife";
+   }
+
 1) Pre-Processing
 ------------------
 
