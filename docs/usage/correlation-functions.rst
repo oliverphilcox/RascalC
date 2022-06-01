@@ -93,7 +93,7 @@ For an analysis using two distinct fields::
 
 This computes estimates of the auto- and cross-correlations for all unrestricted jackknife regions. Since there are three distinct correlations for each, the run-time is increased by a factor of 3.
 
-Following computation of :math:`\xi^J_{aA}` we can estimate the single-survey jackknife covariance matrix via :math:`C^J_{ab,\mathrm{data}} = \sum_A w_{aA}w_{bA}(\xi^J_{aA}-\bar{\xi}^J_a)(\xi^J_{bA}-\bar{\xi}^J_b) / (1-\sum_B w_{aB}w_{bB})`. This is done internally in the :ref:`post-processing-single` code.
+Following computation of :math:`\xi^J_{aA}` we can estimate the single-survey jackknife covariance matrix via :math:`C^J_{ab,\mathrm{data}} = \sum_A w_{aA}w_{bA}(\xi^J_{aA}-\bar{\xi}^J_a)(\xi^J_{bA}-\bar{\xi}^J_b) / (1-\sum_B w_{aB}w_{bB})`. This is done internally in the :ref:`post-processing-jackknife` code.
 
 **Input Parameters**
 
@@ -103,4 +103,4 @@ See the input parameters for the :ref:`full-correlations` script. In addition, t
 
 This script creates ASCII files for each output correlation function, of the form ``xi_jack_n{N}_m{M}_{INDEX}.dat`` for N radial bins, M angular bins and INDEX specifying the correlation function type (11 = autocorrelation of field 1 (default), 12 = cross-correlation of fields 1 and 2, 22 = autocorrelation of field 2). **NB**: These have a different file format to the non-jackknife correlation functions. The first and second lines of the ``.dat`` file list the radial and angular bin centers, but each succeeding line gives the entire correlation function estimate for a given jackknife. The rows indicate the jackknife and the columns specify the collapsed bin, using the indexing :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` for a total of :math:`n_\mu` angular bins.
 
-These files are read automatically by the :ref:`post-processing-multi` code.
+These files are read automatically by the :ref:`post-processing-jackknife` code.

@@ -3,7 +3,7 @@ Tutorial: Periodic Data and Legendre Multipoles
 
 We present a basic example of the use of the RascalC code on a periodic dataset, such as the output of an N-body simulation. Here we'll restrict to a single-field analysis (using only a single set of tracer galaxies), but the multiple field case proceeds similarly. Our goal is to compute the covariance matrix of the monopole and quadrupole correlation functions :math:`\xi_0(r)` and :math:`\xi_2(r)`, as described in `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_. For this we will use the code in LEGENDRE mode. Detailed documentation for all functions is given in associated pages, as overviewed in the :doc:`getting-started` pages. Note that we here run the main code in the JACKKNIFE mode, and work in the RascalC installation directory for simplicity.
 
-An additional tutorial (:doc:`tutorial`) shows the usage of RascalC for an *aperiodic* dataset (e.g. a galaxy survey) in :math:`(r,\mu)` co-ordinates. This also includes descriptions of the shot-noise rescaling procedure used to incorporate non-Gaussianity in our covariances. In this tutorial, we will assume full Gaussianity, setting the shot-noise rescaling parameter to :math:`\alpha=1`. To include non-Gaussianity, we simply need to run RascalC in JACKKNIFE mode first to estimate :math:`\alpha` (as in :ref:`tutorial`), then run it in LEGENDRE mode, using the measured value of :math:`\alpha` in post-processing.
+An additional tutorial (:doc:`tutorial`) shows the usage of RascalC for an *aperiodic* dataset (e.g. a galaxy survey) in :math:`(r,\mu)` co-ordinates. This also includes descriptions of the shot-noise rescaling procedure used to incorporate non-Gaussianity in our covariances. In this tutorial, we will assume full Gaussianity, setting the shot-noise rescaling parameter to :math:`\alpha=1`. To include non-Gaussianity, we simply need to run RascalC in JACKKNIFE mode first to estimate :math:`\alpha` (as in :doc:`tutorial`), then run it in LEGENDRE mode, using the measured value of :math:`\alpha` in post-processing.
 
 1) Pre-Processing
 ------------------
@@ -70,7 +70,7 @@ The main C++ code requires an input *survey correction function* to account for 
 
     python python/compute_correction_function.py nbody_simulation.txt radial_binning_cov.csv ./ 1
 
-(See :ref:`geometry-correction`)
+(See :doc:`geometry-correction`)
 
 The :math:`1` specifies a periodic survey, and the code produces the output file ``BinCorrectionFactor_n25_periodic_11.txt`` in the working directory that can be fed into the C++ code. Note that we use the *covariance matrix* binning file here.
 
