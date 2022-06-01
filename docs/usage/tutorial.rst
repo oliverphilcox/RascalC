@@ -211,7 +211,7 @@ Although the C++ code computes all the relevant parts of the covariance matrices
 
 For a single field analysis, this is run as follows, specifying the jackknife correlation functions, output covariance term directory and weights. Since we used :math:`N_\mathrm{loops}=10` above, we'll set this as the number of subsamples here::
 
-    python python/post_process.py xi_jack/xi_jack_n36_m12_j169_11.dat weights/ ./ 12 10 ./
+    python python/post_process_jackknife.py xi_jack/xi_jack_n36_m12_j169_11.dat weights/ ./ 12 10 ./
 
 (See :ref:`post-processing-general`).
 
