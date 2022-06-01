@@ -121,7 +121,7 @@ indices = ['11','22']
 for i,index in enumerate(indices):
 
     RR_file = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index))
-    weight_file = os.path.join(weight_dir+'jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index))
+    weight_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index))
     print("Loading weights file from %s"%weight_file)
     weights = np.loadtxt(weight_file)[:,1:]
     print("Loading weights file from %s"%RR_file)
