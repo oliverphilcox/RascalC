@@ -116,7 +116,6 @@ if len(RRname)==0:
     J_regions = np.unique(np.concatenate([rJ_RR,rJ_DR,dJ]))
 else:
     J_regions = np.unique(np.concatenate([rJ_DR,dJ]))
-J_regions.sort() # sort to ensure same ordering everywhere
 
 N_jack = len(J_regions)
 

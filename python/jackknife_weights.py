@@ -43,7 +43,6 @@ for n, line in enumerate(open(fname, 'r')):
 N = len(X) # number of particles
 weight_sum = np.sum(W)#  normalization by summed weights
 J_regions = np.unique(J) # jackknife regions in use
-J_regions.sort() # sort to ensure same ordering everywhere
 N_jack = len(J_regions) # number of non-empty jackknife regions
 
 print("Number of random particles %.1e"%N)
