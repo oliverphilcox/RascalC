@@ -100,7 +100,7 @@ if not periodic:
 
     from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
     
-    def non_periodic_RR_counts(Ra,Dec,com_dist,W,Ra2,Dec2,com_dist2,W2,distinct=False):
+    def non_periodic_RR_counts(Ra, Dec, com_dist, W, J, Ra2, Dec2, com_dist2, W2, J2, distinct=False):
         # General function to compute RR pair counts for two possibly distinct fields
         RR_aA=np.zeros([N_jack,nrbins*nmu_bins]);
         
@@ -131,11 +131,11 @@ if not periodic:
     
     # Now compute RR pair counts
     print("Computing Field 1 x Field 1 pair counts, w_aA^{11}")
-    RR_aA_11=non_periodic_RR_counts(Ra,Dec,com_dist,W,Ra,Dec,com_dist,W,distinct=False)
+    RR_aA_11=non_periodic_RR_counts(Ra, Dec, com_dist, W, J, Ra, Dec, com_dist, W, J, distinct=False)
     print("Computing Field 1 x Field 2 pair counts, w_aA^{12}")
-    RR_aA_12=non_periodic_RR_counts(Ra,Dec,com_dist,W,Ra2,Dec2,com_dist2,W2,distinct=True)
+    RR_aA_12=non_periodic_RR_counts(Ra, Dec, com_dist, W, J, Ra2, Dec2, com_dist2, W2, J2, distinct=True)
     print("Computing Field 2 x Field 2 pair counts, w_aA^{22}")
-    RR_aA_22=non_periodic_RR_counts(Ra2,Dec2,com_dist2,W2,Ra2,Dec2,com_dist2,W2,distinct=False)
+    RR_aA_22=non_periodic_RR_counts(Ra2, Dec2, com_dist2, W2, J2, Ra2, Dec2, com_dist2, W2, J2, distinct=False)
     
 else:
     # Compute RR counts for the periodic case (measuring mu from the Z-axis)
