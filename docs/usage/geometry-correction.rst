@@ -82,10 +82,11 @@ Estimating RRR triple counts
 
 We provide a simple code to compute the RRR triple counts, required to find the 3PCF survey correction function for aperiodic survey geometries. (This is not required for periodic surveys). This is a stochastic estimator (similar to the main C++ covariance matrix code) and does *not* exhaustively count all triples of particles. For heavy usage, an exhaustive code such as the :math:`\mathcal{O}(N^2)` algorithm of `Slepian & Eisenstein (2015) <https://arxiv.org/abs/1506.02040>`_ would be more appropriate.
 
-This is a C++ code and is run analogous to the covariance code in :doc:`main-code`. To compile and run use the following::
+This is a C++ code and is run analogous to the covariance code in :doc:`main-code`. To compile and run use the following:
+
+.. code-block:: bash
 
     cd triple_counts
-    bash clean
     make
     ./triple [OPTIONS]
 

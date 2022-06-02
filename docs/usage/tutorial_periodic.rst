@@ -148,12 +148,13 @@ There's two ways to run the code here; firstly we could edit parameters in the `
 
     ....
 
-Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Now, we'll compile the code;::
+Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Now, we'll compile the code:
 
-    bash clean
+.. code-block:: bash
+
     make
 
-The first line simply cleans the pre-existing ``./cov`` file, if present and the second compiles ``grid_covariance.cpp`` using the Makefile (using the g++ compiler by default). We have edited the Makefile to add the ``-DPERIODIC`` flag and ``-DLEGENDRE`` flags to ensure we compute covariances of 2PCF Legendre moments in a periodic geometry. Note that we can also remove the ``-DOPENMP`` flag to run single threaded. The code is then run with the default parameters;
+This compiles ``grid_covariance.cpp`` using the Makefile (using the g++ compiler by default, it should not be necessary to clean up with ``make clean`` since recompilation within ``make`` is invoked automatically after changes in source files). We have edited the Makefile to add the ``-DPERIODIC`` flag and ``-DLEGENDRE`` flags to ensure we compute covariances of 2PCF Legendre moments in a periodic geometry. Note that we can also remove the ``-DOPENMP`` flag to run single threaded. The code is then run with the default parameters:
 
 .. code-block:: bash
 

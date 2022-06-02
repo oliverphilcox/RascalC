@@ -40,13 +40,14 @@ Note that we require a relatively large value of :math:`N_2N_3N_4N_\mathrm{loops
 Usage
 ------
 
-The code is used as follows, with the command line options specified below::
+The code is used as follows, with the command line options specified below:
 
-    bash clean
+.. code-block:: bash
+
     make
     ./cov [OPTIONS]
 
-The first line removes any pre-existing C++ file before it is recompiled in line 2 to produce the ``./cov`` file. The Makefile may need to be altered depending on the particular computational configuration used. The default Makefile is for a standard Unix installation, with the ``Makefile_mac`` file giving a sample Makefile for a Mac installation. This uses the following optional flags in the Makefile;
+The first line produces the ``./cov`` file by compiling the code; running ``make clean`` is not necessary in most cases since recompilation is invoked automatically when needed depending on changes in source files. The Makefile may need to be altered depending on the particular computational configuration used. The default Makefile is for a standard Unix installation, with the ``Makefile_mac`` file giving a sample Makefile for a Mac installation. This uses the following optional flags in the Makefile;
 
 - ``-DOPENMP``: (Recommended) Run code in parallel with OpenMP, using the OpenMP installation specfied by the ``-lgomp`` and ``-fopenmp`` flags.
 - ``-DPERIODIC``: Use periodic boundary conditions (appropriate for a cubic simulation box, but not mock surveys).
