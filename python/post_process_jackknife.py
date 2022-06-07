@@ -34,7 +34,7 @@ print("Loading weights file from %s"%weight_file)
 weights = np.loadtxt(weight_file)[:,1:]
 
 # First exclude any dodgy jackknife regions
-good_jk=np.unique(np.where(np.isfinite(xi_jack))[0])
+good_jk = np.where(np.all(np.isfinite(xi_jack), axis=1))[0] # all xi in jackknife have to be normal numbers
 print("Using %d out of %d jackknives"%(len(good_jk),n_jack))
 xi_jack = xi_jack[good_jk]
 weights = weights[good_jk]
