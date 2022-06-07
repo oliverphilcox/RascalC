@@ -501,12 +501,8 @@ public:
 #endif
 
 		// Output for posterity
-		printf("Box Size = {%6.5e,%6.5e,%6.5e}\n", rect_boxsize.x,rect_boxsize.y,rect_boxsize.z);
 		printf("Grid = %d\n", nside);
 		printf("Maximum Radius = %6.5e\n", rmax);
-		Float gridsize = rmax/(box_max/nside);
-		printf("Max Radius in Grid Units = %6.5e\n", gridsize);
-		if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
         printf("Radial Bins = %d\n", nbin);
 		printf("Radial Binning = {%6.5f, %6.5f} over %d bins (user-defined bin widths) \n",rmin,rmax,nbin);
 #if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)

@@ -180,6 +180,14 @@ int main(int argc, char *argv[]) {
 
         fflush(NULL);
     }
+
+    // Print box size and max radius in grid units here, because they are adjusted while reading particles (non-periodic case)
+    printf("Box Size = {%6.5e,%6.5e,%6.5e}\n", par.rect_boxsize.x, par.rect_boxsize.y, par.rect_boxsize.z);
+    Float box_max = fmax(fmax(par.rect_boxsize.x, par.rect_boxsize.y), par.rect_boxsize.z);
+    Float gridsize = par.rmax/(box_max/par.nside);
+    printf("Max Radius in Grid Units = %6.5e\n", gridsize);
+    if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
+
 #if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)
     // Now rescale weights based on number of particles (whether or not using jackknives)
     all_weights[0].rescale(all_grid[0].norm,all_grid[0].norm);
