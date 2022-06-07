@@ -64,10 +64,11 @@ weights22 = np.loadtxt(weight_file22)[:,1:]
 weights_all[:,:n_bins]=weights11[good_jk]
 weights_all[:,n_bins:2*n_bins]=weights12[good_jk]
 weights_all[:,2*n_bins:]=weights22[good_jk]
+weights_all /= np.sum(weights_all,axis=0) # renormalize after possibly discarding some jackknives
 
 # Compute full covariance matrix:
 tmp_cov = np.zeros([len(good_jk),3*n_bins])
-mean_xi = np.sum(xi_all*weights_all,axis=0)/np.sum(weights_all,axis=0)
+mean_xi = np.sum(xi_all*weights_all, axis=0)
 tmp_cov = weights_all*(xi_all-mean_xi)
 
 print("Computing full data covariance matrix")
