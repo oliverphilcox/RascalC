@@ -480,7 +480,7 @@
 #else
                     Float frob_C2j, frob_C3j, frob_C4j;
                     sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j);
-                    if((frob_C4<0.01)&&(frob_C4j<0.01)) convergence_counter++;
+                    if((frob_C4 < par->convergence_threshold_percent) && (frob_C4j < par->convergence_threshold_percent)) convergence_counter++;
                     if (n_loops!=0){
                         fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
                         fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n",n_loops,frob_C2j, frob_C3j, frob_C4j);
