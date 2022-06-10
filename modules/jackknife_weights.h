@@ -82,6 +82,8 @@ public:
         // If Jackknife directive is not set, we only read in RR pair counts here
         
         nbins = par->nbin*par->mbin; // define number of bins in total
+        char line[1000000];
+        int index;
         
         int ec2=0;
         ec2+=posix_memalign((void **) &RR_pair_counts, PAGE, sizeof(Float)*nbins);
@@ -96,7 +98,6 @@ public:
             printf("Computed analytical binned RR pair counts successfully.\n");
         }
         else { // otherwise read from file
-            char line[1000000];
             FILE *fp2;
             char *RR_file;
 
@@ -111,7 +112,7 @@ public:
             }
             fprintf(stderr,"\nReading RR bin count file '%s'\n",RR_file);
             
-            int index=0;
+            index = 0;
             while (fgets(line,5000,fp2)!=NULL){
                 // Select required lines in file
                 if (line[0]=='#') continue;
