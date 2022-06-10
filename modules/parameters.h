@@ -464,14 +464,6 @@ public:
         }
 #endif
 
-        if((multi_tracers)&&(make_random==1)){
-            printf("\nRunning for multiple tracers but creating particles at random; this is not yet supported. Exiting.\n\n");
-            exit(1);
-        }
-
-
-
-
 #ifdef THREE_PCF
         if(multi_tracers){
             printf("\nSupport for multi-tracer threePCF covariance matrices not yet available. Exiting.\n\n");
