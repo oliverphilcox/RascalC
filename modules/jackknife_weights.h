@@ -82,44 +82,45 @@ public:
         // If Jackknife directive is not set, we only read in RR pair counts here
         
         nbins = par->nbin*par->mbin; // define number of bins in total
-        char line[1000000];
-        FILE *fp2;
-        char *RR_file;
-        
-        if (!(par->make_random && par->perbox)) { // if particles are made random in periodic box RR counts can (and will) be done analytically
-        if((index1==1)&&(index2==1)) RR_file = par->RR_bin_file;
-        else if((index1==2)&&(index2==2)) RR_file = par->RR_bin_file2;
-        else RR_file = par->RR_bin_file12;
-        fp2 = fopen(RR_file,"r");
-        
-        if (fp2==NULL){
-            fprintf(stderr,"RR bin count file %s not found\n",RR_file);
-            abort();
-        }
-        fprintf(stderr,"\nReading RR bin count file '%s'\n",RR_file);
-        }
         
         int ec2=0;
         ec2+=posix_memalign((void **) &RR_pair_counts, PAGE, sizeof(Float)*nbins);
         assert(ec2==0);
         
-        if (par->make_random && par->perbox) {
+        if (par->make_random && par->perbox) { // if particles are made random in periodic box RR counts can (and will) be done analytically
+            fprintf(stderr,"\nComputing analytical binned RR pair counts between fields %d and %d\n", index1, index2);
             for (int i = 0; i < par->nbin; i++) {
                 Float counts = pow(par->np, 2) * 4*M_PI/3 * (pow(par->radial_bins_high[i], 3) - pow(par->radial_bins_low[i], 3)) / pow(par->boxsize, 3) / par->mbin;
                 for (int j = 0; j < par->mbin; j++) RR_pair_counts[i * par->mbin + j] = counts;
             }
+            printf("Computed analytical binned RR pair counts successfully.\n");
         }
-        else {
-        int index=0;
-        while (fgets(line,5000,fp2)!=NULL){
-            // Select required lines in file
-            if (line[0]=='#') continue;
-            if (line[0]=='\n') continue;
-            RR_pair_counts[index]=atof(line);
-            index++;
-        }
-        assert(index==nbins);
-        printf("Read in RR pair counts successfully.\n");
+        else { // otherwise read from file
+            char line[1000000];
+            FILE *fp2;
+            char *RR_file;
+
+            if((index1==1)&&(index2==1)) RR_file = par->RR_bin_file;
+            else if((index1==2)&&(index2==2)) RR_file = par->RR_bin_file2;
+            else RR_file = par->RR_bin_file12;
+            fp2 = fopen(RR_file,"r");
+            
+            if (fp2==NULL){
+                fprintf(stderr,"RR bin count file %s not found\n",RR_file);
+                abort();
+            }
+            fprintf(stderr,"\nReading RR bin count file '%s'\n",RR_file);
+            
+            int index=0;
+            while (fgets(line,5000,fp2)!=NULL){
+                // Select required lines in file
+                if (line[0]=='#') continue;
+                if (line[0]=='\n') continue;
+                RR_pair_counts[index]=atof(line);
+                index++;
+            }
+            assert(index==nbins);
+            printf("Read in RR pair counts successfully.\n");
         }
         
 #ifdef JACKKNIFE
