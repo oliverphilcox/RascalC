@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
         } else {
         // If you want to just make random particles instead:
         assert(par.np>0);
-        orig_p = make_particles(par.rect_boxsize, par.np);
+        orig_p = make_particles(par.rect_boxsize, par.np, index);
         par.cellsize = par.rect_boxsize.x/float(par.nside);
         // set as periodic if we make the random particles
         par.perbox = true;
