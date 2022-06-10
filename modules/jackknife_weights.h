@@ -86,6 +86,7 @@ public:
         FILE *fp2;
         char *RR_file;
         
+        if (!(par->make_random && par->perbox)) { // if particles are made random in periodic box RR counts can (and will) be done analytically
         if((index1==1)&&(index2==1)) RR_file = par->RR_bin_file;
         else if((index1==2)&&(index2==2)) RR_file = par->RR_bin_file2;
         else RR_file = par->RR_bin_file12;
@@ -96,11 +97,19 @@ public:
             abort();
         }
         fprintf(stderr,"\nReading RR bin count file '%s'\n",RR_file);
+        }
         
         int ec2=0;
         ec2+=posix_memalign((void **) &RR_pair_counts, PAGE, sizeof(Float)*nbins);
         assert(ec2==0);
         
+        if (par->make_random && par->perbox) {
+            for (int i = 0; i < par->nbin; i++) {
+                Float counts = pow(par->np, 2) * 4*M_PI/3 * (pow(par->radial_bins_high[i], 3) - pow(par->radial_bins_low[i], 3)) / pow(par->boxsize, 3) / par->mbin;
+                for (int j = 0; j < par->mbin; j++) RR_pair_counts[i * par->mbin + j] = counts;
+            }
+        }
+        else {
         int index=0;
         while (fgets(line,5000,fp2)!=NULL){
             // Select required lines in file
@@ -111,6 +120,7 @@ public:
         }
         assert(index==nbins);
         printf("Read in RR pair counts successfully.\n");
+        }
         
 #ifdef JACKKNIFE
         char *jk_file;
