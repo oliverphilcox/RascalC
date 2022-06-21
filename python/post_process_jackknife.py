@@ -89,6 +89,7 @@ eig_c4 = eigvalsh(c4j)
 eig_c2 = eigvalsh(c2j)
 if min(eig_c4)<-1.*min(eig_c2):
     print("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
+    print("Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
     sys.exit()
 
 # Load in partial jackknife theoretical matrices
@@ -141,6 +142,7 @@ eig_c4f = eigvalsh(c4f)
 eig_c2f = eigvalsh(c2f)
 if min(eig_c4f)<min(eig_c2f)*-1.:
     print("Full 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
+    print("Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4f), min(eig_c2f)))
     sys.exit()
 
 # Compute full precision matrix
