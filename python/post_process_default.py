@@ -26,7 +26,7 @@ if not os.path.exists(outdir):
 def load_matrices(index):
     """Load intermediate or full covariance matrices"""
     cov_root = file_root+'CovMatricesAll/'
-    c2 = np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index))
+    c2 = np.diag(np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index)))
     c3 = np.loadtxt(cov_root+'c3_n%d_m%d_1,11_%s.txt'%(n,m,index))
     c4 = np.loadtxt(cov_root+'c4_n%d_m%d_11,11_%s.txt'%(n,m,index))
 
