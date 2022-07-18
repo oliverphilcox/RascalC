@@ -51,7 +51,9 @@ for ii in range(len(I1)): # loop over all field combinations
             c3.append(np.loadtxt(input_root_all+'c3_n%d_m%d_%s_%s.txt' %(n,m,index3,i)))
             c4.append(np.loadtxt(input_root_all+'c4_n%d_m%d_%s_%s.txt' %(n,m,index4,i)))
     if len(c2) == 0: break # end loop if no full integral has been found
-    if len(c2) < n_samples_tot: print("Some %s full samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2)))
+    if len(c2) < n_samples_tot:
+        print("Some %s full samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2)))
+        break # end loop like above
     c2, c3, c4 = np.array(c2), np.array(c3), np.array(c4)
     # write
     for i in range(n_samples_tot):
@@ -82,7 +84,9 @@ for ii in range(len(I1)): # loop over all field combinations
             RRaA1.append(np.loadtxt(input_root_jack+'RR1_n%d_m%d_%s_%s.txt' %(n,m,index2,i)))
             RRaA2.append(np.loadtxt(input_root_jack+'RR2_n%d_m%d_%s_%s.txt' %(n,m,index2,i)))
     if len(c2j) == 0: continue # skip rest of the loop if no jack integral has been found
-    if len(c2j) < n_samples_tot: print("Some %s jack samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2j)))
+    if len(c2j) < n_samples_tot:
+        print("Some %s jack samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2j)))
+        continue # skip the rest of the loop like above
     c2j, c3j, c4j = np.array(c2j), np.array(c3j), np.array(c4j)
     EEaA1, EEaA2, RRaA1, RRaA2 = np.array(EEaA1), np.array(EEaA2), np.array(RRaA1), np.array(RRaA2)
     # write
