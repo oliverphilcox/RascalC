@@ -19,7 +19,7 @@ skip_bins = 0
 if len(sys.argv) == 8:
     skip_bins = int(sys.argv[7]) * m # convert from radial to total number of bins right away
 
-mock_cov = np.loadtxt(mock_cov_file) # load external mock covariance matrix
+mock_cov = np.loadtxt(mock_cov_file)[skip_bins:, skip_bins:] # load external mock covariance matrix
 
 # Create output directory
 if not os.path.exists(outdir):
