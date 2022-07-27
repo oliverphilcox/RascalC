@@ -268,9 +268,8 @@ class CorrelationFunction{
         }
 
         for (int i = 0; i < nbin; i++) {
-            Float r_mid = (r_low[i] + r_high[i])/2;
-            if (fabs(x[i+1] - r_mid) > 1e-3) {
-                fprintf(stderr,"%d'th r-bin found in correlation function file is %le but %le expected from binning file.\n", i, x[i+1], r_mid);
+            if ((x[i+1] < r_low[i]) || (x[i+1] > r_high[i])) {
+                fprintf(stderr,"%d'th r-bin found in correlation function file is %le but expected between %le and %le from binning file.\n", i, x[i+1], r_low[i], r_high[i]);
                 abort();
             }
         }
