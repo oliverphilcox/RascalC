@@ -1,4 +1,4 @@
-## Script to take a subset of integrals and/or combine samples
+## Script to take a subset of integrals and/or concatenate samples
 ## More specifically, copy part of partial results to other directory and recompute totals by averaging
 ## Determines single-field vs multi-field and jackknife automatically
 ## Do not use if subsamples have different numbers of pairs/triples/quadruplets
@@ -8,7 +8,7 @@ import sys,os
 
 # PARAMETERS
 if len(sys.argv)<6 or len(sys.argv) % 2: # if too few or parity is wrong
-    print("Usage: python take_subset_of_integrals.py {N_R_BINS} {N_MU_BINS} {COVARIANCE_INPUT_DIR1} {N_SUBSAMPLES_TO_USE1} [{COVARIANCE_INPUT_DIR2} {N_SUBSAMPLES_TO_USE2} ...] {COVARIANCE_OUTPUT_DIR}")
+    print("Usage: python cat_subsets_of_integrals.py {N_R_BINS} {N_MU_BINS} {COVARIANCE_INPUT_DIR1} {N_SUBSAMPLES_TO_USE1} [{COVARIANCE_INPUT_DIR2} {N_SUBSAMPLES_TO_USE2} ...] {COVARIANCE_OUTPUT_DIR}")
     sys.exit()
 
 n = int(sys.argv[1])
