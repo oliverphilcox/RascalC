@@ -273,12 +273,14 @@ public:
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
         else if (!strcmp(argv[i],"-N5")) N5=atof(argv[++i]);
         else if (!strcmp(argv[i],"-N6")) N6=atof(argv[++i]);
-#else
+#endif
+#ifndef LEGENDRE
 		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
+#endif
         else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin12")) RR_bin_file12=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin2")) RR_bin_file2=argv[++i];
-#endif
+
         else if (!strcmp(argv[i],"-perbox")) perbox = 1;
         else if (!strcmp(argv[i],"-np")) {
 			double tmp;
