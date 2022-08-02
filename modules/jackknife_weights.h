@@ -167,7 +167,7 @@ public:
             
             // Split into variables
             char * split_string;
-            split_string = strtok(line, "\t");
+            split_string = strtok(line, " \t");
             counter=0;
             
             // Iterate over line
@@ -179,7 +179,7 @@ public:
                     weights[index]=atof(split_string);
                     index++;
                 }
-                split_string = strtok(NULL,"\t");
+                split_string = strtok(NULL, " \t");
                 counter++;
             }
             line_count++;

@@ -183,12 +183,12 @@ public:
                 
             // Split into variables
             char * split_string;
-            split_string = strtok(line, "\t");
+            split_string = strtok(line, " \t");
                 
             // Iterate over line
             while (split_string!=NULL){
                 phi_coeffs[index]=atof(split_string);
-                split_string = strtok(NULL,"\t");
+                split_string = strtok(NULL, " \t");
                 index++;
                 }
             line_count++;
