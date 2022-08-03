@@ -6,14 +6,14 @@ CXXFLAGS = -Wall -O3 -MMD -DOPENMP
 # DOPENMP # use this to run multi threaded with OpenMP
 #-DPERIODIC # use this to enable periodic behavior
 
-CXX = g++ -fopenmp -lgomp -std=c++0x -ffast-math
+CXX = g++ -fopenmp -lgomp -std=c++0x -ffast-math $(shell pkg-config --cflags gsl)
 
 AUNTIE	= triple
 AOBJS	= triple_counts.o ../cubature/hcubature.o ../ransampl/ransampl.o
 ADEPS   = ${AOBJS:.o=.d}
 
 LD	= g++
-LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu -lgsl -lgslcblas -lgomp
+LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu $(shell pkg-config --libs gsl) -lgomp
 
 .PHONY: main clean
 
