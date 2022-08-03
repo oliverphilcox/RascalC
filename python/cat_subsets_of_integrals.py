@@ -47,7 +47,7 @@ for ii in range(len(I1)): # loop over all field combinations
         for i in range(n_samples):
             try:
                 c2.append(np.loadtxt(input_root_all+'c2_n%d_m%d_%s_%s.txt' %(n,m,index2,i)))
-            except FileNotFoundError: break # end loop if c2 full not found
+            except (FileNotFoundError, IOError): break # end loop if c2 full not found
             c3.append(np.loadtxt(input_root_all+'c3_n%d_m%d_%s_%s.txt' %(n,m,index3,i)))
             c4.append(np.loadtxt(input_root_all+'c4_n%d_m%d_%s_%s.txt' %(n,m,index4,i)))
     if len(c2) == 0: break # end loop if no full integral has been found
@@ -75,7 +75,7 @@ for ii in range(len(I1)): # loop over all field combinations
         for i in range(n_samples):
             try:
                 c2j.append(np.loadtxt(input_root_jack+'c2_n%d_m%d_%s_%s.txt' %(n,m,index2,i)))
-            except FileNotFoundError: break # end loop if c2 jack not found
+            except (FileNotFoundError, IOError): break # end loop if c2 jack not found
             c3j.append(np.loadtxt(input_root_jack+'c3_n%d_m%d_%s_%s.txt' %(n,m,index3,i)))
             c4j.append(np.loadtxt(input_root_jack+'c4_n%d_m%d_%s_%s.txt' %(n,m,index4,i)))
             # cxj components
