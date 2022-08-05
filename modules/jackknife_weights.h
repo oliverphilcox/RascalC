@@ -173,7 +173,7 @@ public:
             // Iterate over line
             while (split_string!=NULL){
                 if(counter==0){
-                    filled_JKs[line_count]=atoi(split_string);
+                    filled_JKs[line_count] = (int) atof(split_string);
                     }
                 else{
                     weights[index]=atof(split_string);
