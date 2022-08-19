@@ -1,4 +1,4 @@
-## Script to post-process the single-field Legendre binned integrals computed by the C++ code, given a shot-noise rescaling parameter alpha.
+## Script to post-process the multi-field integrals computed by the C++ code.
 ## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 
 import numpy as np
@@ -163,7 +163,7 @@ def compute_precision(entire_matrix,subsamples):
 print("Computing precision matrices and N_eff")
 prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
 
-output_name =os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Legendre_n%d_m%d.npz'%(n,m))
+output_name =os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Default_n%d_m%d.npz'%(n,m))
 np.savez(output_name,full_theory_covariance=c_comb,
          all_covariances = c_tot,
          shot_noise_rescaling=[alpha_1,alpha_2],
