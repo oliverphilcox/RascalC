@@ -54,8 +54,10 @@ def matrix_readin(suffix='full'):
         if suffix=='full':
             counts_file = file_root_all+'total_counts_n%d_m%d_%s.txt'%(n,m,index4)
             # Load total number of counts
-            total_counts=np.loadtxt(counts_file)
-            print("Reading in integral components for C_{%s}, which used %.2e pairs, %.2e triples and %.2e quads of particles"%(index4,total_counts[0],total_counts[1],total_counts[2]))
+            try:
+                total_counts=np.loadtxt(counts_file)
+                print("Reading in integral components for C_{%s}, which used %.2e pairs, %.2e triples and %.2e quads of particles"%(index4,total_counts[0],total_counts[1],total_counts[2]))
+            except (FileNotFoundError, IOError): pass
         else:
             pass
             #print("Reading in integral components for C_{%s}, iteration %s"%(index4,suffix))
