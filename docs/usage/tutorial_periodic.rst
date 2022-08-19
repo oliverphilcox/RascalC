@@ -70,7 +70,7 @@ The main C++ code requires an input *survey correction function* to account for 
 
     python python/compute_correction_function.py nbody_simulation.txt radial_binning_cov.csv ./ 1
 
-(See :doc:`geometry-correction`)
+(See :ref:`survey_correction_2PCF`)
 
 The :math:`1` specifies a periodic survey, and the code produces the output file ``BinCorrectionFactor_n25_periodic_11.txt`` in the working directory that can be fed into the C++ code. Note that we use the *covariance matrix* binning file here.
 
