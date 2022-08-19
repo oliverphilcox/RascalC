@@ -31,6 +31,9 @@ def KL_div_covs(C1, C2):
     Psi1C2 = Psi1.dot(C2)
     return (np.trace(Psi1C2) - len(C2) - np.log(np.linalg.det(Psi1C2)))/2
 
+def symmetrized(A): # symmetrize a 2D array
+    return 0.5 * (A + A.T)
+
 # input indices
 I1 = [1,1,1,1,1,2,2]
 I2 = [1,2,2,2,1,1,2]
@@ -58,8 +61,8 @@ for ii in range(len(I1)): # loop over all field combinations
     c2, c3, c4 = np.array(c2), np.array(c3), np.array(c4)
     # construct averages in halves
     c2_first, c3_first, c4_first = [np.mean(a[:n_samples//2, skip_bins:, skip_bins:], axis=0) for a in (c2, c3, c4)]
-    cov_first = c2_first * alpha**2 + c3_first * alpha + c4_first
+    cov_first = c2_first * alpha**2 + symmetrized(c3_first) * alpha + symmetrized(c4_first)
     c2_second, c3_second, c4_second = [np.mean(a[n_samples//2:, skip_bins:, skip_bins:], axis=0) for a in (c2, c3, c4)]
-    cov_second = c2_second * alpha**2 + c3_second * alpha + c4_second
+    cov_second = c2_second * alpha**2 + symmetrized(c3_second) * alpha + symmetrized(c4_second)
     print("%s full: RMS eigenvalues of inverse tests for cov half-estimates are %.2e and %.2e" % (index4, rms_eig_inv_test_covs(cov_first, cov_second), rms_eig_inv_test_covs(cov_second, cov_first)))
     print("%s full: KL divergences between cov half-estimates are %.2e and %.2e" % (index4, KL_div_covs(cov_first, cov_second), KL_div_covs(cov_second, cov_first)))
