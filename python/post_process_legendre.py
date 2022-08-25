@@ -5,8 +5,8 @@ import numpy as np
 import sys,os
 
 # PARAMETERS
-if len(sys.argv)!=6 and len(sys.argv)!=7:
-    print("Usage: python post_process_legendre.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING}]")
+if len(sys.argv) not in (6, 7, 8):
+    print("Usage: python post_process_legendre.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING} [{SKIP_R_BINS}]]")
     sys.exit()
 
 file_root = str(sys.argv[1])
@@ -14,10 +14,11 @@ n = int(sys.argv[2])
 max_l = int(sys.argv[3])
 n_samples = int(sys.argv[4])
 outdir = str(sys.argv[5])
-if len(sys.argv)==7:
-    alpha = float(sys.argv[6])
-else:
-    alpha = 1.;
+alpha = float(sys.argv[6]) if len(sys.argv) >= 7 else 1.
+skip_bins = int(sys.argv[7]) if len(sys.argv) >= 8 else 0
+
+# mask for skipping bins
+r_mask = np.arange(n) >= skip_bins
 
 # Create output directory
 if not os.path.exists(outdir):
@@ -29,6 +30,12 @@ def load_matrices(index):
     c2 = np.loadtxt(cov_root+'c2_n%d_l%d_11_%s.txt'%(n,max_l,index))
     c3 = np.loadtxt(cov_root+'c3_n%d_l%d_1,11_%s.txt'%(n,max_l,index))
     c4 = np.loadtxt(cov_root+'c4_n%d_l%d_11,11_%s.txt'%(n,max_l,index))
+
+    N = len(c2)
+    assert N % n == 0, "Number of bins mismatch"
+    nrepeat = N // n
+    full_mask = np.array(nrepeat * list(r_mask)) # repeat the r_mask since cov terms are first ordered by l
+    c2, c3, c4 = (a[full_mask][:, full_mask] for a in (c2, c3, c4)) # select rows and columns
 
     # Now symmetrize and return matrices
     return c2,0.5*(c3+c3.T),0.5*(c4+c4.T)
@@ -43,6 +50,7 @@ eig_c4 = eigvalsh(c4)
 eig_c2 = eigvalsh(c2)
 if min(eig_c4)<-1.*min(eig_c2):
     print("4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
+    print("Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
     sys.exit()
 
 # Compute full covariance matrices and precision
