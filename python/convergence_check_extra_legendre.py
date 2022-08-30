@@ -54,10 +54,10 @@ for ii in range(len(I1)): # loop over all field combinations
     # read
     for i in range(n_samples):
         try:
-            c2.append(np.diag(np.loadtxt(input_root_all+'c2_n%d_m%d_%s_%s.txt' %(n,m,index2,i))))
+            c2.append(np.diag(np.loadtxt(input_root_all+'c2_n%d_l%d_%s_%s.txt' % (n, max_l, index2, i))))
         except (FileNotFoundError, IOError): break # end loop if c2 full not found
-        c3.append(np.loadtxt(input_root_all+'c3_n%d_m%d_%s_%s.txt' %(n,m,index3,i)))
-        c4.append(np.loadtxt(input_root_all+'c4_n%d_m%d_%s_%s.txt' %(n,m,index4,i)))
+        c3.append(np.loadtxt(input_root_all+'c3_n%d_l%d_%s_%s.txt' % (n, max_l, index3, i)))
+        c4.append(np.loadtxt(input_root_all+'c4_n%d_l%d_%s_%s.txt' % (n, max_l, index4, i)))
     if len(c2) == 0: break # end loop if no full integral has been found
     if len(c2) < n_samples:
         print("Some %s full samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2)))
