@@ -5,8 +5,8 @@ import numpy as np
 import sys,os
 
 # PARAMETERS
-if len(sys.argv) not in (6, 7, 8):
-    print("Usage: python post_process_legendre.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING} [{SKIP_R_BINS}]]")
+if len(sys.argv) not in (6, 7, 8, 9):
+    print("Usage: python post_process_legendre.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING} [{SKIP_R_BINS} [{SKIP_L}]]]")
     sys.exit()
 
 file_root = str(sys.argv[1])
@@ -16,6 +16,7 @@ n_samples = int(sys.argv[4])
 outdir = str(sys.argv[5])
 alpha = float(sys.argv[6]) if len(sys.argv) >= 7 else 1.
 skip_bins = int(sys.argv[7]) if len(sys.argv) >= 8 else 0
+skip_l = int(sys.argv[8]) if len(sys.argv) >= 9 else 0
 
 # mask for skipping bins
 r_mask = np.arange(n) >= skip_bins
@@ -33,8 +34,8 @@ def load_matrices(index):
 
     N = len(c2)
     assert N % n == 0, "Number of bins mismatch"
-    nrepeat = N // n
-    full_mask = np.array(nrepeat * list(r_mask)) # repeat the r_mask since cov terms are first ordered by l
+    nrepeat = N // n - skip_l
+    full_mask = np.append(np.repeat(r_mask, nrepeat), np.zeros(n * skip_l, dtype=bool)) # repeat the r_mask and append zeros since cov terms are first ordered by l
     c2, c3, c4 = (a[full_mask][:, full_mask] for a in (c2, c3, c4)) # select rows and columns
 
     # Now symmetrize and return matrices
