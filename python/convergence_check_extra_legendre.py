@@ -54,7 +54,7 @@ for ii in range(len(I1)): # loop over all field combinations
     # read
     for i in range(n_samples):
         try:
-            c2.append(np.diag(np.loadtxt(input_root_all+'c2_n%d_l%d_%s_%s.txt' % (n, max_l, index2, i))))
+            c2.append(np.loadtxt(input_root_all+'c2_n%d_l%d_%s_%s.txt' % (n, max_l, index2, i)))
         except (FileNotFoundError, IOError): break # end loop if c2 full not found
         c3.append(np.loadtxt(input_root_all+'c3_n%d_l%d_%s_%s.txt' % (n, max_l, index3, i)))
         c4.append(np.loadtxt(input_root_all+'c4_n%d_l%d_%s_%s.txt' % (n, max_l, index4, i)))
