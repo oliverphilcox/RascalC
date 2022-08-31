@@ -8,7 +8,7 @@ import numpy as np
 # PARAMETERS
 if len(sys.argv)!=10:
     if len(sys.argv)!=11:
-        print("Usage: python xi_estimator.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_jackknife_counts}]")
+        print("Usage: python xi_estimator_jack.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR} {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} [{RR_jackknife_counts}]")
         sys.exit()
 Dname = str(sys.argv[1])
 RnameDR = str(sys.argv[2])
