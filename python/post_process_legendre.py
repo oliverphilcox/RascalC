@@ -15,11 +15,8 @@ max_l = int(sys.argv[3])
 n_samples = int(sys.argv[4])
 outdir = str(sys.argv[5])
 alpha = float(sys.argv[6]) if len(sys.argv) >= 7 else 1.
-skip_bins = int(sys.argv[7]) if len(sys.argv) >= 8 else 0
+skip_r_bins = int(sys.argv[7]) if len(sys.argv) >= 8 else 0
 skip_l = int(sys.argv[8]) if len(sys.argv) >= 9 else 0
-
-# mask for skipping bins
-r_mask = np.arange(n) >= skip_bins
 
 # Create output directory
 if not os.path.exists(outdir):
@@ -34,8 +31,9 @@ def load_matrices(index):
 
     N = len(c2)
     assert N % n == 0, "Number of bins mismatch"
-    nrepeat = N // n - skip_l
-    full_mask = np.append(np.repeat(r_mask, nrepeat), np.zeros(n * skip_l, dtype=bool)) # repeat the r_mask and append zeros since cov terms are first ordered by l
+    n_l = N // n # number of multipoles present
+    l_mask = (np.arange(n_l) < n_l - skip_l) # this mask skips last skip_l multipoles
+    full_mask = np.append(np.zeros(skip_r_bins * n_l, dtype=bool), np.repeat(l_mask, n - skip_r_bins)) # start with zeros and then repeat the l_mask since cov terms are first ordered by r and then by l
     c2, c3, c4 = (a[full_mask][:, full_mask] for a in (c2, c3, c4)) # select rows and columns
 
     # Now symmetrize and return matrices

@@ -15,11 +15,8 @@ max_l = int(sys.argv[2])
 input_root = str(sys.argv[3])
 n_samples = int(sys.argv[4])
 alpha = float(sys.argv[5]) if len(sys.argv) >= 6 else 1
-skip_bins = int(sys.argv[6]) if len(sys.argv) >= 7 else 0
+skip_r_bins = int(sys.argv[6]) if len(sys.argv) >= 7 else 0
 skip_l = int(sys.argv[7]) if len(sys.argv) >= 8 else 0
-
-# mask for skipping bins
-r_mask = np.arange(n) >= skip_bins
 
 input_root_all = os.path.join(input_root, 'CovMatricesAll/')
 
@@ -66,8 +63,9 @@ for ii in range(len(I1)): # loop over all field combinations
     # construct boolean mask
     N = np.shape(c2)[1]
     assert N % n == 0, "Number of bins mismatch"
-    nrepeat = N // n - skip_l
-    full_mask = np.append(np.repeat(r_mask, nrepeat), np.zeros(n * skip_l, dtype=bool)) # repeat the r_mask and append zeros since cov terms are first ordered by l
+    n_l = N // n # number of multipoles present
+    l_mask = (np.arange(n_l) < n_l - skip_l) # this mask skips last skip_l bins
+    full_mask = np.append(np.zeros(skip_r_bins * n_l, dtype=bool), np.repeat(l_mask, n - skip_r_bins)) # start with zeros and then repeat the l_mask since cov terms are first ordered by r and then by l
     # construct averages in halves
     c2_first, c3_first, c4_first = [np.mean(a[:n_samples//2, full_mask][:, :, full_mask], axis=0) for a in (c2, c3, c4)]
     cov_first = c2_first * alpha**2 + symmetrized(c3_first) * alpha + symmetrized(c4_first)
