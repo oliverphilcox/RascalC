@@ -106,7 +106,7 @@ else:
 if len(outdir)>0:
     os.makedirs(outdir, exist_ok=1)
 
-outfile = os.path.join(outdir, "RR_counts_n%d_m%d_11.txt"%(nrbins,nmu_bins))
+outfile = os.path.join(outdir, "RR_counts_n%d_m%d_11.dat"%(nrbins,nmu_bins))
 print("Saving binned pair counts as %s" %outfile);
 with open(outfile,"w+") as RRfile:
     for i in range(len(RR_counts)):
