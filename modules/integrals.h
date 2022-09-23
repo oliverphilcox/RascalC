@@ -467,8 +467,9 @@ public:
         for(int i=0;i<n_jack;i++){
             for(int j=0;j<nbin*mbin;j++){
                 // We get 1/4 of total pair counts in each EE bin
-                EEaA1[i*nbin*mbin+j]/=(n_pairs*corrf2*0.25);
-                EEaA2[i*nbin*mbin+j]/=(n_pairs*corrf2*0.25);
+                EEaA1[i*nbin*mbin+j]/=(n_pairs*0.25);
+                EEaA2[i*nbin*mbin+j]/=(n_pairs*0.25);
+                // removed correction factor for EEaA since in jackknife post-processing no correction factor is applied to RR
                 RRaA1[i*nbin*mbin+j]/=(n_pairs*corrf2*0.25);
                 RRaA2[i*nbin*mbin+j]/=(n_pairs*corrf2*0.25);
             }

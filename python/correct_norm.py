@@ -93,7 +93,8 @@ for ii in range(len(I1)): # loop over all field combinations
     # rescale
     c2j *= alpha[I1[ii]] * alpha[I2[ii]] # C_2^{XY} gets rescaled by \alpha^X \alpha^Y, see index2
     c3j *= alpha[I2[ii]] # C_3^{Y,XZ} gets rescaled by \alpha^Y, see index3
-    EEaA1, EEaA2, RRaA1, RRaA2 = np.array((EEaA1, EEaA2, RRaA1, RRaA2)) / (alpha[I1[ii]] * alpha[I2[ii]]) # these behave like RR^{XY}, scaling as N^X N^Y thus 1/(\alpha^X \alpha^Y)
+    RRaA1, RRaA2 = np.array((RRaA1, RRaA2)) / (alpha[I1[ii]] * alpha[I2[ii]]) # RR^{XY} scale as N^X N^Y thus 1/(\alpha^X \alpha^Y)
+    # EEaA1,2 don't scale with alpha anymore - check the normalization procedure in the main code
     # write
     for i in range(n_samples):
         np.savetxt(output_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), c2j[i])
