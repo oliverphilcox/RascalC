@@ -11,9 +11,9 @@
 
 // ====================  The Driver ===========================
 
-Particle *make_particles(Float3 rect_boxsize, int np) {
+Particle *make_particles(Float3 rect_boxsize, int np, int index) {
     // Make np random particles
-    srand48(1);      // For reproducibility
+    srand48(index+1); // For reproducibility but not identical for different tracers
     Particle *p = (Particle *)malloc(sizeof(Particle)*np);
     for (int j=0; j<np; j++) {
         p[j].pos.x = drand48()*rect_boxsize.x;

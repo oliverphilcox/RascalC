@@ -27,21 +27,22 @@ n_bins = xi_jack.shape[1] # total bins
 n_jack = xi_jack.shape[0] # total jackknives
 n = n_bins//m # radial bins
 
-weight_file = weight_dir+'jackknife_weights_n%d_m%d_j%d_11.dat'%(n,m,n_jack)
-RR_file = weight_dir+'binned_pair_counts_n%d_m%d_j%d_11.dat'%(n,m,n_jack)
+weight_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_11.dat'%(n,m,n_jack))
+RR_file = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_11.dat'%(n,m,n_jack))
 
 print("Loading weights file from %s"%weight_file)
 weights = np.loadtxt(weight_file)[:,1:]
 
 # First exclude any dodgy jackknife regions
-good_jk=np.unique(np.where(np.isfinite(xi_jack))[0])
+good_jk = np.where(np.all(np.isfinite(xi_jack), axis=1))[0] # all xi in jackknife have to be normal numbers
 print("Using %d out of %d jackknives"%(len(good_jk),n_jack))
 xi_jack = xi_jack[good_jk]
 weights = weights[good_jk]
+weights /= np.sum(weights, axis=0) # renormalize weights after possibly discarding some jackknives
 
 # Compute data covariance matrix
 print("Computing data covariance matrix")
-mean_xi = np.sum(xi_jack*weights,axis=0)/np.sum(weights,axis=0)
+mean_xi = np.sum(xi_jack*weights,axis=0)
 tmp = weights*(xi_jack-mean_xi)
 data_cov = np.matmul(tmp.T,tmp)
 denom = np.matmul(weights.T,weights)
@@ -53,9 +54,9 @@ RR=np.loadtxt(RR_file)
 def load_matrices(index,jack=True):
     """Load intermediate or full covariance matrices"""
     if jack:
-        cov_root = file_root+'CovMatricesJack/'
+        cov_root = os.path.join(file_root, 'CovMatricesJack/')
     else:
-        cov_root = file_root+'CovMatricesAll/'
+        cov_root = os.path.join(file_root, 'CovMatricesAll/')
     c2 = np.diag(np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index)))
     c3 = np.loadtxt(cov_root+'c3_n%d_m%d_1,11_%s.txt'%(n,m,index))
     c4 = np.loadtxt(cov_root+'c4_n%d_m%d_11,11_%s.txt'%(n,m,index))
@@ -80,14 +81,15 @@ def load_matrices(index,jack=True):
 
 # Load in full jackknife theoretical matrices
 print("Loading best estimate of jackknife covariance matrix")
-c2,c3,c4=load_matrices('full')
+c2j,c3j,c4j=load_matrices('full')
 
 # Check matrix convergence
 from numpy.linalg import eigvalsh
-eig_c4 = eigvalsh(c4)
-eig_c2 = eigvalsh(c2)
+eig_c4 = eigvalsh(c4j)
+eig_c2 = eigvalsh(c2j)
 if min(eig_c4)<-1.*min(eig_c2):
     print("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
+    print("Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
     sys.exit()
 
 # Load in partial jackknife theoretical matrices
@@ -102,7 +104,7 @@ for i in range(n_samples):
 # Compute inverted matrix
 def Psi(alpha):
     """Compute precision matrix from covariance matrix, removing quadratic order bias terms."""
-    c_tot = c2*alpha**2.+c3*alpha+c4
+    c_tot = c2j*alpha**2.+c3j*alpha+c4j
     partial_cov=[]
     for i in range(n_samples):
         partial_cov.append(alpha**2.*c2s[i]+alpha*c3s[i]+c4s[i])
@@ -130,7 +132,7 @@ alpha_best = fmin(neg_log_L1,1.)
 print("Optimization complete - optimal rescaling parameter is %.6f"%alpha_best)
 
 # Compute jackknife and full covariance matrices
-jack_cov = c4+c3*alpha_best+c2*alpha_best**2.
+jack_cov = c4j+c3j*alpha_best+c2j*alpha_best**2.
 jack_prec = Psi(alpha_best)
 c2f,c3f,c4f=load_matrices('full',jack=False)
 full_cov = c4f+c3f*alpha_best+c2f*alpha_best**2.
@@ -140,6 +142,7 @@ eig_c4f = eigvalsh(c4f)
 eig_c2f = eigvalsh(c2f)
 if min(eig_c4f)<min(eig_c2f)*-1.:
     print("Full 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
+    print("Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4f), min(eig_c2f)))
     sys.exit()
 
 # Compute full precision matrix
@@ -169,7 +172,7 @@ D_value = slogdetD[0]*np.exp(slogdetD[1]/n_bins)
 N_eff_D = (n_bins+1.)/D_value+1.
 print("Total N_eff Estimate: %.4e"%N_eff_D)        
 
-output_name = outdir+'Rescaled_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack)
+output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack))
 np.savez(output_name,jackknife_theory_covariance=jack_cov,full_theory_covariance=full_cov,
          jackknife_data_covariance=data_cov,shot_noise_rescaling=alpha_best,
          jackknife_theory_precision=jack_prec,full_theory_precision=full_prec,

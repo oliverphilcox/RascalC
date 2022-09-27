@@ -157,7 +157,7 @@ mean_mus = np.linspace(0.5/nmu_bins,1-0.5/nmu_bins,nmu_bins)
 
 outname='xi_n%d_m%d_periodic_11.dat'%(nrbins,nmu_bins)
 print("Saving correlation function(s)")
-with open(outdir+outname,"w+") as outfile:
+with open(os.path.join(outdir, outname), "w+") as outfile:
     for r in mean_bins:
         outfile.write("%.8e "%r)
     outfile.write("\n")
@@ -174,7 +174,7 @@ print("Correlation function written successfully to %s"%(outdir+outname))
 if multifield:
 
     outname='xi_n%d_m%d_periodic_12.dat'%(nrbins,nmu_bins)
-    with open(outdir+outname,"w+") as outfile:
+    with open(os.path.join(outdir, outname), "w+") as outfile:
         for r in mean_bins:
             outfile.write("%.8e "%r)
         outfile.write("\n")
@@ -190,7 +190,7 @@ if multifield:
 
 
     outname='xi_n%d_m%d_periodic_22.dat'%(nrbins,nmu_bins)
-    with open(outdir+outname,"w+") as outfile:
+    with open(os.path.join(outdir, outname), "w+") as outfile:
         for r in mean_bins:
             outfile.write("%.8e "%r)
         outfile.write("\n")

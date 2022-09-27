@@ -344,8 +344,8 @@
                 loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;
 
                 // End loops early if convergence has been acheived
-                if (convergence_counter==10){
-                    if (printtime==0) printf("1 percent convergence acheived in C4 10 times, exiting.\n");
+                if (convergence_counter == par->convergence_ntimes){
+                    if (printtime==0) printf("%.2lf percent convergence achieved in C4 %d times, exiting.\n", par->convergence_threshold_percent, par->convergence_ntimes);
                     printtime++;
                     continue;
                     }
@@ -379,7 +379,7 @@
                         sec_id = prim_id + delta2;
                         cell_sep2 = grid2->cell_sep(delta2);
                         x = draw_particle(sec_id, particle_j, pid_j, cell_sep2, grid2, sln, locrng, sln1, sln2);
-                        if(x==1) continue; // skip if error
+                        if (x==1) continue; // skip failed draws
 
                         used_cell2+=1; // new cell accepted
 
@@ -409,8 +409,8 @@
                             thi_id = prim_id + delta3;
                             cell_sep3 = grid3->cell_sep(delta3);
                             x = draw_particle_without_class(thi_id,particle_k,pid_k,cell_sep3,grid3,tln,locrng); // draw from third grid
-                            if(x==1) continue;
-                            if(pid_j==pid_k) continue;
+                            if (x==1) continue; // skip failed draws
+                            if ((pid_j==pid_k) && (I2==I3)) continue; // skip jk self-counts
 
                             used_cell3+=1; // new third cell used
 
@@ -432,8 +432,8 @@
                                 // Draw fourth cell from j cell weighted by xi_24(r)
                                 delta4 = rd24->random_xidraw(locrng,&p4);
                                 x = draw_particle_without_class(sec_id+delta4,particle_l,pid_l,cell_sep2+grid4->cell_sep(delta4),grid4,fln,locrng); // draw from 4th grid
-                                if(x==1) continue;
-                                if((pid_l==pid_j)||(pid_l==pid_k)) continue;
+                                if (x==1) continue; // skip failed draws
+                                if (((pid_l==pid_j) && (I4==I2)) || ((pid_l==pid_k) && (I4==I3))) continue; // skip jl and kl self-counts
 
                                 used_cell4+=1; // new fourth cell used
 
@@ -473,14 +473,14 @@
                     Float frob_C2, frob_C3, frob_C4;
 #ifndef JACKKNIFE
                     sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4);
-                    if(frob_C4<0.01) convergence_counter++;
+                    if(frob_C4 < par->convergence_threshold_percent) convergence_counter++;
                     if (n_loops!=0){
                         fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
                     }
 #else
                     Float frob_C2j, frob_C3j, frob_C4j;
                     sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j);
-                    if((frob_C4<0.01)&&(frob_C4j<0.01)) convergence_counter++;
+                    if((frob_C4 < par->convergence_threshold_percent) && (frob_C4j < par->convergence_threshold_percent)) convergence_counter++;
                     if (n_loops!=0){
                         fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
                         fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n",n_loops,frob_C2j, frob_C3j, frob_C4j);

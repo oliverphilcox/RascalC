@@ -13,7 +13,7 @@ In JACKKNIFE mode, the shot-noise rescaling parameter(s), :math:`\alpha_i`, are 
 - {N_R_BINS}: Number of radial  bins used in the analysis.
 - {N_MU_BINS} *(DEFAULT and JACKKNIFE modes)*: Number of angular (:math:`\mu`) bins used in the analysis.
 - {MAX_L} *(LEGENDRE and 3PCF modes)*: Maximum Legendre multipole used in the analysis.
-- {N_SUBSAMPLES}: Number of individual matrix subsamples computed in the C++ code. This is the :math:`N_\mathrm{loops}` parameter used in the :ref:`main-code` code. Individual matrix estimates are used to remove quadratic bias from the precision matrix estimates and compute the effective number of mocks :math:`N_\mathrm{eff}`.
+- {N_SUBSAMPLES}: Number of individual matrix subsamples computed in the C++ code. This is the :math:`N_\mathrm{loops}` parameter used in the :doc:`main-code` code. Individual matrix estimates are used to remove quadratic bias from the precision matrix estimates and compute the effective number of mocks :math:`N_\mathrm{eff}`.
 - {OUTPUT_DIR}: Directory in which to save the analysis products. This will be created if not present.
 - {SHOT_NOISE_RESCALING}, {SHOT_NOISE_RESCALING_1}, {SHOT_NOISE_RESCALING_2} *(DEFAULT, LEGENDRE and 3PCF modes)*: Shot-noise rescaling parameter to be applied to the output covariance and precision matrices. This also affects the effective number of mocks, :math:`N_\mathrm{eff}`. If unspecified, this is set to unity.
 

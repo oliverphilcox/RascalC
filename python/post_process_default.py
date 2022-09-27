@@ -1,4 +1,4 @@
-## Script to post-process the single-field Legendre binned integrals computed by the C++ code. This computes the shot-noise rescaling parameter, alpha, from a data derived covariance matrix.
+## Script to post-process the single-field integrals computed by the C++ code.
 ## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 
 import numpy as np
@@ -25,7 +25,7 @@ if not os.path.exists(outdir):
 
 def load_matrices(index):
     """Load intermediate or full covariance matrices"""
-    cov_root = file_root+'CovMatricesAll/'
+    cov_root = os.path.join(file_root, 'CovMatricesAll/')
     c2 = np.diag(np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index)))
     c3 = np.loadtxt(cov_root+'c3_n%d_m%d_1,11_%s.txt'%(n,m,index))
     c4 = np.loadtxt(cov_root+'c4_n%d_m%d_11,11_%s.txt'%(n,m,index))
@@ -43,6 +43,7 @@ eig_c4 = eigvalsh(c4)
 eig_c2 = eigvalsh(c2)
 if min(eig_c4)<-1.*min(eig_c2):
     print("4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
+    print("Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
     sys.exit()
 
 # Compute full covariance matrices and precision
@@ -80,7 +81,7 @@ else:
     N_eff_D = (n_bins+1.)/D_value+1.
     print("Total N_eff Estimate: %.4e"%N_eff_D)
 
-output_name = outdir+'Rescaled_Covariance_Matrices_Default_n%d_m%d.npz'%(n,m)
+output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Default_n%d_m%d.npz'%(n,m))
 np.savez(output_name,full_theory_covariance=full_cov,
          shot_noise_rescaling=alpha,full_theory_precision=full_prec,
          N_eff=N_eff_D,full_theory_D_matrix=full_D_est,

@@ -1,4 +1,4 @@
-## Script to post-process the single-field Legendre binned integrals computed by the C++ code, given a shot-noise rescaling parameter alpha.
+## Script to post-process the multi-field integrals computed by the C++ code.
 ## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 
 import numpy as np
@@ -48,14 +48,16 @@ def matrix_readin(suffix='full'):
         j1,j2,j3,j4=I1[ii]-1,I2[ii]-1,I3[ii]-1,I4[ii]-1 # internal indexing
 
         # Define input files
-        file_root_all=file_root+'CovMatricesAll/'
+        file_root_all = os.path.join(file_root, 'CovMatricesAll/')
         jndex=index2
 
         if suffix=='full':
             counts_file = file_root_all+'total_counts_n%d_m%d_%s.txt'%(n,m,index4)
             # Load total number of counts
-            total_counts=np.loadtxt(counts_file)
-            print("Reading in integral components for C_{%s}, which used %.2e pairs, %.2e triples and %.2e quads of particles"%(index4,total_counts[0],total_counts[1],total_counts[2]))
+            try:
+                total_counts=np.loadtxt(counts_file)
+                print("Reading in integral components for C_{%s}, which used %.2e pairs, %.2e triples and %.2e quads of particles"%(index4,total_counts[0],total_counts[1],total_counts[2]))
+            except (FileNotFoundError, IOError): pass
         else:
             pass
             #print("Reading in integral components for C_{%s}, iteration %s"%(index4,suffix))
@@ -161,7 +163,7 @@ def compute_precision(entire_matrix,subsamples):
 print("Computing precision matrices and N_eff")
 prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
 
-output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_Legendre_n%d_m%d.npz'%(n,m)
+output_name =os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Default_n%d_m%d.npz'%(n,m))
 np.savez(output_name,full_theory_covariance=c_comb,
          all_covariances = c_tot,
          shot_noise_rescaling=[alpha_1,alpha_2],

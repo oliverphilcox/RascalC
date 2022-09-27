@@ -4,6 +4,7 @@
 ## NB: Assume mu is in [0,1] limit here
 
 import sys
+import os
 import numpy as np
 import scipy.spatial as ss
 from scipy.optimize import curve_fit
@@ -89,7 +90,7 @@ if periodic:
     phis = [phi_11,phi_12,phi_22]
 
     for jndex,index in enumerate(roots):
-        outfile = outdir+'BinCorrectionFactor_n%d_periodic_%s.txt'%(n,index)
+        outfile = os.path.join(outdir, 'BinCorrectionFactor_n%d_periodic_%s.txt'%(n,index))
         with open(outfile,"w+") as out:
             for i in range(n):
                 for j in range(7):
@@ -177,7 +178,7 @@ def compute_phi(gal_w1,gal_w2,gal_n1,gal_n2,V,this_RR,index):
 
     print("Fitted dataset %s with mean fractional error %.1e"%(index,np.mean(errors)))
 
-    outfile = outdir+'BinCorrectionFactor_n%d_m%d_%s.txt'%(n,m,index)
+    outfile = os.path.join(outdir, 'BinCorrectionFactor_n%d_m%d_%s.txt'%(n,m,index))
     with open(outfile,"w+") as out:
         for i in range(n):
             for j in range(7):

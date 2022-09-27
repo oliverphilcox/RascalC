@@ -202,7 +202,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                            weight_type='pair_product',RA2=r_Ra2_RR[filt2],DEC2=r_Dec2_RR[filt2],CZ2=r_com_dist2_RR[filt2],
                                            weights2=rW2_RR[filt2],verbose=verbose,is_comoving_dist=True)
                         RR_counts[i,:]+=0.5*cross_RR[:]['npairs']*cross_RR[:]['weightavg']
-                    RR_counts[i,:]/=0.5*(np.sum(rW2_RR)*np.sum(rW[filt])+np.sum(rW_RR)*np.sum(rW2_RR[filt2]))
+                    RR_counts[i,:] /= np.sum(rW2_RR)*np.sum(rW_RR) # normalize by product of sum of weights
                 else:
                     filt = np.where(rJ_RR==j)
                     if len(filt[0])>0:
@@ -210,7 +210,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                                 weight_type='pair_product',RA2=r_Ra_RR[filt],DEC2=r_Dec_RR[filt],CZ2=r_com_dist_RR[filt],
                                                 weights2=rW_RR[filt],verbose=verbose,is_comoving_dist=True)
                         RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
-                        RR_counts[i,:]/=(np.sum(rW_RR)*np.sum(rW_RR[filt]))
+                    RR_counts[i,:] /= np.sum(rW_RR)**2 # normalize by product of sum of weights
                 
         print("Finished RR pair counts after %d seconds"%(time.time()-init))
         
@@ -238,7 +238,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                              weights1=dW,weight_type='pair_product',RA2=r_Ra2_DR[filt2],DEC2=r_Dec2_DR[filt2],
                                              CZ2 = r_com_dist2_DR[filt2], weights2 = rW2_DR[filt2], verbose=verbose,is_comoving_dist=True)
                     D1R2_counts[i,:] +=0.5*cross_D1R2[:]['npairs']*cross_D1R2[:]['weightavg']
-                D1R2_counts[i,:]/=0.5*(np.sum(dW[filt])*np.sum(rW2_DR)+np.sum(rW2_DR[filt2])*np.sum(dW))
+                D1R2_counts[i,:] /= np.sum(dW)*np.sum(rW2_DR) # normalize by product of sum of weights
                 
                 ## Compute D2R1 term
                 filt = np.where(dJ2==j)
@@ -253,7 +253,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                              weights1=dW2,weight_type='pair_product',RA2=r_Ra_DR[filt2],DEC2=r_Dec_DR[filt2],
                                              CZ2 = r_com_dist_DR[filt2], weights2 = rW_DR[filt2], verbose=verbose,is_comoving_dist=True)
                     D2R1_counts[i,:] +=0.5*cross_D2R1[:]['npairs']*cross_D2R1[:]['weightavg']
-                D2R1_counts[i,:]/=0.5*(np.sum(dW2[filt])*np.sum(rW_DR)+np.sum(rW_DR[filt2])*np.sum(dW2))
+                D2R1_counts[i,:] /= np.sum(dW2)*np.sum(rW_DR) # normalize by product of sum of weights
             else:
                 # Just compute DR term
                 filt = np.where(dJ==j)
@@ -268,7 +268,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                         weights1=dW,weight_type='pair_product', RA2=r_Ra_DR[filt2], DEC2=r_Dec_DR[filt2], 
                                         CZ2 = r_com_dist_DR[filt2], weights2 = rW_DR[filt2], verbose=verbose,is_comoving_dist=True)
                     DR_counts[i,:] += 0.5*cross_DR[:]['npairs']*cross_DR[:]['weightavg']
-                DR_counts[i,:]/=0.5*(np.sum(dW[filt])*np.sum(rW_DR)+np.sum(rW_DR[filt2])*np.sum(dW))
+                DR_counts[i,:] /= np.sum(dW)*np.sum(rW_DR) # normalize by product of sum of weights
         print("Finished DR pair counts after %d seconds"%(time.time()-init))
             
         # Now compute DD counts
@@ -287,7 +287,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                             weight_type='pair_product',RA2=d_Ra2,DEC2=d_Dec2,CZ2=d_com_dist2,
                                             weights2=dW2,verbose=verbose,is_comoving_dist=True)
                     DD_counts[i,:]+=0.5*cross_DD[:]['npairs']*cross_DD[:]['weightavg']
-                DD_counts[i,:]/=0.5*(np.sum(dW2[filt])*np.sum(dW)+np.sum(dW[filt2])*np.sum(dW2)
+                DD_counts[i,:] /= np.sum(dW)*np.sum(dW2) # normalize by product of sum of weights
             else:
                 filt = np.where(dJ==j)
                 if len(filt[0])>0:
@@ -295,7 +295,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                             weight_type='pair_product',RA2=d_Ra[filt],DEC2=d_Dec[filt],CZ2=d_com_dist[filt],
                                             weights2=dW[filt],verbose=verbose,is_comoving_dist=True)
                     DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
-                DD_counts[i,:]/=(np.sum(dW[filt])*np.sum(dW))
+                DD_counts[i,:] /= np.sum(dW)**2 # normalize by product of sum of weights
         print("Finished DD pair counts after %d seconds"%(time.time()-init))
     
     else:
@@ -337,7 +337,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                            weight_type='pair_product',X2=rX2_RR[filt2],Y2=rY2_RR[filt2],Z2=rZ2_RR[filt2],
                                            weights2=rW2_RR[filt2],verbose=verbose,periodic=True)
                         RR_counts[i,:]+=0.5*cross_RR[:]['npairs']*cross_RR[:]['weightavg']
-                RR_counts[i,:]/=0.5*(np.sum(rW2_RR)*np.sum(rW[filt])+np.sum(rW_RR)*np.sum(rW2_RR[filt2]))
+                    RR_counts[i,:] /= np.sum(rW_RR)*np.sum(rW2_RR) # normalize by product of sum of weights
                 else:
                     filt = np.where(rJ_RR==j)
                     if len(filt[0])>0:
@@ -345,7 +345,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                                 weight_type='pair_product',X2=rX_RR[filt],Y2=rY_RR[filt],Z2=rZ_RR[filt],
                                                 weights2=rW_RR[filt],verbose=verbose,periodic=True)
                         RR_counts[i,:]+=cross_RR[:]['npairs']*cross_RR[:]['weightavg']
-                        RR_counts[i,:]/=(np.sum(rW_RR)*np.sum(rW_RR[filt]))
+                        RR_counts[i,:] /= np.sum(rW_RR)**2 # normalize by product of sum of weights
         print("Finished RR pair counts after %d seconds"%(time.time()-init))
         
         if cross_term:
@@ -372,7 +372,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                              weights1=dW,weight_type='pair_product',X2=rX2_DR[filt2],Y2=rY2_DR[filt2],
                                              Z2 = rZ2_DR[filt2], weights2 = rW2_DR[filt2], verbose=verbose,periodic=True)
                     D1R2_counts[i,:] +=0.5*cross_D1R2[:]['npairs']*cross_D1R2[:]['weightavg']
-                D1R2_counts[i,:]/=0.5*(np.sum(dW[filt])*np.sum(rW2_DR)+np.sum(rW2_DR[filt2])*np.sum(dW))
+                D1R2_counts[i,:] /= np.sum(dW)*np.sum(rW2_DR) # normalize by product of sum of weights
                 
                 ## Compute D2R1 term
                 filt = np.where(dJ2==j)
@@ -387,7 +387,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                              weights1=dW2,weight_type='pair_product',X2=rX_DR[filt2],Y2=rY_DR[filt2],
                                              Z2 = rZ_DR[filt2], weights2 = rW_DR[filt2], verbose=verbose,periodic=True)
                     D2R1_counts[i,:] +=0.5*cross_D2R1[:]['npairs']*cross_D2R1[:]['weightavg']
-                D2R1_counts[i,:]/=0.5*(np.sum(dW2[filt])*np.sum(rW_DR)+np.sum(rW_DR[filt2])*np.sum(dW2))
+                D2R1_counts[i,:] /= np.sum(dW2)*np.sum(rW_DR) # normalize by product of sum of weights
             else:
                 
                 # Just compute DR term
@@ -403,7 +403,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                         weights1=dW,weight_type='pair_product', X2=rX_DR[filt2], Y2=rY_DR[filt2], 
                                         Z2 = rZ_DR[filt2], weights2 = rW_DR[filt2], verbose=verbose,periodic=True)
                     DR_counts[i,:] += 0.5*cross_DR[:]['npairs']*cross_DR[:]['weightavg']
-                DR_counts[i,:]/=0.5*(np.sum(dW[filt])*np.sum(rW_DR)+np.sum(rW_DR[filt2])*np.sum(dW))
+                DR_counts[i,:] /= np.sum(dW)*np.sum(rW_DR) # normalize by product of sum of weights
         print("Finished DR pair counts after %d seconds"%(time.time()-init))
             
         # Now compute DD counts
@@ -422,7 +422,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                             weight_type='pair_product',X2=dX2,Y2=dY2,Z2=dZ2,
                                             weights2=dW2,verbose=verbose,periodic=True)
                     DD_counts[i,:]+=0.5*cross_DD[:]['npairs']*cross_DD[:]['weightavg']
-                DD_counts[i,:]/=0.5*(np.sum(dW2[filt])*np.sum(dW)+np.sum(dW[filt2])*np.sum(dW2)
+                DD_counts[i,:] /= np.sum(dW)*np.sum(dW2) # normalize by product of sum of weights
             else:
                 filt = np.where(dJ==j)
                 if len(filt[0])>0:
@@ -430,7 +430,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
                                             weight_type='pair_product',X2=dX[filt],Y2=dY[filt],Z2=dZ[filt],
                                             weights2=dW[filt],verbose=verbose,periodic=True)
                     DD_counts[i,:]+=cross_DD[:]['npairs']*cross_DD[:]['weightavg']
-                DD_counts[i,:]/=(np.sum(dW[filt])*np.sum(dW))
+                DD_counts[i,:] /= np.sum(dW)**2 # normalize by product of sum of weights
         print("Finished DD pair counts after %d seconds"%(time.time()-init))
     
     xi_function = np.zeros_like(RR_counts)
@@ -470,7 +470,7 @@ if not os.path.exists(outdir):
 for index in range(3):
     outname='xi_jack_n%d_m%d_%s.dat'%(nrbins,nmu_bins,suffices[index])
     print("Saving %s correlation function to %s"%(suffices[index],outdir+outname))
-    with open(outdir+outname,"w+") as outfile:
+    with open(os.path.join(outdir, outname), "w+") as outfile:
         for r in mean_bins:
             outfile.write("%.8e "%r)
         outfile.write("\n")

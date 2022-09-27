@@ -82,6 +82,10 @@ public:
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops = 40;
 
+    // Exit after relative Frobenius difference is less than (convergence_threshold_percent %) for (convergence_ntimes) times
+    Float convergence_threshold_percent = 0.01;
+    int convergence_ntimes = 10;
+
     // Number of random cells to draw at each stage
     int N2 = 20; // number of j cells per i cell
     int N3 = 40; // number of k cells per j cell
@@ -269,7 +273,8 @@ public:
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
         else if (!strcmp(argv[i],"-N5")) N5=atof(argv[++i]);
         else if (!strcmp(argv[i],"-N6")) N6=atof(argv[++i]);
-#else
+#endif
+#if (!defined LEGENDRE && !defined POWER && !defined THREE_PCF)
 		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
         else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin12")) RR_bin_file12=argv[++i];
@@ -460,14 +465,6 @@ public:
         }
 #endif
 
-        if((multi_tracers)&&(make_random==1)){
-            printf("\nRunning for multiple tracers but creating particles at random; this is not yet supported. Exiting.\n\n");
-            exit(1);
-        }
-
-
-
-
 #ifdef THREE_PCF
         if(multi_tracers){
             printf("\nSupport for multi-tracer threePCF covariance matrices not yet available. Exiting.\n\n");
@@ -497,12 +494,8 @@ public:
 #endif
 
 		// Output for posterity
-		printf("Box Size = {%6.5e,%6.5e,%6.5e}\n", rect_boxsize.x,rect_boxsize.y,rect_boxsize.z);
 		printf("Grid = %d\n", nside);
 		printf("Maximum Radius = %6.5e\n", rmax);
-		Float gridsize = rmax/(box_max/nside);
-		printf("Max Radius in Grid Units = %6.5e\n", gridsize);
-		if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
         printf("Radial Bins = %d\n", nbin);
 		printf("Radial Binning = {%6.5f, %6.5f} over %d bins (user-defined bin widths) \n",rmin,rmax,nbin);
 #if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)
@@ -678,7 +671,7 @@ private:
 
                 // Split into variables
                 char * split_string;
-                split_string = strtok(line, "\t");
+                split_string = strtok(line, " \t");
                 counter=0;
 
                 // Iterate over line
@@ -693,7 +686,7 @@ private:
                         fprintf(stderr,"Incorrect file format");
                         abort();
                     }
-                    split_string = strtok(NULL,"\t");
+                    split_string = strtok(NULL, " \t");
                     counter++;
                 }
                 line_count++;
@@ -746,7 +739,7 @@ private:
 
                 // Split into variables
                 char * split_string;
-                split_string = strtok(line, "\t");
+                split_string = strtok(line, " \t");
                 counter=0;
 
                 // Iterate over line
@@ -761,7 +754,7 @@ private:
                         fprintf(stderr,"Incorrect file format");
                         abort();
                     }
-                    split_string = strtok(NULL,"\t");
+                    split_string = strtok(NULL, " \t");
                     counter++;
                 }
                 line_count++;

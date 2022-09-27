@@ -40,7 +40,7 @@ n = n_bins//m # radial bins
 xi_jack_all = [xi_jack_11,xi_jack_22]
 
 # First exclude any dodgy jackknife regions
-good_jk=np.unique(np.where(np.isfinite(xi_jack_11)&np.isfinite(xi_jack_22)&np.isfinite(xi_jack_12))[0])
+good_jk = np.where(np.all(np.isfinite(xi_jack_11) & np.isfinite(xi_jack_12) & np.isfinite(xi_jack_22), axis=1))[0] # all xi in jackknife have to be normal numbers
 print("Using %d out of %d jackknives"%(len(good_jk),n_jack))
 
 # Initialize full data covariance matrix (ordering [xi_11, xi_12, xi_22])
@@ -51,23 +51,24 @@ weights_all = np.zeros_like(xi_all)
 
 # Load in all xi functions
 xi_all[:,:n_bins]=xi_jack_11[good_jk]
-xi_all[:,n_bins:2*nbins]=xi_jack_12[good_jk]
+xi_all[:,n_bins:2*n_bins]=xi_jack_12[good_jk]
 xi_all[:,2*n_bins:]=xi_jack_22[good_jk]
 
 # Load in all weights:
-weight_file11 = weight_dir+'jackknife_weights_n%d_m%d_j%d_11.dat'%(n,m,n_jack)
-weight_file12 = weight_dir+'jackknife_weights_n%d_m%d_j%d_12.dat'%(n,m,n_jack)
-weight_file22 = weight_dir+'jackknife_weights_n%d_m%d_j%d_22.dat'%(n,m,n_jack)
+weight_file11 = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_11.dat'%(n,m,n_jack))
+weight_file12 = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_12.dat'%(n,m,n_jack))
+weight_file22 = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_22.dat'%(n,m,n_jack))
 weights11 = np.loadtxt(weight_file11)[:,1:]
 weights12 = np.loadtxt(weight_file12)[:,1:]
 weights22 = np.loadtxt(weight_file22)[:,1:]
 weights_all[:,:n_bins]=weights11[good_jk]
 weights_all[:,n_bins:2*n_bins]=weights12[good_jk]
 weights_all[:,2*n_bins:]=weights22[good_jk]
+weights_all /= np.sum(weights_all,axis=0) # renormalize after possibly discarding some jackknives
 
 # Compute full covariance matrix:
 tmp_cov = np.zeros([len(good_jk),3*n_bins])
-mean_xi = np.sum(xi_all*weights_all,axis=0)/np.sum(weights_all,axis=0)
+mean_xi = np.sum(xi_all*weights_all, axis=0)
 tmp_cov = weights_all*(xi_all-mean_xi)
 
 print("Computing full data covariance matrix")
@@ -80,9 +81,9 @@ def load_matrices(index,field,jack=True):
     """Load intermediate or full autocovariance matrices.
     The field parameter controls which field covariance matrix to load"""
     if jack:
-        cov_root = file_root+'CovMatricesJack/'
+        cov_root = os.path.join(file_root, 'CovMatricesJack/')
     else:
-        cov_root = file_root+'CovMatricesAll/'
+        cov_root = os.path.join(file_root, 'CovMatricesAll/')
     suffix2 = '_n%d_m%d_%s%s_%s.txt'%(n,m,field,field,index)
     suffix3 = '_n%d_m%d_%s,%s%s_%s.txt'%(n,m,field,field,field,index)
     suffix4 = '_n%d_m%d_%s%s,%s%s_%s.txt'%(n,m,field,field,field,field,index)
@@ -120,8 +121,8 @@ indices = ['11','22']
 ## Optimize for alpha_1 and alpha_2 separately.
 for i,index in enumerate(indices):
 
-    RR_file = weight_dir+'binned_pair_counts_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index)
-    weight_file = weight_dir+'jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index)
+    RR_file = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index))
+    weight_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,index))
     print("Loading weights file from %s"%weight_file)
     weights = np.loadtxt(weight_file)[:,1:]
     print("Loading weights file from %s"%RR_file)
@@ -136,12 +137,12 @@ for i,index in enumerate(indices):
 
     # Load in full jackknife theoretical matrices
     print("Loading best estimate of jackknife covariance matrix for field %d"%(i+1))
-    c2,c3,c4=load_matrices('full',i+1)
+    c2j,c3j,c4j=load_matrices('full',i+1)
 
     # Check matrix convergence
     from numpy.linalg import eigvalsh
-    eig_c4 = eigvalsh(c4)
-    eig_c2 = eigvalsh(c2)
+    eig_c4 = eigvalsh(c4j)
+    eig_c2 = eigvalsh(c2j)
     if min(eig_c4)<-1.*min(eig_c2):
         print("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
         sys.exit()
@@ -158,7 +159,7 @@ for i,index in enumerate(indices):
     # Compute inverted matrix
     def Psi(alpha):
         """Compute precision matrix from covariance matrix, removing quadratic order bias terms."""
-        c_tot = c2*alpha**2.+c3*alpha+c4
+        c_tot = c2j*alpha**2.+c3j*alpha+c4j
         partial_cov=[]
         for i in range(n_samples):
             partial_cov.append(alpha**2.*c2s[i]+alpha*c3s[i]+c4s[i])
@@ -211,13 +212,13 @@ def matrix_readin(suffix='full'):
         j1,j2,j3,j4=I1[ii]-1,I2[ii]-1,I3[ii]-1,I4[ii]-1 # internal indexing
 
         # Define input files
-        file_root_all=file_root+'CovMatricesAll/'
-        file_root_jack=file_root+'CovMatricesJack/'
+        file_root_all = os.path.join(file_root, 'CovMatricesAll/')
+        file_root_jack = os.path.join(file_root, 'CovMatricesJack/')
         jndex=index2
         if jndex=='21':
             jndex='12' # to get correct weights
-        rr_true_file =weight_dir+'binned_pair_counts_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,jndex)
-        weights_file = weight_dir+'jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,jndex)
+        rr_true_file = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,jndex))
+        weights_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_%s.dat'%(n,m,n_jack,jndex))
 
         if suffix=='full':
             counts_file = file_root_all+'total_counts_n%d_m%d_%s.txt'%(n,m,index4)
@@ -326,6 +327,7 @@ def matrix_readin(suffix='full'):
 
     for j1 in range(3):
         ind1,ind2 = cov_indices[j1]
+        alpha_1, alpha_2 = alpha_best[[ind1, ind2]]
         for j2 in range(3):
             ind3,ind4 = cov_indices[j2]
             tmp,tmpj=construct_fields(ind1,ind2,ind3,ind4,alpha_1,alpha_2)
@@ -334,7 +336,7 @@ def matrix_readin(suffix='full'):
             c_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmp
             cj_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmpj
 
-    return c_tot,0.5*(c_comb+c_comb.T), cj_tot, 0.5*(cj_comb,cj_comb.T) # add all remaining symmetries
+    return c_tot,0.5*(c_comb+c_comb.T), cj_tot, 0.5*(cj_comb+cj_comb.T) # add all remaining symmetries
 
 # Load full matrices
 c_tot,c_comb, cj_tot, cj_comb = matrix_readin()
@@ -370,7 +372,7 @@ print("Computing precision matrices and N_eff")
 prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
 precj_comb,Nj_eff,Dj_est = compute_precision(cj_comb,cj_subsamples)
 
-output_name = outdir+'Rescaled_Multi_Field_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack)
+output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack))
 
 np.savez(output_name,jackknife_theory_covariance=cj_comb,
          full_theory_covariance=c_comb,

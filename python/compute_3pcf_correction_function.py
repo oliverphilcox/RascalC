@@ -5,6 +5,7 @@
 
 
 import sys
+import os
 import numpy as np
 import scipy.spatial as ss
 
@@ -118,9 +119,9 @@ else:
         sys.exit()
     
 if periodic:
-    outfile = outdir+'BinCorrectionFactor3PCF_n%d_periodic.txt'%(n)
+    outfile = os.path.join(outdir, 'BinCorrectionFactor3PCF_n%d_periodic.txt'%(n))
 else:
-    outfile = outdir+'BinCorrectionFactor3PCF_n%d_m%d.txt'%(n,m)
+    outfile = os.path.join(outdir, 'BinCorrectionFactor3PCF_n%d_m%d.txt'%(n,m))
     
 with open(outfile,"w+") as out:
     for b1 in range(n):

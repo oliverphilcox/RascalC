@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
         } else {
         // If you want to just make random particles instead:
         assert(par.np>0);
-        orig_p = make_particles(par.rect_boxsize, par.np);
+        orig_p = make_particles(par.rect_boxsize, par.np, index);
         par.cellsize = par.rect_boxsize.x/float(par.nside);
         // set as periodic if we make the random particles
         par.perbox = true;
@@ -180,6 +180,14 @@ int main(int argc, char *argv[]) {
 
         fflush(NULL);
     }
+
+    // Print box size and max radius in grid units here, because they are adjusted while reading particles (non-periodic case)
+    printf("Box Size = {%6.5e,%6.5e,%6.5e}\n", par.rect_boxsize.x, par.rect_boxsize.y, par.rect_boxsize.z);
+    Float box_max = fmax(fmax(par.rect_boxsize.x, par.rect_boxsize.y), par.rect_boxsize.z);
+    Float gridsize = par.rmax/(box_max/par.nside);
+    printf("Max Radius in Grid Units = %6.5e\n", gridsize);
+    if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
+
 #if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)
     // Now rescale weights based on number of particles (whether or not using jackknives)
     all_weights[0].rescale(all_grid[0].norm,all_grid[0].norm);
@@ -193,13 +201,13 @@ int main(int argc, char *argv[]) {
     CorrelationFunction all_cf[max_no_functions];
     RandomDraws all_rd[max_no_functions];
 
-    CorrelationFunction tmp_cf(par.corname,par.mbin_cf,par.mumax-par.mumin);
+    CorrelationFunction tmp_cf(par.corname, par.nbin_cf, par.radial_bins_low_cf, par.radial_bins_high_cf, par.mbin_cf, par.mumax-par.mumin);
     all_cf[0].copy_function(&tmp_cf);
     RandomDraws tmp_rd(&tmp_cf,&par,NULL,0);
     all_rd[0].copy(&tmp_rd);
 
     if(par.multi_tracers==true){
-        CorrelationFunction tmp_cf12(par.corname12,par.mbin_cf,par.mumax-par.mumin), tmp_cf2(par.corname2,par.mbin_cf,par.mumax-par.mumin);
+         CorrelationFunction tmp_cf12(par.corname12, par.nbin_cf, par.radial_bins_low_cf, par.radial_bins_high_cf, par.mbin_cf, par.mumax-par.mumin), tmp_cf2(par.corname2, par.nbin_cf, par.radial_bins_low_cf, par.radial_bins_high_cf, par.mbin_cf, par.mumax-par.mumin);
         all_cf[1].copy_function(&tmp_cf2);
         all_cf[2].copy_function(&tmp_cf12);
         RandomDraws rd2(&tmp_cf2,&par,NULL,0), rd12(&tmp_cf12,&par,NULL,0);

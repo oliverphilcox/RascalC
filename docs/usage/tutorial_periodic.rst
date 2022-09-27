@@ -3,7 +3,7 @@ Tutorial: Periodic Data and Legendre Multipoles
 
 We present a basic example of the use of the RascalC code on a periodic dataset, such as the output of an N-body simulation. Here we'll restrict to a single-field analysis (using only a single set of tracer galaxies), but the multiple field case proceeds similarly. Our goal is to compute the covariance matrix of the monopole and quadrupole correlation functions :math:`\xi_0(r)` and :math:`\xi_2(r)`, as described in `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_. For this we will use the code in LEGENDRE mode. Detailed documentation for all functions is given in associated pages, as overviewed in the :doc:`getting-started` pages. Note that we here run the main code in the JACKKNIFE mode, and work in the RascalC installation directory for simplicity.
 
-An additional tutorial (:doc:`tutorial`) shows the usage of RascalC for an *aperiodic* dataset (e.g. a galaxy survey) in :math:`(r,\mu)` co-ordinates. This also includes descriptions of the shot-noise rescaling procedure used to incorporate non-Gaussianity in our covariances. In this tutorial, we will assume full Gaussianity, setting the shot-noise rescaling parameter to :math:`\alpha=1`. To include non-Gaussianity, we simply need to run RascalC in JACKKNIFE mode first to estimate :math:`\alpha` (as in :ref:`tutorial`), then run it in LEGENDRE mode, using the measured value of :math:`\alpha` in post-processing.
+An additional tutorial (:doc:`tutorial`) shows the usage of RascalC for an *aperiodic* dataset (e.g. a galaxy survey) in :math:`(r,\mu)` co-ordinates. This also includes descriptions of the shot-noise rescaling procedure used to incorporate non-Gaussianity in our covariances. In this tutorial, we will assume full Gaussianity, setting the shot-noise rescaling parameter to :math:`\alpha=1`. To include non-Gaussianity, we simply need to run RascalC in JACKKNIFE mode first to estimate :math:`\alpha` (as in :doc:`tutorial`), then run it in LEGENDRE mode, using the measured value of :math:`\alpha` in post-processing.
 
 1) Pre-Processing
 ------------------
@@ -70,7 +70,7 @@ The main C++ code requires an input *survey correction function* to account for 
 
     python python/compute_correction_function.py nbody_simulation.txt radial_binning_cov.csv ./ 1
 
-(See :ref:`geometry-correction`)
+(See :ref:`survey_correction_2PCF`)
 
 The :math:`1` specifies a periodic survey, and the code produces the output file ``BinCorrectionFactor_n25_periodic_11.txt`` in the working directory that can be fed into the C++ code. Note that we use the *covariance matrix* binning file here.
 
@@ -148,12 +148,13 @@ There's two ways to run the code here; firstly we could edit parameters in the `
 
     ....
 
-Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Now, we'll compile the code;::
+Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Now, we'll compile the code:
 
-    bash clean
+.. code-block:: bash
+
     make
 
-The first line simply cleans the pre-existing ``./cov`` file, if present and the second compiles ``grid_covariance.cpp`` using the Makefile (using the g++ compiler by default). We have edited the Makefile to add the ``-DPERIODIC`` flag and ``-DLEGENDRE`` flags to ensure we compute covariances of 2PCF Legendre moments in a periodic geometry. Note that we can also remove the ``-DOPENMP`` flag to run single threaded. The code is then run with the default parameters;
+This compiles ``grid_covariance.cpp`` using the Makefile (using the g++ compiler by default, it should not be necessary to clean up with ``make clean`` since recompilation within ``make`` is invoked automatically after changes in source files). We have edited the Makefile to add the ``-DPERIODIC`` flag and ``-DLEGENDRE`` flags to ensure we compute covariances of 2PCF Legendre moments in a periodic geometry. Note that we can also remove the ``-DOPENMP`` flag to run single threaded. The code is then run with the default parameters:
 
 .. code-block:: bash
 

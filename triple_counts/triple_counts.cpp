@@ -531,7 +531,7 @@ int main(int argc, char *argv[]) {
         } else {
         // If you want to just make random particles instead:
         assert(par.np>0);
-        orig_p = make_particles(par.rect_boxsize, par.np);
+        orig_p = make_particles(par.rect_boxsize, par.np, index);
         // set as periodic if we make the random particles
         par.perbox = true;
         }
@@ -577,7 +577,7 @@ int main(int argc, char *argv[]) {
     CorrelationFunction all_cf[max_no_functions];
     RandomDraws all_rd[max_no_functions];
     
-    CorrelationFunction tmp_cf(par.corname,par.mbin,par.mumax-par.mumin);
+    CorrelationFunction tmp_cf(par.corname, par.nbin_cf, par.radial_bins_low_cf, par.radial_bins_high_cf, par.mbin_cf, par.mumax-par.mumin);
     all_cf[0].copy_function(&tmp_cf);
     RandomDraws tmp_rd(&tmp_cf,&par,NULL,0);
     all_rd[0].copy(&tmp_rd);

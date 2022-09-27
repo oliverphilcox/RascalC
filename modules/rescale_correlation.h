@@ -174,7 +174,7 @@ public:
 
         for(int index=0;index<number_xi;index++){ // iterate over correlation functions
             if (par->cf_loops>0){
-                printf("\nRefining correlation function %d of %d.\n",index+1,number_xi);
+                fprintf(stderr, "\nRefining correlation function %d of %d.\n",index+1,number_xi);
             }
                 true_cf.copy_function(&all_cf[index]); // store initial correlation function
                 for(int n_refine=0;n_refine<par->cf_loops;n_refine++){ // refine cf_loops times per correlation function
@@ -208,11 +208,11 @@ public:
         // Decide thread
         int thread = omp_get_thread_num();
         assert(omp_get_num_threads()<=par->nthread);
-        if (thread==0) printf("# Computing correlation function iteration %d of %d on %d threads.\n", index+1,par->cf_loops, omp_get_num_threads());
+        if (thread==0) fprintf(stderr, "# Computing correlation function iteration %d of %d on %d threads.\n", index+1,par->cf_loops, omp_get_num_threads());
     #else
         { // start empty loop
         int thread = 0;
-        printf("# Computing correlation function iteration %d of %d single threaded.\n",index+1,par->cf_loops);
+        fprintf(stderr, "# Computing correlation function iteration %d of %d single threaded.\n",index+1,par->cf_loops);
     #endif
 
         // Define local thread variables
