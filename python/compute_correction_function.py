@@ -67,7 +67,7 @@ if periodic:
 
 else:
     ## load in RR counts
-    RR_flat = np.loadtxt(RR_file)*np.sum(gal_w)**2. # change normalization here
+    RR_flat = np.loadtxt(RR_file) # not change normalization here
     m=len(RR_flat)//n
     RR_true = RR_flat.reshape((n,m))
 

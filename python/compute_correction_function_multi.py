@@ -105,15 +105,15 @@ if periodic:
 ## Continue for aperiodic case
 
 # Load RR counts
-RR_flat = np.loadtxt(RR_file)*np.sum(gal_w)**2. # change normalization here
+RR_flat = np.loadtxt(RR_file) # not change normalization here
 m=len(RR_flat)//n
 RR_true = RR_flat.reshape((n,m))
 
-RR_flat2 = np.loadtxt(RR_file2)*np.sum(gal2_w)**2.
+RR_flat2 = np.loadtxt(RR_file2)
 assert((len(RR_flat2)//n)==m), "Need same bins for all RR files."
 RR_true2 = RR_flat2.reshape((n,m))
 
-RR_flat12 = np.loadtxt(RR_file2)*np.sum(gal_w)*np.sum(gal2_w)
+RR_flat12 = np.loadtxt(RR_file2)
 assert((len(RR_flat12)//n)==m), "Need same bins for all RR files."
 RR_true12 = RR_flat12.reshape((n,m))
 
