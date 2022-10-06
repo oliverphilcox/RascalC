@@ -1,29 +1,32 @@
 ## MAKEFILE FOR RascalC. This compiles the grid_covariance.cpp file into the ./cov exececutable and is for use with Macs.
 
 CC = gcc
-CFLAGS = -O3 -Wall
-CXXFLAGS = -O3 -Wall -DOPENMP
-#-DOPENMP  # use this to run multi-threaded with OPENMP
+CFLAGS = -g -O3 -Wall -MMD
+CXXFLAGS = -O3 -Wall -MMD -DLEGENDRE
 #-DPERIODIC # use this to enable periodic behavior
 #-DLEGENDRE # use this to compute 2PCF covariances in Legendre bins
 #-DJACKKNIFE # use this to compute (r,mu)-space 2PCF covariances and jackknife covariances
 #-DTHREE_PCF # use this to compute 3PCF autocovariances
+#-DOPENMP  # not supported on Mac (cpu_set_t and sched_getaffinity used in modules/compute_integral.h are Linux-specific)
 
-# Here we load the OpenMP mac package from LLVM
-# This may need to be modified to match the local OpenMP installation
-CXX = /usr/local/opt/llvm/bin/clang++ -std=c++11 -fopenmp -ffast-math
-CXXFLAGS = -O3 -Wall -v
+CXX = g++ -std=c++0x -ffast-math $(shell pkg-config --cflags gsl)
 
 AUNTIE	= cov
 AOBJS	= grid_covariance.o ./cubature/hcubature.o ./ransampl/ransampl.o
+ADEPS   = ${AOBJS:.o=.d}
 
-LD	= /usr/local/opt/llvm/bin/clang++
-LDFLAGS = -lgsl -lgslcblas -lgomp
+LD	= g++
+LFLAGS	= $(shell pkg-config --libs gsl)
+
+.PHONY: main clean
 
 main: $(AUNTIE)
 
-$(AUNTIE):	$(AOBJS)
-	$(LD) $(AOBJS) $(LDFLAGS) -o $(AUNTIE)
+$(AUNTIE):	$(AOBJS) Makefile
+	$(LD) $(AOBJS) $(LFLAGS) -o $(AUNTIE)
 
 clean:
-	rm grid_covariance
+	rm -f $(AUNTIE) $(AOBJS) ${ADEPS}
+
+$(AOBJS): Makefile
+-include ${ADEPS}
