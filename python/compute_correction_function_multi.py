@@ -38,12 +38,10 @@ gal_x = all_gal[:,0]
 gal_y = all_gal[:,1]
 gal_z = all_gal[:,2]
 gal_w = all_gal[:,3]
-gal_n = (1./gal_w-1.)/20000.
 gal2_x = all_gal2[:,0]
 gal2_y = all_gal2[:,1]
 gal2_z = all_gal2[:,2]
 gal2_w = all_gal2[:,3]
-gal2_n = (1./gal2_w-1.)/20000.
 
 w_bar1 = np.mean(gal_w)
 w_bar2 = np.mean(gal2_w)
@@ -122,13 +120,10 @@ mu_cen = np.arange(1./(2.*m),1.+1./(2.*m),1./m)
 delta_mu = mu_cen[-1]-mu_cen[-2]
 assert(m==len(mu_cen))
 
-def compute_phi(gal_w1,gal_w2,gal_n1,gal_n2,V,this_RR,index):
+def compute_phi(w_bar1, w_bar2, n_bar1, n_bar2, V, this_RR, index):
     print("\nComputing survey correction factor %s"%index)
     ## Define normalization constant
-    if np.mean(gal_n1)==np.mean(gal_n2): # i.e. same fields
-        this_norm = np.mean(gal_n1**2*gal_w1**2)
-    else:
-        this_norm = np.mean(gal_n1*gal_w1)*np.mean(gal_n2*gal_w2)
+    this_norm = n_bar1*n_bar2*w_bar1*w_bar2 # keep it simple, only need to be self-consistent - use the same norm everywhere
 
     norm = V*this_norm
 
@@ -190,6 +185,6 @@ def compute_phi(gal_w1,gal_w2,gal_n1,gal_n2,V,this_RR,index):
     print("Saved (normalized) output to %s"%outfile)
 
 # Now run this
-compute_phi(gal_w,gal_w,gal_n,gal_n,V,RR_true,"11");
-compute_phi(gal_w,gal2_w,gal_n,gal2_n,V,RR_true,"12"); # just use volume 1 here
-compute_phi(gal2_w,gal2_w,gal2_n,gal2_n,V2,RR_true,"22");
+compute_phi(w_bar1, w_bar1, n_bar1, n_bar1, V, RR_true, "11");
+compute_phi(w_bar1, w_bar2, n_bar1, n_bar2, np.sqrt(V*V2), RR_true12, "12"); # use geometrically average volume, should be not critical
+compute_phi(w_bar2, w_bar2, n_bar2, n_bar2, V2, RR_true2, "22");
