@@ -44,25 +44,6 @@ class compute_integral{
             return 0;
         }
         
-        void check_threads(Parameters *par,int print){
-            // Set up OPENMP and define which threads to use
-    #ifdef OPENMP
-            cpu_set_t mask[par->nthread+1];
-            int tnum=0;
-            sched_getaffinity(0, sizeof(cpu_set_t), &mask[par->nthread]);
-            if(print==1) fprintf(stderr, " CPUs used are: ");
-            for(int ii=0;ii<64;ii++){
-                if(CPU_ISSET(ii, &mask[par->nthread])){
-                    if(print==1) fprintf(stderr,"%d ", ii);
-                    CPU_ZERO(&mask[tnum]);
-                    CPU_SET(ii,&mask[tnum]);
-                    tnum++;
-                }
-            }
-            fprintf(stderr,"\n");
-    #endif
-        }
-        
     public:    
         compute_integral(){};
         
@@ -90,8 +71,6 @@ class compute_integral{
             uint64 tot_triples=0, tot_quads=0, tot_quints=0, tot_hexes=0; // global number of particle sets used (including those rejected for being in the wrong bins)
             uint64 cell_attempt3=0,cell_attempt4=0,cell_attempt5=0,cell_attempt6=0; // number of k,l,m,n cells attempted
             uint64 used_cell3=0,used_cell4=0,used_cell5=0,used_cell6=0; // number of used j,k,l cells
-            
-            check_threads(par,1); // Define which threads we use
         
             initial.Stop();
             fprintf(stderr, "Init time: %g s\n",initial.Elapsed());
