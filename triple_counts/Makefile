@@ -19,7 +19,7 @@ LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu $(shell pkg-config --libs 
 
 main: $(AUNTIE)
 
-$(AUNTIE):	$(AOBJS)
+$(AUNTIE):	$(AOBJS) Makefile
 	$(LD) $(AOBJS) $(LFLAGS) -o $(AUNTIE)
 
 clean:
