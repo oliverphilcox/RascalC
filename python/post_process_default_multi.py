@@ -5,7 +5,7 @@ import numpy as np
 import sys,os
 
 # PARAMETERS
-if len(sys.argv)!=6 and len(sys.argv)!=8:
+if len(sys.argv) not in (6, 8):
     print("Usage: python post_process_default_multi.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]")
     sys.exit()
 
@@ -14,12 +14,10 @@ n = int(sys.argv[2])
 m = int(sys.argv[3])
 n_samples = int(sys.argv[4])
 outdir = str(sys.argv[5])
-if len(sys.argv)==8:
-    alpha_1 = float(sys.argv[6])
-    alpha_2 = float(sys.argv[7])
-else:
-    alpha_1 = 1.;
-    alpha_2 = 1.;
+alpha_1 = float(sys.argv[6]) if len(sys.argv) >= 7 else 1
+alpha_2 = float(sys.argv[7]) if len(sys.argv) >= 8 else 1
+
+alphas = [alpha_1, alpha_2]
 
 # Create output directory
 if not os.path.exists(outdir):
@@ -121,9 +119,10 @@ def matrix_readin(suffix='full'):
 
     for j1 in range(3):
         ind1,ind2 = cov_indices[j1]
+        alpha1, alpha2 = alphas[ind1], alphas[ind2]
         for j2 in range(3):
             ind3,ind4 = cov_indices[j2]
-            tmp=construct_fields(ind1,ind2,ind3,ind4,alpha_1,alpha_2)
+            tmp = construct_fields(ind1, ind2, ind3, ind4, alpha1, alpha2)
             c_tot[j1,j2] = tmp
             c_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmp
 
