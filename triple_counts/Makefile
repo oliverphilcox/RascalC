@@ -3,7 +3,7 @@
 CC = gcc
 CFLAGS = -Wall -O3 -MMD
 CXXFLAGS = -Wall -O3 -MMD -DOPENMP
-# DOPENMP # use this to run multi threaded with OpenMP
+#-DOPENMP # use this to run multi-threaded with OpenMP
 #-DPERIODIC # use this to enable periodic behavior
 
 CXX = g++ -fopenmp -lgomp -std=c++0x -ffast-math $(shell pkg-config --cflags gsl)
@@ -19,7 +19,7 @@ LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu $(shell pkg-config --libs 
 
 main: $(AUNTIE)
 
-$(AUNTIE):	$(AOBJS)
+$(AUNTIE):	$(AOBJS) Makefile
 	$(LD) $(AOBJS) $(LFLAGS) -o $(AUNTIE)
 
 clean:

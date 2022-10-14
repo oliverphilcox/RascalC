@@ -1,23 +1,16 @@
 ## Script to perform an extra convergence check on full integrals
 ## More specifically, divide integral subsamples into halves and check similarity of their average results
-## Determines single-field vs multi-field automatically
+## Should work in any case - default, jackknife, Legendre, multi-tracer - as it utilizes universal data from RascalC file
 
 import numpy as np
 import sys,os
 
 # PARAMETERS
-if len(sys.argv) not in (5, 6, 7): # if too few or parity is wrong
-    print("Usage: python convergence_check_extra.py {N_R_BINS} {N_MU_BINS} {COVARIANCE_INPUT_DIR} {N_SUBSAMPLES} [{ALPHA} [{SKIP_R_BINS}]]")
+if len(sys.argv) != 2:
+    print("Usage: python convergence_check_extra.py {RASCALC_RESULTS_FILE}")
     sys.exit()
 
-n = int(sys.argv[1])
-m = int(sys.argv[2])
-input_root = str(sys.argv[3])
-n_samples = int(sys.argv[4])
-alpha = float(sys.argv[5]) if len(sys.argv) >= 6 else 1
-skip_bins = int(sys.argv[6]) * m if len(sys.argv) >= 7 else 0
-
-input_root_all = os.path.join(input_root, 'CovMatricesAll/')
+rascalc_results = str(sys.argv[1])
 
 # methods to assess similarity
 def rms_eig_inv_test_covs(C1, C2):
@@ -31,38 +24,11 @@ def KL_div_covs(C1, C2):
     Psi1C2 = Psi1.dot(C2)
     return (np.trace(Psi1C2) - len(C2) - np.log(np.linalg.det(Psi1C2)))/2
 
-def symmetrized(A): # symmetrize a 2D array
-    return 0.5 * (A + A.T)
+with np.load(rascalc_results) as f:
+    c_samples = f["individual_theory_covariances"]
 
-# input indices
-I1 = [1,1,1,1,1,2,2]
-I2 = [1,2,2,2,1,1,2]
-I3 = [1,1,2,1,2,2,2]
-I4 = [1,1,1,2,2,2,2]
-
-for ii in range(len(I1)): # loop over all field combinations
-    index4="%d%d,%d%d"%(I1[ii],I2[ii],I3[ii],I4[ii])
-    index3="%d,%d%d"%(I2[ii],I1[ii],I3[ii])
-    index2="%d%d"%(I1[ii],I2[ii])
-
-    # full integrals
-    c2, c3, c4 = [], [], []
-    # read
-    for i in range(n_samples):
-        try:
-            c2.append(np.diag(np.loadtxt(input_root_all+'c2_n%d_m%d_%s_%s.txt' %(n,m,index2,i))))
-        except (FileNotFoundError, IOError): break # end loop if c2 full not found
-        c3.append(np.loadtxt(input_root_all+'c3_n%d_m%d_%s_%s.txt' %(n,m,index3,i)))
-        c4.append(np.loadtxt(input_root_all+'c4_n%d_m%d_%s_%s.txt' %(n,m,index4,i)))
-    if len(c2) == 0: break # end loop if no full integral has been found
-    if len(c2) < n_samples:
-        print("Some %s full samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2)))
-        break # end loop like above
-    c2, c3, c4 = np.array(c2), np.array(c3), np.array(c4)
-    # construct averages in halves
-    c2_first, c3_first, c4_first = [np.mean(a[:n_samples//2, skip_bins:, skip_bins:], axis=0) for a in (c2, c3, c4)]
-    cov_first = c2_first * alpha**2 + symmetrized(c3_first) * alpha + symmetrized(c4_first)
-    c2_second, c3_second, c4_second = [np.mean(a[n_samples//2:, skip_bins:, skip_bins:], axis=0) for a in (c2, c3, c4)]
-    cov_second = c2_second * alpha**2 + symmetrized(c3_second) * alpha + symmetrized(c4_second)
-    print("%s full: RMS eigenvalues of inverse tests for cov half-estimates are %.2e and %.2e" % (index4, rms_eig_inv_test_covs(cov_first, cov_second), rms_eig_inv_test_covs(cov_second, cov_first)))
-    print("%s full: KL divergences between cov half-estimates are %.2e and %.2e" % (index4, KL_div_covs(cov_first, cov_second), KL_div_covs(cov_second, cov_first)))
+n_samples_2 = len(c_samples) // 2
+cov_first = np.mean(c_samples[:n_samples_2], axis=0)
+cov_second = np.mean(c_samples[n_samples_2:], axis=0)
+print("RMS eigenvalues of inverse tests for cov half-estimates are %.2e and %.2e" % (rms_eig_inv_test_covs(cov_first, cov_second), rms_eig_inv_test_covs(cov_second, cov_first)))
+print("KL divergences between cov half-estimates are %.2e and %.2e" % (KL_div_covs(cov_first, cov_second), KL_div_covs(cov_second, cov_first)))

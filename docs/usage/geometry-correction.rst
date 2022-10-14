@@ -65,7 +65,7 @@ For an analysis using two distinct fields::
 
 See the :ref:`RR_counts` parameters above. Additionally;
 
-- {RR_COUNTS}, {RR_COUNTS_11}, {RR_COUNTS_12} {RR_COUNTS_22} *(Only required if dataset is aperiodic)*: RR counts computed by the :ref:`RR_counts` script, or externally. These should be normalized by the sum of the squared random weights (by using the NORMED flag above).
+- {RR_COUNTS}, {RR_COUNTS_11}, {RR_COUNTS_12} {RR_COUNTS_22} *(Only required if dataset is aperiodic)*: RR counts computed by the :ref:`RR_counts` script, or externally. These should be NOT normalized by the sum of the squared random weights (by setting the NORMED flag above to 0).
 
 **Notes**:
 

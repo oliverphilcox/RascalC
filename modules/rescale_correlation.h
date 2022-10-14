@@ -200,8 +200,6 @@ public:
         correlation_integral full_xi_function(par,old_cf); // full correlation function class
         uint64 used_pairs=0;
 
-        compute->check_threads(par,0); // check threads
-
 #ifdef OPENMP
 #pragma omp parallel firstprivate(steps,par,grid1, grid2, old_cf) shared(gsl_rng_default,rd) reduction(+:used_pairs)
         { // start parallel loop

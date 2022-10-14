@@ -114,6 +114,13 @@ public:
 #endif
     }
     
+    void rescale(Float norm1, Float norm2){
+        // Rescale the survey correction function by a factor (N_rand_1/N_gal_1)*(N_rand2/N_gal2) - inverse of RR counts rescaling
+        Float rescale_factor = norm1*norm2;
+        printf("Rescaling survey correction function by a factor (N_rand_1/N_gal_1)*(N_rand2/N_gal2) = %.1e\n", rescale_factor);
+        for(int i = 0; i < nbin * n_param; i++) phi_coeffs[i] *= rescale_factor;
+    }
+    
     // Empty operator
     SurveyCorrection(){};
     

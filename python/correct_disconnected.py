@@ -17,7 +17,7 @@ output_root = str(sys.argv[5])
 norm1 = float(sys.argv[6]) / float(sys.argv[7]) # nrandoms1/ndata1, like in the C++ code
 norm2 = float(sys.argv[8]) / float(sys.argv[9]) if len(sys.argv) >= 10 else 1 # nrandoms2/ndata2 if present, default 1
 
-norm = [norm1, norm2]
+norm = {1: norm1, 2: norm2}
 
 input_root_all = os.path.join(input_root, 'CovMatricesAll/')
 input_root_jack = os.path.join(input_root, 'CovMatricesJack/')
@@ -51,7 +51,7 @@ for ii in range(len(I1)): # loop over all field combinations
         c4.append(np.loadtxt(input_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i)))
     if len(c2) == 0: break # end loop if no full integral has been found
     if len(c2) < n_samples:
-        print("Some %s full samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2)))
+        print("Some %s full samples missing: expected %d, found %d" % (index4, n_samples, len(c2)))
         break # end loop like above
     c2, c3, c4 = np.array(c2), np.array(c3), np.array(c4)
     # do nothing
@@ -84,7 +84,7 @@ for ii in range(len(I1)): # loop over all field combinations
         RRaA2.append(np.loadtxt(input_root_jack+'RR2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i)))
     if len(c2j) == 0: continue # skip rest of the loop if no jack integral has been found
     if len(c2j) < n_samples:
-        print("Some %s jack samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2j)))
+        print("Some %s jack samples missing: expected %d, found %d" % (index4, n_samples, len(c2j)))
         continue # skip the rest of the loop like above
     c2j, c3j, c4j = np.array(c2j), np.array(c3j), np.array(c4j)
     EEaA1, EEaA2, RRaA1, RRaA2 = np.array(EEaA1), np.array(EEaA2), np.array(RRaA1), np.array(RRaA2)

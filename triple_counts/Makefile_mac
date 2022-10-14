@@ -1,13 +1,10 @@
-## MAKEFILE FOR RascalC. This compiles the grid_covariance.cpp file into the ./cov exececutable and is for use with Macs.
+## MAKEFILE FOR RascalC. This compiles the triple_counts.cpp file into the ./triple exececutable and is for use with Macs.
 
 CC = gcc
-CFLAGS = -g -O3 -Wall -MMD
-CXXFLAGS = -O3 -Wall -MMD -DOPENMP -DLEGENDRE
-#-DOPENMP  # use this to run multi-threaded with OPENMP
+CFLAGS = -Wall -O3 -MMD
+CXXFLAGS = -Wall -O3 -MMD -DOPENMP
+#-DOPENMP # use this to run multi-threaded with OpenMP
 #-DPERIODIC # use this to enable periodic behavior
-#-DLEGENDRE # use this to compute 2PCF covariances in Legendre bins
-#-DJACKKNIFE # use this to compute (r,mu)-space 2PCF covariances and jackknife covariances
-#-DTHREE_PCF # use this to compute 3PCF autocovariances
 
 # Here we use LLVM compiler to load the Mac OpenMP. Tested after installation commands:
 # brew install llvm
@@ -15,8 +12,8 @@ CXXFLAGS = -O3 -Wall -MMD -DOPENMP -DLEGENDRE
 # This may need to be modified with a different installation
 CXX = /usr/local/opt/llvm/bin/clang++ -std=c++0x -fopenmp -ffast-math $(shell pkg-config --cflags gsl)
 
-AUNTIE	= cov
-AOBJS	= grid_covariance.o ./cubature/hcubature.o ./ransampl/ransampl.o
+AUNTIE	= triple
+AOBJS	= triple_counts.o ../cubature/hcubature.o ../ransampl/ransampl.o
 ADEPS   = ${AOBJS:.o=.d}
 
 # These two lines might also need adjustment with a different OpenMP setup
@@ -31,7 +28,7 @@ $(AUNTIE):	$(AOBJS) Makefile_mac
 	$(LD) $(AOBJS) $(LFLAGS) -o $(AUNTIE)
 
 clean:
-	rm -f $(AUNTIE) $(AOBJS) ${ADEPS}
+	rm -f ${AUNTIE} ${AOBJS} ${ADEPS}
 
 $(AOBJS): Makefile_mac
 -include ${ADEPS}

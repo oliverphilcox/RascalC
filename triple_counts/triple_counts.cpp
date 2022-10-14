@@ -294,25 +294,6 @@ class compute_triples{
         
         
     public:
-        void check_threads(Parameters *par,int print){
-            // Set up OPENMP and define which threads to use
-    #ifdef OPENMP
-            cpu_set_t mask[par->nthread+1];
-            int tnum=0;
-            sched_getaffinity(0, sizeof(cpu_set_t), &mask[par->nthread]);
-            if(print==1) fprintf(stderr, " CPUs used are: ");
-            for(int ii=0;ii<64;ii++){
-                if(CPU_ISSET(ii, &mask[par->nthread])){
-                    if(print==1) fprintf(stderr,"%d ", ii);
-                    CPU_ZERO(&mask[tnum]);
-                    CPU_SET(ii,&mask[tnum]);
-                    tnum++;
-                }
-            }
-            fprintf(stderr,"\n");
-    #endif
-        }
-    public:
         compute_triples(Grid *grid, Parameters *par, CorrelationFunction *cf, RandomDraws *rd){
             
             // Define parameters
@@ -333,8 +314,6 @@ class compute_triples{
             uint64 used_cell2=0,used_cell3=0; // number of used j,k,l cells
             
             TripleCounts global_counts(par);
-            
-            check_threads(par,1); // Define which threads we use
 
             initial.Stop();
             fprintf(stderr, "Init time: %g s\n",initial.Elapsed());
