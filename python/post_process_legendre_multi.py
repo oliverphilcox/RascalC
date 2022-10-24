@@ -139,11 +139,12 @@ for i in range(n_samples):
 # Now compute all precision matrices
 iden = np.eye(len(c_comb))
 
-def compute_precision(entire_matrix,subsamples):
+def compute_precision(entire_matrix, subsamples):
     summ=0.
+    sum_subsamples = np.sum(subsamples, axis=0)
     for i in range(n_samples):
-        c_excl_i = np.mean(subsamples[:i]+subsamples[i+1:],axis=0)
-        summ+=np.matmul(np.linalg.inv(c_excl_i),subsamples[i])
+        c_excl_i = (sum_subsamples - subsamples[i]) / (n_samples - 1)
+        summ+=np.matmul(np.linalg.inv(c_excl_i), subsamples[i])
     D_est = (summ/n_samples-iden)*(n_samples-1.)/n_samples
     logdetD = np.linalg.slogdet(D_est)
     if logdetD[0]<0:

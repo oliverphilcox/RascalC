@@ -51,25 +51,25 @@ if min(eig_c4)<-1.*min(eig_c2):
 n_bins = len(c4)
 
 # Load in partial theoretical matrices
-c2s,c3s,c4s=[],[],[]
+c2s, c3s, c4s = [], [], []
 for i in range(n_samples):
     print("Loading full subsample %d of %d"%(i+1,n_samples))
     c2,c3,c4=load_matrices(i)
     c2s.append(c2)
     c3s.append(c3)
     c4s.append(c4)
+c2s, c3s, c4s = [np.array(a) for a in (c2s, c3s, c4s)]
 
 # Compute inverted matrix
 def Psi(alpha):
     """Compute precision matrix from covariance matrix, removing quadratic order bias terms."""
     c_tot = c2*alpha**2.+c3*alpha+c4
-    partial_cov=[]
-    for i in range(n_samples):
-        partial_cov.append(alpha**2.*c2s[i]+alpha*c3s[i]+c4s[i])
+    partial_cov = alpha**2 * c2s + alpha * c3s + c4s
+    sum_partial_cov = np.sum(partial_cov, axis=0)
     tmp=0.
     for i in range(n_samples):
-        c_excl_i = np.mean(partial_cov[:i]+partial_cov[i+1:],axis=0)
-        tmp+=np.matmul(np.linalg.inv(c_excl_i),partial_cov[i])
+        c_excl_i = (sum_partial_cov - partial_cov[i]) / (n_samples - 1)
+        tmp+=np.matmul(np.linalg.inv(c_excl_i), partial_cov[i])
     D_est=(n_samples-1.)/n_samples * (-1.*np.eye(n_bins) + tmp/n_samples)
     Psi = np.matmul(np.eye(n_bins)-D_est,np.linalg.inv(c_tot))
     return Psi
@@ -95,13 +95,12 @@ full_cov = c4+c3*alpha+c2*alpha**2.
 
 # Compute full precision matrix
 print("Computing the full precision matrix estimate:")
-partial_cov=[]
-for i in range(n_samples):
-    partial_cov.append(alpha**2.*c2s[i]+alpha*c3s[i]+c4s[i])
+partial_cov = alpha**2 * c2s + alpha * c3s + c4s
+sum_partial_cov = np.sum(partial_cov, axis=0)
 tmp=0.
 for i in range(n_samples):
-    c_excl_i = np.mean(partial_cov[:i]+partial_cov[i+1:],axis=0)
-    tmp+=np.matmul(np.linalg.inv(c_excl_i),partial_cov[i])
+    c_excl_i = (sum_partial_cov - partial_cov[i]) / (n_samples - 1)
+    tmp+=np.matmul(np.linalg.inv(c_excl_i), partial_cov[i])
 full_D_est=(n_samples-1.)/n_samples * (-1.*np.eye(n_bins) + tmp/n_samples)
 full_prec = np.matmul(np.eye(n_bins)-full_D_est,np.linalg.inv(full_cov))
 print("Full precision matrix estimate computed")

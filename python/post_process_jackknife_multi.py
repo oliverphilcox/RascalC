@@ -148,25 +148,25 @@ for i,index in enumerate(indices):
         sys.exit()
 
     # Load in partial jackknife theoretical matrices
-    c2s,c3s,c4s=[],[],[]
+    c2s, c3s, c4s = [], [], []
     for j in range(n_samples):
         print("Loading field %d jackknife subsample %d of %d"%(i+1,j+1,n_samples))
         c2,c3,c4=load_matrices(j,i+1)
         c2s.append(c2)
         c3s.append(c3)
         c4s.append(c4)
+    c2s, c3s, c4s = [np.array(a) for a in (c2s, c3s, c4s)]
 
     # Compute inverted matrix
     def Psi(alpha):
         """Compute precision matrix from covariance matrix, removing quadratic order bias terms."""
         c_tot = c2j*alpha**2.+c3j*alpha+c4j
-        partial_cov=[]
-        for i in range(n_samples):
-            partial_cov.append(alpha**2.*c2s[i]+alpha*c3s[i]+c4s[i])
+        partial_cov = alpha**2 * c2s + alpha * c3s + c4s
+        sum_partial_cov = np.sum(partial_cov, axis=0)
         tmp=0.
         for i in range(n_samples):
-            c_excl_i = np.mean(partial_cov[:i]+partial_cov[i+1:],axis=0)
-            tmp+=np.matmul(np.linalg.inv(c_excl_i),partial_cov[i])
+            c_excl_i = (sum_partial_cov - partial_cov[i]) / (n_samples - 1)
+            tmp+=np.matmul(np.linalg.inv(c_excl_i), partial_cov[i])
         D_est=(n_samples-1.)/n_samples * (-1.*np.eye(n_bins) + tmp/n_samples)
         Psi = np.matmul(np.eye(n_bins)-D_est,np.linalg.inv(c_tot))
         return Psi
@@ -353,11 +353,12 @@ for i in range(n_samples):
 # Now compute all precision matrices
 iden = np.eye(len(c_comb))
 
-def compute_precision(entire_matrix,subsamples):
+def compute_precision(entire_matrix, subsamples):
     summ=0.
+    sum_subsamples = np.sum(subsamples, axis=0)
     for i in range(n_samples):
-        c_excl_i = np.mean(subsamples[:i]+subsamples[i+1:],axis=0)
-        summ+=np.matmul(np.linalg.inv(c_excl_i),subsamples[i])
+        c_excl_i = (sum_subsamples - subsamples[i]) / (n_samples - 1)
+        summ+=np.matmul(np.linalg.inv(c_excl_i), subsamples[i])
     D_est = (summ/n_samples-iden)*(n_samples-1.)/n_samples
     logdetD = np.linalg.slogdet(D_est)
     if logdetD[0]<0:

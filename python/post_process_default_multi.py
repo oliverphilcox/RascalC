@@ -137,6 +137,7 @@ c_subsamples=[]
 for i in range(n_samples):
     _,tmp=matrix_readin(i)
     c_subsamples.append(tmp)
+c_subsamples = np.array(c_subsamples)
 
 # Now compute all precision matrices
 iden = np.eye(len(c_comb))
@@ -144,11 +145,12 @@ iden = np.eye(len(c_comb))
 N_eff = np.zeros([2,2,2,2])
 D_est = np.zeros_like(c_tot)
 
-def compute_precision(entire_matrix,subsamples):
+def compute_precision(entire_matrix, subsamples):
     summ=0.
+    sum_subsamples = np.sum(subsamples, axis=0)
     for i in range(n_samples):
-        c_excl_i = np.mean(subsamples[:i]+subsamples[i+1:],axis=0)
-        summ+=np.matmul(np.linalg.inv(c_excl_i),subsamples[i])
+        c_excl_i = (sum_subsamples - subsamples[i]) / (n_samples - 1)
+        summ+=np.matmul(np.linalg.inv(c_excl_i), subsamples[i])
     D_est = (summ/n_samples-iden)*(n_samples-1.)/n_samples
     logdetD = np.linalg.slogdet(D_est)
     if logdetD[0]<0:
@@ -160,7 +162,7 @@ def compute_precision(entire_matrix,subsamples):
     return precision,N_eff_D,D_est
 
 print("Computing precision matrices and N_eff")
-prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
+prec_comb,N_eff,D_est = compute_precision(c_comb, c_subsamples)
 
 output_name =os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Default_n%d_m%d.npz'%(n,m))
 np.savez(output_name,full_theory_covariance=c_comb,
