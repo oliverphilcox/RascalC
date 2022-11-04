@@ -135,7 +135,9 @@ int main(int argc, char *argv[]) {
             orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax);
             assert(par.np>0);
 #endif
-            par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
+#ifndef PERIODIC
+            par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside); // respect the given boxsize if periodic
+#endif
         } else {
         // If you want to just make random particles instead:
         assert(par.np>0);
