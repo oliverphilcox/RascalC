@@ -303,7 +303,7 @@ def compute_xi(random1_RR,random1_DR,data1,N_rand1_RR, N_rand1_DR, N_gal1,random
         
         # Compute xi for the periodic case (measuring mu from the Z-axis)
         print("Using periodic input data")
-        from Corrfunc.mocks.DDsmu import DDsmu
+        from Corrfunc.theory.DDsmu import DDsmu
         
         import time
         init = time.time()
