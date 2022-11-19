@@ -21,7 +21,7 @@ skip_bins = int(sys.argv[8]) * m if len(sys.argv) >= 9 else 0
 
 input_root_jack = os.path.join(input_root, 'CovMatricesJack/')
 
-weights = np.loadtxt(weight_file)[:,1:]
+weights = np.loadtxt(weight_file)[:, 1+skip_bins:]
 RR = np.loadtxt(RR_file)
 
 # methods to assess similarity
