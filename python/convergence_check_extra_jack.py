@@ -1,6 +1,7 @@
 ## Script to perform an extra convergence check on jackknife integrals
 ## More specifically, divide integral subsamples into halves and check similarity of their average results
 ## Determines single-field vs multi-field automatically
+## Now legacy, jackknife integrals convergence checking implemented in convergence_check_extra.py, but old post-processing results do not have the needed information saved in .npz files
 
 import numpy as np
 import sys,os
