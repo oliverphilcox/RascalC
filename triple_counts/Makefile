@@ -12,8 +12,11 @@ ifeq ($(shell uname -s),Darwin)
 # brew install llvm
 # brew install libomp
 # This may need to be modified with a different installation
-CXX = /usr/local/opt/llvm/bin/clang++ -std=c++0x -fopenmp -ffast-math $(shell pkg-config --cflags gsl)
-LD	= /usr/local/opt/llvm/bin/clang++
+ifndef HOMEBREW_PREFIX
+HOMEBREW_PREFIX = /usr/local
+endif
+CXX = ${HOMEBREW_PREFIX}/opt/llvm/bin/clang++ -std=c++0x -fopenmp -ffast-math $(shell pkg-config --cflags gsl)
+LD	= ${HOMEBREW_PREFIX}/opt/llvm/bin/clang++
 LFLAGS	= $(shell pkg-config --libs gsl) -fopenmp -lomp
 else
 # default (Linux) case
