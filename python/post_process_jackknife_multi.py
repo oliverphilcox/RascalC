@@ -394,9 +394,9 @@ print("Computing precision matrices and N_eff")
 prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
 precj_comb,Nj_eff,Dj_est = compute_precision(cj_comb,cj_subsamples)
 
-output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack))
+output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz' % (n, m, n_jack))
 
-np.savez(output_name,jackknife_theory_covariance=cj_comb,
+np.savez(output_name, jackknife_theory_covariance=cj_comb,
          full_theory_covariance=c_comb,
          all_covariances=c_tot,
          all_jackknife_covariances=cj_tot,
@@ -406,6 +406,7 @@ np.savez(output_name,jackknife_theory_covariance=cj_comb,
          N_eff=N_eff,
          full_theory_D_matrix=D_est,
          jackknife_data_covariance=data_cov,
-         individual_theory_covariances = c_subsamples)
+         individual_theory_covariances=c_subsamples,
+         individual_theory_jackknife_covariances=cj_subsamples)
 
-print("Saved output covariance matrices as %s"%output_name)
+print("Saved output covariance matrices as %s" % output_name)

@@ -167,16 +167,19 @@ full_prec = np.matmul(np.eye(n_bins)-full_D_est,np.linalg.inv(full_cov))
 print("Full precision matrix estimate computed")    
 
 # Now compute effective N:
-slogdetD=np.linalg.slogdet(full_D_est)
+slogdetD = np.linalg.slogdet(full_D_est)
 D_value = slogdetD[0]*np.exp(slogdetD[1]/n_bins)
 N_eff_D = (n_bins+1.)/D_value+1.
-print("Total N_eff Estimate: %.4e"%N_eff_D)        
+print("Total N_eff Estimate: %.4e" % N_eff_D)
 
-output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz'%(n,m,n_jack))
-np.savez(output_name,jackknife_theory_covariance=jack_cov,full_theory_covariance=full_cov,
-         jackknife_data_covariance=data_cov,shot_noise_rescaling=alpha_best,
-         jackknife_theory_precision=jack_prec,full_theory_precision=full_prec,
-         N_eff=N_eff_D,full_theory_D_matrix=full_D_est,
-         individual_theory_covariances=partial_cov)
+# Jackknife covariance for posterity
+partial_jack_cov = alpha_best**2 * c2s + alpha_best * c3s + c4s
+
+output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz' % (n, m, n_jack))
+np.savez(output_name, jackknife_theory_covariance=jack_cov, full_theory_covariance=full_cov,
+         jackknife_data_covariance=data_cov, shot_noise_rescaling=alpha_best,
+         jackknife_theory_precision=jack_prec, full_theory_precision=full_prec,
+         N_eff=N_eff_D, full_theory_D_matrix=full_D_est,
+         individual_theory_covariances=partial_cov, individual_theory_jackknife_covariances=partial_jack_cov)
 
 print("Saved output covariance matrices as %s"%output_name)
