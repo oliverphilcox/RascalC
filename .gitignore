@@ -55,3 +55,6 @@ __pycache__
 
 # Built docs
 _build
+
+# Hidden files
+.*
