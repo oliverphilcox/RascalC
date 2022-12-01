@@ -16,4 +16,4 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 - Ross O'Connell (Pittsburgh)
 - Alexander Wiegand (Garching)
 
-We thank Yuting Wang and Ryuichiro Hada for pointing out and fixing a number of issues with the code and its documentation. We are particularly grateful to Misha Rashkovetskyi for finding a wide variety of improvements and bugs!
+We thank Yuting Wang and Ryuichiro Hada for pointing out and fixing a number of issues with the code and its documentation. We are particularly grateful to Misha Rashkovetskyi and Uendert Arande for finding a wide variety of improvements and bugs!
