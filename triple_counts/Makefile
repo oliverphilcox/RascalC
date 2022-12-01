@@ -6,14 +6,28 @@ CXXFLAGS = -Wall -O3 -MMD -DOPENMP
 #-DOPENMP # use this to run multi-threaded with OpenMP
 #-DPERIODIC # use this to enable periodic behavior
 
+# Known OS-specific choices
+ifeq ($(shell uname -s),Darwin)
+# Here we use LLVM compiler to load the Mac OpenMP. Tested after installation commands:
+# brew install llvm
+# brew install libomp
+# This may need to be modified with a different installation
+ifndef HOMEBREW_PREFIX
+HOMEBREW_PREFIX = /usr/local
+endif
+CXX = ${HOMEBREW_PREFIX}/opt/llvm/bin/clang++ -std=c++0x -fopenmp -ffast-math $(shell pkg-config --cflags gsl)
+LD	= ${HOMEBREW_PREFIX}/opt/llvm/bin/clang++
+LFLAGS	= $(shell pkg-config --libs gsl) -fopenmp -lomp
+else
+# default (Linux) case
 CXX = g++ -fopenmp -lgomp -std=c++0x -ffast-math $(shell pkg-config --cflags gsl)
+LD	= g++
+LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu $(shell pkg-config --libs gsl) -lgomp
+endif
 
 AUNTIE	= triple
 AOBJS	= triple_counts.o ../cubature/hcubature.o ../ransampl/ransampl.o
 ADEPS   = ${AOBJS:.o=.d}
-
-LD	= g++
-LFLAGS	= -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu $(shell pkg-config --libs gsl) -lgomp
 
 .PHONY: main clean
 

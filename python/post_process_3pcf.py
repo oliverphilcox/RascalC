@@ -72,7 +72,7 @@ n_bins = len(c6)
 # Compute full precision matrix
 print("Computing the full precision matrix estimate:")
 # Load in partial theoretical matrices
-c3s,c4s,c5s,c6s=[],[],[],[]
+c3s, c4s, c5s, c6s = [], [], [], []
 for i in range(n_samples):
     print("Loading full subsample %d of %d"%(i+1,n_samples))
     c3t,c4t,c5t,c6t=load_matrices(i)
@@ -80,18 +80,18 @@ for i in range(n_samples):
     c4s.append(c4t)
     c5s.append(c5t)
     c6s.append(c6t)
+c3s, c4s, c5s, c6s = [np.array(a) for a in (c3s, c4s, c5s, c6s)]
     
-partial_cov=[]
-for i in range(n_samples):
-    partial_cov.append(alpha**3.*c3s[i]+alpha**2*c4s[i]+alpha*c5s[i]+c6s[i])
+partial_cov = alpha**3 * c3s + alpha**2 * c4s + alpha * c5s + c6s
+sum_partial_cov = np.sum(partial_cov, axis=0)
 
 tmp=0.
 
 for _ in range(1):
     for i in range(n_samples):
-        c_excl_i = np.mean(np.concatenate([list(partial_cov[:i])+list(partial_cov[i+1:])]),axis=0)
+        c_excl_i = (sum_partial_cov - partial_cov[i]) / (n_samples - 1)
         try:
-            tmp+=np.matmul(np.linalg.inv(c_excl_i),partial_cov[i])
+            tmp+=np.matmul(np.linalg.inv(c_excl_i), partial_cov[i])
         except np.linalg.linalg.LinAlgError:
             print("Could not invert submatrix, so setting overall precision to zero. Matrix is not fully converged")
             tmp = np.inf

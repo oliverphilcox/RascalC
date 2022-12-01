@@ -59,20 +59,20 @@ n_bins = len(c4)
 # Compute full precision matrix
 print("Computing the full precision matrix estimate:")
 # Load in partial theoretical matrices
-c2s,c3s,c4s=[],[],[]
+c2s, c3s, c4s = [], [], []
 for i in range(n_samples):
     print("Loading full subsample %d of %d"%(i+1,n_samples))
     c2t,c3t,c4t=load_matrices(i)
     c2s.append(c2t)
     c3s.append(c3t)
     c4s.append(c4t)
-partial_cov=[]
-for i in range(n_samples):
-    partial_cov.append(alpha**2.*c2s[i]+alpha*c3s[i]+c4s[i])
+c2s, c3s, c4s = [np.array(a) for a in (c2s, c3s, c4s)]
+partial_cov = alpha**2 * c2s + alpha * c3s + c4s
+sum_partial_cov = np.sum(partial_cov, axis=0)
 tmp=0.
 for i in range(n_samples):
-    c_excl_i = np.mean(partial_cov[:i]+partial_cov[i+1:],axis=0)
-    tmp+=np.matmul(np.linalg.inv(c_excl_i),partial_cov[i])
+    c_excl_i = (sum_partial_cov - partial_cov[i]) / (n_samples - 1)
+    tmp += np.matmul(np.linalg.inv(c_excl_i), partial_cov[i])
 full_D_est=(n_samples-1.)/n_samples * (-1.*np.eye(n_bins) + tmp/n_samples)
 full_prec = np.matmul(np.eye(n_bins)-full_D_est,np.linalg.inv(full_cov))
 print("Full precision matrix estimate computed")

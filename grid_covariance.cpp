@@ -118,55 +118,74 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
-    // Now read in particles to grid:
-    Grid all_grid[no_fields]; // create empty grids
+    // Now read in particles
+    Particle* all_particles[no_fields];
+    int all_np[no_fields];
 
-    for(int index=0;index<no_fields;index++){
+    for (int index = 0; index < no_fields; index++) {
         Float3 shift;
-        Particle *orig_p;
-        if (!par.make_random){
+        if (!par.make_random) {
             char *filename;
-            if(index==0) filename=par.fname;
-            else filename=par.fname2;
+            if (index == 0) filename = par.fname;
+            else filename = par.fname2;
 #ifdef JACKKNIFE
-            orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax, &all_weights[index]);
-            assert(par.np>0);
+            all_particles[index] = read_particles(par.rescale, &all_np[index], filename, par.rstart, par.nmax, &all_weights[index]);
 #else
-            orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax);
-            assert(par.np>0);
+            all_particles[index] = read_particles(par.rescale, &all_np[index], filename, par.rstart, par.nmax);
 #endif
-            par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
-        } else {
-        // If you want to just make random particles instead:
-        assert(par.np>0);
-        orig_p = make_particles(par.rect_boxsize, par.np, index);
-        par.cellsize = par.rect_boxsize.x/float(par.nside);
+            assert(all_np[index] > 0);
+        }
+        else {
+            // If you want to just make random particles instead:
+            assert(par.np > 0);
+            all_particles[index] = make_particles(par.rect_boxsize, all_np[index], index);
+            all_np[index] = par.np;
+        }
+        if (par.qinvert) invert_weights(all_particles[index], all_np[index]);
+        if (par.qbalance) balance_weights(all_particles[index], all_np[index]);
+    }
+
+    // Now compute bounding box using all particles
+    Float3 shift; // default value is zero
+    if (!par.make_random) {
+        par.perbox = compute_bounding_box(all_particles, all_np, no_fields, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
+#ifdef PERIODIC
+        par.rect_boxsize = {par.boxsize, par.boxsize, par.boxsize} // restore the given boxsize if periodic
+        par.cellsize = par.boxsize / (Float)par.nside; // set cell size manually
+        // keep the shift from compute_bounding_box, allowing for coordinate ranges other than [0, par.boxsize) but still of length par.boxsize - this is quite generic and precise at the same time.
+#endif
+    }
+    else {
+        // If randoms particles were made we keep the boxsize
+        par.cellsize = par.boxsize / (Float)par.nside;
         // set as periodic if we make the random particles
         par.perbox = true;
-        }
-        if (par.qinvert) invert_weights(orig_p, par.np);
-        if (par.qbalance) balance_weights(orig_p, par.np);
+    }
 
+    // Now put particles to grid(s)
+    Grid all_grid[no_fields]; // create empty grids
+    Float max_density = 16., min_density = 2.;
+
+    for (int index = 0; index < no_fields; index++) {
         // Now ready to compute!
-        // Sort the particles into the grid.
-        Float nofznorm=par.nofznorm;
-        if(index==1) nofznorm=par.nofznorm2;
-        Grid tmp_grid(orig_p, par.np, par.rect_boxsize, par.cellsize, par.nside, shift, nofznorm);
+        // Sort particles into grid(s)
+        Float nofznorm = par.nofznorm;
+        if (index == 1) nofznorm = par.nofznorm2;
+        Grid tmp_grid(all_particles[index], all_np[index], par.rect_boxsize, par.cellsize, par.nside, shift, nofznorm);
 
-        Float grid_density = (double)par.np/tmp_grid.nf;
-        printf("\n RANDOM CATALOG %d DIAGNOSTICS:\n",index+1);
+        Float grid_density = (Float)tmp_grid.np/tmp_grid.nf;
+        printf("\n RANDOM CATALOG %d DIAGNOSTICS:\n", index+1);
         printf("Average number of particles per grid cell = %6.2f\n", grid_density);
-        Float max_density = 16.0;
-        if (grid_density>max_density){
-            fprintf(stderr,"Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n",max_density);
+        if (grid_density > max_density) {
+            fprintf(stderr,"# ERROR: Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n", max_density);
+            exit(1);
+        }
+        if (grid_density < min_density) {
+            printf("# ERROR: grid appears inefficiently fine (average density less than %.0f particles per cell); exiting.\n", min_density);
             exit(1);
         }
         printf("Average number of particles per max_radius ball = %6.2f\n",
-                par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
-        if (grid_density<2){
-            printf("#\n# WARNING: grid appears inefficiently fine; exiting.\n#\n");
-            exit(1);
-        }
+                tmp_grid.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
 
         printf("# Done gridding the particles\n");
         printf("# %d particles in use, %d with positive weight\n", tmp_grid.np, tmp_grid.np_pos);
@@ -176,17 +195,16 @@ int main(int argc, char *argv[]) {
         // Now save grid to global memory:
         all_grid[index].copy(&tmp_grid);
 
-        free(orig_p); // Particles are now only stored in grid
+        free(all_particles[index]); // Particles are now only stored in grid
 
         fflush(NULL);
     }
 
     // Print box size and max radius in grid units here, because they are adjusted while reading particles (non-periodic case)
     printf("Box Size = {%6.5e,%6.5e,%6.5e}\n", par.rect_boxsize.x, par.rect_boxsize.y, par.rect_boxsize.z);
-    Float box_max = fmax(fmax(par.rect_boxsize.x, par.rect_boxsize.y), par.rect_boxsize.z);
-    Float gridsize = par.rmax/(box_max/par.nside);
+    Float gridsize = par.rmax / par.cellsize;
     printf("Max Radius in Grid Units = %6.5e\n", gridsize);
-    if (gridsize<1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
+    if (gridsize < 1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
 
 #if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)
     // Now rescale weights based on number of particles (whether or not using jackknives)

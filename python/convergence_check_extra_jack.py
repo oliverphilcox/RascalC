@@ -1,6 +1,7 @@
 ## Script to perform an extra convergence check on jackknife integrals
 ## More specifically, divide integral subsamples into halves and check similarity of their average results
 ## Determines single-field vs multi-field automatically
+## Now legacy, jackknife integrals convergence checking implemented in convergence_check_extra.py, but old post-processing results do not have the needed information saved in .npz files
 
 import numpy as np
 import sys,os
@@ -21,7 +22,7 @@ skip_bins = int(sys.argv[8]) * m if len(sys.argv) >= 9 else 0
 
 input_root_jack = os.path.join(input_root, 'CovMatricesJack/')
 
-weights = np.loadtxt(weight_file)[:,1:]
+weights = np.loadtxt(weight_file)[:, 1+skip_bins:]
 RR = np.loadtxt(RR_file)
 
 # methods to assess similarity
@@ -67,7 +68,7 @@ for ii in range(len(I1)): # loop over all field combinations
         RRaA2.append(np.loadtxt(input_root_jack+'RR2_n%d_m%d_%s_%s.txt' %(n,m,index2,i)))
     if len(c2j) == 0: break # terminate the loop if no jack integral has been found
     if len(c2j) < n_samples:
-        print("Some %s jack samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2j)))
+        print("Some %s jack samples missing: expected %d, found %d" % (index4, n_samples, len(c2j)))
         continue # skip the rest of the loop like above
     c2j, c3j, c4j = np.array(c2j), np.array(c3j), np.array(c4j)
     EEaA1, EEaA2, RRaA1, RRaA2 = np.array(EEaA1), np.array(EEaA2), np.array(RRaA1), np.array(RRaA2)

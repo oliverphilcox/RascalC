@@ -472,7 +472,7 @@
 
                 // Save output after each loop
                 char output_string[50];
-                sprintf(output_string,"%d", n_loops);
+                snprintf(output_string, 50, "%d", n_loops);
 #ifndef POWER
                 locint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads);
 #else
@@ -527,7 +527,7 @@
         printf("Acceptance speed: %.2e quads per core per second\n",double(cnt4)/(runtime*double(par->nthread)));
 
         char out_string[5];
-        sprintf(out_string,"full");
+        snprintf(out_string, 5, "full");
         sumint.save_integrals(out_string,1); // save integrals to file
         sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file
 #ifdef POWER
