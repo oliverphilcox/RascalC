@@ -21,18 +21,22 @@ assert max_l<8, "High order multipoles cannot be reliably computed"
 if not os.path.exists(infile):
     raise Exception('Could not find input file %s'%infile)
 
-r_bins = np.genfromtxt(infile,max_rows=1)
-mu_bins = np.genfromtxt(infile,max_rows=1,skip_header=1)
-xi_vals = np.genfromtxt(infile,skip_header=2)
+r_bins = np.genfromtxt(infile, max_rows=1)
+mu_bins = np.genfromtxt(infile, max_rows=1, skip_header=1)
+xi_vals = np.genfromtxt(infile, skip_header=2)
+
+mu_edges = np.linspace(0, 1, len(mu_bins)+1) # edges of the mu bins, assumes uniform
 
 ## Now convert to Legendre multipoles
-xi_mult = np.zeros((len(r_bins),max_l//2+1))
+xi_mult = np.zeros((len(r_bins), max_l//2+1))
 
-for ell in np.arange(0,max_l+1,2):
-    leg_mu = legendre(ell)(mu_bins) # compute mu bins
+for ell in np.arange(0, max_l+1, 2):
+    leg_pol = legendre(ell) # Legendre polynomial
+    leg_pol_int = np.polyint(leg_pol) # its indefinite integral (analytic)
+    leg_mu_ints = np.diff(leg_pol_int(mu_edges)) # differences of indefinite integral between edges of mu bins = integral of Legendre polynomial over each mu bin
 
     # Compute integral as Int_0^1 dmu L_ell(mu) xi(r, mu) * (2 ell + 1)
-    xi_mult[:,ell//2] = np.sum(leg_mu*xi_vals*(mu_bins[1]-mu_bins[0]),axis=1)*(2.*ell+1)
+    xi_mult[:, ell//2] = np.sum(leg_mu_ints * xi_vals, axis=1) * (2*ell+1)
 
 with open(outfile,"w+") as out:
 

@@ -29,14 +29,18 @@ r_bins = np.loadtxt(infile, max_rows=1)
 mu_bins = np.loadtxt(infile, max_rows=1, skiprows=1)
 xi_vals = np.loadtxt(infile, skiprows=2)
 
+mu_edges = np.linspace(0, 1, len(mu_bins)+1) # edges of the mu bins, assumes uniform
+
 ## Now convert to Legendre multipoles
 xi_mult = np.zeros((max_l//2+1, len(r_bins)))
 
-for ell in np.arange(0,max_l+1,2):
-    leg_mu = legendre(ell)(mu_bins) # compute polynomial at mu bins
+for ell in np.arange(0, max_l+1, 2):
+    leg_pol = legendre(ell) # Legendre polynomial
+    leg_pol_int = np.polyint(leg_pol) # its indefinite integral (analytic)
+    leg_mu_ints = np.diff(leg_pol_int(mu_edges)) # differences of indefinite integral between edges of mu bins = integral of Legendre polynomial over each mu bin
 
     # Compute integral as Int_0^1 dmu L_ell(mu) xi(r, mu) * (2 ell + 1)
-    xi_mult[ell//2] = np.sum(leg_mu*xi_vals*(mu_bins[1]-mu_bins[0]),axis=1)*(2.*ell+1)
+    xi_mult[ell//2] = np.sum(leg_mu_ints * xi_vals, axis=1) * (2*ell+1)
 
 ## Perform radial smoothing
 xi_mult *= r_bins**2 # multiply by r^2
@@ -46,9 +50,13 @@ xi_mult /= r_bins**2 # divide by r^2 to restore original form
 ## Convert back to xi(r, mu)
 xi_vals = 0
 
-for ell in np.arange(0,max_l+1,2):
-    leg_mu = legendre(ell)(mu_bins) # compute polynomial at mu bins
-    xi_vals += xi_mult[ell//2][:, None] * leg_mu[None, :] # accumulate xi(r, mu)
+for ell in np.arange(0, max_l+1, 2):
+    leg_pol = legendre(ell) # Legendre polynomial
+    leg_pol_int = np.polyint(leg_pol) # its indefinite integral (analytic)
+    leg_mu_ints = np.diff(leg_pol_int(mu_edges)) # differences of indefinite integral between edges of mu bins = integral of Legendre polynomial over each mu bin
+    leg_mu_avg = leg_mu_ints / np.diff(mu_edges) # divide integrals by bin widths to get bin-averaged value of Legendre polynomial
+
+    xi_vals += xi_mult[ell//2][:, None] * leg_mu_avg[None, :] # accumulate xi(r, mu)
 
 ## Custom array to string function
 def my_a2s(a, fmt='%.18e'):
