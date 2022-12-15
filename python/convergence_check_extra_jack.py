@@ -9,7 +9,7 @@ import sys,os
 # PARAMETERS
 if len(sys.argv) not in (7, 8, 9): # if too few or parity is wrong
     print("Usage: python convergence_check_extra_jack.py {N_R_BINS} {N_MU_BINS} {COVARIANCE_INPUT_DIR} {N_SUBSAMPLES} {JACKKNIFE_WEIGHTS_FILE} {RR_FILE} [{ALPHA} [{SKIP_R_BINS}]]")
-    sys.exit()
+    sys.exit(1)
 
 n = int(sys.argv[1])
 m = int(sys.argv[2])

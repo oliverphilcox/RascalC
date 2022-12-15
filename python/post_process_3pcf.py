@@ -7,7 +7,7 @@ import sys,os
 # PARAMETERS
 if len(sys.argv)!=6 and len(sys.argv)!=7:
     print("Usage: python post_process_3pcf.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING}]")
-    sys.exit()
+    sys.exit(1)
         
 file_root = str(sys.argv[1])
 n = int(sys.argv[2])

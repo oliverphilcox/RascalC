@@ -7,7 +7,7 @@ import sys,os
 # PARAMETERS
 if len(sys.argv) not in (8, 10):
     print("Usage: python correct_norm.py {N_R_BINS} {mN_MU_BINS/lMAX_L} {COVARIANCE_INPUT_DIR} {N_SAMPLES} {COVARIANCE_OUTPUT_DIR} {OLD_NORM1} {NEW_NORM1} [{OLD_NORM2} {NEW_NORM2}]")
-    sys.exit()
+    sys.exit(1)
 
 n = int(sys.argv[1])
 mstr = str(sys.argv[2])

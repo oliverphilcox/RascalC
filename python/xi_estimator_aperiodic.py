@@ -11,7 +11,7 @@ if len(sys.argv)!=9:
         if len(sys.argv)!=15:
             if len(sys.argv)!=10:
                 print("Usage: python xi_estimator_aperiodic.py {GALAXY_FILE} {RANDOM_FILE_DR} {RANDOM_FILE_RR}  {RADIAL_BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2} {RANDOM_FILE_2_DR} {RANDOM_FILE_2_RR}] [{RR_counts_11}] [{RR_counts_12} {RR_counts_22}]")
-                sys.exit()
+                sys.exit(1)
 
 Dname1 = str(sys.argv[1])
 Rname1_DR = str(sys.argv[2])
@@ -80,7 +80,7 @@ zrange = max(data1[2])-min(data1[2])
 
 if (np.abs(xrange-yrange)/xrange<1e-2) and (np.abs(zrange-xrange)/xrange<1e-2):
     print('Data set 1 seems to be periodic! The xi_estimator_periodic function should be used here!')
-    sys.exit()
+    sys.exit(1)
 
 if multifield:
     data2 = reader(Dname2)
@@ -92,7 +92,7 @@ if multifield:
 
     if (np.abs(xrange-yrange)/xrange<1e-2) and (np.abs(zrange-xrange)/xrange<1e-2):
         print('Data set 2 seems to be periodic! The xi_estimator_periodic function should be used here!')
-        sys.exit()
+        sys.exit(1)
 
 ## Read DR random files
 random1_DR = reader(Rname1_DR)

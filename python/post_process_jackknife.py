@@ -7,7 +7,7 @@ import sys,os
 # PARAMETERS
 if len(sys.argv)!=7:
     print("Usage: python post_process_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}")
-    sys.exit()
+    sys.exit(1)
         
 jackknife_file = str(sys.argv[1])
 weight_dir = str(sys.argv[2])
@@ -90,7 +90,7 @@ eig_c2 = eigvalsh(c2j)
 if min(eig_c4)<-1.*min(eig_c2):
     print("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
     print("Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
-    sys.exit()
+    sys.exit(1)
 
 # Load in partial jackknife theoretical matrices
 c2s, c3s, c4s = [], [], []
@@ -143,7 +143,7 @@ eig_c2f = eigvalsh(c2f)
 if min(eig_c4f)<min(eig_c2f)*-1.:
     print("Full 4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
     print("Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4f), min(eig_c2f)))
-    sys.exit()
+    sys.exit(1)
 
 # Compute full precision matrix
 print("Computing the full precision matrix estimate:")

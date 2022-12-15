@@ -10,7 +10,7 @@ import os, sys, numpy as np
 ## PARAMETERS
 if len(sys.argv)!=6:
     print("Usage: python smoothen_xi.py {INFILE} {MAX_L} {RADIAL_WINDOW_LENGTH} {RADIAL_POLYORDER} {OUTFILE}")
-    sys.exit()
+    sys.exit(1)
 
 infile = str(sys.argv[1])
 max_l = int(sys.argv[2])

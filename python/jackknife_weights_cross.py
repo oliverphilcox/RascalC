@@ -5,11 +5,12 @@
 
 import sys
 import numpy as np
+import math
 
 # PARAMETERS
 if len(sys.argv)!=9:
     print("Usage: python jackknife_weights_cross.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR}")
-    sys.exit()
+    sys.exit(1)
 fname = str(sys.argv[1])
 fname2 = str(sys.argv[2])
 binfile = str(sys.argv[3])

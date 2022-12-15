@@ -8,7 +8,7 @@ import sys,os
 # PARAMETERS
 if len(sys.argv) not in (2, 3):
     print("Usage: python convergence_check_extra.py {RASCALC_RESULTS_FILE} [{N_SUBSAMPLES_TO_USE}]")
-    sys.exit()
+    sys.exit(1)
 
 rascalc_results = str(sys.argv[1])
 

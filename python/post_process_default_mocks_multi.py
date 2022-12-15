@@ -7,7 +7,7 @@ import sys,os
 # PARAMETERS
 if len(sys.argv) not in (7, 8):
     print("Usage: python post_process_default_mocks_multi.py {MOCK_COV_FILE} {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SKIP_R_BINS}]")
-    sys.exit()
+    sys.exit(1)
         
 mock_cov_file = str(sys.argv[1])
 file_root = str(sys.argv[2])
@@ -65,7 +65,7 @@ for i, index in enumerate(indices):
     if min(eig_c4) < -1.*min(eig_c2):
         print("4-point covariance matrix has not converged properly via the eigenvalue test. Exiting")
         print("Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
-        sys.exit()
+        sys.exit(1)
 
     # Load in partial jackknife theoretical matrices
     c2s, c3s, c4s = [], [], []

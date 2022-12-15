@@ -6,7 +6,7 @@ import sys
 ## PARAMETERS
 if len(sys.argv) != 4:
     print("Usage: python convert_cov_legendre.py {RASCALC_RESULTS_FILE} {N_R_BINS} {OUTPUT_COV_FILE}.")
-    sys.exit()
+    sys.exit(1)
 rascalc_results = str(sys.argv[1])
 n = int(sys.argv[2])
 output_cov_file = str(sys.argv[3])

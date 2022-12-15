@@ -8,7 +8,7 @@ import os,sys,numpy as np
 ## PARAMETERS
 if len(sys.argv)!=4:
     print("Usage: python convert_xi_to_multipoles.py {INFILE} {MAX_L} {OUTFILE}")
-    sys.exit()
+    sys.exit(1)
 
 infile = str(sys.argv[1])
 max_l = int(sys.argv[2])
