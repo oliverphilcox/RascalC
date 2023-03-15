@@ -12,7 +12,7 @@ from scipy.optimize import curve_fit
 # PARAMETERS
 if (len(sys.argv)!=5) and (len(sys.argv)!=6):
     print("Usage: python compute_correction_function.py {GALAXY_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS}] ")
-    sys.exit()
+    sys.exit(1)
 gal_file = str(sys.argv[1])
 binfile = str(sys.argv[2])
 outdir=str(sys.argv[3])

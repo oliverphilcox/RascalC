@@ -4,11 +4,12 @@
 
 import sys
 import numpy as np
+import math
 
 # PARAMETERS
 if len(sys.argv)!=8:
     print("Usage: python jackknife_weights.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR}")
-    sys.exit()
+    sys.exit(1)
 fname = str(sys.argv[1])
 binfile = str(sys.argv[2])
 mu_max = float(sys.argv[3])

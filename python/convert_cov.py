@@ -6,7 +6,7 @@ import sys
 ## PARAMETERS
 if len(sys.argv) != 3:
     print("Usage: python convert_cov.py {RASCALC_RESULTS_FILE} {OUTPUT_COV_FILE}.")
-    sys.exit()
+    sys.exit(1)
 rascalc_results = str(sys.argv[1])
 output_cov_file = str(sys.argv[2])
 

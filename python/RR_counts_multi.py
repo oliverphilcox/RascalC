@@ -10,7 +10,7 @@ import math
 # PARAMETERS
 if len(sys.argv)!=10:
     print("Usage: python RR_counts_multi.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} {NORMED}")
-    sys.exit()
+    sys.exit(1)
 fname = str(sys.argv[1])
 fname2 = str(sys.argv[2])
 binfile = str(sys.argv[3])

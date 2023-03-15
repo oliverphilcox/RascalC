@@ -9,7 +9,7 @@ import sys,os
 # PARAMETERS
 if len(sys.argv)<6: # if too few
     print("Usage: python cat_subsets_of_integrals.py {N_R_BINS} {mN_MU_BINS/lMAX_L} {COVARIANCE_INPUT_DIR1} {N_SUBSAMPLES_TO_USE1} [{COVARIANCE_INPUT_DIR2} {N_SUBSAMPLES_TO_USE2} ...] [{COLLAPSE_FACTOR}] {COVARIANCE_OUTPUT_DIR}")
-    sys.exit()
+    sys.exit(1)
 
 n = int(sys.argv[1])
 mstr = str(sys.argv[2])

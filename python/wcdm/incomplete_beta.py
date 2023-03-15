@@ -44,7 +44,7 @@ def beta_cont_frac_gsl(a, b, x):
     if (np.min(x)<0 or np.max(x)>=1):
         print("Illegal entry in beta_cont_frac_gsl()\n")
         import sys
-        sys.exit()
+        sys.exit(1)
     cutoff = 1e-30	#  control the zero cutoff
 
     # standard initialization for continued fraction 

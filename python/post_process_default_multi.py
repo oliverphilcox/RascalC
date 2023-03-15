@@ -7,7 +7,7 @@ import sys,os
 # PARAMETERS
 if len(sys.argv) not in (6, 8):
     print("Usage: python post_process_default_multi.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]")
-    sys.exit()
+    sys.exit(1)
 
 file_root = str(sys.argv[1])
 n = int(sys.argv[2])

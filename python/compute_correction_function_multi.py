@@ -12,7 +12,7 @@ from scipy.optimize import curve_fit
 # PARAMETERS
 if len(sys.argv)!=6 and len(sys.argv)!=9:
     print("Usage: python compute_correction_function_multi.py {GALAXY_FILE} {GALAXY_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]")
-    sys.exit()
+    sys.exit(1)
 gal_file = str(sys.argv[1])
 gal_file2 = str(sys.argv[2])
 binfile = str(sys.argv[3])
@@ -98,7 +98,7 @@ if periodic:
                     else:
                         out.write("\n")
         print("Saved (normalized) output for field %s to %s"%(index,outfile))
-    sys.exit();
+    sys.exit(1);
 
 ## Continue for aperiodic case
 

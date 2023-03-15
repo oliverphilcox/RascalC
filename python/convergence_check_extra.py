@@ -8,7 +8,7 @@ import sys,os
 # PARAMETERS
 if len(sys.argv) not in (2, 3):
     print("Usage: python convergence_check_extra.py {RASCALC_RESULTS_FILE} [{N_SUBSAMPLES_TO_USE}]")
-    sys.exit()
+    sys.exit(1)
 
 rascalc_results = str(sys.argv[1])
 
@@ -24,6 +24,11 @@ def KL_div_covs(C1, C2):
     Psi1C2 = Psi1.dot(C2)
     return (np.trace(Psi1C2) - len(C2) - np.log(np.linalg.det(Psi1C2)))/2
 
+def chi2_red_covs(C1, C2):
+    Psi1 = np.linalg.inv(C1)
+    Psi1C2 = Psi1.dot(C2)
+    return np.trace(Psi1C2)/len(C2)
+
 with np.load(rascalc_results) as f:
     c_samples = f["individual_theory_covariances"]
     jack_key = "individual_theory_jackknife_covariances"
@@ -36,6 +41,7 @@ n_samples_2 = n_samples // 2
 def cmp_cov_print(cov_first, cov_second):
     print("RMS eigenvalues of inverse tests for cov half-estimates are %.2e and %.2e" % (rms_eig_inv_test_covs(cov_first, cov_second), rms_eig_inv_test_covs(cov_second, cov_first)))
     print("KL divergences between cov half-estimates are %.2e and %.2e" % (KL_div_covs(cov_first, cov_second), KL_div_covs(cov_second, cov_first)))
+    print("Reduced chi2-1 between cov half-estimates are %.2e and %.2e" % (chi2_red_covs(cov_first, cov_second)-1, chi2_red_covs(cov_second, cov_first)-1))
 
 def cmp_cov_splittings(c_samples):
     print("First splitting")

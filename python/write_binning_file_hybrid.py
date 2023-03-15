@@ -5,7 +5,7 @@ import numpy as np
 
 if len(sys.argv)<7:
     print("Please specify input parameters in the form {N_LOG_BINS} {N_LIN_BINS} {MIN_R} {CUTOFF_R} {MAX_R} {OUTPUT_FILE}.")
-    sys.exit()
+    sys.exit(1)
 n_log_bins = int(sys.argv[1])
 n_lin_bins = int(sys.argv[2])
 r_min = float(sys.argv[3])

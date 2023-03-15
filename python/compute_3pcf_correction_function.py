@@ -12,7 +12,7 @@ import scipy.spatial as ss
 # PARAMETERS
 if (len(sys.argv)!=5) and (len(sys.argv)!=6):
     print("Usage python compute_3pcf_correction_function.py {GALAXY_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RRR_COUNTS}]")
-    sys.exit();
+    sys.exit(1);
 
 gal_file = str(sys.argv[1])
 binfile = str(sys.argv[2])
@@ -21,13 +21,13 @@ periodic = int(sys.argv[4])
 if periodic:
     if(len(sys.argv)!=5):
         print("Usage python compute_3pcf_correction_function.py {GALAXY_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RRR_COUNTS}]")
-        sys.exit();
+        sys.exit(1);
     print("\nAssuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere");
    
 else:
     if(len(sys.argv)!=6):
         print("Usage python compute_3pcf_correction_function.py {GALAXY_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RRR_COUNTS}]")
-        sys.exit();
+        sys.exit(1);
     RRR_file = str(sys.argv[5])
 
 ## Load galaxies
@@ -113,10 +113,10 @@ else:
     if np.mean(phi_inv_mult[:,:,0])<1e-3:
         print(phi_inv_mult[:,:,0])
         print("Survey correction function seems too small - are the RRR counts normalized correctly?")
-        sys.exit()
+        sys.exit(1)
     if np.mean(phi_inv_mult[:,:,0])>1e3:
         print("Survey correction function seems too large - are the RRR counts normalized correctly?")
-        sys.exit()
+        sys.exit(1)
     
 if periodic:
     outfile = os.path.join(outdir, 'BinCorrectionFactor3PCF_n%d_periodic.txt'%(n))

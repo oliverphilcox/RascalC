@@ -10,7 +10,7 @@ import numpy as np
 if len(sys.argv)!=8:
     if len(sys.argv)!=9:
         print("Usage: python xi_estimator_periodic.py {GALAXY_FILE} {RADIAL_BIN_FILE} {BOXSIZE} {MU_MAX} {N_MU_BINS} {NTHREADS} {OUTPUT_DIR} [{GALAXY_FILE_2}]")
-        sys.exit()
+        sys.exit(1)
 Dname = str(sys.argv[1])
 binfile = str(sys.argv[2])
 boxsize = float(sys.argv[3])

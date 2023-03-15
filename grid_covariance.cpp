@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
     if (!par.make_random) {
         par.perbox = compute_bounding_box(all_particles, all_np, no_fields, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
 #ifdef PERIODIC
-        par.rect_boxsize = {par.boxsize, par.boxsize, par.boxsize} // restore the given boxsize if periodic
+        par.rect_boxsize = {par.boxsize, par.boxsize, par.boxsize}; // restore the given boxsize if periodic
         par.cellsize = par.boxsize / (Float)par.nside; // set cell size manually
         // keep the shift from compute_bounding_box, allowing for coordinate ranges other than [0, par.boxsize) but still of length par.boxsize - this is quite generic and precise at the same time.
 #endif
