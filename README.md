@@ -17,4 +17,4 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 - Alexander Wiegand (Garching)
 - Misha Rashkovetskyi (Harvard)
 
-We thank Yuting Wang and Ryuichiro Hada for pointing out and fixing a number of issues with the code and its documentation. We are particularly grateful to Uendert Arande for finding a wide variety of improvements and bugs!
+We thank Yuting Wang and Ryuichiro Hada for pointing out and fixing a number of issues with the code and its documentation. We are particularly grateful to Uendert Andrade for finding a wide variety of improvements and bugs!
