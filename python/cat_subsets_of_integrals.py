@@ -56,7 +56,7 @@ for ii in range(len(I1)): # loop over all field combinations
             c4.append(np.loadtxt(input_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i)))
     if len(c2) == 0: break # end loop if no full integral has been found
     if len(c2) < n_samples_tot:
-        print("Some %s full samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2)))
+        print("ERROR: some %s full samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2)))
         break # end loop like above
     c2, c3, c4 = [np.array(a) for a in (c2, c3, c4)]
     if collapse_factor > 1: c2, c3, c4 = [np.mean(a.reshape(-1, collapse_factor, *np.shape(a)[1:]), axis=1) for a in (c2, c3, c4)] # average adjacent chunks of collapse_factor samples
@@ -90,7 +90,7 @@ for ii in range(len(I1)): # loop over all field combinations
             RRaA2.append(np.loadtxt(input_root_jack+'RR2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i)))
     if len(c2j) == 0: continue # skip rest of the loop if no jack integral has been found
     if len(c2j) < n_samples_tot:
-        print("Some %s jack samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2j)))
+        print("ERROR: some %s jack samples missing: expected %d, found %d" % (index4, n_samples_tot, len(c2j)))
         continue # skip the rest of the loop like above
     c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2 = [np.array(a) for a in (c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2)]
     if collapse_factor > 1: c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2 = [np.mean(a.reshape(-1, collapse_factor, *np.shape(a)[1:]), axis=1) for a in (c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2)] # average adjacent chunks of collapse_factor samples
