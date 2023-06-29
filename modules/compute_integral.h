@@ -152,6 +152,7 @@
             nbin = par->nbin; // number of radial bins
             mbin = par->mbin; // number of mu bins
 
+            STimer* LoopTimes = new STimer[par->max_loops];
             STimer initial, TotalTime; // Time initialization
             initial.Start();
 
@@ -246,7 +247,7 @@
 #if (defined LEGENDRE || defined POWER)
     #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #elif defined JACKKNIFE
-    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,ThreadTimes,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #else
     #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #endif
@@ -321,6 +322,7 @@
             for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
                 percent_counter=0.;
                 loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;
+                LoopTimes[n_loops].Start();
 
                 // End loops early if convergence has been acheived
                 if (convergence_counter == par->convergence_ntimes){
@@ -333,7 +335,7 @@
 
                     // Print time left
                     if((float(n1)/float(grid1->nf)*100)>=percent_counter){
-                        printf("Integral %d of %d, run %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n",iter_no,tot_iter,1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),thread, n1+1,grid1->nf,percent_counter);
+                        printf("Integral %d of %d, iteration %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n", iter_no, tot_iter, 1+n_loops, par->max_loops, thread, n1+1, grid1->nf, percent_counter);
                         percent_counter+=5.;
                     }
 
@@ -487,7 +489,7 @@
 
                 }
 
-
+            LoopTimes[n_loops].Stop();
             } // end cycle loop
 
             // Free up allocated memory at end of process
@@ -510,6 +512,10 @@
 
         int runtime = TotalTime.Elapsed();
         printf("\n\nINTEGRAL %d OF %d COMPLETE\n",iter_no,tot_iter);
+        for (int n_loop = 0; n_loop < par->max_loops; n_loop++) {
+            int loop_runtime = LoopTimes[n_loop].Elapsed();
+            fprintf(stderr, "Loop %d time: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", n_loop, loop_runtime, loop_runtime/3600, loop_runtime/60%60, loop_runtime%60);
+        }
         fprintf(stderr, "\nTotal process time for %.2e sets of cells and %.2e quads of particles: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", double(used_cell4),double(tot_quads),runtime, runtime/3600,runtime/60%60,runtime%60);
         printf("We tried %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(cell_attempt2),double(cell_attempt3),double(cell_attempt4));
         printf("Of these, we accepted %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(used_cell2),double(used_cell3),double(used_cell4));
