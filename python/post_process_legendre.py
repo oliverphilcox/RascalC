@@ -2,7 +2,8 @@
 ## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 
 import numpy as np
-import sys,os
+import sys, os
+from tqdm import tqdm
 
 # PARAMETERS
 if len(sys.argv) not in (6, 7, 8, 9):
@@ -60,8 +61,7 @@ n_bins = len(c4)
 print("Computing the full precision matrix estimate:")
 # Load in partial theoretical matrices
 c2s, c3s, c4s = [], [], []
-for i in range(n_samples):
-    print("Loading full subsample %d of %d"%(i+1,n_samples))
+for i in tqdm(range(n_samples), desc="Loading full subsamples"):
     c2t,c3t,c4t=load_matrices(i)
     c2s.append(c2t)
     c3s.append(c3t)

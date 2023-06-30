@@ -5,6 +5,7 @@
 
 import numpy as np
 import sys,os
+from tqdm import tqdm
 
 # PARAMETERS
 if len(sys.argv)<6: # if too few
@@ -48,7 +49,7 @@ for ii in range(len(I1)): # loop over all field combinations
     c2, c3, c4 = [], [], []
     # read
     for input_root_all, n_samples in zip(input_roots_all, ns_samples):
-        for i in range(n_samples):
+        for i in tqdm(range(n_samples), desc="Reading %s full samples from %s" % (index4, input_root_all)):
             try:
                 c2.append(np.loadtxt(input_root_all+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i)))
             except (FileNotFoundError, IOError): break # end loop if c2 full not found
@@ -61,7 +62,7 @@ for ii in range(len(I1)): # loop over all field combinations
     c2, c3, c4 = [np.array(a) for a in (c2, c3, c4)]
     if collapse_factor > 1: c2, c3, c4 = [np.mean(a.reshape(-1, collapse_factor, *np.shape(a)[1:]), axis=1) for a in (c2, c3, c4)] # average adjacent chunks of collapse_factor samples
     # write
-    for i in range(n_samples_out):
+    for i in tqdm(range(n_samples_out), desc="Writing %s full samples" % index4):
         np.savetxt(output_root_all+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), c2[i])
         np.savetxt(output_root_all+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i), c3[i])
         np.savetxt(output_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i), c4[i])
@@ -77,7 +78,7 @@ for ii in range(len(I1)): # loop over all field combinations
     EEaA1, EEaA2, RRaA1, RRaA2 = [], [], [], []
     # read
     for input_root_jack, n_samples in zip(input_roots_jack, ns_samples):
-        for i in range(n_samples):
+        for i in tqdm(range(n_samples), desc="Reading %s jack samples from %s" % (index4, input_root_jack)):
             try:
                 c2j.append(np.loadtxt(input_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i)))
             except (FileNotFoundError, IOError): break # end loop if c2 jack not found
@@ -95,7 +96,7 @@ for ii in range(len(I1)): # loop over all field combinations
     c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2 = [np.array(a) for a in (c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2)]
     if collapse_factor > 1: c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2 = [np.mean(a.reshape(-1, collapse_factor, *np.shape(a)[1:]), axis=1) for a in (c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2)] # average adjacent chunks of collapse_factor samples
     # write
-    for i in range(n_samples_out):
+    for i in tqdm(range(n_samples_out), desc="Writing %s jack samples" % index4):
         np.savetxt(output_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), c2j[i])
         np.savetxt(output_root_jack+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i), c3j[i])
         np.savetxt(output_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i), c4j[i])
