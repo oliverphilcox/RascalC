@@ -249,11 +249,11 @@
 #ifdef OPENMP
 
 #if (defined LEGENDRE || defined POWER)
-    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_pairs_per_sample,used_triples_per_sample,used_quads_per_sample,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_pairs_per_sample,used_triples_per_sample,used_quads_per_sample,TotalTime,LoopTimes,gsl_rng_default,rd13,rd24) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #elif defined JACKKNIFE
-    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,ThreadTimes,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,LoopTimes,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #else
-    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,LoopTimes,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #endif
             { // start parallel loop
             // Decide which thread we are in
