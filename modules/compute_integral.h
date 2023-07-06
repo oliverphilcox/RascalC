@@ -216,8 +216,9 @@
 
     //-----------INITIALIZE OPENMP + CLASSES----------
             std::random_device urandom("/dev/urandom");
-            std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
-            unsigned long int steps = dist(urandom);
+            unsigned long seed_step = std::numeric_limits<unsigned long>::max() / (unsigned long)(par->nthread);
+            std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
+            unsigned long seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * thread + seed_shift, where thread goes from 0 to nthread-1 => no overflow and guaranteed unique for each thread
 
             gsl_rng_env_setup(); // initialize gsl rng
             int completed_loops = 0; // counter of completed loops, since may not finish in index order
@@ -248,11 +249,11 @@
 #ifdef OPENMP
 
 #if (defined LEGENDRE || defined POWER)
-    #pragma omp parallel firstprivate(steps,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_pairs_per_sample,used_triples_per_sample,used_quads_per_sample,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_pairs_per_sample,used_triples_per_sample,used_quads_per_sample,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #elif defined JACKKNIFE
-    #pragma omp parallel firstprivate(steps,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,ThreadTimes,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,ThreadTimes,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #else
-    #pragma omp parallel firstprivate(steps,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #endif
             { // start parallel loop
             // Decide which thread we are in
@@ -305,7 +306,7 @@
             Integrals locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // Accumulates the integral contribution of each thread
 #endif
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-            gsl_rng_set(locrng, steps*(thread+1));
+            gsl_rng_set(locrng, seed_step * (unsigned long)thread + seed_shift); // the second number, seed, will not overflow and will be unique for each thread in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively. Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
 
             // Assign memory for intermediate steps
             int ec=0;
