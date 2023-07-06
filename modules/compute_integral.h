@@ -156,8 +156,6 @@
             STimer initial, TotalTime; // Time initialization
             initial.Start();
 
-            int convergence_counter=0, printtime=0;// counter to stop loop early if convergence is reached.
-
 #ifdef JACKKNIFE
     // --------Compute product weights----------------------
             int nbins=nbin*mbin;
@@ -250,11 +248,11 @@
 #ifdef OPENMP
 
 #if (defined LEGENDRE || defined POWER)
-    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_pairs_per_sample,used_triples_per_sample,used_quads_per_sample,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(steps,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_pairs_per_sample,used_triples_per_sample,used_quads_per_sample,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #elif defined JACKKNIFE
-    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,ThreadTimes,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(steps,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,ThreadTimes,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #else
-    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(steps,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #endif
             { // start parallel loop
             // Decide which thread we are in
@@ -329,12 +327,6 @@
                 loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;
                 LoopTimes[n_loops].Start();
 
-                // End loops early if convergence has been acheived
-                if (convergence_counter == par->convergence_ntimes){
-                    if (printtime==0) printf("%.2lf percent convergence achieved in C4 %d times, exiting.\n", par->convergence_threshold_percent, par->convergence_ntimes);
-                    printtime++;
-                    continue;
-                    }
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid1->nf;n1++){
 
@@ -461,12 +453,10 @@
                     Float frob_C2, frob_C3, frob_C4;
 #ifndef JACKKNIFE
                     sumint.frobenius_difference_sum(&locint, n_loops, frob_C2, frob_C3, frob_C4);
-                    if(frob_C4 < par->convergence_threshold_percent) convergence_counter++;
                     fprintf(stderr, "Frobenius percent difference after %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", completed_loops, frob_C2, frob_C3, frob_C4);
 #else
                     Float frob_C2j, frob_C3j, frob_C4j;
                     sumint.frobenius_difference_sum(&locint, n_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j);
-                    if((frob_C4 < par->convergence_threshold_percent) && (frob_C4j < par->convergence_threshold_percent)) convergence_counter++;
                     fprintf(stderr, "Frobenius percent difference after %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", completed_loops, frob_C2, frob_C3, frob_C4);
                     fprintf(stderr, "Frobenius jackknife percent difference after %d loops is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n", completed_loops, frob_C2j, frob_C3j, frob_C4j);
 #endif
