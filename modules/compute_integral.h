@@ -460,11 +460,11 @@
                     TotalTime.Start(); // Restart the timer
                     Float frob_C2, frob_C3, frob_C4;
 #ifndef JACKKNIFE
-                    sumint.frobenius_difference_sum(&locint, n_loops, frob_C2, frob_C3, frob_C4);
+                    sumint.frobenius_difference_sum(&locint, subsample_index * par->loops_per_sample, frob_C2, frob_C3, frob_C4); // since sumint is only incremented every loops_per_sample iterations, subsample_index * loops_per_sample is exactly how many loops are stored in the sumint at the moment. Thus if loops_per_sample>1 the Frobenius percent difference may be an overestimate.
                     fprintf(stderr, "Frobenius percent difference after %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", completed_loops, frob_C2, frob_C3, frob_C4);
 #else
                     Float frob_C2j, frob_C3j, frob_C4j;
-                    sumint.frobenius_difference_sum(&locint, n_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j);
+                    sumint.frobenius_difference_sum(&locint, subsample_index * par->loops_per_sample, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j); // since sumint is only incremented every loops_per_sample iterations, subsample_index * loops_per_sample is exactly how many loops are stored in the sumint at the moment. Thus if loops_per_sample>1 the Frobenius percent difference may be an overestimate.
                     fprintf(stderr, "Frobenius percent difference after %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", completed_loops, frob_C2, frob_C3, frob_C4);
                     fprintf(stderr, "Frobenius jackknife percent difference after %d loops is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n", completed_loops, frob_C2j, frob_C3j, frob_C4j);
 #endif
