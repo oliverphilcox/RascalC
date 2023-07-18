@@ -448,6 +448,7 @@
     #pragma omp critical // only one processor can access at once
     #endif
             {
+                printf("Integral %d of %d, iteration %d of %d on thread %d completed\n", iter_no, tot_iter, 1+n_loops, par->max_loops, thread);
                 int subsample_index = completed_loops / par->loops_per_sample; // index of output subsample for this loop
                 completed_loops++; // increment completed loops counter, since they may be done not according to n_loops order
                 if (completed_loops % par->nthread == 0) { // Print every nthread completed loops
