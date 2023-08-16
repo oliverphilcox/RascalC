@@ -3,6 +3,8 @@
 #ifndef RESCALE_CORRELATION_H
 #define RESCALE_CORRELATION_H
 
+#include <algorithm>
+
 class correlation_integral{
 public:
     Float *cf_estimate; // estimated correlation function in each bin
@@ -54,16 +56,11 @@ private:
         // Linearizes 2D indices - needs CORRELATION FUNCTION bins here, not covariance binning (i.e. should extend to zero)
 
         // First define which r bin we are in;
-        int which_bin = -1; // default if outside bins
-        for(int i=0;i<nbin;i++){
-            if((r>r_low[i])&&(r<r_high[i])){
-                which_bin=i;
-                break;
-            }
-            if((i==nbin-1)&&(r>r_high[i])){
-                which_bin=nbin; // if above top bin
-            }
-        }
+        Float* r_higher = std::upper_bound(r_high, r_high + nbin, r); // binary search for r_high element higher than r
+        int which_bin = r_higher - r_high; // bin index is pointer difference; will be nbin if value not found, i.e. if we are above top bin
+        if (which_bin < nbin) // safety check unless we are above top bin already
+            if (r < r_low[which_bin]) // r < r_high[which_bin] is guaranteed above so only need to check that r >= r_low[which_bin]
+                which_bin = -1; // if not then no bin fits the bill
         return which_bin*mbin + floor((mu-mumin)/dmu);
     }
 
