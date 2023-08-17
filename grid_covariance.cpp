@@ -57,6 +57,9 @@ typedef double3 Float3;
 #else
     #include "modules/jackknife_weights.h"
     #include "modules/integrals.h"
+#ifdef LEGENDRE_MIX
+    #include "modules/legendre_mix_utilities.h"
+#endif
 #endif
     #include "modules/random_draws.h"
     #include "modules/driver.h"
