@@ -279,6 +279,11 @@ public:
 #if (defined LEGENDRE || defined LEGENDRE_MIX)
         else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
 #endif
+#ifdef JACKKNIFE
+        else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
+        else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
+        else if (!strcmp(argv[i],"-jackknife2")) jk_weight_file2=argv[++i];
+#endif
 #ifdef LEGENDRE_MIX
         else if (!strcmp(argv[i],"-mu_bin_legendre_file")) mu_bin_legendre_file=argv[++i];
 #elif defined LEGENDRE
@@ -294,10 +299,6 @@ public:
         else if (!strcmp(argv[i],"-power_norm")) power_norm = atof(argv[++i]);
         else if (!strcmp(argv[i],"-power_norm12")) power_norm12 = atof(argv[++i]);
         else if (!strcmp(argv[i],"-power_norm")) power_norm2 = atof(argv[++i]);
-#elif defined JACKKNIFE
-        else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
-        else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
-        else if (!strcmp(argv[i],"-jackknife2")) jk_weight_file2=argv[++i];
 #elif defined THREE_PCF
         else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];

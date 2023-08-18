@@ -34,7 +34,7 @@ private:
     Float *product_weights12_12, *product_weights12_23, *product_weights12_34; // arrays to get products of jackknife weights to avoid recomputation
 #endif
 #ifdef LEGENDRE_MIX
-    int n_l;
+    int max_l, n_l;
     MuBinLegendreFactors* mu_bin_legendre;
 #endif
     char* out_file;
@@ -70,7 +70,8 @@ public:
         mbin = par->mbin; // number of mu bins
         #ifdef LEGENDRE_MIX
         mu_bin_legendre = &(par->mu_bin_legendre_factors);
-        n_l = par->max_l/2+1; // number of Legendre multipoles, even only
+        max_l = par->max_l; // highest Legendre multipole (even)
+        n_l = max_l/2+1; // number of Legendre multipoles, even only
         no_bins = n_l * nbin; // number of bins for covariance
         size2 = no_bins * no_bins; // 2-point matrices are non-diagonal, we store them full. Note: they are block-diagonal – nonzero only for same r/s bin and different ell, this can be optimized but somewhat troublesome
         #else // default s,mu-binned mode
@@ -679,12 +680,16 @@ public:
         */
         // Create output files
 
-        char c2name[1000];
-        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_m%d_%d%d_%s.txt", out_file,nbin, mbin,I1,I2,suffix);
-        char c3name[1000];
-        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin,I2,I1,I3,suffix);
-        char c4name[1000];
-        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
+        char c2name[1000], c3name[1000], c4name[1000];
+#ifdef LEGENDRE_MIX
+        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
+        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
+        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
+#else
+        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1, I2, suffix);
+        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2, I1, I3, suffix);
+        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1, I2, I3, I4,suffix);
+#endif
 #ifndef LEGENDRE_MIX
         char RRname[1000];
         snprintf(RRname, sizeof RRname, "%sCovMatricesAll/RR_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
@@ -727,18 +732,20 @@ public:
 #ifndef LEGENDRE_MIX
         fclose(RRFile);
 #endif
-        if(save_all==1){
-            char binname[1000];
-            snprintf(binname,sizeof binname, "%sCovMatricesAll/binct_c4_n%d_m%d_%d%d,%d%d_%s.txt",out_file, nbin,mbin,I1,I2,I3,I4,suffix);
-            FILE * BinFile = fopen(binname,"w");
-
-            char bin3name[1000];
-            snprintf(bin3name,sizeof bin3name, "%sCovMatricesAll/binct_c3_n%d_m%d_%d,%d%d_%s.txt",out_file, nbin,mbin,I2,I1,I3,suffix);
-            FILE * Bin3File = fopen(bin3name,"w");
-
-            char bin2name[1000];
-            snprintf(bin2name,sizeof bin2name, "%sCovMatricesAll/binct_c2_n%d_m%d_%d%d_%s.txt",out_file, nbin,mbin,I1,I2,suffix);
-            FILE * Bin2File = fopen(bin2name,"w");
+        if (save_all) {
+            char bin4name[1000], bin3name[1000], bin2name[1000];
+#ifdef LEGENDRE_MIX
+            snprintf(bin4name, sizeof bin4name, "%sCovMatricesAll/binct_c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
+            snprintf(bin3name, sizeof bin3name, "%sCovMatricesAll/binct_c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
+            snprintf(bin2name, sizeof bin2name, "%sCovMatricesAll/binct_c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
+#else
+            snprintf(bin4name, sizeof bin4name, "%sCovMatricesAll/binct_c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1, I2, I3, I4, suffix);
+            snprintf(bin3name, sizeof bin3name, "%sCovMatricesAll/binct_c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2, I1, I3, suffix);
+            snprintf(bin2name, sizeof bin2name, "%sCovMatricesAll/binct_c2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1, I2,suffix);
+#endif
+            FILE * Bin4File = fopen(bin4name, "w");
+            FILE * Bin3File = fopen(bin3name, "w");
+            FILE * Bin2File = fopen(bin2name, "w");
 
 #ifndef LEGENDRE_MIX
             for (int j=0; j<no_bins; j++) {
@@ -748,19 +755,19 @@ public:
 
             for(int i=0; i<no_bins; i++){
                 for(int j=0; j<no_bins; j++){
-                    fprintf(BinFile, "%llu\t", binct4[i*no_bins+j]);
+                    fprintf(Bin4File, "%llu\t", binct4[i*no_bins+j]);
                     fprintf(Bin3File, "%llu\t", binct3[i*no_bins+j]);
 #ifdef LEGENDRE_MIX
                     fprintf(Bin2File, "%llu\t", binct[i*no_bins+j]);
 #endif
                 }
-                fprintf(BinFile,"\n");
+                fprintf(Bin4File,"\n");
                 fprintf(Bin3File,"\n");
 #ifdef LEGENDRE_MIX
                 fprintf(Bin2File,"\n");
 #endif
             }
-            fclose(BinFile);
+            fclose(Bin4File);
             fclose(Bin2File);
             fclose(Bin3File);
         }
@@ -773,12 +780,16 @@ public:
         */
         // Create output files
 
-        char c2name[1000];
-        snprintf(c2name, sizeof c2name, "%sCovMatricesJack/c2_n%d_m%d_%d%d_%s.txt", out_file,nbin, mbin,I1,I2,suffix);
-        char c3name[1000];
-        snprintf(c3name, sizeof c3name, "%sCovMatricesJack/c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin,I2,I1,I3,suffix);
-        char c4name[1000];
-        snprintf(c4name, sizeof c4name, "%sCovMatricesJack/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1,I2,I3,I4,suffix);
+        char c2name[1000], c3name[1000], c4name[1000];
+#ifdef LEGENDRE_MIX
+        snprintf(c2name, sizeof c2name, "%sCovMatricesJack/c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
+        snprintf(c3name, sizeof c3name, "%sCovMatricesJack/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
+        snprintf(c4name, sizeof c4name, "%sCovMatricesJack/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
+#else
+        snprintf(c2name, sizeof c2name, "%sCovMatricesJack/c2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1, I2, suffix);
+        snprintf(c3name, sizeof c3name, "%sCovMatricesJack/c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2, I1, I3, suffix);
+        snprintf(c4name, sizeof c4name, "%sCovMatricesJack/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1, I2, I3, I4, suffix);
+#endif
         FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
         FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
         FILE * C4File = fopen(c4name,"w"); // for c4 part of integral

@@ -534,8 +534,9 @@
         printf("We sampled %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(tot_pairs),double(tot_triples),double(tot_quads));
         printf("Of these, we have integral contributions from %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(cnt2),double(cnt3),double(cnt4));
         printf("Cell acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)used_cell2/cell_attempt2,(double)used_cell3/cell_attempt3,(double)used_cell4/cell_attempt4);
-#if (defined LEGENDRE || POWER)
-        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs/pow(mbin,2),(double)cnt3/tot_triples/pow(mbin,2),(double)cnt4/tot_quads/pow(mbin,2));
+#if (defined LEGENDRE || LEGENDRE_MIX || POWER)
+        int n_l = par->max_l / 2 + 1; // more general expression. This is equal to mbin for LEGENDRE and POWER but not LEGENDRE_MIX
+        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n", (double)cnt2/tot_pairs/pow(n_l, 2), (double)cnt3/tot_triples/pow(n_l, 2), (double)cnt4/tot_quads/pow(n_l, 2));
 #else
         printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
 #endif

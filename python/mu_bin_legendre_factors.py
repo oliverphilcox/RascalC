@@ -24,5 +24,6 @@ for i, ell in enumerate(ells):
     leg_pol_int = np.polyint(leg_pol) # its indefinite integral (analytic)
     leg_mu_factors[i] = (2*ell+1)*np.diff(leg_pol_int(mu_edges)) # what we need is differences of indefinite integral between edges of mu bins = integral of Legendre polynomial over each mu bin, multiplied by 2l+1
 
-output_file = os.path.join(output_dir, "mu_bin_legendre_factors_m%d_l%d.txt" % (n_mu_bins, n_l))
+output_file = os.path.join(output_dir, "mu_bin_legendre_factors_m%d_l%d.txt" % (n_mu_bins, max_l))
+os.makedirs(output_dir, exist_ok=1) # make sure the directory exists
 np.savetxt(output_file, leg_mu_factors.T) # more convenient to transpose so that rows are mu bins and columns are multipoles
