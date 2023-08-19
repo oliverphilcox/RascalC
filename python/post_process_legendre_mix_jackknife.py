@@ -66,7 +66,7 @@ def load_matrices(index,jack=True):
         cov_root = os.path.join(file_root, 'CovMatricesJack/')
     else:
         cov_root = os.path.join(file_root, 'CovMatricesAll/')
-    c2 = np.diag(np.loadtxt(cov_root+'c2_n%d_l%d_11_%s.txt' % (n, max_l, index)))
+    c2 = np.loadtxt(cov_root+'c2_n%d_l%d_11_%s.txt' % (n, max_l, index))
     c3 = np.loadtxt(cov_root+'c3_n%d_l%d_1,11_%s.txt' % (n, max_l, index))
     c4 = np.loadtxt(cov_root+'c4_n%d_l%d_11,11_%s.txt' % (n, max_l, index))
     # Now symmetrize and return matrices
