@@ -28,49 +28,21 @@ else:
     RRname=""
 
 ## First read in weights and positions:
-dtype = np.double 
-
 # Read first set of randoms
-print("Counting lines in DR random file")
-total_lines=0
-for n, line in enumerate(open(RnameDR, 'r')):
-    total_lines+=1
 
-rX_DR,rY_DR,rZ_DR,rW_DR,rJ_DR=[np.zeros(total_lines) for _ in range(5)]
-
-print("Reading in DR random data");
-for n, line in enumerate(open(RnameDR, 'r')):
-    if n%1000000==0:
-        print("Reading line %d of %d" %(n,total_lines))
-    split_line=np.array(line.split(" "), dtype=float) 
-    rX_DR[n]=split_line[0];
-    rY_DR[n]=split_line[1];
-    rZ_DR[n]=split_line[2];
-    rW_DR[n]=split_line[3];
-    rJ_DR[n]=split_line[4];
+print("Reading in DR random data")
+rX_DR, rY_DR, rZ_DR, rW_DR, rJ_DR = np.loadtxt(RnameDR, usecols=range(5)).T
+rJ_DR = rJ_DR.astype(int) # jackknife region is integer
 
 N_randDR = len(rX_DR) # number of particles
 
 if len(RRname)==0:
     if RnameRR!=RnameDR:
         # only read in RR file if distinct from DR and needed by the code:
-        print("Counting lines in RR random file")
-        total_lines=0
-        for n, line in enumerate(open(RnameRR, 'r')):
-            total_lines+=1
 
-        rX_RR,rY_RR,rZ_RR,rW_RR,rJ_RR=[np.zeros(total_lines) for _ in range(5)]
-
-        print("Reading in RR random data");
-        for n, line in enumerate(open(RnameRR, 'r')):
-            if n%1000000==0:
-                print("Reading line %d of %d" %(n,total_lines))
-            split_line=np.array(line.split(" "), dtype=float) 
-            rX_RR[n]=split_line[0];
-            rY_RR[n]=split_line[1];
-            rZ_RR[n]=split_line[2];
-            rW_RR[n]=split_line[3];
-            rJ_RR[n]=split_line[4];
+        print("Reading in RR random data")
+        rX_RR, rY_RR, rZ_RR, rW_RR, rJ_RR = np.loadtxt(RnameRR, usecols=range(5)).T
+        rJ_RR = rJ_RR.astype(int) # jackknife region is integer
             
         N_randRR = len(rX_RR) # number of particles
     else:
@@ -89,23 +61,9 @@ else:
     for n, line in enumerate(open(RnameRR, 'r')):
         N_randRR+=1
 
-print("Counting lines in galaxy file")
-total_lines=0
-for n, line in enumerate(open(Dname, 'r')):
-    total_lines+=1
-
-dX,dY,dZ,dW,dJ=[np.zeros(total_lines) for _ in range(5)]
-
-print("Reading in galaxy data");
-for n, line in enumerate(open(Dname, 'r')):
-    if n%1000000==0:
-        print("Reading line %d of %d" %(n,total_lines))
-    split_line=np.array(line.split(" "), dtype=float) 
-    dX[n]=split_line[0];
-    dY[n]=split_line[1];
-    dZ[n]=split_line[2];
-    dW[n]=split_line[3];
-    dJ[n]=int(split_line[4]);
+print("Reading in galaxy data")
+dX, dY, dZ, dW, dJ = np.loadtxt(Dname, usecols=range(5)).T
+dJ = dJ.astype(int) # jackknife region is integer
 
 N_gal = len(dX) # number of particles
 

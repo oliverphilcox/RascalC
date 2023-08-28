@@ -47,18 +47,9 @@ def reader(filename,only_length=False):
     if only_length:
         return total_lines
     
-    X,Y,Z,W,J=[np.zeros(total_lines) for _ in range(5)]
-    
-    for n, line in enumerate(open(filename, 'r')):
-        if n%1000000==0:
-            print("Reading line %d of %d from file %s" %(n,total_lines,filename))
-        split_line=np.array(line.split(" "), dtype=float) 
-        X[n]=split_line[0];
-        Y[n]=split_line[1];
-        Z[n]=split_line[2];
-        W[n]=split_line[3];
-        J[n]=int(split_line[4]);
-    return X,Y,Z,W,J
+    X, Y, Z, W, J = np.loadtxt(filename, usecols=range(5)).T
+    J = J.astype(int) # jackknife region is integer
+    return X, Y, Z, W, J
 
 ## Read galaxy files
 data1 = reader(Dname1)

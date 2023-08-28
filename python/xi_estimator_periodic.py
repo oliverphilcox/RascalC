@@ -33,20 +33,10 @@ total_lines=0
 for n, line in enumerate(open(Dname, 'r')):
     total_lines+=1
 
-dX,dY,dZ,dW=[np.zeros(total_lines) for _ in range(4)]
-
 print("Reading in galaxy data");
-for n, line in enumerate(open(Dname, 'r')):
-    if n%1000000==0:
-        print("Reading line %d of %d" %(n,total_lines))
-    split_line=np.array(line.split(), dtype=float)
-    dX[n]=split_line[0];
-    dY[n]=split_line[1];
-    dZ[n]=split_line[2];
-    if len(split_line)>3:
-        dW[n]=split_line[3];
-    else:
-        dW[n]=1.
+tmp = np.loadtxt(Dname, usecols=range(4)).T
+dX, dY, dZ = tmp[:3]
+dW = tmp[3] if len(tmp) >= 4 else np.ones_like(dX)
 
 N_gal = len(dX) # number of particles
 
@@ -63,22 +53,10 @@ assert(np.abs(zrange-boxsize)/boxsize<0.001),'Data is not periodic! Z-range is %
 
 if multifield:
 
-    print("Counting lines in galaxy file 2")
-    total_lines2=0
-    for n, line in enumerate(open(Dname2,'r')):
-        total_lines2+=1
-
-    dX2,dY2,dZ2,dW2=[np.zeros(total_lines2) for _ in range(4)]
-
     print("Reading in galaxy data for galaxy 2");
-    for n, line in enumerate(open(Dname2, 'r')):
-        if n%1000000==0:
-            print("Reading line %d of %d" %(n,total_lines2))
-        split_line=np.array(line.split(), dtype=float)
-        dX2[n]=split_line[0];
-        dY2[n]=split_line[1];
-        dZ2[n]=split_line[2];
-        dW2[n]=split_line[3];
+    tmp = np.loadtxt(Dname, usecols=range(4)).T
+    dX2, dY2, dZ2 = tmp[:3]
+    dW2 = tmp[3] if len(tmp) >= 4 else np.ones_like(dX2)
 
     N_gal2 = len(dX2) # number of particles
     print("Number of galaxy particles in second set: %.1e"%N_gal2)
