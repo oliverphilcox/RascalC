@@ -95,7 +95,7 @@ if min(eig_c4)<-1.*min(eig_c2):
 
 # Load in partial jackknife theoretical matrices
 c2s, c3s, c4s = [], [], []
-for i in trange(n_samples, "Loading jackknife subsamples"):
+for i in trange(n_samples, desc="Loading jackknife subsamples"):
     c2, c3, c4 = load_matrices(i)
     c2s.append(c2)
     c3s.append(c3)
