@@ -3,6 +3,7 @@
 
 import numpy as np
 import sys,os
+from tqdm import trange
 
 # PARAMETERS
 if len(sys.argv) not in (6, 8):
@@ -138,8 +139,8 @@ n_bins = len(c_tot[0,0])
 
 # Load subsampled matrices (all submatrices combined)
 c_subsamples=[]
-for i in range(n_samples):
-    _,tmp=matrix_readin(i)
+for i in trange(n_samples, desc="Loading full subsamples"):
+    _, tmp = matrix_readin(i)
     c_subsamples.append(tmp)
 c_subsamples = np.array(c_subsamples)
 

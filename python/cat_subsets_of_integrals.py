@@ -5,7 +5,7 @@
 
 import numpy as np
 import sys,os
-from tqdm import tqdm
+from tqdm import trange
 from shutil import copy2
 
 # PARAMETERS
@@ -65,7 +65,7 @@ for ii in range(len(I1)): # loop over all field combinations
             except (FileNotFoundError, IOError): pass
         if read_all:
             if os.path.isfile(input_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, n_samples-1)):
-                for i in tqdm(range(n_samples), desc="Reading %s full samples" % index4):
+                for i in trange(n_samples, desc="Loading %s full samples" % index4):
                     c2.append(np.loadtxt(input_root_all+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i)))
                     c3.append(np.loadtxt(input_root_all+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i)))
                     c4.append(np.loadtxt(input_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i)))
@@ -84,14 +84,14 @@ for ii in range(len(I1)): # loop over all field combinations
     if collapse_factor > 1:
         c2, c3, c4 = [np.mean(a.reshape(n_samples_out, collapse_factor, *np.shape(a)[1:]), axis=1) for a in (c2, c3, c4)] # average adjacent chunks of collapse_factor samples; repeats must be trivial in this case
         # write the collapsed data
-        for i in tqdm(range(n_samples_out), desc="Writing %s full samples" % index4):
+        for i in trange(n_samples_out, desc="Writing %s full samples" % index4):
             np.savetxt(output_root_all+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), c2[i])
             np.savetxt(output_root_all+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i), c3[i])
             np.savetxt(output_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i), c4[i])
     else: # can copy files, which should be faster
         c2, c3, c4 = [None] * 3 # won't be needed, so can free memory
         for input_root_all, n_samples, sample_offset in zip(input_roots_all, ns_samples, sample_offsets):
-            for i in tqdm(range(n_samples), desc="Copying %s full samples" % index4):
+            for i in trange(n_samples, desc="Copying %s full samples" % index4):
                 copy2(input_root_all+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), output_root_all+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i + sample_offset))
                 copy2(input_root_all+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i), output_root_all+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i + sample_offset))
                 copy2(input_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i), output_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i + sample_offset))
@@ -119,7 +119,7 @@ for ii in range(len(I1)): # loop over all field combinations
             except (FileNotFoundError, IOError): pass
         if read_all:
             if os.path.isfile(input_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, n_samples-1)):
-                for i in tqdm(range(n_samples), desc="Reading %s jack samples" % index4):
+                for i in trange(n_samples, desc="Loading %s jack samples" % index4):
                     c2j.append(np.loadtxt(input_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i)))
                     c3j.append(np.loadtxt(input_root_jack+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i)))
                     c4j.append(np.loadtxt(input_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i)))
@@ -148,7 +148,7 @@ for ii in range(len(I1)): # loop over all field combinations
     if collapse_factor > 1:
         c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2 = [np.mean(a.reshape(n_samples_out, collapse_factor, *np.shape(a)[1:]), axis=1) for a in (c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2)] # average adjacent chunks of collapse_factor samples
         # write the collapsed data
-        for i in tqdm(range(n_samples_out), desc="Writing %s jack samples" % index4):
+        for i in trange(n_samples_out, desc="Writing %s jack samples" % index4):
             np.savetxt(output_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), c2j[i])
             np.savetxt(output_root_jack+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i), c3j[i])
             np.savetxt(output_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i), c4j[i])
@@ -160,7 +160,7 @@ for ii in range(len(I1)): # loop over all field combinations
     else: # can copy files, which should be faster
         c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2 = [None] * 7 # won't be needed, so can free memory
         for input_root_jack, n_samples, sample_offset in zip(input_roots_jack, ns_samples, sample_offsets):
-            for i in tqdm(range(n_samples), desc="Copying %s full samples" % index4):
+            for i in trange(n_samples, desc="Copying %s full samples" % index4):
                 copy2(input_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), output_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i + sample_offset))
                 copy2(input_root_jack+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i), output_root_jack+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i + sample_offset))
                 copy2(input_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i), output_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i + sample_offset))

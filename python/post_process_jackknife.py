@@ -3,6 +3,7 @@
 
 import numpy as np
 import sys,os
+from tqdm import trange
 
 # PARAMETERS
 if len(sys.argv)!=7:
@@ -94,9 +95,8 @@ if min(eig_c4)<-1.*min(eig_c2):
 
 # Load in partial jackknife theoretical matrices
 c2s, c3s, c4s = [], [], []
-for i in range(n_samples):
-    print("Loading jackknife subsample %d of %d"%(i+1,n_samples))
-    c2,c3,c4=load_matrices(i)
+for i in trange(n_samples, "Loading jackknife subsamples"):
+    c2, c3, c4 = load_matrices(i)
     c2s.append(c2)
     c3s.append(c3)
     c4s.append(c4)
@@ -149,9 +149,8 @@ if min(eig_c4f)<min(eig_c2f)*-1.:
 print("Computing the full precision matrix estimate:")
 # Load in partial jackknife theoretical matrices
 c2fs, c3fs, c4fs = [], [], []
-for i in range(n_samples):
-    print("Loading full subsample %d of %d"%(i+1,n_samples))
-    c2,c3,c4=load_matrices(i,jack=False)
+for i in trange(n_samples, desc="Loading full subsamples"):
+    c2, c3, c4 = load_matrices(i, jack=False)
     c2fs.append(c2)
     c3fs.append(c3)
     c4fs.append(c4)

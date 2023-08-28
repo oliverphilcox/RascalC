@@ -3,6 +3,7 @@
 
 import numpy as np
 import sys,os
+from tqdm import trange
 
 # PARAMETERS
 if len(sys.argv)!=6 and len(sys.argv)!=7:
@@ -54,9 +55,8 @@ n_bins = len(c4)
 print("Computing the full precision matrix estimate:")
 # Load in partial theoretical matrices
 c2s,c3s,c4s=[],[],[]
-for i in range(n_samples):
-    print("Loading full subsample %d of %d"%(i+1,n_samples))
-    c2,c3,c4=load_matrices(i)
+for i in trange(n_samples, desc="Loading full subsamples"):
+    c2, c3, c4 = load_matrices(i)
     c2s.append(c2)
     c3s.append(c3)
     c4s.append(c4)
