@@ -191,7 +191,7 @@ for ii in range(len(I1)): # loop over all field combinations
             np.savetxt(output_root_jack+'RR1_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), RRaA1[i])
             np.savetxt(output_root_jack+'RR2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), RRaA2[i])
     else: # can copy files, which should be faster
-        EEaA1, EEaA2, RRaA1, RRaA2 = [None] * 7 # won't be needed, so can free memory
+        EEaA1, EEaA2, RRaA1, RRaA2 = [None] * 4 # won't be needed, so can free memory
         for input_root_jack, n_samples, sample_offset in zip(input_roots_jack, ns_samples, sample_offsets):
             for i in tqdm(range(n_samples), desc="Copying %s disconnected jack samples" % index2):
                 copy2(input_root_jack+'EE1_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), output_root_jack+'EE1_n%d_%s_%s_%s.txt' % (n, mstr, index2, i + sample_offset))
