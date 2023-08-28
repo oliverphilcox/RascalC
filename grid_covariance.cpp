@@ -145,61 +145,85 @@ int main(int argc, char *argv[]) {
         if (par.qbalance) balance_weights(all_particles[index], all_np[index]);
     }
 
-    // Now compute bounding box using all particles
-    Float3 shift; // default value is zero
-    if (!par.make_random) {
-        par.perbox = compute_bounding_box(all_particles, all_np, no_fields, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
-#ifdef PERIODIC
-        par.rect_boxsize = {par.boxsize, par.boxsize, par.boxsize}; // restore the given boxsize if periodic
-        par.cellsize = par.boxsize / (Float)par.nside; // set cell size manually
-        // keep the shift from compute_bounding_box, allowing for coordinate ranges other than [0, par.boxsize) but still of length par.boxsize - this is quite generic and precise at the same time.
-#endif
-    }
-    else {
-        // If randoms particles were made we keep the boxsize
-        par.cellsize = par.boxsize / (Float)par.nside;
-        // set as periodic if we make the random particles
-        par.perbox = true;
-    }
-
     // Now put particles to grid(s)
     Grid all_grid[no_fields]; // create empty grids
     Float max_density = 16., min_density = 2.;
+    int nside_attempts = 3; // number of attempts to meet the constraints by changing nside
+    bool nside_global_failure = true; // assume failure until success
 
-    for (int index = 0; index < no_fields; index++) {
-        // Now ready to compute!
-        // Sort particles into grid(s)
-        Float nofznorm = par.nofznorm;
-        if (index == 1) nofznorm = par.nofznorm2;
-        Grid tmp_grid(all_particles[index], all_np[index], par.rect_boxsize, par.cellsize, par.nside, shift, nofznorm);
-
-        Float grid_density = (Float)tmp_grid.np/tmp_grid.nf;
-        printf("\n RANDOM CATALOG %d DIAGNOSTICS:\n", index+1);
-        printf("Average number of particles per grid cell = %6.2f\n", grid_density);
-        if (grid_density > max_density) {
-            fprintf(stderr,"# ERROR: Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n", max_density);
-            exit(1);
+    for (int no_attempt = 0; no_attempt <= nside_attempts; no_attempt++) {
+        // Compute bounding box using all particles. Do it inside the attempt loop because nside could change.
+        Float3 shift; // default value is zero
+        if (!par.make_random) {
+            par.perbox = compute_bounding_box(all_particles, all_np, no_fields, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
+#ifdef PERIODIC
+            par.rect_boxsize = {par.boxsize, par.boxsize, par.boxsize}; // restore the given boxsize if periodic
+            par.cellsize = par.boxsize / (Float)par.nside; // set cell size manually
+            // keep the shift from compute_bounding_box, allowing for coordinate ranges other than [0, par.boxsize) but still of length par.boxsize - this is quite generic and precise at the same time.
+#endif
         }
-        if (grid_density < min_density) {
-            printf("# ERROR: grid appears inefficiently fine (average density less than %.0f particles per cell); exiting.\n", min_density);
-            exit(1);
+        else {
+            // If randoms particles were made we keep the boxsize
+            par.cellsize = par.boxsize / (Float)par.nside;
+            // set as periodic if we make the random particles
+            par.perbox = true;
         }
-        printf("Average number of particles per max_radius ball = %6.2f\n",
-                tmp_grid.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
 
-        printf("# Done gridding the particles\n");
-        printf("# %d particles in use, %d with positive weight\n", tmp_grid.np, tmp_grid.np_pos);
-        printf("# Weights: Positive particles sum to %f\n", tmp_grid.sumw_pos);
-        printf("#          Negative particles sum to %f\n", tmp_grid.sumw_neg);
+        // Create grid(s) and see if the particle density is acceptable
+        bool nside_local_success = true; // assume this attempt succeeded be default, can be unset
+        for (int index = 0; index < no_fields; index++) {
+            // Now ready to compute!
+            // Sort particles into grid(s)
+            Float nofznorm = par.nofznorm;
+            if (index == 1) nofznorm = par.nofznorm2;
+            Grid tmp_grid(all_particles[index], all_np[index], par.rect_boxsize, par.cellsize, par.nside, shift, nofznorm);
 
-        // Now save grid to global memory:
-        all_grid[index].copy(&tmp_grid);
+            Float grid_density = (Float)tmp_grid.np/tmp_grid.nf;
+            printf("\n RANDOM CATALOG %d DIAGNOSTICS:\n", index+1);
+            printf("Average number of particles per grid cell = %6.2f\n", grid_density);
+            if (grid_density > max_density) {
+                nside_local_success = false; // unset this attempt's success flag
+                Float aimed_density = cbrt(max_density * max_density * min_density); // aim for density between the limits but closer to max
+                Float nside_approx = cbrt(grid_density/aimed_density) * par.nside; // approximate value of nside to reach this density
+                par.nside = 2 * (int)round((nside_approx + 1)/2) - 1; // round to closest odd integer
+                fprintf(stderr,"# WARNING: Average particle density exceeds maximum advised particle density (%.0f particles per cell). Setting nside=%d.\n", max_density, par.nside);
+                break; // terminate the inner, tracer loop
+            }
+            if (grid_density < min_density) {
+                nside_local_success = false; // unset this attempt's success flag
+                Float aimed_density = cbrt(max_density * min_density * min_density); // aim for density between the limits but closer to min
+                Float nside_approx = cbrt(grid_density/aimed_density) * par.nside; // approximate value of nside to reach this density
+                par.nside = 2 * (int)round((nside_approx + 1)/2) - 1; // round to closest odd integer
+                fprintf(stderr, "# WARNING: grid appears inefficiently fine (average density less than %.0f particles per cell). Setting nside=%d.\n", min_density, par.nside);
+                break; // terminate the inner, tracer loop
+            }
+            printf("Average number of particles per max_radius ball = %6.2f\n",
+                    tmp_grid.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
 
-        free(all_particles[index]); // Particles are now only stored in grid
+            printf("# Done gridding the particles\n");
+            printf("# %d particles in use, %d with positive weight\n", tmp_grid.np, tmp_grid.np_pos);
+            printf("# Weights: Positive particles sum to %f\n", tmp_grid.sumw_pos);
+            printf("#          Negative particles sum to %f\n", tmp_grid.sumw_neg);
 
-        fflush(NULL);
+            // Now save grid to global memory:
+            all_grid[index].copy(&tmp_grid);
+
+            free(all_particles[index]); // Particles are now only stored in grid
+
+            fflush(NULL);
+        }
+        if (nside_local_success) {
+            nside_global_failure = false; // unset global failure
+            break; // terminate attempt loop
+        }
+    }
+    if (nside_global_failure) { // report and terminate
+        fprintf(stderr, "# ERROR: could not meet mean grid density constraints after %d additional attempts.\n", nside_attempts);
+        exit(1);
     }
 
+    // Print the resulting grid size to be sure the stderr messages are not missed
+    printf("Final grid = %d\n", par.nside);
     // Print box size and max radius in grid units here, because they are adjusted while reading particles (non-periodic case)
     printf("Box Size = {%6.5e,%6.5e,%6.5e}\n", par.rect_boxsize.x, par.rect_boxsize.y, par.rect_boxsize.z);
     Float gridsize = par.rmax / par.cellsize;

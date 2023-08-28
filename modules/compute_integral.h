@@ -152,10 +152,9 @@
             nbin = par->nbin; // number of radial bins
             mbin = par->mbin; // number of mu bins
 
+            STimer* LoopTimes = new STimer[par->max_loops];
             STimer initial, TotalTime; // Time initialization
             initial.Start();
-
-            int convergence_counter=0, printtime=0;// counter to stop loop early if convergence is reached.
 
 #ifdef JACKKNIFE
     // --------Compute product weights----------------------
@@ -217,16 +216,22 @@
 
     //-----------INITIALIZE OPENMP + CLASSES----------
             std::random_device urandom("/dev/urandom");
-            std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
-            unsigned long int steps = dist(urandom);
+            unsigned long seed_step = std::numeric_limits<unsigned long>::max() / (unsigned long)(par->nthread);
+            std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
+            unsigned long seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * thread + seed_shift, where thread goes from 0 to nthread-1 => no overflow and guaranteed unique for each thread
 
             gsl_rng_env_setup(); // initialize gsl rng
+            int completed_loops = 0; // counter of completed loops, since may not finish in index order
+            uint64 used_pairs_per_sample = 0, used_triples_per_sample = 0, used_quads_per_sample = 0; // pair, triple and quad counts for the normalization of the current output sample
 #if (defined LEGENDRE || defined POWER)
             Integrals sumint(par, cf12, cf13, cf24, I1, I2, I3, I4,survey_corr_12,survey_corr_23,survey_corr_34); // total integral
+            Integrals outint(par, cf12, cf13, cf24, I1, I2, I3, I4, survey_corr_12, survey_corr_23, survey_corr_34); // current output integral
 #elif defined JACKKNIFE
             Integrals sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4,product_weights12_12,product_weights12_23,product_weights12_34); // total integral
+            Integrals outint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4, product_weights12_12,product_weights12_23, product_weights12_34); // current output integral
 #else
             Integrals sumint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // total integral
+            Integrals outint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // current output integral
 #endif
             uint64 tot_pairs=0, tot_triples=0, tot_quads=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
             uint64 cell_attempt2=0,cell_attempt3=0,cell_attempt4=0; // number of j,k,l cells attempted
@@ -244,11 +249,11 @@
 #ifdef OPENMP
 
 #if (defined LEGENDRE || defined POWER)
-    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_pairs_per_sample,used_triples_per_sample,used_quads_per_sample,TotalTime,LoopTimes,gsl_rng_default,rd13,rd24) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #elif defined JACKKNIFE
-    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,LoopTimes,gsl_rng_default,rd13,rd24,JK12,JK23,JK34,product_weights12_12,product_weights12_23,product_weights12_34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #else
-    #pragma omp parallel firstprivate(steps,par,printtime,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,TotalTime,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:convergence_counter,cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,grid3,grid4,cf12,cf13,cf24) shared(sumint,outint,completed_loops,used_triples_per_sample,used_quads_per_sample,TotalTime,LoopTimes,gsl_rng_default,rd13,rd24,JK12,JK23,JK34) reduction(+:cell_attempt2,cell_attempt3,cell_attempt4,used_cell2,used_cell3,used_cell4,tot_pairs,tot_triples,tot_quads)
 #endif
             { // start parallel loop
             // Decide which thread we are in
@@ -275,7 +280,9 @@
             int *bin_ij; // i-j separation bin
             int mnp = grid1->maxnp; // max number of particles in a grid1 cell
             Float *xi_ik, *w_ijk, *w_ij; // arrays to store xi and weight values
+#ifdef PRINTPERCENTS
             Float percent_counter;
+#endif
             int x, prim_id_1D;
             integer3 delta2, delta3, delta4, prim_id, sec_id, thi_id;
             Float3 cell_sep2,cell_sep3;
@@ -301,7 +308,7 @@
             Integrals locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // Accumulates the integral contribution of each thread
 #endif
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-            gsl_rng_set(locrng, steps*(thread+1));
+            gsl_rng_set(locrng, seed_step * (unsigned long)thread + seed_shift); // the second number, seed, will not overflow and will be unique for each thread in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively. Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
 
             // Assign memory for intermediate steps
             int ec=0;
@@ -319,23 +326,22 @@
     #pragma omp for schedule(dynamic)
     #endif
             for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
+#ifdef PRINTPERCENTS
                 percent_counter=0.;
+#endif
                 loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;
+                LoopTimes[n_loops].Start();
 
-                // End loops early if convergence has been acheived
-                if (convergence_counter == par->convergence_ntimes){
-                    if (printtime==0) printf("%.2lf percent convergence achieved in C4 %d times, exiting.\n", par->convergence_threshold_percent, par->convergence_ntimes);
-                    printtime++;
-                    continue;
-                    }
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid1->nf;n1++){
 
+#ifdef PRINTPERCENTS
                     // Print time left
                     if((float(n1)/float(grid1->nf)*100)>=percent_counter){
-                        printf("Integral %d of %d, run %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n",iter_no,tot_iter,1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),thread, n1+1,grid1->nf,percent_counter);
+                        printf("Integral %d of %d, iteration %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n", iter_no, tot_iter, 1+n_loops, par->max_loops, thread, n1+1, grid1->nf, percent_counter);
                         percent_counter+=5.;
                     }
+#endif
 
                     // Pick first particle
                     prim_id_1D = grid1-> filled[n1]; // 1d ID for cell i
@@ -442,52 +448,60 @@
     #pragma omp critical // only one processor can access at once
     #endif
             {
-                if ((n_loops+1)%par->nthread==0){ // Print every nthread loops
+                printf("Integral %d of %d, iteration %d of %d on thread %d completed\n", iter_no, tot_iter, 1+n_loops, par->max_loops, thread);
+                int subsample_index = completed_loops / par->loops_per_sample; // index of output subsample for this loop
+                completed_loops++; // increment completed loops counter, since they may be done not according to n_loops order
+                if (completed_loops % par->nthread == 0) { // Print every nthread completed loops
                     TotalTime.Stop(); // interrupt timing to access .Elapsed()
                     int current_runtime = TotalTime.Elapsed();
-                    int remaining_time = current_runtime/((n_loops+1)/par->nthread)*(par->max_loops/par->nthread-(n_loops+1)/par->nthread);  // estimated remaining time
-                    fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops+1,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
+                    int remaining_time = current_runtime*(par->max_loops - completed_loops)/completed_loops;  // estimated remaining time
+                    fprintf(stderr, "\nFinished %d integral loops of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n", completed_loops, par->max_loops, current_runtime, remaining_time/3600, remaining_time/60%60, remaining_time%60, remaining_time);
 
                     TotalTime.Start(); // Restart the timer
                     Float frob_C2, frob_C3, frob_C4;
 #ifndef JACKKNIFE
-                    sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4);
-                    if(frob_C4 < par->convergence_threshold_percent) convergence_counter++;
-                    if (n_loops!=0){
-                        fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
-                    }
+                    sumint.frobenius_difference_sum(&locint, subsample_index * par->loops_per_sample, frob_C2, frob_C3, frob_C4); // since sumint is only incremented every loops_per_sample iterations, subsample_index * loops_per_sample is exactly how many loops are stored in the sumint at the moment. Thus if loops_per_sample>1 the Frobenius percent difference may be an overestimate.
+                    fprintf(stderr, "Frobenius percent difference after %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", completed_loops, frob_C2, frob_C3, frob_C4);
 #else
                     Float frob_C2j, frob_C3j, frob_C4j;
-                    sumint.frobenius_difference_sum(&locint,n_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j);
-                    if((frob_C4 < par->convergence_threshold_percent) && (frob_C4j < par->convergence_threshold_percent)) convergence_counter++;
-                    if (n_loops!=0){
-                        fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C2), %.3f (C3), %.3f (C4)\n",n_loops,frob_C2, frob_C3, frob_C4);
-                        fprintf(stderr,"Frobenius jackknife percent difference after loop %d is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n",n_loops,frob_C2j, frob_C3j, frob_C4j);
-                    }
+                    sumint.frobenius_difference_sum(&locint, subsample_index * par->loops_per_sample, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j); // since sumint is only incremented every loops_per_sample iterations, subsample_index * loops_per_sample is exactly how many loops are stored in the sumint at the moment. Thus if loops_per_sample>1 the Frobenius percent difference may be an overestimate.
+                    fprintf(stderr, "Frobenius percent difference after %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", completed_loops, frob_C2, frob_C3, frob_C4);
+                    fprintf(stderr, "Frobenius jackknife percent difference after %d loops is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n", completed_loops, frob_C2j, frob_C3j, frob_C4j);
 #endif
                 }
 
                 // Sum up integrals
-                sumint.sum_ints(&locint);
+                outint.sum_ints(&locint); // subsample total
 
-                // Save output after each loop
-                char output_string[50];
-                snprintf(output_string, 50, "%d", n_loops);
+                // Sum up pairs, triples, quads for the group
+                used_pairs_per_sample += loc_used_pairs;
+                used_triples_per_sample += loc_used_triples;
+                used_quads_per_sample += loc_used_quads;
+
+                // Save output if the group is done
+                if (completed_loops % par->loops_per_sample == 0) {
+                    sumint.sum_ints(&outint); // add to grand total
+                    char output_string[50];
+                    snprintf(output_string, 50, "%d", subsample_index);
 #ifndef POWER
-                locint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads);
+                    outint.normalize(grid1->norm, grid2->norm, grid3->norm, grid4->norm, (Float)used_pairs_per_sample, (Float)used_triples_per_sample, (Float)used_quads_per_sample);
 #else
-                locint.normalize(grid1->norm,grid2->norm,grid3->norm,grid4->norm,(Float)loc_used_pairs, (Float)loc_used_triples, (Float)loc_used_quads, par->power_norm);
+                    outint.normalize(grid1->norm, grid2->norm, grid3->norm, grid4->norm, (Float)used_pairs_per_sample, (Float)used_triples_per_sample, (Float)used_quads_per_sample, par->power_norm);
 #endif
-                locint.save_integrals(output_string,0);
+                    outint.save_integrals(output_string, 0);
 #ifdef JACKKNIFE
-                locint.save_jackknife_integrals(output_string);
+                    outint.save_jackknife_integrals(output_string);
 #endif
+                    // Reset the current output sample variables
+                    outint.reset();
+                    used_pairs_per_sample = used_triples_per_sample = used_quads_per_sample = 0;
+                }
                 locint.sum_total_counts(cnt2, cnt3, cnt4);
                 locint.reset();
 
                 }
 
-
+            LoopTimes[n_loops].Stop();
             } // end cycle loop
 
             // Free up allocated memory at end of process
@@ -510,6 +524,10 @@
 
         int runtime = TotalTime.Elapsed();
         printf("\n\nINTEGRAL %d OF %d COMPLETE\n",iter_no,tot_iter);
+        for (int n_loop = 0; n_loop < par->max_loops; n_loop++) {
+            int loop_runtime = LoopTimes[n_loop].Elapsed();
+            fprintf(stderr, "Loop %d time: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", n_loop, loop_runtime, loop_runtime/3600, loop_runtime/60%60, loop_runtime%60);
+        }
         fprintf(stderr, "\nTotal process time for %.2e sets of cells and %.2e quads of particles: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", double(used_cell4),double(tot_quads),runtime, runtime/3600,runtime/60%60,runtime%60);
         printf("We tried %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(cell_attempt2),double(cell_attempt3),double(cell_attempt4));
         printf("Of these, we accepted %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(used_cell2),double(used_cell3),double(used_cell4));

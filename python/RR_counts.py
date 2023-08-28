@@ -21,24 +21,9 @@ outdir=str(sys.argv[7])
 normed=int(sys.argv[8])
 
 ## First read in weights and positions:
-dtype = np.double 
-
-print("Counting lines in file")
-total_lines=0
-for n, line in enumerate(open(fname, 'r')):
-    total_lines+=1
-
-X,Y,Z,W=[np.zeros(total_lines) for _ in range(4)]
 
 print("Reading in data");
-for n, line in enumerate(open(fname, 'r')):
-    if n%1000000==0:
-        print("Reading line %d of %d" %(n,total_lines))
-    split_line=np.array(line.split(" "), dtype=float) 
-    X[n]=split_line[0];
-    Y[n]=split_line[1];
-    Z[n]=split_line[2];
-    W[n]=split_line[3];
+X, Y, Z, W = np.loadtxt(fname, usecols=range(4)).T
     
 N = len(X) # number of particles
 weight_sum = np.sum(W)#  normalization by summed weights

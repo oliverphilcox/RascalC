@@ -2,12 +2,13 @@
 
 CC = gcc
 CFLAGS = -g -O3 -Wall -MMD
-CXXFLAGS = -O3 -Wall -MMD -DOPENMP -DLEGENDRE
+CXXFLAGS = -O3 -Wall -MMD -DOPENMP -DLEGENDRE -DPRINTPERCENTS
 #-DOPENMP  # use this to run multi-threaded with OPENMP
 #-DPERIODIC # use this to enable periodic behavior
 #-DLEGENDRE # use this to compute 2PCF covariances in Legendre bins
 #-DJACKKNIFE # use this to compute (r,mu)-space 2PCF covariances and jackknife covariances
 #-DTHREE_PCF # use this to compute 3PCF autocovariances
+#-DPRINTPERCENTS # use this to print percentage of progress in each loop. This can be a lot of output
 
 # Known OS-specific choices
 ifeq ($(shell uname -s),Darwin)
