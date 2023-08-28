@@ -22,40 +22,12 @@ outdir=str(sys.argv[8])
 normed=int(sys.argv[9])
 
 ## First read in weights and positions:
-dtype = np.double 
 
-print("Counting lines in file 1")
-total_lines=0
-for n, line in enumerate(open(fname, 'r')):
-    total_lines+=1
+print("Reading in data for file 1")
+X, Y, Z, W = np.loadtxt(fname, usecols=range(4)).T
     
-print("Counting lines in file 2")
-total_lines2=0
-for n, line in enumerate(open(fname2, 'r')):
-    total_lines2+=1
-
-X,Y,Z,W=[np.zeros(total_lines) for _ in range(4)]
-X2,Y2,Z2,W2=[np.zeros(total_lines2) for _ in range(4)]
-
-print("\nReading in data for file 1");
-for n, line in enumerate(open(fname, 'r')):
-    if n%1000000==0:
-        print("Reading line %d of %d" %(n,total_lines))
-    split_line=np.array(line.split(" "), dtype=float) 
-    X[n]=split_line[0];
-    Y[n]=split_line[1];
-    Z[n]=split_line[2];
-    W[n]=split_line[3];
-    
-print("\nReading in data for file 2");
-for n, line in enumerate(open(fname2, 'r')):
-    if n%1000000==0:
-        print("Reading line %d of %d" %(n,total_lines2))
-    split_line=np.array(line.split(" "), dtype=float) 
-    X2[n]=split_line[0];
-    Y2[n]=split_line[1];
-    Z2[n]=split_line[2];
-    W2[n]=split_line[3];
+print("Reading in data for file 2")
+X2, Y2, Z2, W2 = np.loadtxt(fname2, usecols=range(4)).T
     
 N = len(X) # number of particles
 N2 = len(X2)
