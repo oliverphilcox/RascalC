@@ -20,7 +20,10 @@ ns_samples = [int(s) for s in sys.argv[4:-1:2]]
 output_root = str(sys.argv[-1])
 collapse_factor = int(input_roots.pop()) if len(input_roots) > len(ns_samples) else 1 # recover the collapse factor if present
 assert collapse_factor > 0, "Collapsing factor must be positive"
+assert len(input_roots) >= 1, "Need at least one input directory"
 assert len(ns_samples) == len(input_roots), "Number of input dirs and subsamples to use from them must be the same"
+assert collapse_factor == 1 or not os.path.samefile(input_roots[0], output_root), "Only can collapse samples into a different directory"
+assert not any(os.path.samefile(input_root, output_root) for input_root in input_roots[1:]), "Only first input directory can be the same as the output"
 
 n_samples_tot = sum(ns_samples)
 assert n_samples_tot % collapse_factor == 0, "Collapse factor must divide the total number of samples"
@@ -91,6 +94,7 @@ for ii in range(len(I1)): # loop over all field combinations
     else: # can copy files, which should be faster
         c2, c3, c4 = [None] * 3 # won't be needed, so can free memory
         for input_root_all, n_samples, sample_offset in zip(input_roots_all, ns_samples, sample_offsets):
+            if os.path.samefile(input_root_all, output_root_all): continue # skip copying, files are already there
             for i in trange(n_samples, desc="Copying %s full samples" % index4):
                 copy2(input_root_all+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), output_root_all+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i + sample_offset))
                 copy2(input_root_all+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i), output_root_all+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i + sample_offset))
@@ -140,6 +144,7 @@ for ii in range(len(I1)): # loop over all field combinations
     else: # can copy files, which should be faster
         c2j, c3j, c4j = [None] * 3 # won't be needed, so can free memory
         for input_root_jack, n_samples, sample_offset in zip(input_roots_jack, ns_samples, sample_offsets):
+            if os.path.samefile(input_root_jack, output_root_jack): continue # skip copying, files are already there
             for i in trange(n_samples, desc="Copying %s jack samples" % index4):
                 copy2(input_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), output_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i + sample_offset))
                 copy2(input_root_jack+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i), output_root_jack+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i + sample_offset))
@@ -193,6 +198,7 @@ for ii in range(len(I1)): # loop over all field combinations
     else: # can copy files, which should be faster
         EEaA1, EEaA2, RRaA1, RRaA2 = [None] * 4 # won't be needed, so can free memory
         for input_root_jack, n_samples, sample_offset in zip(input_roots_jack, ns_samples, sample_offsets):
+            if os.path.samefile(input_root_jack, output_root_jack): continue # skip copying, files are already there
             for i in trange(n_samples, desc="Copying %s disconnected jack samples" % index2):
                 copy2(input_root_jack+'EE1_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), output_root_jack+'EE1_n%d_%s_%s_%s.txt' % (n, mstr, index2, i + sample_offset))
                 copy2(input_root_jack+'EE2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), output_root_jack+'EE2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i + sample_offset))
