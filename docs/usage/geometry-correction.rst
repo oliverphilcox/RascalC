@@ -55,11 +55,11 @@ Usage
 
 For a single field analysis::
 
-    python python/compute_correction_function.py {GALAXY_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS}]
+    python python/compute_correction_function.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS}]
 
 For an analysis using two distinct fields::
 
-    python python/compute_correction_function_multi.py {GALAXY_FILE} {GALAXY_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]
+    python python/compute_correction_function_multi.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]
 
 **Input Parameters**:
 
@@ -108,7 +108,7 @@ Usage
 ~~~~~~
  ::
 
-    python python/compute_3pcf_correction_function.py {GALAXY_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RRR_COUNTS}]
+    python python/compute_3pcf_correction_function.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RRR_COUNTS}]
 
 **Input Parameters**:
 
