@@ -68,7 +68,7 @@ This uses Corrfunc to perform pair counting and computes :math:`\xi_a` for each 
 
 The main C++ code requires an input *survey correction function* to account for non-trivial survey geometries. For a periodic box, the correction function :math:`\Phi(r_a,\mu)` is constant, but the normalization carries important information including the survey volume and number density. This is simply computed via::
 
-    python python/compute_correction_function.py nbody_simulation.txt radial_binning_cov.csv ./ 1
+    python python/compute_correction_function.py nbody_randoms_10x.txt radial_binning_cov.csv ./ 1
 
 (See :ref:`survey_correction_2PCF`)
 
