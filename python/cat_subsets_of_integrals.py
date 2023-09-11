@@ -160,7 +160,7 @@ for ii in range(len(I1)): # loop over all field combinations
     else: # can copy files, which should be faster
         c2j, c3j, c4j, EEaA1, EEaA2, RRaA1, RRaA2 = [None] * 7 # won't be needed, so can free memory
         for input_root_jack, n_samples, sample_offset in zip(input_roots_jack, ns_samples, sample_offsets):
-            for i in trange(n_samples, desc="Copying %s full samples" % index4):
+            for i in trange(n_samples, desc="Copying %s jack samples" % index4):
                 copy2(input_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i), output_root_jack+'c2_n%d_%s_%s_%s.txt' % (n, mstr, index2, i + sample_offset))
                 copy2(input_root_jack+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i), output_root_jack+'c3_n%d_%s_%s_%s.txt' % (n, mstr, index3, i + sample_offset))
                 copy2(input_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i), output_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, i + sample_offset))

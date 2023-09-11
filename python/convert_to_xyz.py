@@ -41,7 +41,7 @@ sys.path.insert(0, str(dirname)+'/wcdm/')
 import wcdm
 
 # Load in data:
-print("Counting lines in file")
+print("Reading in data")
 all_ra, all_dec, all_z, all_w = np.loadtxt(input_file, usecols=range(4)).T
     
 from astropy.constants import c as c_light
