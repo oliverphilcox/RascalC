@@ -57,8 +57,9 @@ for ii in range(len(I1)): # loop over all field combinations
     # read
     for input_root_all, n_samples in zip(input_roots_all, ns_samples):
         read_all = True
-        if collapse_factor == 1 and not os.path.isfile(input_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, n_samples)):
-            # if don't want to collapse and there are no more samples than we are using, can read averages from full file
+        if collapse_factor == 1 and not os.path.isfile(input_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, n_samples)) and os.path.isfile(input_root_all+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, n_samples-1)):
+            # if don't want to collapse and there are no more and no less samples than we are using, can read averages from full file
+            # note: logic can still be broken by a gap in the samples, but there probably would not be a full file then
             try:
                 c2.append(np.loadtxt(input_root_all+'c2_n%d_%s_%s_full.txt' % (n, mstr, index2)))
                 c3.append(np.loadtxt(input_root_all+'c3_n%d_%s_%s_full.txt' % (n, mstr, index3)))
@@ -107,8 +108,9 @@ for ii in range(len(I1)): # loop over all field combinations
     # read
     for input_root_jack, n_samples in zip(input_roots_jack, ns_samples):
         read_all = True
-        if collapse_factor == 1 and not os.path.isfile(input_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, n_samples)):
-            # if don't want to collapse and there are no more samples than we are using, can read averages from full file
+        if collapse_factor == 1 and not os.path.isfile(input_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, n_samples)) and os.path.isfile(input_root_jack+'c4_n%d_%s_%s_%s.txt' % (n, mstr, index4, n_samples-1)):
+            # if don't want to collapse and there are no more and no less samples than we are using, can read averages from full file
+            # note: logic can still be broken by a gap in the samples, but there probably would not be a full file then
             try:
                 c2j.append(np.loadtxt(input_root_jack+'c2_n%d_%s_%s_full.txt' % (n, mstr, index2)))
                 c3j.append(np.loadtxt(input_root_jack+'c3_n%d_%s_%s_full.txt' % (n, mstr, index3)))
@@ -157,8 +159,9 @@ for ii in range(len(I1)): # loop over all field combinations
     # read
     for input_root_jack, n_samples in zip(input_roots_jack, ns_samples):
         read_all = True
-        if collapse_factor == 1 and not os.path.isfile(input_root_jack+'EE1_n%d_%s_%s_full.txt' % (n, mstr, index2)):
-            # if don't want to collapse and there are no more samples than we are using, can read averages from full file
+        if collapse_factor == 1 and not os.path.isfile(input_root_jack+'EE1_n%d_%s_%s_%d.txt' % (n, mstr, index2, n_samples)) and os.path.isfile(input_root_jack+'EE1_n%d_%s_%s_%d.txt' % (n, mstr, index2, n_samples-1)):
+            # if don't want to collapse and there are no more and no less samples than we are using, can read averages from full file
+            # note: logic can still be broken by a gap in the samples, but there probably would not be a full file then
             try:
                 EEaA1.append(np.loadtxt(input_root_jack+'EE1_n%d_%s_%s_full.txt' % (n, mstr, index2)))
                 EEaA2.append(np.loadtxt(input_root_jack+'EE2_n%d_%s_%s_full.txt' % (n, mstr, index2)))
