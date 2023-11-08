@@ -8,7 +8,7 @@ def run_cov(mode: str, s_edges,
             randoms_positions1, randoms_weights1,
             pycorr_allcounts_11,
             xi_table_11, xi_table_12 = None, xi_table_22 = None,
-            xi_cut: float = 250,
+            xi_cut_s: float = 250,
             pycorr_allcounts_12 = None, pycorr_allcounts_22 = None,
             no_data_galaxies1: float | None = None, no_data_galaxies2: float | None = None,
             randoms_samples1 = None,
@@ -96,6 +96,10 @@ def run_cov(mode: str, s_edges,
     xi_table_22 : 
         Table of second tracer auto-correlation function in separation (s) and µ bins.
         The code will use it for interpolation in the covariance matrix integrals.
+    
+    xi_cut_s : float
+        (Optional) separation value beyond which the correlation function is assumed to be zero for the covariance matrix integrals.
+        Between the maximum separation from ``xi_table``s and ``xi_cut_s``, the correlation function is extrapolated as :math:`\propto s^{-4}`.
 
     nthread : integer
         Number of hyperthreads to use.
