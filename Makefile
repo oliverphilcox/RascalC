@@ -41,15 +41,12 @@ DEFINES_FOR_legendre_orig=-DLEGENDRE
 DEFINES_FOR_legendre_mix=-DLEGENDRE_MIX
 DEFINES_FOR_legendre_mix_jackknife=-DLEGENDRE_MIX -DJACKKNIFE
 
-PERIODIC_VARIANTS = $(foreach variant,$(BASE_VARIANTS),$(variant)_periodic)
-
-define add_periodic_defines
+define add_periodic_variant
 DEFINES_FOR_$(1)_periodic	= $$(DEFINES_FOR_$(1)) -DPERIODIC
+VARIANTS	+= $(1) $(1)_periodic
 endef
 
-$(foreach variant,$(BASE_VARIANTS),$(eval $(call add_periodic_defines,$(variant))))
-
-VARIANTS	= $(BASE_VARIANTS) $(PERIODIC_VARIANTS)
+$(foreach variant,$(BASE_VARIANTS),$(eval $(call add_periodic_variant,$(variant))))
 
 OBJDIR	= obj
 EXECDIR	= bin
@@ -61,19 +58,13 @@ VAR_OBJ_BASE	= $(OBJDIR)/$(VAR_SRC_BASE)
 EXEC_BASE	= $(EXECDIR)/cov
 COMMON_OBJS	= ./cubature/hcubature.o ./ransampl/ransampl.o
 
-VAR_OBJS	= $(foreach variant,$(VARIANTS),$(VAR_OBJ_BASE).$(variant).o)
-ALL_EXECS	= $(foreach variant,$(VARIANTS),$(EXEC_BASE).$(variant))
-
-ALL_OBJS	= $(VAR_OBJS) $(COMMON_OBJS)
-ALL_DEPS	= ${ALL_OBJS:.o=.d}
-
-.PHONY: main clean
-
-main: $(ALL_EXECS)
+ALL_OBJS	= $(COMMON_OBJS)
 
 define make_targets
 OBJ_$(1)	= $$(VAR_OBJ_BASE).$(1).o
+ALL_OBJS	+= $$(OBJ_$(1))
 EXEC_$(1)	= $$(EXEC_BASE).$(1)
+ALL_EXECS	+= $$(EXEC_$(1))
 
 $$(OBJ_$(1)): $$(VAR_SRC)
 	mkdir -p $$(OBJDIR)
@@ -87,9 +78,15 @@ endef
 
 $(foreach variant,$(VARIANTS),$(eval $(call make_targets,$(variant))))
 
+.PHONY: all clean
+
+all: $(ALL_EXECS)
+.DEFAULT_GOAL	:= all
+
 clean:
 	rm -f $(ALL_EXECS) $(ALL_OBJS) ${ALL_DEPS}
 	rm -rf $(OBJDIR) $(EXECDIR)
 
 $(ALL_OBJS): Makefile
+ALL_DEPS	= ${ALL_OBJS:.o=.d}
 -include ${ALL_DEPS}
