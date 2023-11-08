@@ -23,15 +23,16 @@ def run_cov(mode: str, s_edges,
     mode : string
         Choice of binning setup, one of:
 
-            - "default": compute covariance of the correlation function in s, µ bins.
-            - "legendre_mix": compute covariance of the correlation function Legendre multipoles in separation (s) bins projected from µ bins. Works with jackknives, may be less efficient in periodic geometry.
+            - "default": compute covariance of the correlation function in s, µ bins. Only linear µ binning between 0 and 1 supported.
+            - "legendre_mix": compute covariance of the correlation function Legendre multipoles in separation (s) bins projected from µ bins (only linear µ binning supported between 0 and 1). Works with jackknives, may be less efficient in periodic geometry.
             - "legendre_orig": compute covariance of the correlation function Legendre multipoles in separation (s) bins accumulated directly, without first doing µ-binned counts. Incompatible with jackknives.
 
     s_edges : sequence (list, array, tuple, etc) of floats
         Edges of the separation (s) bins.
 
     n_mu_bins : integer
-        Number of µ bins (required in "default" ``mode``)
+        Number of µ bins (required in "default" ``mode``).
+        Only linear µ binning between 0 and 1 supported.
     
     max_l : integer
         Max Legendre multipole index (required in both "legendre" ``mode``s).
@@ -51,6 +52,7 @@ def run_cov(mode: str, s_edges,
     randoms_samples1 : None or array of floats of length N_randoms
         (Optional) jackknife region numbers for random points for the first tracer.
         If given and not None, enables the jackknife functionality (tuning of shot-noise rescaling on jackknife correlation function estimates).
+        The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_11`` (and ``pycorr_allcounts_12`` in multi-tracer mode).
 
     randoms_positions2 : None or array of floats, shape (3, N_randoms2)
         (Optional) cartesian coordinates of random points for the second tracer.
@@ -61,18 +63,19 @@ def run_cov(mode: str, s_edges,
     
     randoms_samples2 : None or array of floats of length N_randoms2
         Jackknife region numbers for the second tracer (required for multi-tracer + jackknife functionality, although this combination has not been used yet).
+        The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_12`` and ``pycorr_allcounts_22``.
 
     pycorr_allcounts_11 : ``pycorr`` TwoPointEstimator
         ``pycorr`` TwoPointEstimator with auto-counts for the first tracer.
-        For jackknife functionality, must contain jackknife RR counts and correlation function.
+        For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1``.
 
     pycorr_allcounts_12 : ``pycorr`` TwoPointEstimator
         (Optional) ``pycorr`` TwoPointEstimator with cross-counts between the two tracers.
-        For jackknife functionality, must contain jackknife RR counts and correlation function.
+        For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1`` and ``randoms_samples2``.
 
     pycorr_allcounts_22 : ``pycorr`` TwoPointEstimator
         (Optional) ``pycorr`` TwoPointEstimator with auto-counts for the second tracer.
-        For jackknife functionality, must contain jackknife RR counts and correlation function.
+        For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples2``
     
     no_data_galaxies1 : None or float
         (Optional) number of first tracer data (not random!) points for the covariance rescaling.
@@ -87,8 +90,12 @@ def run_cov(mode: str, s_edges,
         The code will use it for interpolation in the covariance matrix integrals.
 
     xi_table_12 : 
+        Table of the two tracer's cross-correlation function in separation (s) and µ bins.
+        The code will use it for interpolation in the covariance matrix integrals.
 
     xi_table_22 : 
+        Table of second tracer auto-correlation function in separation (s) and µ bins.
+        The code will use it for interpolation in the covariance matrix integrals.
 
     nthread : integer
         Number of hyperthreads to use.
