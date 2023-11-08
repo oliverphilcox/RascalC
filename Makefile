@@ -52,33 +52,35 @@ $(foreach variant,$(BASE_VARIANTS),$(eval $(call add_periodic_defines,$(variant)
 VARIANTS	= $(BASE_VARIANTS) $(PERIODIC_VARIANTS)
 
 OBJDIR	= obj
-BINDIR	= bin
+EXECDIR	= bin
 
 VAR_SRC_BASE	= grid_covariance
 VAR_SRC	= $(VAR_SRC_BASE).cpp
 VAR_OBJ_BASE	= $(OBJDIR)/$(VAR_SRC_BASE)
 
-EXEC_BASE	= $(BINDIR)/cov
+EXEC_BASE	= $(EXECDIR)/cov
 COMMON_OBJS	= ./cubature/hcubature.o ./ransampl/ransampl.o
 
 VAR_OBJS	= $(foreach variant,$(VARIANTS),$(VAR_OBJ_BASE).$(variant).o)
-EXECS	= $(foreach variant,$(VARIANTS),$(EXEC_BASE).$(variant))
+ALL_EXECS	= $(foreach variant,$(VARIANTS),$(EXEC_BASE).$(variant))
 
 ALL_OBJS	= $(VAR_OBJS) $(COMMON_OBJS)
 ALL_DEPS	= ${ALL_OBJS:.o=.d}
 
 .PHONY: main clean
 
-main: $(EXECS)
+main: $(ALL_EXECS)
 
 define make_targets
 OBJ_$(1)	= $$(VAR_OBJ_BASE).$(1).o
 EXEC_$(1)	= $$(EXEC_BASE).$(1)
 
 $$(OBJ_$(1)): $$(VAR_SRC)
+	mkdir -p $$(OBJDIR)
 	$$(CXX) $$(CXXFLAGS) $$(DEFINES_FOR_$(1)) -c $$(VAR_SRC) -o $$@
 
 $$(EXEC_$(1)): $$(OBJ_$(1)) $$(COMMON_OBJS)
+	mkdir -p $$(EXECDIR)
 	$$(LD) $$(OBJ_$(1)) $$(COMMON_OBJS) $$(LFLAGS) -o $$@
 
 endef
@@ -86,7 +88,8 @@ endef
 $(foreach variant,$(VARIANTS),$(eval $(call make_targets,$(variant))))
 
 clean:
-	rm -f $(EXECS) $(ALL_OBJS) ${ALL_DEPS}
+	rm -f $(ALL_EXECS) $(ALL_OBJS) ${ALL_DEPS}
+	rm -rf $(OBJDIR) $(EXECDIR)
 
 $(ALL_OBJS): Makefile
 -include ${ALL_DEPS}
