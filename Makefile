@@ -33,13 +33,13 @@ endif
 
 # The code below compiles all the valid variants for the 2PCF covariance
 
-BASE_VARIANTS	= default default_jackknife legendre_orig legendre_mix legendre_mix_jackknife
+BASE_VARIANTS	= s_mu s_mu_jackknife legendre_accumulated legendre_projected legendre_projected_jackknife
 
-DEFINES_FOR_default=
-DEFINES_FOR_default_jackknife=-DJACKKNIFE
-DEFINES_FOR_legendre_orig=-DLEGENDRE
-DEFINES_FOR_legendre_mix=-DLEGENDRE_MIX
-DEFINES_FOR_legendre_mix_jackknife=-DLEGENDRE_MIX -DJACKKNIFE
+DEFINES_FOR_s_mu=
+DEFINES_FOR_s_mu_jackknife=-DJACKKNIFE
+DEFINES_FOR_legendre_accumulated=-DLEGENDRE
+DEFINES_FOR_legendre_projected=-DLEGENDRE_MIX
+DEFINES_FOR_legendre_projected_jackknife=-DLEGENDRE_MIX -DJACKKNIFE
 
 define add_periodic_variant
 DEFINES_FOR_$(1)_periodic	= $$(DEFINES_FOR_$(1)) -DPERIODIC

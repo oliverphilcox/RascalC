@@ -24,15 +24,15 @@ def run_cov(mode: str, s_edges,
     mode : string
         Choice of binning setup, one of:
 
-            - "default": compute covariance of the correlation function in s, µ bins. Only linear µ binning between 0 and 1 supported.
-            - "legendre_mix": compute covariance of the correlation function Legendre multipoles in separation (s) bins projected from µ bins (only linear µ binning supported between 0 and 1). Works with jackknives, may be less efficient in periodic geometry.
-            - "legendre_orig": compute covariance of the correlation function Legendre multipoles in separation (s) bins accumulated directly, without first doing µ-binned counts. Incompatible with jackknives.
+            - "s_mu": compute covariance of the correlation function in s, µ bins. Only linear µ binning between 0 and 1 supported.
+            - "legendre_projected": compute covariance of the correlation function Legendre multipoles in separation (s) bins projected from µ bins (only linear µ binning supported between 0 and 1). Procedure matches ``pycorr``. Works with jackknives, may be less efficient in periodic geometry.
+            - "legendre_accumulated": compute covariance of the correlation function Legendre multipoles in separation (s) bins accumulated directly, without first doing µ-binned counts. Incompatible with jackknives.
 
     s_edges : sequence (list, array, tuple, etc) of floats
         Edges of the separation (s) bins.
 
     n_mu_bins : integer
-        Number of µ bins (required in "default" ``mode``).
+        Number of µ bins (required in "s_mu" ``mode``).
         Only linear µ binning between 0 and 1 supported.
     
     max_l : integer
@@ -152,11 +152,11 @@ def run_cov(mode: str, s_edges,
         More disk space required - needs to store all the input arrays in the current implementation.
     """
 
-    assert mode in ("default", "legendre_orig", "legendre_mix"), "Given mode not supported"
+    assert mode in ("s_mu", "legendre_accumulated", "legendre_projected"), "Given mode not supported"
 
     # Set mode flags
-    legendre_orig = (mode == "legendre_orig")
-    legendre_mix = (mode == "legendre_mix")
+    legendre_orig = (mode == "legendre_accumulated")
+    legendre_mix = (mode == "legendre_projected")
     legendre = legendre_orig or legendre_mix
     jackknife = randoms_samples1 is not None
 
@@ -166,7 +166,7 @@ def run_cov(mode: str, s_edges,
         assert max_l is not None, "Max ell must be provided in Legendre mode"
         assert max_l % 2 == 0, "Only even Legendre multipoles supported"
     else:
-        assert n_mu_bins is not None, "Number of µ bins for the covariance matrix must be provided in default mode"
+        assert n_mu_bins is not None, "Number of µ bins for the covariance matrix must be provided in s_mu mode"
 
     # Set some other flags
     periodic = boxsize is not None
