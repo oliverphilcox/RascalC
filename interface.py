@@ -10,6 +10,7 @@ def run_cov(mode: str, s_edges,
             xi_table_11, xi_table_12 = None, xi_table_22 = None,
             xi_cut_s: float = 250,
             pycorr_allcounts_12 = None, pycorr_allcounts_22 = None,
+            normalize_wcounts: bool = True,
             no_data_galaxies1: float | None = None, no_data_galaxies2: float | None = None,
             randoms_samples1 = None,
             randoms_positions2 = None, randoms_weights2 = None, randoms_samples2 = None,
@@ -65,17 +66,23 @@ def run_cov(mode: str, s_edges,
         Jackknife region numbers for the second tracer (required for multi-tracer + jackknife functionality, although this combination has not been used yet).
         The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_12`` and ``pycorr_allcounts_22``.
 
-    pycorr_allcounts_11 : ``pycorr`` TwoPointEstimator
+    pycorr_allcounts_11 : ``pycorr.TwoPointEstimator``
         ``pycorr`` TwoPointEstimator with auto-counts for the first tracer.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1``.
 
-    pycorr_allcounts_12 : ``pycorr`` TwoPointEstimator
+    pycorr_allcounts_12 : ``pycorr.TwoPointEstimator``
         (Optional) ``pycorr`` TwoPointEstimator with cross-counts between the two tracers.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1`` and ``randoms_samples2``.
 
-    pycorr_allcounts_22 : ``pycorr`` TwoPointEstimator
+    pycorr_allcounts_22 : ``pycorr.TwoPointEstimator``
         (Optional) ``pycorr`` TwoPointEstimator with auto-counts for the second tracer.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples2``
+
+    normalize_wcounts : boolean
+        (Optional) whether to normalize the weights and weighted counts.
+        If False, the provided RR counts must match what can be obtained from given randoms, otherwise the covariance matrix will be off by a constant factor.
+        Example: if counts were computed with ``n_randoms`` roughly similar random chunks and only one is provided to RascalC here, the counts should be divided by ``n_random`` where ``s > split_above`` and by ``n_random ** 2`` where ``s < split_above``.
+        If True (default), the weights will be normalized so that their sum is 1 and the counts will be normalized by their ``wnorm``, which gives a match with default ``pycorr`` normalization settings.
     
     no_data_galaxies1 : None or float
         (Optional) number of first tracer data (not random!) points for the covariance rescaling.
@@ -85,17 +92,26 @@ def run_cov(mode: str, s_edges,
         (Optional) number of second tracer data (not random!) points for the covariance rescaling.
         If not given or None, the code will attempt to obtain it from ``pycorr_allcounts_22``.
     
-    xi_table_11 : sequence (tuple or list) of 3 elements: (s_values, mu_values, xi_values)
+    xi_table_11 : ``pycorr.TwoPointEstimator``, or sequence (tuple or list) of 3 elements: (s_values, mu_values, xi_values), or sequence (tuple or list) of 4 elements: (s_values, mu_values, xi_values, s_edges)
         Table of first tracer auto-correlation function in separation (s) and µ bins.
         The code will use it for interpolation in the covariance matrix integrals.
+        Important: if the given correlation function is an average in s, µ bins, the separation bin edges need to be provided (and the µ bins are assumed to be linear) for rescaling procedure which ensures that the interpolation results averaged over s, µ bins returns the given correlation function. In case of ``pycorr.TwoPointEstimator``, the edges will be recovered automatically.
+        In the sequence format:
 
-    xi_table_12 : 
+            - s_values must be a 1D array of reference separation (s) values for the table of length N;
+            - mu_values must be a 1D array of reference µ values for the table of length M;
+            - xi_values must be an array of correlation function values at those s, µ values of shape (N, M);
+            - s_edges, if given, must be a 1D array of separation bin edges of length N+1. The bins must come close to zero separation (say start at ``s <= 0.01``).
+
+    xi_table_12 : None or the same format as ``xi_table_11``
         Table of the two tracer's cross-correlation function in separation (s) and µ bins.
         The code will use it for interpolation in the covariance matrix integrals.
+        Required for multi-tracer functionality.
 
-    xi_table_22 : 
+    xi_table_22 : None or the same format as ``xi_table_11``
         Table of second tracer auto-correlation function in separation (s) and µ bins.
         The code will use it for interpolation in the covariance matrix integrals.
+        Required for multi-tracer functionality.
     
     xi_cut_s : float
         (Optional) separation value beyond which the correlation function is assumed to be zero for the covariance matrix integrals.
