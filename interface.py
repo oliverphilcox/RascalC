@@ -67,15 +67,21 @@ def run_cov(mode: str, s_edges,
         The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_12`` and ``pycorr_allcounts_22``.
 
     pycorr_allcounts_11 : ``pycorr.TwoPointEstimator``
-        ``pycorr`` TwoPointEstimator with auto-counts for the first tracer.
+        ``pycorr.TwoPointEstimator`` with auto-counts for the first tracer.
+        Must be rebinnable (possibly approximately) to the requested s bins (``s_edges``).
+        The counts will be wrapped to positive µ, so if the µ range in them is from -1 to 1, the number of µ bins must be even.
+        In "s_mu" ``mode``, must be rebinnable to the requested number of µ bins after wrapping.
+        In any of the Legendre ``mode``s, it will be assumed that Legendre multipoles are produced from the same number of µ bins as present in these counts.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1``.
 
     pycorr_allcounts_12 : ``pycorr.TwoPointEstimator``
-        (Optional) ``pycorr`` TwoPointEstimator with cross-counts between the two tracers.
+        (Optional) ``pycorr.TwoPointEstimator`` with cross-counts between the two tracers (order does not matter, because they will be wrapped).
+        Must have the same bin configuration as ``pycorr_allcounts_11``.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1`` and ``randoms_samples2``.
 
     pycorr_allcounts_22 : ``pycorr.TwoPointEstimator``
-        (Optional) ``pycorr`` TwoPointEstimator with auto-counts for the second tracer.
+        (Optional) ``pycorr.TwoPointEstimator`` with auto-counts for the second tracer.
+        Must have the same bin configuration as ``pycorr_allcounts_11``.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples2``
 
     normalize_wcounts : boolean
