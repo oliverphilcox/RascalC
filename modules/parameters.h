@@ -4,6 +4,10 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
+#ifdef LEGENDRE_MIX
+#include "legendre_mix_utilities.h"
+#endif
+
 class Parameters{
 
 public:
@@ -64,10 +68,21 @@ public:
 
     //-------- LEGENDRE PARAMETERS -------------------------------------------
 
+#if (defined LEGENDRE || defined LEGENDRE_MIX)
     int max_l = 2; // max Legendre moment (must be even unless computing 3PCF)
+#endif
 
+#ifdef LEGENDRE_MIX
+    char *mu_bin_legendre_file = NULL; // Mu bin Legendre factors file
+    const char default_mu_bin_legendre_file[500] = "mu_bin_legendre_factors_m20_l2.txt";
+
+    MuBinLegendreFactors mu_bin_legendre_factors;
+#endif
+
+#ifdef LEGENDRE
     char *phi_file = NULL; // Survey correction function coefficient file
     const char default_phi_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/BinCorrectionFactor_n25_periodic_11.txt";
+#endif
 
     //-------- POWER PARAMETERS (not yet publicly released) ------------------
 
@@ -114,31 +129,39 @@ public:
 
     //---------- (r,mu) MULTI-FIELD PARAMETERS ------------------------------
 
+#if (!defined LEGENDRE && !defined POWER && !defined THREE_PCF)
     // Summed pair count files
     char *RR_bin_file12 = NULL; // RR_{aA}^{12} file
     const char default_RR_bin_file12[500] = "";
 
     char *RR_bin_file2 = NULL; // RR_{aA}^{22} file
     const char default_RR_bin_file2[500] = "";
+#endif
 
     //-------- JACKKNIFE MULTI-FIELD PARAMETERS ------------------------------
 
+#ifdef JACKKNIFE
     // Jackknife weight files
     char *jk_weight_file12 = NULL; // w_{aA}^{12} weights
     const char default_jk_weight_file12[500] = "";
 
     char *jk_weight_file2 = NULL; // w_{aA}^{22} weights
     const char default_jk_weight_file2[500] = "";
+#endif
 
     //-------- LEGENDRE MULTI-FIELD PARAMETERS -------------------------------
 
+#ifdef LEGENDRE
     const char default_phi_file12[500] = "";
     char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
 
     char *phi_file2 = NULL; // (Normalized) survey correction function survey_22
     const char default_phi_file2[500] = "";
+#endif
 
     // ------- POWER MULTI-FIELD PARAMETERS ----------------------------------
+
+#ifdef POWER
 
     char *inv_phi_file2 = NULL; // (Normalized) inverse survey correction function multipoles survey_22
     const char default_inv_phi_file2[500] = "";
@@ -149,6 +172,8 @@ public:
     Float power_norm12 = 0; // power spectrum normalization for field 1 x 2
 
     Float power_norm2 = 0; // power spectrum normalization for field 2 x 2
+
+#endif
 
     //-------- OTHER PARAMETERS ----------------------------------------------
 
@@ -251,8 +276,17 @@ public:
         else if (!strcmp(argv[i],"-N2")) N2=atof(argv[++i]);
         else if (!strcmp(argv[i],"-N3")) N3=atof(argv[++i]);
         else if (!strcmp(argv[i],"-N4")) N4=atof(argv[++i]);
-#ifdef LEGENDRE
+#if (defined LEGENDRE || defined LEGENDRE_MIX)
         else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
+#endif
+#ifdef JACKKNIFE
+        else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
+        else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
+        else if (!strcmp(argv[i],"-jackknife2")) jk_weight_file2=argv[++i];
+#endif
+#ifdef LEGENDRE_MIX
+        else if (!strcmp(argv[i],"-mu_bin_legendre_file")) mu_bin_legendre_file=argv[++i];
+#elif defined LEGENDRE
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
         else if (!strcmp(argv[i],"-phi_file12")) phi_file12=argv[++i];
         else if (!strcmp(argv[i],"-phi_file2")) phi_file2=argv[++i];
@@ -265,10 +299,6 @@ public:
         else if (!strcmp(argv[i],"-power_norm")) power_norm = atof(argv[++i]);
         else if (!strcmp(argv[i],"-power_norm12")) power_norm12 = atof(argv[++i]);
         else if (!strcmp(argv[i],"-power_norm")) power_norm2 = atof(argv[++i]);
-#elif defined JACKKNIFE
-        else if (!strcmp(argv[i],"-jackknife")) jk_weight_file=argv[++i];
-        else if (!strcmp(argv[i],"-jackknife12")) jk_weight_file12=argv[++i];
-        else if (!strcmp(argv[i],"-jackknife2")) jk_weight_file2=argv[++i];
 #elif defined THREE_PCF
         else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
@@ -328,8 +358,13 @@ public:
 #endif
 	    assert(mumax<=1); // mu > 1 makes no sense
 
-#ifdef LEGENDRE
+#if (defined LEGENDRE || defined LEGENDRE_MIX)
         assert(max_l%2==0); // check maximum ell is even
+#endif
+#ifdef LEGENDRE_MIX
+        if (mu_bin_legendre_file == NULL) mu_bin_legendre_file = (char *) default_mu_bin_legendre_file; // no mu bin Legendre file specified
+        new (&mu_bin_legendre_factors) MuBinLegendreFactors(mu_bin_legendre_file, mbin, max_l); // construct in place
+#elif defined LEGENDRE
         assert(max_l<=10); // ell>10 not yet implemented!
         mbin = max_l/2+1; // number of angular bins is set to number of Legendre bins
         if (phi_file==NULL) {phi_file = (char *) default_phi_file;} // no phi file specified
@@ -541,8 +576,12 @@ private:
 	    fprintf(stderr, "   -cor2 <file>: (Optional) File location of input xi_2 correlation function file.\n");
 	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Number of galaxies in the survey for the second tracer set.\n");
 
-#ifdef LEGENDRE
+#if (defined LEGENDRE || defined LEGENDRE_MIX)
         fprintf(stderr, "   -max_l <max_l>: Maximum legendre multipole (must be even)\n");
+#endif
+#ifdef LEGENDRE_MIX
+        fprintf(stderr, "   -mu_bin_legendre_file <filename>: Mu bin Legendre factors file\n");
+#elif defined LEGENDRE
         fprintf(stderr, "   -phi_file <filename>: Survey correction function coefficient file\n");
         fprintf(stderr, "\n");
         fprintf(stderr, "   -phi_file12 <filename>: (Optional) Survey correction function coefficient file for fields 1 x 2\n");

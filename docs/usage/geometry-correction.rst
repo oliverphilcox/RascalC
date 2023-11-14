@@ -75,6 +75,21 @@ See the :ref:`RR_counts` parameters above. Additionally;
 - For a periodic data-set, we output a set of parameters which will lead to the survey correction function being reconstructed as unity everywhere.
 
 
+.. _mu_bin_legendre_factors:
+
+Computing mu bin Legendre factors
+-----------------------------------------------------
+
+This is a simple script to produce the file with projection factors from :math:`\mu` bins to Legendre multipoles for the C++ code in LEGENDRE_MIX mode.
+The computation is much easier in Python than in C++, and only needs to be done once, because the factors are the same for all radial bins and tracers, only depending on the number of :math:`\mu` bins (assumed linear between 0 and 1) and the number of Legendre multipoles in computation.
+
+Usage::
+
+    python python/mu_bin_legendre_factors.py {N_MU_BINS} {MAX_L} {OUTPUT_DIR}
+
+The output file will have the name ``mu_bin_legendre_factors_m{N_MU_BINS}_l{MAX_L}.txt`` and located in the ``{OUTPUT_DIR}``.
+
+
 .. _RRR_counts:
 
 Estimating RRR triple counts
