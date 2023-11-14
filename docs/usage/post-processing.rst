@@ -37,8 +37,8 @@ For multi-field cases, we also create a single compressed Python file for the ou
 
 .. _post-processing-general:
 
-DEFAULT, LEGENDRE and 3PCF mode reconstruction
------------------------------------------------
+DEFAULT, LEGENDRE, LEGENDRE_MIX and 3PCF mode reconstruction
+------------------------------------------------------------
 
 Here we reconstruct the output covariance matrices and associated products, given an input shot-noise rescaling parameter. In 3PCF mode, we do not include the first six-point term, :math:`{}_A^6\mathbf{C}`, as noted in Philcox & Eisenstein (in prep.) since this is expected to be small for a large survey, yet difficult to accurately measure.
 
@@ -57,23 +57,29 @@ For multiple fields::
     python python/post_process_default_multi.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]
     python python/post_process_legendre_multi.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]
 
+Legendre post-processing works for both LEGENDRE and LEGENDRE_MIX modes.
+
 
 .. _post-processing-jackknife:
 
-JACKKNIFE mode reconstruction
-------------------------------
+JACKKNIFE reconstruction
+------------------------
 
-**NB**: This can only be run if the C++ code was run in JACKKNIFE mode for the 2PCF.
+**NB**: This can only be run if the C++ code was run with JACKKNIFE functionality for the 2PCF.
 
 This script differs from the above in that we now compute the shot-noise rescaling parameters by comparing the theoretical jackknife covariance matrix :math:`\hat{C}^{J}_{ab}(\alpha)` with that computed from the data itself, using individual unrestricted jackknife estimates :math:`\hat{\xi}^J_{aA}`. We define the data jackknife covariance matrix as :math:`C^{\mathrm{data}}_{ab} = \sum_A w_{aA}w_{bA}\left(\hat\xi^J_{aA} - \bar{\xi}_a\right)\left(\hat\xi^J_{bA}-\bar\xi_b\right) / \left(1-\sum_B w_{aB} w_{bB}\right)`, where :math:`\bar\xi_a` is the mean correlation function in bin :math:`a`. We compute :math:`\alpha` via minimizing the likelihood function :math:`-\log\mathcal{L}_1(\alpha) = \mathrm{trace}(\Psi^J(\alpha)C^\mathrm{data}) - \log\mathrm{det}\Psi^J(\alpha)+\mathrm{const}.` using the (bias-corrected) precision matrix :math:`\Psi^J(\alpha)`. When run for multiple input fields, the (11,11) and (22,22) covariance matrices are used to constrain :math:`\alpha_1` and :math:`\alpha_2` respectively.
 
 **Usage**
 
-For a single field::
+For a single field in DEFAULT mode::
 
     python python/post-process_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}
 
-For multiple fields::
+For a single field in LEGENDRE_MIX mode::
+
+    python python/post_process_legendre_mix_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR}
+
+For multiple fields in DEFAULT mode::
 
     python python/post_process_jackknife_multi.py {XI_JACKKNIFE_FILE_11} {XI_JACKKNIFE_FILE_12} {XI_JACKKNIFE_FILE_22} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}
 
