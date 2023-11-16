@@ -1,190 +1,75 @@
 ### Function to fit a model to the survey correction function, defined as the ratio between model and true RR pair counts for a two surveys. This fits a piecewise polynomial model to the data.
 
-## NB: Input RR counts should be normalized by summed galaxy weights here.
+## NB: Input RR counts should NOT be normalized by summed galaxy weights here.
 ## NB: Assume mu is in [0,1] limit here
 
 import sys
 import os
 import numpy as np
-import scipy.spatial as ss
-from scipy.optimize import curve_fit
+from compute_correction_function import compute_V_n_w_bar_from_file, compute_phi_periodic, load_RR, compute_phi_aperiodic
 
-# PARAMETERS
-if len(sys.argv)!=6 and len(sys.argv)!=9:
-    print("Usage: python compute_correction_function_multi.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]")
-    sys.exit(1)
-gal_file = str(sys.argv[1])
-gal_file2 = str(sys.argv[2])
-binfile = str(sys.argv[3])
-outdir = str(sys.argv[4])
-periodic = int(sys.argv[5])
+def compute_correction_function_multi(gal_file: str, gal_file2: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, RR_file12: str | None = None, RR_file2: str | None = None, print_function = print) -> None:
+    if periodic:
+        print_function("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
+    elif any(file is None for file in (RR_file, RR_file12, RR_file2)):
+        raise TypeError("All the RR files must be specified if aperiodic")
 
-if periodic:
-    print("\nAssuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
-else:
-    RR_file = str(sys.argv[6])
-    RR_file12 = str(sys.argv[7])
-    RR_file2 = str(sys.argv[8])
+    V1, n_bar1, w_bar1 = compute_V_n_w_bar_from_file(gal_file, print_function = print_function)
+    V2, n_bar2, w_bar2 = compute_V_n_w_bar_from_file(gal_file, index = 2, print_function = print_function)
 
-## Load galaxies
-print("\nLoading galaxy set 1")
-all_gal = np.loadtxt(gal_file)
+    # Load in binning files
+    r_bins = np.loadtxt(binfile)
+    n = len(r_bins)
 
-print("Loading galaxy set 2")
-all_gal2 = np.loadtxt(gal_file2)
+    if periodic:
+        ## Periodic correction function is simple
 
-# Define survey galaxy coordinates
-gal_x = all_gal[:,0]
-gal_y = all_gal[:,1]
-gal_z = all_gal[:,2]
-gal_w = all_gal[:,3]
-gal2_x = all_gal2[:,0]
-gal2_y = all_gal2[:,1]
-gal2_z = all_gal2[:,2]
-gal2_w = all_gal2[:,3]
+        phi_11 = compute_phi_periodic(w_bar1, w_bar1, n_bar1, n_bar1, V1, n)
+        phi_12 = compute_phi_periodic(w_bar1, w_bar2, n_bar1, n_bar2, np.sqrt(V1*V2), n)
+        phi_22 = compute_phi_periodic(w_bar2, w_bar2, n_bar2, n_bar2, V2, n)
+    else:
+        ## Continue for aperiodic case
 
-w_bar1 = np.mean(gal_w)
-w_bar2 = np.mean(gal2_w)
+        # Load RR counts
+        RR = load_RR(RR_file, n)
+        m = RR.shape[1]
 
-N_gal = len(all_gal)
-N_gal2 = len(all_gal2)
+        RR2 = load_RR(RR_file2, n)
+        if RR2.shape != RR.shape: raise ValueError("Need the same binning for all RR files")
 
-## Find survey volume via ConvexHull in Scipy
-hull = ss.ConvexHull(np.vstack([gal_x,gal_y,gal_z]).T)
-print('\nSurvey volume 1 is approximately: %.2f (Gpc/h)^3'%(hull.volume/1e9))
-V=hull.volume # in (Mpc/h)^3
+        RR12 = load_RR(RR_file12, n)
+        if RR12.shape != RR.shape: raise ValueError("Need the same binning for all RR files")
 
-hull = ss.ConvexHull(np.vstack([gal2_x,gal2_y,gal2_z]).T)
-print('Survey volume 2 is approximately: %.2f (Gpc/h)^3'%(hull.volume/1e9))
-V2=hull.volume # in (Mpc/h)^3
+        # Now run this
+        phi_11 = compute_phi_aperiodic(w_bar1, w_bar1, n_bar1, n_bar1, V1, r_bins, RR, "11", print_function)
+        phi_12 = compute_phi_aperiodic(w_bar1, w_bar2, n_bar1, n_bar2, np.sqrt(V1*V2), r_bins, RR, "12", print_function) # use geometrically average volume, should be not critical
+        phi_12 = compute_phi_aperiodic(w_bar2, w_bar2, n_bar2, n_bar2, V2, RR, r_bins, "22", print_function)
 
-## Galaxy number density
-n_bar1 = N_gal/V
-n_bar2 = N_gal2/V2
+    roots = ['11', '12', '22']
+    phis = [phi_11, phi_12, phi_22]
 
-# Load in binning files
-r_bins = np.loadtxt(binfile)
-n=len(r_bins)
+    for phi, index in zip(phis, roots):
+        if periodic:
+            outfile = os.path.join(outdir, 'BinCorrectionFactor_n%d_periodic_%s.txt'%(n, index))
+        else:
+            outfile = os.path.join(outdir, 'BinCorrectionFactor_n%d_m%d_11.%s'%(n, m, index))
+        np.savetxt(outfile, phi)
+        print_function("Saved (normalized) output for field %s to %s"%(index, outfile))
 
-# Find binning centers
-r_cen = np.mean(r_bins,axis=1)
-vol_r = 4.*np.pi/3.*(r_bins[:,1]**3-r_bins[:,0]**3)
+if __name__ == "__main__": # if invoked as a script
+    # PARAMETERS
+    if len(sys.argv) not in (6, 9):
+        print("Usage: python compute_correction_function_multi.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]")
+        sys.exit(1)
+    gal_file = str(sys.argv[1])
+    gal_file2 = str(sys.argv[2])
+    binfile = str(sys.argv[3])
+    outdir = str(sys.argv[4])
+    periodic = int(sys.argv[5])
 
-if periodic:
-    ## Save periodic pair counts simply
+    from utils import get_arg_safe
+    RR_file = get_arg_safe(6)
+    RR_file12 = get_arg_safe(7)
+    RR_file2 = get_arg_safe(8)
 
-    phi_11 = np.zeros([n,7])
-    phi_12 = np.zeros([n,7])
-    phi_22 = np.zeros([n,7])
-
-    phi_11[:,0] = 1./(V*n_bar1**2*w_bar1**2)
-    phi_11[:,3] = 1./(V*n_bar1**2*w_bar1**2)
-    phi_12[:,0] = 1./(V*n_bar1*n_bar2*w_bar1*w_bar2)
-    phi_12[:,3] = 1./(V*n_bar1*n_bar2*w_bar1*w_bar2)
-    phi_22[:,0] = 1./(V2*n_bar2**2*w_bar2**2)
-    phi_22[:,3] = 1./(V2*n_bar2**2*w_bar2**2)
-
-    roots = ['11','12','22']
-    phis = [phi_11,phi_12,phi_22]
-
-    for jndex,index in enumerate(roots):
-        outfile = os.path.join(outdir, 'BinCorrectionFactor_n%d_periodic_%s.txt'%(n,index))
-        with open(outfile,"w+") as out:
-            for i in range(n):
-                for j in range(7):
-                    out.write("%.8e"%(phis[jndex][i,j]))
-                    if j<6:
-                        out.write("\t")
-                    else:
-                        out.write("\n")
-        print("Saved (normalized) output for field %s to %s"%(index,outfile))
-    sys.exit(1);
-
-## Continue for aperiodic case
-
-# Load RR counts
-RR_flat = np.loadtxt(RR_file) # not change normalization here
-m=len(RR_flat)//n
-RR_true = RR_flat.reshape((n,m))
-
-RR_flat2 = np.loadtxt(RR_file2)
-assert((len(RR_flat2)//n)==m), "Need same bins for all RR files."
-RR_true2 = RR_flat2.reshape((n,m))
-
-RR_flat12 = np.loadtxt(RR_file2)
-assert((len(RR_flat12)//n)==m), "Need same bins for all RR files."
-RR_true12 = RR_flat12.reshape((n,m))
-
-# Load mu bins
-mu_cen = np.arange(1./(2.*m),1.+1./(2.*m),1./m)
-delta_mu = mu_cen[-1]-mu_cen[-2]
-assert(m==len(mu_cen))
-
-def compute_phi(w_bar1, w_bar2, n_bar1, n_bar2, V, this_RR, index):
-    print("\nComputing survey correction factor %s"%index)
-    ## Define normalization constant
-    this_norm = n_bar1*n_bar2*w_bar1*w_bar2 # keep it simple, only need to be self-consistent - use the same norm everywhere
-
-    norm = V*this_norm
-
-    ## Define RR model
-    def RR_model(r_bin,mu):
-        return norm*vol_r[r_bin]*delta_mu
-
-    # Compute correction functions
-    Phi_values = []
-    for r_bin in range(n):
-        Phi_values.append(RR_model(r_bin,mu_cen)/this_RR[r_bin,:])
-
-    ## check for order of magnitude consistency
-    if np.mean(Phi_values)>50:
-        raise Exception("RR_true seems to be much smaller than RR_model. Is the input RR correctly normalized?")
-    if np.mean(Phi_values)<0.02:
-        raise Exception("RR_true seems to be much larger than RR_model. Is the input RR correctly normalized?")
-
-    ## Define Phi model (piecewise continuous polynomial)
-    mu_crit=0.75
-    def Phi_model(mu,a0,a1,a2,b2,b3,mu_crit=mu_crit):
-        b1=a1+2*mu_crit*(a2-b2)-3*b3*mu_crit**2.
-        b0=a0+(a1-b1)*mu_crit+(a2-b2)*mu_crit**2.-b3*mu_crit**3.
-        filt1=np.where(mu<mu_crit)
-        filt2=np.where(mu>=mu_crit)
-        output=np.zeros_like(mu)
-        output[filt1]=a0+a1*mu[filt1]+a2*mu[filt1]**2.
-        output[filt2]=b0+b1*mu[filt2]+b2*mu[filt2]**2.+b3*mu[filt2]**3.
-        return output
-
-    ## Find optimal parameters
-    def fit_model(mu,good_param):
-        return Phi_model(mu,good_param[0],good_param[1],good_param[2],good_param[3],good_param[4])
-
-    fit_params=[]
-    errors=[]
-    for i in range(n):
-        good_param,_=curve_fit(Phi_model,mu_cen,Phi_values[i],p0=[0,0,0,0,0])
-        a0,a1,a2,b2,b3=good_param
-        b1=a1+2*mu_crit*(a2-b2)-3*b3*mu_crit**2.
-        b0=a0+(a1-b1)*mu_crit+(a2-b2)*mu_crit**2.-b3*mu_crit**3.
-        out_params=[a0,a1,a2,b0,b1,b2,b3]
-        fit_params.append(out_params)
-        errors.append(np.abs(Phi_values[i]-fit_model(mu_cen,good_param))/fit_model(mu_cen,good_param))
-
-    fit_params = np.asarray(fit_params)
-
-    print("Fitted dataset %s with mean fractional error %.1e"%(index,np.mean(errors)))
-
-    outfile = os.path.join(outdir, 'BinCorrectionFactor_n%d_m%d_%s.txt'%(n,m,index))
-    with open(outfile,"w+") as out:
-        for i in range(n):
-            for j in range(7):
-                out.write("%.8e"%(fit_params[i,j]/norm))
-                if j<6:
-                    out.write("\t")
-                else:
-                    out.write("\n")
-    print("Saved (normalized) output to %s"%outfile)
-
-# Now run this
-compute_phi(w_bar1, w_bar1, n_bar1, n_bar1, V, RR_true, "11");
-compute_phi(w_bar1, w_bar2, n_bar1, n_bar2, np.sqrt(V*V2), RR_true12, "12"); # use geometrically average volume, should be not critical
-compute_phi(w_bar2, w_bar2, n_bar2, n_bar2, V2, RR_true2, "22");
+    compute_correction_function_multi(gal_file, gal_file2, binfile, outdir, periodic, RR_file, RR_file12, RR_file2)

@@ -4,13 +4,8 @@
 
 import numpy as np
 import sys,os
+from utils import blank_function
 
-# PARAMETERS
-if len(sys.argv) not in (2, 3):
-    print("Usage: python convergence_check_extra.py {RASCALC_RESULTS_FILE} [{N_SUBSAMPLES_TO_USE}]")
-    sys.exit(1)
-
-rascalc_results = str(sys.argv[1])
 
 # methods to assess similarity
 def rms_eig_inv_test_covs(C1, C2):
@@ -29,33 +24,63 @@ def chi2_red_covs(C1, C2):
     Psi1C2 = Psi1.dot(C2)
     return np.trace(Psi1C2)/len(C2)
 
-with np.load(rascalc_results) as f:
-    c_samples = f["individual_theory_covariances"]
-    jack_key = "individual_theory_jackknife_covariances"
-    do_jack = (jack_key in f.keys())
-    if do_jack: cj_samples = f[jack_key]
+def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_function = blank_function) -> dict:
+    result = dict()
 
-n_samples = int(sys.argv[2]) if len(sys.argv) >= 3 else len(c_samples)
-n_samples_2 = n_samples // 2
+    result["R_inv"] = (rms_eig_inv_test_covs(cov_first, cov_second), rms_eig_inv_test_covs(cov_second, cov_first))
+    print_function("RMS eigenvalues of inverse tests for cov half-estimates are %.2e and %.2e" % result["R_inv"])
 
-def cmp_cov_print(cov_first, cov_second):
-    print("RMS eigenvalues of inverse tests for cov half-estimates are %.2e and %.2e" % (rms_eig_inv_test_covs(cov_first, cov_second), rms_eig_inv_test_covs(cov_second, cov_first)))
-    print("KL divergences between cov half-estimates are %.2e and %.2e" % (KL_div_covs(cov_first, cov_second), KL_div_covs(cov_second, cov_first)))
-    print("Reduced chi2-1 between cov half-estimates are %.2e and %.2e" % (chi2_red_covs(cov_first, cov_second)-1, chi2_red_covs(cov_second, cov_first)-1))
+    result["D_KL"] = (KL_div_covs(cov_first, cov_second), KL_div_covs(cov_second, cov_first))
+    print_function("KL divergences between cov half-estimates are %.2e and %.2e" % result["D_KL"])
 
-def cmp_cov_splittings(c_samples):
-    print("First splitting")
+    result["chi2_red-1"] = (chi2_red_covs(cov_first, cov_second)-1, chi2_red_covs(cov_second, cov_first)-1)
+    print_function("Reduced chi2-1 between cov half-estimates are %.2e and %.2e" % result["chi2_red-1"])
+
+    return result
+
+def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: int | None = None, print_function = blank_function) -> dict:
+    if n_samples is None: n_samples = len(c_samples)
+    n_samples_2 = n_samples // 2
+
+    result = dict()
+
+    print_function("First splitting")
     cov_first = np.mean(c_samples[:n_samples_2], axis=0)
     cov_second = np.mean(c_samples[n_samples_2:n_samples], axis=0)
-    cmp_cov_print(cov_first, cov_second)
+    result["split1"] = cmp_cov(cov_first, cov_second, print_function)
 
-    print("Second splitting")
+    print_function("Second splitting")
     cov_first = np.mean(c_samples[:n_samples:2], axis=0)
     cov_second = np.mean(c_samples[1:n_samples:2], axis=0)
-    cmp_cov_print(cov_first, cov_second)
+    result["split2"] = cmp_cov(cov_first, cov_second, print_function)
 
-print("Full covariance")
-cmp_cov_splittings(c_samples)
-if do_jack:
-    print("Jack covariance")
-    cmp_cov_splittings(cj_samples)
+    return result
+
+def convergence_check_extra(rascalc_results_file: str, n_samples: int | None = None, print_function = blank_function) -> dict:
+    with np.load(rascalc_results_file) as f:
+        c_samples = f["individual_theory_covariances"]
+        jack_key = "individual_theory_jackknife_covariances"
+        do_jack = (jack_key in f.keys())
+        if do_jack: cj_samples = f[jack_key]
+
+    result = dict()
+    
+    print_function("Full covariance")
+    result["full"] = convergence_check_extra_splittings(c_samples, n_samples, print_function)
+    if do_jack:
+        print_function("Jack covariance")
+        result["jack"] = convergence_check_extra_splittings(cj_samples, n_samples, print_function)
+    return result
+
+if __name__ == "__main__": # if invoked as a script
+    # PARAMETERS
+    if len(sys.argv) not in (2, 3):
+        print("Usage: python convergence_check_extra.py {RASCALC_RESULTS_FILE} [{N_SUBSAMPLES_TO_USE}]")
+        sys.exit(1)
+
+    rascalc_results = str(sys.argv[1])
+
+    from utils import get_arg_safe
+    n_samples = get_arg_safe(2, int)
+
+    convergence_check_extra(rascalc_results, n_samples, print_function = print)

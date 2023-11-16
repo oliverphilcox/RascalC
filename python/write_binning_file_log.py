@@ -2,24 +2,23 @@
 
 import sys
 import numpy as np
+from utils import write_binning_file
 
-if len(sys.argv)<5:
-    print("Please specify input parameters in the form {N_LOG_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}.")
-    sys.exit(1)
-nrbins = int(sys.argv[1])
-r_min = float(sys.argv[2])
-assert r_min>0,'Minimum r must be greater than zero to take logarithm'
-r_max = float(sys.argv[3])
-out_file = str(sys.argv[4])
 
-print("Using LOG binning");
+def write_binning_file_log(out_file: str, r_min: float, r_max: float, nrbins: int, print_function = print):
+    print_function("Using LOG binning")
+    if r_min <= 0: raise ValueError('Minimum r must be positive to take logarithm')
+    # Define radial bins
+    r_edges = np.geomspace(r_min, r_max, nrbins+1)
+    write_binning_file(out_file, r_edges, print_function)
 
-# Define radial bins
-rbins = np.logspace(np.log(r_min),np.log(r_max),nrbins+1,base=np.e)
+if __name__ == "__main__": # if invoked as a script
+    if len(sys.argv)<5:
+        print("Please specify input parameters in the form {N_LOG_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}.")
+        sys.exit(1)
+    nrbins = int(sys.argv[1])
+    r_min = float(sys.argv[2])
+    r_max = float(sys.argv[3])
+    out_file = str(sys.argv[4])
 
-# PRINT binning:
-with open(out_file,'w+') as writefile:
-    for i in range(nrbins-1):
-        writefile.write("%.8f\t%.8f\n" %(rbins[i],rbins[i+1]))
-    writefile.write("%.8f\t%.8f" %(rbins[nrbins-1],rbins[nrbins]))
-print("Binning file '%s' written successfully."%out_file)
+    write_binning_file_log(out_file, r_min, r_max, nrbins)
