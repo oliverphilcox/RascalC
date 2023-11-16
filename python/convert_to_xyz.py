@@ -22,12 +22,17 @@ dirname=os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, str(dirname)+'/wcdm/')
 import wcdm
 
-def convert_to_xyz(all_ra: np.ndarray[float], all_dec: np.ndarray[float], all_z: np.ndarray[float], Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1):
+def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1) -> np.ndarray[float]:
     # default cosmology from the BOSS DR12 2016 clustering paper assuming LCDM
-    all_comoving_radius=wcdm.coorddist(all_z, Omega_m, w_dark_energy, Omega_k)
+    if ra_dec_z_pos.shape[0] != 3: ra_dec_z_pos = ra_dec_z_pos.T
+    if ra_dec_z_pos.shape[0] != 3: raise ValueError("The input position do not appear 3D")
+
+    all_ra, all_dec, all_z = ra_dec_z_pos
+
+    all_comoving_radius = wcdm.coorddist(all_z, Omega_m, w_dark_energy, Omega_k)
 
     # Convert to Mpc/h
-    H_0_h=100*u.km/u.s/u.Mpc # to ensure we get output in Mpc/h units
+    H_0_h = 100*u.km/u.s/u.Mpc # to ensure we get output in Mpc/h units
     comoving_radius_Mpc = ((all_comoving_radius/H_0_h*c_light).to(u.Mpc)).value
 
     # Convert to polar coordinates in radians
@@ -38,21 +43,21 @@ def convert_to_xyz(all_ra: np.ndarray[float], all_dec: np.ndarray[float], all_z:
     all_z = comoving_radius_Mpc * np.cos(all_theta_rad)
     all_x = comoving_radius_Mpc * np.sin(all_theta_rad) * np.cos(all_phi_rad)
     all_y = comoving_radius_Mpc * np.sin(all_theta_rad) * np.sin(all_phi_rad)
-    return all_x, all_y, all_z
+    return np.array((all_x, all_y, all_z)).T
 
 def convert_to_xyz_files(input_file: str, output_file: str, Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1, print_function = print):
     # default cosmology from the BOSS DR12 2016 clustering paper assuming LCDM
     print_function(f"Using cosmological parameters as Omega_m = {Omega_m}, Omega_k = {Omega_k}, w = {w_dark_energy}")
     # Load in data:
     print_function("Reading input file %s in Ra,Dec,z coordinates\n"%input_file)
-    all_ra, all_dec, all_z, all_w = np.loadtxt(input_file, usecols=range(4)).T
+    particles = np.loadtxt(input_file) # first index (rows) are particle numbers, second index (columns) are different properties
 
     print_function("Converting redshift to comoving distances:")
-    all_x, all_y, all_z = convert_to_xyz(all_ra, all_dec, all_z, Omega_m, Omega_k, w_dark_energy)
+    particles[:, :3] = convert_to_xyz(particles[:, :3], Omega_m, Omega_k, w_dark_energy) # assume first three columns are positions, and the rest should not be touched
 
     print_function("Writing to file %s:"%output_file)
-    np.savetxt(output_file, np.array((all_x, all_y, all_z, all_w)).T)
-    print_function("Output positions (of length %d) written succesfully!" % len(all_z))
+    np.savetxt(output_file, particles)
+    print_function("Output positions (of length %d) written succesfully!" % len(particles))
 
 if __name__ == "__main__": # if invoked as a script
     if len(sys.argv) not in (3, 6):
