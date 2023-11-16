@@ -5,6 +5,7 @@
 
 import numpy as np
 import sys,os
+sys.path.append('..') # to use functions from ../utils.py and ../convergence_check_extra.py
 from utils import symmetrized
 from convergence_check_extra import convergence_check_extra_splittings
 
