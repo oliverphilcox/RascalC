@@ -11,9 +11,10 @@ Computation Modes
 The RascalC code may be run a variety of modes, which compute the covariances of different statistics. These are enabled via compilation flags, set in the Makefile (see :doc:`main-code` for usage). The various modes are outlined below:
 
 1. **DEFAULT** (No compiler flags): Compute the full-survey covariance of the anisotropic two-point correlation function (2PCF) in :math:`(r,\mu)` bins.
-2. **JACKKNIFE** (``-DJACKKNIFE`` flag): Compute the full-survey and jackknife covariance matrices of the anisotropic 2PCF in :math:`(r,\mu)` bins. The theoretical jackknife matrix can be compared to the sample jackknife matrix to compute the shot-noise rescaling parameter :math:`\alpha`.
-3. **LEGENDRE** (``-DLEGENDRE`` flag): Compute the full-survey covariance of (even) Legendre multipoles of the 2PCF. *NB*: We do not provide functionality to compute the jackknife covariance in Legendre multipole bins, since this has a more complex functional form. However, the shot-noise rescaling parameter :math:`\alpha` can be found from :math:`(r,\mu)` jackknife covariance matrix fitting and applied to the output full-survey Legendre-binned matrix.
-4. **3PCF** (``-DTHREE_PCF`` flag): Compute the full-survey covariance of (odd and even) Legendre multipoles of the isotropic three-point correlation function (3PCF).
+2. **LEGENDRE** (``-DLEGENDRE`` flag): Compute the full-survey covariance of (even) Legendre multipoles of the 2PCF accumulated directly. *NB*: We do not provide functionality to compute the jackknife covariance in Legendre multipole bins, since this has a more complex functional form. However, the shot-noise rescaling parameter :math:`\alpha` can be found from :math:`(r,\mu)` jackknife covariance matrix fitting and applied to the output full-survey Legendre-binned matrix
+3. **LEGENDRE_MIX** (``-DLEGENDRE_MIX`` flag): Compute the full-survey covariance of (even) Legendre multipoles of the 2PCF projected from :math:`(r,\mu)` bins. Compatible with jackknives.
+4. **JACKKNIFE** (``-DJACKKNIFE`` flag): Compute the full-survey and jackknife covariance matrices of the anisotropic 2PCF in :math:`(r,\mu)` bins. The theoretical jackknife matrix can be compared to the sample jackknife matrix to compute the shot-noise rescaling parameter :math:`\alpha`. Compatible with **DEFAULT** and **LEGENDRE_MIX** modes but neither **LEGENDRE** nor **3PCF**.
+5. **3PCF** (``-DTHREE_PCF`` flag): Compute the full-survey covariance of (odd and even) Legendre multipoles of the isotropic three-point correlation function (3PCF).
 
 .. _pipeline_outline:
 
@@ -27,7 +28,7 @@ In order to compute the covariance matrices there are several steps:
 2. :doc:`jackknife-weights` (*Only required in JACKKNIFE mode*):
     Before the main C++ code is run, we compute the weights for each jackknife region, by computing jackknife-specific RR pair counts using `Corrfunc <https://corrfunc.readthedocs.io>`_. This is run via a Python script.
 3. 
-    a. :doc:`geometry-correction` (*Required in DEFAULT, LEGENDRE and 3PCF modes*):
+    a. :doc:`geometry-correction` (*Required in DEFAULT, LEGENDRE, LEGENDRE_MIX and 3PCF modes*):
         The main C++ code requires either the RR counts (DEFAULT mode) or the survey-geometry correction function :math:`\Phi` (LEGENDRE and 3PCF modes). We provide Python and C++ scripts to compute these, with the correction functions requiring a set of RR or RRR counts to be computed first.
     b. :doc:`correlation-functions` (*Optional*):
         This provides functions to compute the overall survey correlation functions for one or two fields using Corrfunc (which may also be defined by the user). In addition, we provide routines to compute the jackknife correlation functions :math:`\xi^{J}(r,\mu)`, which are later used to calibrate the shot-noise rescaling parameter(s) in the JACKKNIFE mode.
@@ -76,11 +77,11 @@ The required input files and formats are described below. Note that several of t
     - The radial and angular binning should match that desired for the output covariance matrix.
     - If this is supplied separately, the user must ensure that the pair count terms are normalized by the ratio of summed galaxy and random particle weights across the **entire** survey, not just those in the relevant jackknife region. This is for later convenience when estimating the jackknife covariance matrix model.
     - *Format*: An ASCII file with space separated values. Lines 1 and 2 list the radial and angular bin centers (as for the full correlation function). Each succeeding line gives the entire correlation function estimate for a given jackknife. The rows indicate the jackknife and the columns specify the collapsed bin, using the indexing :math:`\mathrm{bin}_\mathrm{collapsed} = \mathrm{bin}_\mathrm{radial}\times n_\mu + \mathrm{bin}_\mathrm{angular}` for a total of :math:`n_\mu` angular bins (unlike for the full correlation function).
-- *(Required in JACKKNIFE mode and usually created internally)* **Jackknife Weights and Random Particle Counts**:
+- *(Required in JACKKNIFE mode with DEFAULT or LEGENDRE_MIX and usually created internally)* **Jackknife Weights and Random Particle Counts**:
     - These specify the weights of each jackknife region for each bin and the random particle counts both for each jackknife, and for the entire survey.
     - These should be created using the :doc:`jackknife-weights` script.
     - They are saved in ``.dat`` files with the name ``jackknife_weights_n{N}_m{M}_j{J}_{INDEX}.dat``, ``jackknife_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` and ``binned_pair_counts_n{N}_m{M}_j{J}_{INDEX}.dat`` where N and M specify the number of radial and angular bins respectively and J gives the number of non-empty jackknife regions. INDEX specifies which fields are being used (e.g. 12 specifies the cross-weights between fields 1 and 2).
-- *(Required in DEFAULT mode and usually created internally)* **Random Particle Counts**:
+- *(Required in DEFAULT or LEGENDRE_MIX mode and usually created internally)* **Random Particle Counts**:
     - These specify random particle counts for the entire survey, which are needed to normalize the :math:`(r,\mu)` binned covariances.
     - These should be created using the RR count script described in :doc:`geometry-correction` (and *not* normalized by the summed squared weights).
     - They are saved in ``.dat`` files with the name ``binned_pair_counts_n{N}_m{M}_{INDEX}.dat`` where N and M specify the number of radial and angular bins respectively. INDEX specifies which fields are being used (e.g. 12 specifies the cross-weights between fields 1 and 2).
@@ -89,3 +90,7 @@ The required input files and formats are described below. Note that several of t
     - For multiple input fields, we will have three output bin correction factors of the same format.
     - These should be created using the survey-correction functions described in :doc:`geometry-correction`, and require the RR or RRR counts to be computed (also described in :doc:`geometry-correction`).
     - They are saved as ASCII files with the names ``BinCorrectionFactor_n{N}_m{M}.txt`` or ``BinCorrectionFactor3PCF_n{N}_m{M}.txt`` and specify polynomial fitting parameters (2PCF) or the first seven multipoles of :math:`\Phi^{-1}` (3PCF), which are found to well describe the fit. These have one row per radial bin (or pair of bins for the 3PCF), and must be constructed using the same radial binning as for the output covariance matrix.
+- *(Required in LEGENDRE_MIX mode and usually created internally)* **Projection factors from :math:`\mu` bins to Legendre multipoles**:
+    - These together with the full-survey random particle counts give the correct normalization for the projected Legendre multipole covariance.
+    - One file of them is enough, it can be created with the :ref:`mu_bin_legendre_factors` script.
+    - The file must have rows corresponding to the :math:`\mu` bins and columns corresponding to the (even) Legendre multipoles. The factors are the same for all radial bins, unlike the random counts which also influence the projection.
