@@ -5,10 +5,11 @@ import numpy as np
 import sys,os
 from tqdm import trange
 
-def post_process_legendre_multi(file_root: str, n: int, max_l: int, n_samples: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, print_function = print):
+
+def post_process_legendre_multi(file_root: str, n: int, max_l: int, n_samples: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, skip_r_bins: int = 0, skip_l: int = 0, print_function = print):
     if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
-    m = max_l // 2 + 1
-    n_bins = n * m
+    n_l = max_l // 2 + 1
+    n_bins = (n - skip_r_bins) * (n_l - skip_l)
 
     alphas = [alpha_1, alpha_2]
 
@@ -45,7 +46,7 @@ def post_process_legendre_multi(file_root: str, n: int, max_l: int, n_samples: i
             file_root_all = os.path.join(file_root, 'CovMatricesAll/')
 
             if suffix=='full':
-                counts_file = file_root_all + 'total_counts_n%d_m%d_%s.txt' % (n, m, index4)
+                counts_file = file_root_all + 'total_counts_n%d_m%d_%s.txt' % (n, n_l, index4)
                 # Load total number of counts
                 try:
                     total_counts=np.loadtxt(counts_file)
@@ -59,6 +60,14 @@ def post_process_legendre_multi(file_root: str, n: int, max_l: int, n_samples: i
             c2 = np.loadtxt(file_root_all + 'c2_n%d_l%d_%s_%s.txt' % (n, max_l, index2, suffix))
             c3 = np.loadtxt(file_root_all + 'c3_n%d_l%d_%s_%s.txt' % (n, max_l, index3, suffix))
             c4 = np.loadtxt(file_root_all + 'c4_n%d_l%d_%s_%s.txt' % (n, max_l, index4, suffix))
+
+            N = len(c2)
+            assert N % n == 0, "Number of bins mismatch"
+            n_l = N // n # number of multipoles present
+            assert n_l == n_l, "Number of multipoles mismatch"
+            l_mask = (np.arange(n_l) < n_l - skip_l) # this mask skips last skip_l multipoles
+            full_mask = np.append(np.zeros(skip_r_bins * n_l, dtype=bool), np.tile(l_mask, n - skip_r_bins)) # start with zeros and then tile (append to itself n - skip_r_bins times) the l_mask since cov terms are first ordered by r and then by l
+            c2, c3, c4 = (a[full_mask][:, full_mask] for a in (c2, c3, c4)) # select rows and columns
 
             # Now save components
             c2s[j1, j2] += c2
@@ -109,8 +118,8 @@ def post_process_legendre_multi(file_root: str, n: int, max_l: int, n_samples: i
         # Index in ordering (P_11,P_12,P_22)
         cov_indices = [[0, 0], [0, 1], [1, 1]]
 
-        c_tot = np.zeros([3,3,n*m,n*m]) # array with each individual covariance accessible
-        c_comb = np.zeros([3*n*m,3*n*m]) # full array suitable for inversion
+        c_tot = np.zeros([3, 3, n_bins, n_bins]) # array with each individual covariance accessible
+        c_comb = np.zeros([3*n_bins, 3*n_bins]) # full array suitable for inversion
 
         for j1 in range(3):
             ind1,ind2 = cov_indices[j1]
@@ -119,13 +128,16 @@ def post_process_legendre_multi(file_root: str, n: int, max_l: int, n_samples: i
                 ind3,ind4 = cov_indices[j2]
                 tmp = construct_fields(ind1, ind2, ind3, ind4, alpha1, alpha2)
                 c_tot[j1,j2] = tmp
-                c_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmp
+                c_comb[j1*n_bins:(j1+1)*n_bins, j2*n_bins:(j2+1)*n_bins] = tmp
 
         return c_tot,0.5*(c_comb+c_comb.T) # add all remaining symmetries
 
     # Load full matrices
     c_tot, c_comb = matrix_readin()
     n_bins = len(c_tot[0,0])
+
+    # Check positive definiteness
+    if np.any(np.linalg.eigvalsh(c_comb) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
 
     # Load subsampled matrices (all submatrices combined)
     c_subsamples=[]
@@ -170,7 +182,7 @@ def post_process_legendre_multi(file_root: str, n: int, max_l: int, n_samples: i
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
-    if len(sys.argv) not in (6, 8):
+    if len(sys.argv) not in (6, 8, 9, 10):
         print("Usage: python post_process_legendre_multi.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]")
         sys.exit(1)
 
@@ -182,5 +194,7 @@ if __name__ == "__main__": # if invoked as a script
     from utils import get_arg_safe
     alpha_1 = get_arg_safe(6, float, 1)
     alpha_2 = get_arg_safe(7, float, 1)
+    skip_r_bins = get_arg_safe(8, int, 0)
+    skip_l = get_arg_safe(9, int, 0)
 
-    post_process_legendre_multi(file_root, n, max_l, n_samples, outdir, alpha_1, alpha_2)
+    post_process_legendre_multi(file_root, n, max_l, n_samples, outdir, alpha_1, alpha_2, skip_r_bins, skip_l)

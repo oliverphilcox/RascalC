@@ -4,8 +4,10 @@
 import numpy as np
 import sys, os
 from tqdm import trange
+from warnings import warn
 
-def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, max_l: int, n_samples, outdir: str, print_function = print):
+
+def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, max_l: int, n_samples, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, print_function = print):
     if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
     n_l = max_l//2 + 1 # number of multipoles
 
@@ -19,7 +21,7 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
     n_bins_smu = xi_jack.shape[1] # total s,mu bins
     n_jack = xi_jack.shape[0] # total jackknives
     n = n_bins_smu // m # radial bins
-    n_bins = n_l * n # total Legendre bins
+    n_bins = (n_l - skip_l) * (n - skip_r_bins) # total Legendre bins to work with
 
     weight_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_11.dat' % (n, m, n_jack))
     mu_bin_legendre_file = os.path.join(weight_dir, 'mu_bin_legendre_factors_m%d_l%d.txt' % (m, max_l))
@@ -42,13 +44,19 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
     denom = np.matmul(weights.T, weights)
     data_cov /= (np.ones_like(denom)-denom)
 
-    print_function("Loading mu bin Legendre factors from %s" % mu_bin_legendre_file)
+    print("Loading mu bin Legendre factors from %s" % mu_bin_legendre_file)
     mu_bin_legendre_factors = np.loadtxt(mu_bin_legendre_file) # rows correspond to mu bins, columns to multipoles
+    if skip_l > 0: mu_bin_legendre_factors = mu_bin_legendre_factors[:, :-skip_l] # discard unneeded l; the expression works wrong for skip_l=0
 
     # Project the data jackknife covariance from mu bins to Legendre multipoles
     data_cov = data_cov.reshape(n, m, n, m) # make the array 4D with [r_bin, mu_bin] indices for rows and columns
+    data_cov = data_cov[skip_r_bins:, :, skip_r_bins:, :] # discard the extra radial bins now since it is convenient
     data_cov = np.einsum("imjn,mp,nq->ipjq", data_cov, mu_bin_legendre_factors, mu_bin_legendre_factors) # use mu bin Legendre factors to project mu bins into Legendre multipoles, staying within the same radial bins. The indices are now [r_bin, ell] for rows and columns
     data_cov = data_cov.reshape(n_bins, n_bins)
+
+    # Prepare for cutting the covariances we will load
+    l_mask = (np.arange(n_l) < n_l - skip_l) # this mask skips last skip_l multipoles
+    full_mask = np.append(np.zeros(skip_r_bins * n_l, dtype=bool), np.tile(l_mask, n - skip_r_bins)) # start with zeros and then tile (append to itself n - skip_r_bins times) the l_mask since cov terms are first ordered by r and then by l
 
     def load_matrices(index,jack=True):
         """Load intermediate or full covariance matrices"""
@@ -59,6 +67,9 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
         c2 = np.loadtxt(cov_root+'c2_n%d_l%d_11_%s.txt' % (n, max_l, index))
         c3 = np.loadtxt(cov_root+'c3_n%d_l%d_1,11_%s.txt' % (n, max_l, index))
         c4 = np.loadtxt(cov_root+'c4_n%d_l%d_11,11_%s.txt' % (n, max_l, index))
+
+        c2, c3, c4 = (a[full_mask][:, full_mask] for a in (c2, c3, c4)) # select only needed rows and columns
+
         # Now symmetrize and return matrices
         return c2, 0.5*(c3+c3.T), 0.5*(c4+c4.T)
 
@@ -71,7 +82,7 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
     eig_c4 = eigvalsh(c4j)
     eig_c2 = eigvalsh(c2j)
     if min(eig_c4) < -1. * min(eig_c2):
-        raise ValueError("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
+        warn("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
 
     # Load in partial jackknife theoretical matrices
     c2s, c3s, c4s = [], [], []
@@ -117,11 +128,14 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
     c2f, c3f, c4f=load_matrices('full', jack=False)
     full_cov = c4f + c3f*alpha_best + c2f*alpha_best**2.
 
+    # Check positive definiteness
+    if np.any(np.linalg.eigvalsh(full_cov) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
+
     # Check convergence
     eig_c4f = eigvalsh(c4f)
     eig_c2f = eigvalsh(c2f)
     if min(eig_c4f)<min(eig_c2f)*-1.:
-        raise ValueError("Full 4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4f), min(eig_c2f)))
+        warn("Full 4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4f), min(eig_c2f)))
 
     # Compute full precision matrix
     print_function("Computing the full precision matrix estimate:")
@@ -163,8 +177,8 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
-    if len(sys.argv) != 8:
-        print("Usage: python post_process_legendre_mix_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR}")
+    if len(sys.argv) not in (8, 9, 10):
+        print("Usage: python post_process_legendre_mix_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SKIP_R_BINS} [{SKIP_L}]]")
         sys.exit(1)
             
     jackknife_file = str(sys.argv[1])
@@ -174,5 +188,8 @@ if __name__ == "__main__": # if invoked as a script
     max_l = int(sys.argv[5])
     n_samples = int(sys.argv[6])
     outdir = str(sys.argv[7])
+    from utils import get_arg_safe
+    skip_r_bins = get_arg_safe(8, int, 0)
+    skip_l = get_arg_safe(9, int, 0)
 
-    post_process_legendre_mix_jackknife(jackknife_file, weight_dir, file_root, m, max_l, n_samples, outdir)
+    post_process_legendre_mix_jackknife(jackknife_file, weight_dir, file_root, m, max_l, n_samples, outdir, skip_r_bins, skip_l)

@@ -4,25 +4,28 @@
 import numpy as np
 import sys,os
 from tqdm import trange
+from warnings import warn
 
 
-def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, n_samples: int, outdir: str, print_function = print):
+def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, n_samples: int, outdir: str, skip_r_bins: int = 0, print_function = print):
+    skip_bins = skip_r_bins * m
+
     # Create output directory
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
     # Load jackknife xi estimates from data
     print_function("Loading correlation function jackknife estimates from %s"%jackknife_file)
-    xi_jack = np.loadtxt(jackknife_file,skiprows=2)
+    xi_jack = np.loadtxt(jackknife_file, skiprows=2)[:, skip_bins:]
     n_bins = xi_jack.shape[1] # total bins
     n_jack = xi_jack.shape[0] # total jackknives
-    n = n_bins//m # radial bins
+    n = n_bins // m + skip_r_bins # radial bins
 
     weight_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_11.dat'%(n,m,n_jack))
     RR_file = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_11.dat'%(n,m,n_jack))
 
     print_function("Loading weights file from %s"%weight_file)
-    weights = np.loadtxt(weight_file)[:,1:]
+    weights = np.loadtxt(weight_file)[:, 1+skip_bins:]
 
     # First exclude any dodgy jackknife regions
     good_jk = np.where(np.all(np.isfinite(xi_jack), axis=1))[0] # all xi in jackknife have to be normal numbers
@@ -48,14 +51,14 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
             cov_root = os.path.join(file_root, 'CovMatricesJack/')
         else:
             cov_root = os.path.join(file_root, 'CovMatricesAll/')
-        c2 = np.diag(np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index)))
-        c3 = np.loadtxt(cov_root+'c3_n%d_m%d_1,11_%s.txt'%(n,m,index))
-        c4 = np.loadtxt(cov_root+'c4_n%d_m%d_11,11_%s.txt'%(n,m,index))
+        c2 = np.diag(np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index))[skip_bins:])
+        c3 = np.loadtxt(cov_root+'c3_n%d_m%d_1,11_%s.txt'%(n,m,index))[skip_bins:, skip_bins:]
+        c4 = np.loadtxt(cov_root+'c4_n%d_m%d_11,11_%s.txt'%(n,m,index))[skip_bins:, skip_bins:]
         if jack:
-            EEaA1 = np.loadtxt(cov_root+'EE1_n%d_m%d_11_%s.txt' %(n,m,index))
-            EEaA2 = np.loadtxt(cov_root+'EE2_n%d_m%d_11_%s.txt' %(n,m,index))
-            RRaA1 = np.loadtxt(cov_root+'RR1_n%d_m%d_11_%s.txt' %(n,m,index))
-            RRaA2 = np.loadtxt(cov_root+'RR2_n%d_m%d_11_%s.txt' %(n,m,index))
+            EEaA1 = np.loadtxt(cov_root+'EE1_n%d_m%d_11_%s.txt' %(n,m,index))[:, skip_bins:]
+            EEaA2 = np.loadtxt(cov_root+'EE2_n%d_m%d_11_%s.txt' %(n,m,index))[:, skip_bins:]
+            RRaA1 = np.loadtxt(cov_root+'RR1_n%d_m%d_11_%s.txt' %(n,m,index))[:, skip_bins:]
+            RRaA2 = np.loadtxt(cov_root+'RR2_n%d_m%d_11_%s.txt' %(n,m,index))[:, skip_bins:]
         
             # Compute disconnected term
             w_aA1 = RRaA1/np.sum(RRaA1,axis=0)
@@ -79,7 +82,7 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     eig_c4 = eigvalsh(c4j)
     eig_c2 = eigvalsh(c2j)
     if min(eig_c4)<-1.*min(eig_c2):
-        raise ValueError("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
+        warn("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
 
     # Load in partial jackknife theoretical matrices
     c2s, c3s, c4s = [], [], []
@@ -124,6 +127,9 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     jack_prec = Psi(alpha_best)
     c2f,c3f,c4f=load_matrices('full',jack=False)
     full_cov = c4f+c3f*alpha_best+c2f*alpha_best**2.
+
+    # Check positive definiteness
+    if np.any(np.linalg.eigvalsh(full_cov) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
 
     # Check convergence
     eig_c4f = eigvalsh(c4f)
@@ -171,8 +177,8 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
-    if len(sys.argv)!=7:
-        print("Usage: python post_process_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR}")
+    if len(sys.argv) not in (7, 8):
+        print("Usage: python post_process_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SKIP_R_BINS}]")
         sys.exit(1)
 
     jackknife_file = str(sys.argv[1])
@@ -181,5 +187,7 @@ if __name__ == "__main__": # if invoked as a script
     m = int(sys.argv[4])
     n_samples = int(sys.argv[5])
     outdir = str(sys.argv[6])
+    from utils import get_arg_safe
+    skip_r_bins = get_arg_safe(7, int, 0)
 
-    post_process_jackknife(jackknife_file, weight_dir, file_root, m, n_samples, outdir)
+    post_process_jackknife(jackknife_file, weight_dir, file_root, m, n_samples, outdir, skip_r_bins)

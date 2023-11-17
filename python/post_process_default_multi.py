@@ -5,8 +5,9 @@ import numpy as np
 import sys,os
 from tqdm import trange
 
-def post_process_default_multi(file_root: str, n: int, m: int, n_samples: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, print_function = print):
-    n_bins = n * m
+def post_process_default_multi(file_root: str, n: int, m: int, n_samples: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, skip_r_bins: int = 0, print_function = print):
+    skip_bins = skip_r_bins * m
+    n_bins = n * m - skip_bins
 
     alphas = [alpha_1, alpha_2]
 
@@ -108,8 +109,8 @@ def post_process_default_multi(file_root: str, n: int, m: int, n_samples: int, o
         # Index in ordering (P_11,P_12,P_22)
         cov_indices = [[0, 0], [0, 1], [1, 1]]
 
-        c_tot = np.zeros([3,3,n*m,n*m]) # array with each individual covariance accessible
-        c_comb = np.zeros([3*n*m,3*n*m]) # full array suitable for inversion
+        c_tot = np.zeros([3, 3, n_bins, n_bins]) # array with each individual covariance accessible
+        c_comb = np.zeros([3*n_bins, 3*n_bins]) # full array suitable for inversion
 
         for j1 in range(3):
             ind1,ind2 = cov_indices[j1]
@@ -118,13 +119,16 @@ def post_process_default_multi(file_root: str, n: int, m: int, n_samples: int, o
                 ind3,ind4 = cov_indices[j2]
                 tmp = construct_fields(ind1, ind2, ind3, ind4, alpha1, alpha2)
                 c_tot[j1,j2] = tmp
-                c_comb[j1*n*m:(j1+1)*n*m,j2*n*m:(j2+1)*n*m] = tmp
+                c_comb[j1*n_bins:(j1+1)*n_bins,j2*n_bins:(j2+1)*n_bins] = tmp
 
         return c_tot,0.5*(c_comb+c_comb.T) # add all remaining symmetries
 
     # Load full matrices
     c_tot, c_comb = matrix_readin()
     n_bins = len(c_tot[0,0])
+
+    # Check positive definiteness
+    if np.any(np.linalg.eigvalsh(c_comb) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
 
     # Load subsampled matrices (all submatrices combined)
     c_subsamples=[]
@@ -170,8 +174,8 @@ def post_process_default_multi(file_root: str, n: int, m: int, n_samples: int, o
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
-    if len(sys.argv) not in (6, 8):
-        print("Usage: python post_process_default_multi.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2}]")
+    if len(sys.argv) not in (6, 8, 9):
+        print("Usage: python post_process_default_multi.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2} [{SKIP_R_BINS}]]")
         sys.exit(1)
 
     file_root = str(sys.argv[1])
@@ -182,5 +186,6 @@ if __name__ == "__main__": # if invoked as a script
     from utils import get_arg_safe
     alpha_1 = get_arg_safe(6, float, 1)
     alpha_2 = get_arg_safe(7, float, 1)
+    skip_r_bins = get_arg_safe(8, int, 0)
 
-    post_process_default_multi(file_root, n, m, n_samples, outdir, alpha_1, alpha_2)
+    post_process_default_multi(file_root, n, m, n_samples, outdir, alpha_1, alpha_2, skip_r_bins)

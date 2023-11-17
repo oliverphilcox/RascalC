@@ -4,6 +4,7 @@
 import numpy as np
 import sys,os
 from tqdm import trange
+from warnings import warn
 
 
 def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int, m: int, n_samples: int, outdir: str, skip_r_bins: int = 0, print_function = print):
@@ -55,7 +56,7 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
         eig_c4 = eigvalsh(c4f)
         eig_c2 = eigvalsh(c2f)
         if min(eig_c4) < -1.*min(eig_c2):
-            raise ValueError("4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
+            warn("4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
 
         # Load in partial jackknife theoretical matrices
         c2s, c3s, c4s = [], [], []
@@ -207,6 +208,9 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
     # Load full matrices
     c_tot, c_comb = matrix_readin()
     n_bins = len(c_tot[0,0])
+
+    # Check positive definiteness
+    if np.any(np.linalg.eigvalsh(c_comb) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
 
     # Load subsampled matrices (all submatrices combined)
     c_subsamples=[]

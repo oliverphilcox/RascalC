@@ -4,6 +4,8 @@
 import numpy as np
 import sys, os
 from tqdm import trange
+from warnings import warn
+
 
 def post_procss_legendre(file_root: str, n: int, max_l: int, n_samples: int, outdir: str, alpha: float = 1, skip_r_bins: int = 0, skip_l: int = 0, print_function = print):
     # Create output directory
@@ -21,7 +23,7 @@ def post_procss_legendre(file_root: str, n: int, max_l: int, n_samples: int, out
         assert N % n == 0, "Number of bins mismatch"
         n_l = N // n # number of multipoles present
         l_mask = (np.arange(n_l) < n_l - skip_l) # this mask skips last skip_l multipoles
-        full_mask = np.append(np.zeros(skip_r_bins * n_l, dtype=bool), np.repeat(l_mask, n - skip_r_bins)) # start with zeros and then repeat the l_mask since cov terms are first ordered by r and then by l
+        full_mask = np.append(np.zeros(skip_r_bins * n_l, dtype=bool), np.tile(l_mask, n - skip_r_bins)) # start with zeros and then tile (append to itself n - skip_r_bins times) the l_mask since cov terms are first ordered by r and then by l
         c2, c3, c4 = (a[full_mask][:, full_mask] for a in (c2, c3, c4)) # select rows and columns
 
         # Now symmetrize and return matrices
@@ -36,11 +38,14 @@ def post_procss_legendre(file_root: str, n: int, max_l: int, n_samples: int, out
     eig_c4 = eigvalsh(c4)
     eig_c2 = eigvalsh(c2)
     if min(eig_c4)<-1.*min(eig_c2):
-        raise ValueError("4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
+        warn("4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
 
     # Compute full covariance matrices and precision
     full_cov = c4+c3*alpha+c2*alpha**2.
     n_bins = len(c4)
+
+    # Check positive definiteness
+    if np.any(np.linalg.eigvalsh(full_cov) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
 
     # Compute full precision matrix
     print_function("Computing the full precision matrix estimate:")

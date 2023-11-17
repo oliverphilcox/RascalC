@@ -4,9 +4,12 @@
 import numpy as np
 import sys,os
 from tqdm import trange
+from warnings import warn
 
 
-def post_process_default(file_root, n, m, n_samples, outdir, alpha = 1, print_function = print):
+def post_process_default(file_root: str, n: int, m: int, n_samples: int, outdir: str, alpha: float = 1, skip_r_bins: int = 0, print_function = print):
+    skip_bins = skip_r_bins * m
+
     # Create output directory
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -14,10 +17,9 @@ def post_process_default(file_root, n, m, n_samples, outdir, alpha = 1, print_fu
     def load_matrices(index):
         """Load intermediate or full covariance matrices"""
         cov_root = os.path.join(file_root, 'CovMatricesAll/')
-        c2 = np.diag(np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index)))
-        c3 = np.loadtxt(cov_root+'c3_n%d_m%d_1,11_%s.txt'%(n,m,index))
-        c4 = np.loadtxt(cov_root+'c4_n%d_m%d_11,11_%s.txt'%(n,m,index))
-
+        c2 = np.diag(np.loadtxt(cov_root+'c2_n%d_m%d_11_%s.txt'%(n,m,index))[skip_bins:])
+        c3 = np.loadtxt(cov_root+'c3_n%d_m%d_1,11_%s.txt'%(n,m,index))[skip_bins:, skip_bins:]
+        c4 = np.loadtxt(cov_root+'c4_n%d_m%d_11,11_%s.txt'%(n,m,index))[skip_bins:, skip_bins:]
         # Now symmetrize and return matrices
         return c2,0.5*(c3+c3.T),0.5*(c4+c4.T)
 
@@ -30,11 +32,14 @@ def post_process_default(file_root, n, m, n_samples, outdir, alpha = 1, print_fu
     eig_c4 = eigvalsh(c4)
     eig_c2 = eigvalsh(c2)
     if min(eig_c4)<-1.*min(eig_c2):
-        raise ValueError("4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
+        warn("4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
 
     # Compute full covariance matrices and precision
     full_cov = c4+c3*alpha+c2*alpha**2.
     n_bins = len(c4)
+
+    # Check positive definiteness
+    if np.any(np.linalg.eigvalsh(full_cov) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
 
     # Compute full precision matrix
     print_function("Computing the full precision matrix estimate:")
@@ -76,7 +81,7 @@ def post_process_default(file_root, n, m, n_samples, outdir, alpha = 1, print_fu
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
-    if len(sys.argv) not in (6, 7):
+    if len(sys.argv) not in (6, 7, 8):
         print("Usage: python post_process_default.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING}]")
         sys.exit(1)
 
@@ -87,5 +92,6 @@ if __name__ == "__main__": # if invoked as a script
     outdir = str(sys.argv[5])
     from utils import get_arg_safe
     alpha = get_arg_safe(6, float, 1)
+    skip_r_bins = get_arg_safe(7, int, 0)
     
-    post_process_default(file_root, n, m, n_samples, outdir, alpha)
+    post_process_default(file_root, n, m, n_samples, outdir, alpha, skip_r_bins)

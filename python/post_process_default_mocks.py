@@ -4,6 +4,7 @@
 import numpy as np
 import sys,os
 from tqdm import trange
+from warnings import warn
 
 def post_process_default_mocks(mock_cov_file: str, file_root: str, n: int, m: int, n_samples: int, outdir: str, skip_r_bins: int = 0, print_function = print):
     skip_bins = skip_r_bins * m
@@ -32,7 +33,7 @@ def post_process_default_mocks(mock_cov_file: str, file_root: str, n: int, m: in
     eig_c4 = eigvalsh(c4f)
     eig_c2 = eigvalsh(c2f)
     if min(eig_c4)<-1.*min(eig_c2):
-        raise ValueError("4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
+        warn("4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
 
     n_bins = len(c4f)
 
@@ -77,6 +78,9 @@ def post_process_default_mocks(mock_cov_file: str, file_root: str, n: int, m: in
 
     # Compute full covariance matrices and precision
     full_cov = c4f + c3f*alpha + c2f*alpha**2
+
+    # Check positive definiteness
+    if np.any(np.linalg.eigvalsh(full_cov) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
 
     # Compute full precision matrix
     print_function("Computing the full precision matrix estimate:")
