@@ -54,7 +54,7 @@ def collect_raw_covariance_matrices(cov_dir: str, print_function = print) -> Non
     for input_filename in glob(cov_dir_jack + "*.txt"):
         organize_filename(input_filename, output_groups, jack = True)
     
-    print_function(f"Detected {len(output_groups)} output groups")
+    print_function(f"Detected {len(output_groups)} output groups in {cov_dir}")
 
     return_dictionary = {}
     
@@ -135,6 +135,24 @@ def collect_raw_covariance_matrices(cov_dir: str, print_function = print) -> Non
     rmdir_safe(cov_dir_jack)
 
     return return_dictionary
+
+def load_raw_covariances_smu(file_root: str, n: int, m: int, print_function = print):
+    input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_n{n}_m{m}.npz")
+    if not os.path.isfile(input_filename):
+        print_function(f"Recollecting the raw covariance matrices from {file_root}")
+        collect_raw_covariance_matrices(file_root, print_function)
+        if not os.path.isfile(input_filename):
+            raise ValueError("Raw covariance matrices file not produced. Check n and m values are right.")
+    return np.load(input_filename)
+
+def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, print_function = print):
+    input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_n{n}_l{max_l}.npz")
+    if not os.path.isfile(input_filename):
+        print_function(f"Recollecting the raw covariance matrices from {file_root}")
+        collect_raw_covariance_matrices(file_root, print_function)
+        if not os.path.isfile(input_filename):
+            raise ValueError("Raw covariance matrices file not produced. Check n and m values are right.")
+    return np.load(input_filename)
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
