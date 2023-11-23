@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath('../python/'))
 # -- Project information -----------------------------------------------------
 
 project = 'RascalC'
-copyright = '2019, Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand'
-author = 'Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand'
+copyright = '2019-2023, Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
+author = 'Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
 
 # The short X.Y version
 version = ''
@@ -139,7 +139,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'RascalC.tex', 'RascalC Documentation',
-     'Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand', 'manual'),
+     'Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand', 'Misha Rashkovetskyi', 'manual'),
 ]
 
 
