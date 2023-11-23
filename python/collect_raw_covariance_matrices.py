@@ -136,23 +136,23 @@ def collect_raw_covariance_matrices(cov_dir: str, print_function = print) -> Non
 
     return return_dictionary
 
-def load_raw_covariances_smu(file_root: str, n: int, m: int, print_function = print):
-    input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_n{n}_m{m}.npz")
+def load_raw_covariances(file_root: str, label: str, print_function = print) -> dict[str]:
+    input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_{label}.npz")
     if not os.path.isfile(input_filename):
-        print_function(f"Recollecting the raw covariance matrices from {file_root}")
-        collect_raw_covariance_matrices(file_root, print_function)
-        if not os.path.isfile(input_filename):
-            raise ValueError("Raw covariance matrices file not produced. Check n and m values are right.")
+        print_function(f"Collecting the raw covariance matrices from {file_root}.")
+        result = collect_raw_covariance_matrices(file_root, print_function)
+        if label not in result:
+            raise ValueError(f"Raw covariance matrices for {label} not produced. Check the n and m/max_l values.")
+        return result[label]
     return np.load(input_filename)
 
-def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, print_function = print):
-    input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_n{n}_l{max_l}.npz")
-    if not os.path.isfile(input_filename):
-        print_function(f"Recollecting the raw covariance matrices from {file_root}")
-        collect_raw_covariance_matrices(file_root, print_function)
-        if not os.path.isfile(input_filename):
-            raise ValueError("Raw covariance matrices file not produced. Check n and m values are right.")
-    return np.load(input_filename)
+def load_raw_covariances_smu(file_root: str, n: int, m: int, print_function = print) -> dict[str]:
+    label = f"n{n}_m{m}"
+    return load_raw_covariances(file_root, label, print_function)
+
+def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, print_function = print) -> dict[str]:
+    label = f"n{n}_l{max_l}"
+    return load_raw_covariances(file_root, label, print_function)
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
