@@ -3,7 +3,6 @@
 
 import numpy as np
 import sys, os
-from tqdm import trange
 from warnings import warn
 from utils import cov_filter_legendre, load_full_matrices, load_subsample_matrices, check_eigval_convergence, add_cov_terms, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
 from collect_raw_covariance_matrices import load_raw_covariances_legendre
@@ -33,9 +32,10 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
 
     # First exclude any dodgy jackknife regions
     good_jk = np.where(np.all(np.isfinite(xi_jack), axis=1))[0] # all xi in jackknife have to be normal numbers
-    print_function("Using %d out of %d jackknives" % (len(good_jk), n_jack))
-    xi_jack = xi_jack[good_jk]
-    weights = weights[good_jk]
+    if len(good_jk) < n_jack:
+        warn("Using only %d out of %d jackknives - some xi values were not finite" % (len(good_jk), n_jack))
+        xi_jack = xi_jack[good_jk]
+        weights = weights[good_jk]
     weights /= np.sum(weights, axis=0) # renormalize weights after possibly discarding some jackknives
 
     # Compute data covariance matrix

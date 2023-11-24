@@ -3,6 +3,7 @@
 
 import numpy as np
 import sys, os
+from warnings import warn
 from utils import symmetrized, cov_filter_smu, load_full_matrices, load_subsample_matrices, check_eigval_convergence, add_cov_terms, fit_shot_noise_rescaling, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
 from collect_raw_covariance_matrices import load_raw_covariances_smu
 
@@ -34,9 +35,10 @@ def optimize_alpha_jackknife(jackknife_file: str, weight_dir: str, input_file: d
 
     # First exclude any dodgy jackknife regions
     good_jk = np.where(np.all(np.isfinite(xi_jack), axis=1))[0] # all xi in jackknife have to be normal numbers
-    print_function("Using %d out of %d jackknives" % (len(good_jk), n_jack))
-    xi_jack = xi_jack[good_jk]
-    weights = weights[good_jk]
+    if len(good_jk) < n_jack:
+        warn("Using only %d out of %d jackknives - some xi values were not finite" % (len(good_jk), n_jack))
+        xi_jack = xi_jack[good_jk]
+        weights = weights[good_jk]
     weights /= np.sum(weights, axis=0) # renormalize weights after possibly discarding some jackknives
 
     # Compute data covariance matrix
@@ -73,7 +75,7 @@ def optimize_alpha_jackknife(jackknife_file: str, weight_dir: str, input_file: d
     partial_jack_cov = add_cov_terms(c2s, c3s, c4s, alpha_best)
     _, jack_prec = compute_D_precision_matrix(partial_jack_cov, jack_cov)
 
-    return alpha_best, len(good_jk), data_cov, jack_cov, partial_jack_cov, jack_prec
+    return alpha_best, n_jack, data_cov, jack_cov, partial_jack_cov, jack_prec
 
 def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
     cov_filter = cov_filter_smu(n, m, skip_r_bins)
