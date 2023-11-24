@@ -85,7 +85,7 @@ def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 
     indices_1d = indices_l_r.ravel()
     return np.ix_(indices_1d, indices_1d)
 
-def load_full_matrices(input_data: dict, cov_filter: np.ndarray[int], tracer: int = 1, jack = False, legendre = False):
+def load_full_matrices(input_data: dict[str], cov_filter: np.ndarray[int], tracer: int = 1, jack: bool = False, legendre: bool = False):
     c2 = input_data["c2" + "j" * jack + f"_{tracer}{tracer}_full"]
     c2 = symmetrized(c2) if legendre else np.diag(c2)
     c2 = c2[cov_filter]
@@ -93,7 +93,7 @@ def load_full_matrices(input_data: dict, cov_filter: np.ndarray[int], tracer: in
     c4 = symmetrized(input_data["c4" + "j" * jack + f"_{tracer}{tracer},{tracer}{tracer}_full"][cov_filter])
     return c2, c3, c4
 
-def load_subsample_matrices(input_data: dict, cov_filter: np.ndarray[int], tracer: int = 1, jack = False, legendre = False):
+def load_subsample_matrices(input_data: dict[str], cov_filter: np.ndarray[int], tracer: int = 1, jack: bool = False, legendre: bool = False):
     c2 = input_data["c2" + "j" * jack + f"_{tracer}{tracer}"]
     c3 = input_data["c3" + "j" * jack + f"_{tracer},{tracer}{tracer}"]
     c4 = input_data["c4" + "j" * jack + f"_{tracer}{tracer},{tracer}{tracer}"]
