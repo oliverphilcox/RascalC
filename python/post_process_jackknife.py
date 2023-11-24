@@ -91,11 +91,11 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     # Compute full covariance matrix
     full_cov = add_cov_terms(c2f, c3f, c4f, alpha_best)
 
-    # Check positive definiteness
-    check_positive_definiteness(full_cov)
-
     # Check convergence
     check_eigval_convergence(c2f, c4f, "Full")
+
+    # Check positive definiteness
+    check_positive_definiteness(full_cov)
 
     # Compute full precision matrix
     print_function("Computing the full precision matrix estimate:")
