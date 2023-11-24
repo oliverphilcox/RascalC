@@ -85,22 +85,20 @@ def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 
     indices_1d = indices_l_r.ravel()
     return np.ix_(indices_1d, indices_1d)
 
-def load_full_matrices(input_data: dict[str], cov_filter: np.ndarray[int], tracer: int = 1, jack: bool = False, legendre: bool = False):
-    c2 = input_data["c2" + "j" * jack + f"_{tracer}{tracer}_full"]
-    c2 = symmetrized(c2) if legendre else np.diag(c2)
-    c2 = c2[cov_filter]
-    c3 = symmetrized(input_data["c3" + "j" * jack + f"_{tracer},{tracer}{tracer}_full"][cov_filter])
-    c4 = symmetrized(input_data["c4" + "j" * jack + f"_{tracer}{tracer},{tracer}{tracer}_full"][cov_filter])
-    return c2, c3, c4
-
-def load_subsample_matrices(input_data: dict[str], cov_filter: np.ndarray[int], tracer: int = 1, jack: bool = False, legendre: bool = False):
-    c2 = input_data["c2" + "j" * jack + f"_{tracer}{tracer}"]
-    c3 = input_data["c3" + "j" * jack + f"_{tracer},{tracer}{tracer}"]
-    c4 = input_data["c4" + "j" * jack + f"_{tracer}{tracer},{tracer}{tracer}"]
-    c2 = [symmetrized(_) if legendre else np.diag(_) for _ in c2]
-    c2 = np.array([_[cov_filter] for _ in c2])
-    c3 = np.array([symmetrized(_[cov_filter]) for _ in c3])
-    c4 = np.array([symmetrized(_[cov_filter]) for _ in c4])
+def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tracer: int = 1, full: bool = True, jack: bool = False) -> (np.ndarray[float], np.ndarray[float], np.ndarray[float]):
+    jack_suffix = "j" * jack
+    full_suffix = "_full" * full
+    c2 = input_data["c2" + jack_suffix + f"_{tracer}{tracer}" + full_suffix]
+    c3 = input_data["c3" + jack_suffix + f"_{tracer},{tracer}{tracer}" + full_suffix]
+    c4 = input_data["c4" + jack_suffix + f"_{tracer}{tracer},{tracer}{tracer}" + full_suffix]
+    if full: # 2D matrices, filter can be applied directly
+        c2 = symmetrized(c2[cov_filter])
+        c3 = symmetrized(c3[cov_filter])
+        c4 = symmetrized(c4[cov_filter])
+    else: # 3D matrices, need to loop over the first index first
+        c2 = np.array([symmetrized(_[cov_filter]) for _ in c2])
+        c3 = np.array([symmetrized(_[cov_filter]) for _ in c3])
+        c4 = np.array([symmetrized(_[cov_filter]) for _ in c4])
     return c2, c3, c4
 
 def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], kind: str = "") -> None:

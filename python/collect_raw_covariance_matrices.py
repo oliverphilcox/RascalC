@@ -100,7 +100,9 @@ def collect_raw_covariance_matrices(cov_dir: str, print_function = print) -> Non
         for matrix_name, matrix_filenames_dictionary in output_group.items():
             output_dictionary[matrix_name] = dict()
             for suffix, input_filename in matrix_filenames_dictionary.items():
-                output_dictionary[matrix_name][suffix] = np.loadtxt(input_filename)
+                matrix = np.loadtxt(input_filename)
+                if matrix_name.startswith("c2") and matrix.ndim == 1: matrix = np.diag(matrix) # convert 1D c2 to a 2D diagonal matrix
+                output_dictionary[matrix_name][suffix] = matrix
 
             # special treatment for string suffixes (at the moment, only "full")
             for suffix in output_dictionary[matrix_name].keys():

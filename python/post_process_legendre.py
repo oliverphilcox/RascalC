@@ -3,7 +3,7 @@
 
 import numpy as np
 import sys, os
-from utils import cov_filter_legendre, load_full_matrices, load_subsample_matrices, check_eigval_convergence, add_cov_terms, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from utils import cov_filter_legendre, load_matrices_single, check_eigval_convergence, add_cov_terms, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
 from collect_raw_covariance_matrices import load_raw_covariances_legendre
 
 
@@ -18,7 +18,7 @@ def post_process_legendre(file_root: str, n: int, max_l: int, outdir: str, alpha
 
     # Load in full theoretical matrices
     print_function("Loading best estimate of covariance matrix")
-    c2, c3, c4 = load_full_matrices(input_file, cov_filter, tracer, jack = False, legendre = True)
+    c2, c3, c4 = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = False)
 
     # Check matrix convergence
     check_eigval_convergence(c2, c4)
@@ -32,7 +32,7 @@ def post_process_legendre(file_root: str, n: int, max_l: int, outdir: str, alpha
     # Compute full precision matrix
     print_function("Computing the full precision matrix estimate:")
     # Load in partial theoretical matrices
-    c2s, c3s, c4s = load_subsample_matrices(input_file, cov_filter, tracer, jack = False, legendre = True)
+    c2s, c3s, c4s = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = False)
     partial_cov = add_cov_terms(c2s, c3s, c4s, alpha)
     full_D_est, full_prec = compute_D_precision_matrix(partial_cov, full_cov)
     print_function("Full precision matrix estimate computed")

@@ -4,7 +4,7 @@
 import numpy as np
 import sys, os
 from warnings import warn
-from utils import symmetrized, cov_filter_smu, load_full_matrices, load_subsample_matrices, check_eigval_convergence, add_cov_terms, fit_shot_noise_rescaling, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from utils import symmetrized, cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms, fit_shot_noise_rescaling, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
 from collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
@@ -55,14 +55,14 @@ def optimize_alpha_jackknife(jackknife_file: str, weight_dir: str, input_file: d
 
     # Load in full jackknife theoretical matrices
     print_function("Loading best estimate of jackknife covariance matrix")
-    c2j, c3j, c4j = load_full_matrices(input_file, cov_filter, tracer, jack = True, legendre = False)
+    c2j, c3j, c4j = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = True)
     c4j += compute_disconnected_term(input_file[f"EE1_{tracer}{tracer}_full"], input_file[f"EE2_{tracer}{tracer}_full"], input_file[f"RR1_{tracer}{tracer}_full"], input_file[f"RR2_{tracer}{tracer}_full"], RR, weights)[cov_filter]
 
     # Check matrix convergence
     check_eigval_convergence(c2j, c4j, "Jackknife")
 
     # Load in partial jackknife theoretical matrices
-    c2s, c3s, c4s = load_subsample_matrices(input_file, cov_filter, tracer, jack = True, legendre = False)
+    c2s, c3s, c4s = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = True)
     c4s += np.array([compute_disconnected_term(EE1, EE2, RR1, RR2, RR, weights)[cov_filter]] for (EE1, EE2, RR1, RR2) in zip(input_file[f"EE1_{tracer}{tracer}"], input_file[f"EE2_{tracer}{tracer}"], input_file[f"RR1_{tracer}{tracer}"], input_file[f"RR2_{tracer}{tracer}"]))
 
     # Now optimize for shot-noise rescaling parameter alpha
@@ -89,7 +89,7 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     alpha_best, n_jack, data_cov, jack_cov, partial_jack_cov, jack_prec = optimize_alpha_jackknife(jackknife_file, weight_dir, input_file, cov_filter, tracer, print_function, full_return = True)
 
     # Load full covariance matrix terms
-    c2f, c3f, c4f = load_full_matrices(input_file, cov_filter, tracer, jack = False, legendre = False)
+    c2f, c3f, c4f = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = False)
     # Compute full covariance matrix
     full_cov = add_cov_terms(c2f, c3f, c4f, alpha_best)
 
@@ -102,7 +102,7 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     # Compute full precision matrix
     print_function("Computing the full precision matrix estimate:")
     # Load in partial jackknife theoretical matrices
-    c2fs, c3fs, c4fs = load_subsample_matrices(input_file, cov_filter, tracer, jack = False, legendre = False)
+    c2fs, c3fs, c4fs = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = False)
     partial_cov = add_cov_terms(c2fs, c3fs, c4fs, alpha_best)
     full_D_est, full_prec = compute_D_precision_matrix(partial_cov, full_cov)
     print_function("Full precision matrix estimate computed")    

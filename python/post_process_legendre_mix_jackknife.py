@@ -4,7 +4,7 @@
 import numpy as np
 import sys, os
 from warnings import warn
-from utils import cov_filter_legendre, load_full_matrices, load_subsample_matrices, check_eigval_convergence, add_cov_terms, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
+from utils import cov_filter_legendre, load_matrices_single, check_eigval_convergence, add_cov_terms, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
 from collect_raw_covariance_matrices import load_raw_covariances_legendre
 
 
@@ -58,13 +58,13 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
 
     # Load in full jackknife theoretical matrices
     print_function("Loading best estimate of jackknife covariance matrix")
-    c2j, c3j, c4j = load_full_matrices(input_file, cov_filter, tracer, jack = True, legendre = True)
+    c2j, c3j, c4j = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = True)
 
     # Check matrix convergence
     check_eigval_convergence(c2j, c4j, "Jackknife")
 
     # Load in partial jackknife theoretical matrices
-    c2s, c3s, c4s = load_subsample_matrices(input_file, cov_filter, tracer, jack = True, legendre = True)
+    c2s, c3s, c4s = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = True)
 
     # Now optimize for shot-noise rescaling parameter alpha
     print_function("Optimizing for the shot-noise rescaling parameter")
@@ -76,7 +76,7 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
     partial_jack_cov = add_cov_terms(c2s, c3s, c4s, alpha_best)
     _, jack_prec = compute_D_precision_matrix(partial_jack_cov, jack_cov)
 
-    c2f, c3f, c4f = load_full_matrices(input_file, cov_filter, tracer, jack = False, legendre = True)
+    c2f, c3f, c4f = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = False)
     full_cov = add_cov_terms(c2f, c3f, c4f, alpha_best)
 
     # Check convergence
@@ -88,7 +88,7 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
     # Compute full precision matrix
     print_function("Computing the full precision matrix estimate:")
     # Load in partial jackknife theoretical matrices
-    c2fs, c3fs, c4fs = load_subsample_matrices(input_file, cov_filter, tracer, jack = False, legendre = True)
+    c2fs, c3fs, c4fs = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = False)
     partial_cov = add_cov_terms(c2fs, c3fs, c4fs, alpha_best)
     full_D_est, full_prec = compute_D_precision_matrix(partial_cov, full_cov)
     print_function("Full precision matrix estimate computed")    
