@@ -40,6 +40,20 @@ def rmdir_safe(dirname: str) -> None:
     if os.path.isdir(dirname) and len(os.listdir(dirname)) > 0:
         os.rmdir(dirname)
 
+def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[str]):
+    output_filename = os.path.join(output_dir, f"Raw_Covariance_Matrices_{output_group_name}.npz")
+    if os.path.exists(output_filename):
+        warn(f"The default output filename for group {output_group_name}, {output_filename}, already exists. Will try to find a replacement.")
+        i = 1
+        while True:
+            output_filename = os.path.join(cov_dir, f"Raw_Covariance_Matrices_{output_group_name}.{i}.npz")
+            if not os.path.exists(output_filename):
+                warn(f"Found unused name {output_filename}, will save there.")
+                break
+            i += 1
+            
+    np.savez_compressed(output_filename, **output_dictionary)
+
 def collect_raw_covariance_matrices(cov_dir: str, print_function = print) -> None:
     cov_dir_all = os.path.join(cov_dir, 'CovMatricesAll/')
     cov_dir_jack = os.path.join(cov_dir, 'CovMatricesJack/')
@@ -109,18 +123,7 @@ def collect_raw_covariance_matrices(cov_dir: str, print_function = print) -> Non
         
         return_dictionary[output_group_name] = output_dictionary
         
-        output_filename = os.path.join(cov_dir, f"Raw_Covariance_Matrices_{output_group_name}.npz")
-        if os.path.exists(output_filename):
-            warn(f"The default output filename for group {output_group_name}, {output_filename}, already exists. Will try to find a replacement.")
-            i = 1
-            while True:
-                output_filename = os.path.join(cov_dir, f"Raw_Covariance_Matrices_{output_group_name}.{i}.npz")
-                if not os.path.exists(output_filename):
-                    warn(f"Found unused name {output_filename}, will save there.")
-                    break
-                i += 1
-                
-        np.savez_compressed(output_filename, **output_dictionary)
+        save_safe(cov_dir, output_group_name, output_dictionary)
 
         # now that the file is saved (not any earlier to be sure), can remove all the text files
         # the list contains only the files that had their contents loaded and saved
