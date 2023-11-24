@@ -14,7 +14,7 @@ def normalize_weights_files(input_file: str, output_file: str, print_function = 
     print_function("Reading from file %s" % input_file)
     contents = np.loadtxt(input_file)
     print_function("Read %d particles" % contents.shape[0])
-    if len(contents.shape) == 2: raise ValueError("Input file not read as 2D array")
+    if contents.ndim != 2: raise ValueError("Input file not read as 2D array")
     if contents.shape[1] < 4: raise ValueError("Not enough columns to get weights")
 
     print_function("Normalizing weights")
