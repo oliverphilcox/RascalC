@@ -12,7 +12,7 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
     n_bins = n * m - skip_bins
 
     skip_mask = np.tile(np.arange(n * m) >= skip_bins, 3) # the mask gives False for first skip_bins, all this repeating 3 times; 3 is number of correlations for 2 tracers
-    mock_cov = np.loadtxt(mock_cov_file)[skip_mask][:, skip_mask] # load external mock covariance matrix, select bins on both axes
+    mock_cov = np.loadtxt(mock_cov_file)[np.ix_(skip_bins, skip_bins)] # load external mock covariance matrix, select bins on both axes
 
     # Create output directory
     if not os.path.exists(outdir):
