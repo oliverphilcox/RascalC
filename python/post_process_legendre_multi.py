@@ -2,12 +2,12 @@
 ## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 
 import numpy as np
-import sys,os
+import sys, os
 from utils import cov_filter_legendre, load_matrices_multi, add_cov_terms_multi, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
 from collect_raw_covariance_matrices import load_raw_covariances_legendre
 
 
-def post_process_legendre_multi(file_root: str, n: int, max_l: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, skip_r_bins: int = 0, skip_l: int = 0, print_function = print):
+def post_process_legendre_multi(file_root: str, n: int, max_l: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, skip_r_bins: int = 0, skip_l: int = 0, print_function = print) -> dict[str]:
     cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
 
     input_file = load_raw_covariances_legendre(file_root, n, max_l, print_function)

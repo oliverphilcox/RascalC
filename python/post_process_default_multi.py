@@ -7,7 +7,7 @@ from utils import cov_filter_smu, load_matrices_multi, add_cov_terms_multi, chec
 from collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
-def post_process_default_multi(file_root: str, n: int, m: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, skip_r_bins: int = 0, print_function = print):
+def post_process_default_multi(file_root: str, n: int, m: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, skip_r_bins: int = 0, print_function = print) -> dict[str]:
     cov_filter = cov_filter_smu(n, m, skip_r_bins)
 
     input_file = load_raw_covariances_smu(file_root, n, m, print_function)
@@ -38,7 +38,7 @@ def post_process_default_multi(file_root: str, n: int, m: int, outdir: str, alph
 
     output_dict = {"full_theory_covariance": c_comb, "all_covariances": c_tot, "shot_noise_rescaling": alphas, "full_theory_precision": prec_comb, "N_eff": N_eff, "full_theory_D_matrix": D_est, "individual_theory_covariances": c_comb_subsamples}
 
-    output_name =os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Default_n%d_m%d.npz'%(n,m))
+    output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Default_n%d_m%d.npz'%(n,m))
     np.savez(output_name, **output_dict)
 
     print_function("Saved output covariance matrices as %s"%output_name)
