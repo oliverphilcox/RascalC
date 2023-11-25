@@ -95,15 +95,15 @@ def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tra
     c2 = input_data["c2" + joint + suffix]
     c3 = input_data["c3" + joint + str(tracer) + "," + suffix]
     c4 = input_data["c4" + joint + str(tracer) * 2 + "," + suffix]
+    matrices = (c2, c3, c4)
+
+    def finalize_matrix(a: np.ndarra):
+        return symmetrized(a[cov_filter])
+    
     if full: # 2D matrices, filter can be applied directly
-        c2 = symmetrized(c2[cov_filter])
-        c3 = symmetrized(c3[cov_filter])
-        c4 = symmetrized(c4[cov_filter])
+        return [finalize_matrix(a) for a in matrices]
     else: # 3D matrices, need to loop over the first index first
-        c2 = np.array([symmetrized(_[cov_filter]) for _ in c2])
-        c3 = np.array([symmetrized(_[cov_filter]) for _ in c3])
-        c4 = np.array([symmetrized(_[cov_filter]) for _ in c4])
-    return c2, c3, c4
+        return [np.array(list(map(finalize_matrix, a))) for a in matrices]
 
 def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], kind: str = "") -> None:
     eig_c4 = np.linalg.eigvalsh(c4)
@@ -178,15 +178,18 @@ def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full
     n3 = np.zeros([ntracers] * 3)
     n4 = np.zeros([ntracers] * 4)
 
+    def finalize_matrix(a: np.ndarray):
+        return a[cov_filter]
+
     # accumulate the values
     for matrix_name, matrices in input_data.values():
         matrix_name_split = matrix_name.split("_")
         if len(matrix_name_split) != 2 + full: continue # should skip full if not loading full, and skip subsamples if loading full
         if full and matrix_name_split[-1] != "full": continue # double-check for safety
         if full: # 2D matrix, can apply cov filter directly
-            matrices = matrices[cov_filter]
+            matrices = finalize_matrix(matrices)
         else: # 3D matrix, should loops over the first index first
-            matrices = np.array(_[cov_filter] for _ in matrices)
+            matrices = np.array(list(map(finalize_matrix, matrices)))
         matrix_name = matrix_name_split[0]
         index = matrix_name_split[1]
         if matrix_name == "c2" + suffix_jack:

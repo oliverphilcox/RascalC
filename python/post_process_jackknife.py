@@ -10,16 +10,15 @@ from collect_raw_covariance_matrices import load_raw_covariances_smu
 
 def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float], weights: np.ndarray[float], tracer: int = 1, full: bool = True) -> np.ndarray[float]:
     suffix = "_" + str(tracer) * 2 + "_full" * full
-    EEaA1 = input_data["EE1" + suffix]
-    EEaA2 = input_data["EE2" + suffix]
-    RRaA1 = input_data["RR1" + suffix]
-    RRaA2 = input_data["RR2" + suffix]
+    disconnected_array_names = ["EE1", "RR1", "EE2", "RR2"]
+    disconnected_arrays = np.array([input_data[name + suffix] for name in disconnected_array_names])
 
     RRaRRb = np.matmul(np.asmatrix(RR).T, np.asmatrix(RR))
     fact = 1 - np.matmul(np.asmatrix(weights).T, np.asmatrix(weights))
     norm = RRaRRb * fact
 
-    def compute_disconnected_term(EEaA1: np.ndarray[float], EEaA2: np.ndarray[float], RRaA1: np.ndarray[float], RRaA2: np.ndarray[float]):
+    def compute_disconnected_term(EEaA1: np.ndarray[float], RRaA1: np.ndarray[float], EEaA2: np.ndarray[float], RRaA2: np.ndarray[float]):
+        # argument order follows disconnected_array_names
         w_aA1 = RRaA1 / RRaA1.sum(axis = 0)
         w_aA2 = RRaA2 / RRaA2.sum(axis = 0)
         diff1 = EEaA1 - w_aA1 * EEaA1.sum(axis = 0)
@@ -27,10 +26,15 @@ def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[
         cx = np.matmul(diff1.T, diff2) / norm
         return cx[cov_filter]
     
-    if full: # 2D array
-        return symmetrized(compute_disconnected_term(EEaA1, EEaA2, RRaA1, RRaA2))
-    else: # 3D array, need to loop over first index
-        return symmetrized(np.array([compute_disconnected_term(*_) for _ in zip(EEaA1, EEaA2, RRaA1, RRaA2)]))
+    def get_disconnected_term(disconnected_arrays: np.ndarray[float]):
+        return compute_disconnected_term(*disconnected_arrays)
+    
+    if full: # 2D arrays
+        cx = get_disconnected_term(disconnected_arrays)
+    else: # 3D array, need to loop over subsample index
+        cx = np.array(list(map(get_disconnected_term, np.moveaxis(disconnected_arrays, 1, 0))))
+        # the first axis is the array type, the next is for the subsamples, which we move up front to loop over
+    return symmetrized(cx)
 
 def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
     # Load jackknife xi estimates from data
