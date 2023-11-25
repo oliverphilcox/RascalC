@@ -74,7 +74,7 @@ def load_matrices(index,jack=True):
         diff2 = EEaA2-w_aA2*EEaA2.sum(axis=0)
         RRaRRb = np.matmul(np.asmatrix(RR).T,np.asmatrix(RR))
         fact = np.ones_like(c4)-np.matmul(np.asmatrix(weights).T,np.asmatrix(weights))
-        cx = np.asarray(np.matmul(diff1.T,diff2)/np.matmul(fact,RRaRRb))
+        cx = np.asarray(np.matmul(diff1.T,diff2)/(fact*RRaRRb))
         c4+=cx
     
     # Now symmetrize and return matrices
