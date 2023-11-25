@@ -165,7 +165,9 @@ def fit_shot_noise_rescaling(target_cov: np.ndarray[float], c2: np.ndarray[float
 def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full: bool = True, jack: bool = False, ntracers: int = 2) -> (np.ndarray[float], np.ndarray[float], np.ndarray[float]):
     suffix_jack = "j" * jack
     suffix_full = "_full" * full
-    single_array_shape = list(input_data["c4_11,11" + suffix_full][cov_filter].shape) # take reference shape from c4_11,11, with _full suffix if loading full
+    single_array_shape = np.array(input_data["c4_11,11" + suffix_full].shape) # take reference shape from c4_11,11, with _full suffix if loading full
+    single_array_shape[:-2] = np.array(np.zeros(single_array_shape[:-2])[cov_filter].shape) # account for the shape change with cov_filter
+    single_array_shape = list(single_array_shape)
 
     # arrays to store cN with first N indices being tracers
     c2 = np.zeros([ntracers] * 2 + single_array_shape)
@@ -189,37 +191,37 @@ def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full
         index = matrix_name_split[1]
         if matrix_name == "c2" + suffix_jack:
             if len(index) != 2: raise ValueError(f"Wrong 2-point index length for {index}")
-            j1, j2 = [int(c)-1 for c in index]
+            t1, t2 = [int(c)-1 for c in index]
             # accumulate c2 with normal index order
-            c2[j1, j2] += matrices
-            n2[j1, j2] += 1
+            c2[t1, t2] += matrices
+            n2[t1, t2] += 1
             # accumulate c2 with interchanged indices and transposed matrix, will ensure symmetry
-            c2[j1, j2] += transposed(matrices)
-            n2[j1, j2] += 1
+            c2[t2, t1] += transposed(matrices)
+            n2[t2, t1] += 1
         if matrix_name == "c3" + suffix_jack:
             if len(index) != 4: raise ValueError(f"Unexpected 3-point index length for {index}")
             if index[1] != ",": raise ValueError(f"Unexpected 3-point index format for {index}")
-            j2, j1, j3 = int(index[0])-1, int(index[2])-1, int(index[3])-1
+            t2, t1, t3 = int(index[0])-1, int(index[2])-1, int(index[3])-1
             # accumulate c3 with normal index order
-            c3[j2, j1, j3] += matrices
-            n3[j2, j1, j3] += 1
+            c3[t2, t1, t3] += matrices
+            n3[t2, t1, t3] += 1
             # accumulate c3 with swapped j1 and j3
-            c3[j2, j1, j3] += transposed(matrices)
-            n3[j2, j1, j3] += 1
+            c3[t2, t3, t1] += transposed(matrices)
+            n3[t2, t3, t1] += 1
         if matrix_name == "c4" + suffix_jack:
             if len(index) != 5: raise ValueError(f"Unexpected 4-point index length for {index}")
             if index[2] != ",": raise ValueError(f"Unexpected 4-point index format for {index}")
-            j1, j2, j3, j4 = int(index[0])-1, int(index[1])-1, int(index[3])-1, int(index[4])-1
+            t1, t2, t3, t4 = int(index[0])-1, int(index[1])-1, int(index[3])-1, int(index[4])-1
             # All symmetries possible for c4 without transpositions
-            permutations4 = ((j1, j2, j3, j4), # original
-                            (j2, j1, j3, j4), # first two indices interchanged
-                            (j1, j2, j4, j3), # last two indices interchanged
-                            (j2, j1, j4, j3), # first and last two indices interchanged at the same time
+            permutations4 = ((t1, t2, t3, t4), # original
+                            (t2, t1, t3, t4), # first two tracers interchanged
+                            (t1, t2, t4, t3), # last two tracers interchanged
+                            (t2, t1, t4, t3), # first and last two tracers interchanged at the same time
                             )
             for (i1, i2, i3, i4) in permutations4:
                 c4[i1, i2, i3, i4] += matrices
                 n4[i1, i2, i3, i4] += 1
-                # now swap indices and transpose
+                # now swap tracer pairs and transpose
                 c4[i3, i4, i1, i2] += transposed(matrices)
                 n4[i3, i4, i1, i2] += 1
         # else do nothing
