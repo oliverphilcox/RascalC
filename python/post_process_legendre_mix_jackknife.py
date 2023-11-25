@@ -8,20 +8,12 @@ from utils import cov_filter_legendre, load_matrices_single, check_eigval_conver
 from collect_raw_covariance_matrices import load_raw_covariances_legendre
 
 
-def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, file_root: str, n: int, m: int, max_l: int, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
-    cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
-    n_l = max_l // 2 + 1 # number of multipoles
-    
-    input_file = load_raw_covariances_legendre(file_root, n, max_l, print_function)
-
-    # Create output directory
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-
+def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, max_l: int, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
     # Load jackknife xi estimates from data
     print_function("Loading correlation function jackknife estimates from %s" % jackknife_file)
     xi_jack = np.loadtxt(jackknife_file, skiprows = 2)
     n_jack = xi_jack.shape[0] # total jackknives
+    n = xi_jack.shape[1] // m # radial bins
     n_bins = (n_l - skip_l) * (n - skip_r_bins) # total Legendre bins to work with
 
     weight_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_11.dat' % (n, m, n_jack))
@@ -55,6 +47,15 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
     data_cov = data_cov[skip_r_bins:, :, skip_r_bins:, :] # discard the extra radial bins now since it is convenient
     data_cov = np.einsum("imjn,mp,nq->ipjq", data_cov, mu_bin_legendre_factors, mu_bin_legendre_factors) # use mu bin Legendre factors to project mu bins into Legendre multipoles, staying within the same radial bins. The indices are now [r_bin, ell] for rows and columns
     data_cov = data_cov.reshape(n_bins, n_bins)
+
+    cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
+    n_l = max_l // 2 + 1 # number of multipoles
+    
+    input_file = load_raw_covariances_legendre(file_root, n, max_l, print_function)
+
+    # Create output directory
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     # Load in full jackknife theoretical matrices
     print_function("Loading best estimate of jackknife covariance matrix")
@@ -107,19 +108,18 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
-    if len(sys.argv) not in (8, 9, 10):
-        print("Usage: python post_process_legendre_mix_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {MAX_L} {OUTPUT_DIR} [{SKIP_R_BINS} [{SKIP_L}]]")
+    if len(sys.argv) not in (7, 8, 9):
+        print("Usage: python post_process_legendre_mix_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {MAX_L} {OUTPUT_DIR} [{SKIP_R_BINS} [{SKIP_L}]]")
         sys.exit(1)
             
     jackknife_file = str(sys.argv[1])
     weight_dir = str(sys.argv[2])
     file_root = str(sys.argv[3])
-    n = int(sys.argv[4])
-    m = int(sys.argv[5])
-    max_l = int(sys.argv[6])
-    outdir = str(sys.argv[7])
+    m = int(sys.argv[4])
+    max_l = int(sys.argv[5])
+    outdir = str(sys.argv[6])
     from utils import get_arg_safe
-    skip_r_bins = get_arg_safe(8, int, 0)
-    skip_l = get_arg_safe(9, int, 0)
+    skip_r_bins = get_arg_safe(7, int, 0)
+    skip_l = get_arg_safe(8, int, 0)
 
-    post_process_legendre_mix_jackknife(jackknife_file, weight_dir, file_root, n, m, max_l, outdir, skip_r_bins, skip_l)
+    post_process_legendre_mix_jackknife(jackknife_file, weight_dir, file_root, m, max_l, outdir, skip_r_bins, skip_l)
