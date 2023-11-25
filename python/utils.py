@@ -162,19 +162,19 @@ def fit_shot_noise_rescaling(target_cov: np.ndarray[float], c2: np.ndarray[float
     alpha_best = fmin(neg_log_L1, 1., args = (target_cov, c2, c3, c4, c2s, c3s, c4s))
     return alpha_best
 
-def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full: bool = False, jack: bool = False, ntracers: int = 2):
+def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full: bool = True, jack: bool = False, ntracers: int = 2) -> (np.ndarray[float], np.ndarray[float], np.ndarray[float]):
     suffix_jack = "j" * jack
     suffix_full = "_full" * full
     single_array_shape = list(input_data["c4_11,11" + suffix_full][cov_filter].shape) # take reference shape from c4_11,11, with _full suffix if loading full
 
     # arrays to store cN with first N indices being tracers
-    c2s = np.zeros([ntracers] * 2 + single_array_shape)
-    c3s = np.zeros([ntracers] * 3 + single_array_shape)
-    c4s = np.zeros([ntracers] * 4 + single_array_shape)
+    c2 = np.zeros([ntracers] * 2 + single_array_shape)
+    c3 = np.zeros([ntracers] * 3 + single_array_shape)
+    c4 = np.zeros([ntracers] * 4 + single_array_shape)
     # simpler arrays for accumulating number of additions to normalize by
-    n2s = np.zeros([ntracers] * 2)
-    n3s = np.zeros([ntracers] * 3)
-    n4s = np.zeros([ntracers] * 4)
+    n2 = np.zeros([ntracers] * 2)
+    n3 = np.zeros([ntracers] * 3)
+    n4 = np.zeros([ntracers] * 4)
 
     # accumulate the values
     for matrix_name, matrices in input_data.values():
@@ -191,21 +191,21 @@ def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full
             if len(index) != 2: raise ValueError(f"Wrong 2-point index length for {index}")
             j1, j2 = [int(c)-1 for c in index]
             # accumulate c2 with normal index order
-            c2s[j1, j2] += matrices
-            n2s[j1, j2] += 1
+            c2[j1, j2] += matrices
+            n2[j1, j2] += 1
             # accumulate c2 with interchanged indices and transposed matrix, will ensure symmetry
-            c2s[j1, j2] += transposed(matrices)
-            n2s[j1, j2] += 1
+            c2[j1, j2] += transposed(matrices)
+            n2[j1, j2] += 1
         if matrix_name == "c3" + suffix_jack:
             if len(index) != 4: raise ValueError(f"Unexpected 3-point index length for {index}")
             if index[1] != ",": raise ValueError(f"Unexpected 3-point index format for {index}")
             j2, j1, j3 = int(index[0])-1, int(index[2])-1, int(index[3])-1
             # accumulate c3 with normal index order
-            c3s[j2, j1, j3] += matrices
-            n3s[j2, j1, j3] += 1
+            c3[j2, j1, j3] += matrices
+            n3[j2, j1, j3] += 1
             # accumulate c3 with swapped j1 and j3
-            c3s[j2, j1, j3] += transposed(matrices)
-            n3s[j2, j1, j3] += 1
+            c3[j2, j1, j3] += transposed(matrices)
+            n3[j2, j1, j3] += 1
         if matrix_name == "c4" + suffix_jack:
             if len(index) != 5: raise ValueError(f"Unexpected 4-point index length for {index}")
             if index[2] != ",": raise ValueError(f"Unexpected 4-point index format for {index}")
@@ -217,27 +217,27 @@ def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full
                             (j2, j1, j4, j3), # first and last two indices interchanged at the same time
                             )
             for (i1, i2, i3, i4) in permutations4:
-                c4s[i1, i2, i3, i4] += matrices
-                n4s[i1, i2, i3, i4] += 1
+                c4[i1, i2, i3, i4] += matrices
+                n4[i1, i2, i3, i4] += 1
                 # now swap indices and transpose
-                c4s[i3, i4, i1, i2] += transposed(matrices)
-                n4s[i3, i4, i1, i2] += 1
+                c4[i3, i4, i1, i2] += transposed(matrices)
+                n4[i3, i4, i1, i2] += 1
         # else do nothing
     
     # check that all parts have been accumulated indeed
-    if np.count_nonzero(n2s == 0) > 0: raise ValueError("Some 2-point terms missing")
-    if np.count_nonzero(n3s == 0) > 0: raise ValueError("Some 3-point terms missing")
-    if np.count_nonzero(n4s == 0) > 0: raise ValueError("Some 4-point terms missing")
+    if np.count_nonzero(n2 == 0) > 0: raise ValueError("Some 2-point terms missing")
+    if np.count_nonzero(n3 == 0) > 0: raise ValueError("Some 3-point terms missing")
+    if np.count_nonzero(n4 == 0) > 0: raise ValueError("Some 4-point terms missing")
 
     # now can normalize safely
-    c2s /= n2s
-    c3s /= n4s
-    c4s /= n4s
+    c2 /= n2
+    c3 /= n4
+    c4 /= n4
 
-    return c2s, c3s, c4s
+    return c2, c3, c4
 
-def add_cov_terms_multi(c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.ndarray[float], alphas: list[float] | np.ndarray[float], ntracers: int = 2):
-    def construct_fields(t1, t2, t3, t4, alpha1, alpha2):
+def add_cov_terms_multi(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alphas: list[float] | np.ndarray[float], ntracers: int = 2) -> (np.ndarray[float], np.ndarray[float]):
+    def construct_fields(t1: int, t2: int, t3: int, t4: int, alpha1: float, alpha2: float):
         # Reconstruct the full field for given input fields and rescaling parameters
 
         # Create kronecker deltas
@@ -246,7 +246,7 @@ def add_cov_terms_multi(c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.
         d_yw = (t2 == t4)
         d_yz = (t2 == t3)
 
-        full = c4s[t1, t2, t3, t4] + 0.25 * alpha1 * (d_xw * c3s[t1, t2, t3] + d_xz * c3s[t1, t2, t4]) + 0.25 * alpha2 * (d_yw * c3s[t2, t1, t3] + d_yz * c3s[t2, t1, t4]) + 0.5 * alpha1 * alpha2 * (d_xw * d_yz + d_xz * d_yw) * c2s[t1, t2]
+        full = c4[t1, t2, t3, t4] + 0.25 * alpha1 * (d_xw * c3[t1, t2, t3] + d_xz * c3[t1, t2, t4]) + 0.25 * alpha2 * (d_yw * c3[t2, t1, t3] + d_yz * c3[t2, t1, t4]) + 0.5 * alpha1 * alpha2 * (d_xw * d_yz + d_xz * d_yw) * c2[t1, t2]
         return full
 
     corr_tracers = []
@@ -260,10 +260,10 @@ def add_cov_terms_multi(c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.
     n_corr = ntracers * (ntracers + 1) // 2
     assert len(corr_tracers) == n_corr, "Mismatch in correlation functions counting or indices generation"
 
-    single_array_shape = list(c2s.shape)[2:]
-    if c2s.shape != [ntracers] * 2 + single_array_shape: raise ValueError("Unexpected shape of 2-point array")
-    if c3s.shape != [ntracers] * 3 + single_array_shape: raise ValueError("Unexpected shape of 3-point array")
-    if c4s.shape != [ntracers] * 4 + single_array_shape: raise ValueError("Unexpected shape of 4-point array")
+    single_array_shape = list(c2.shape)[2:]
+    if c2.shape != [ntracers] * 2 + single_array_shape: raise ValueError("Unexpected shape of 2-point array")
+    if c3.shape != [ntracers] * 3 + single_array_shape: raise ValueError("Unexpected shape of 3-point array")
+    if c4.shape != [ntracers] * 4 + single_array_shape: raise ValueError("Unexpected shape of 4-point array")
     n_bins = single_array_shape[-1]
     if single_array_shape[-2] != n_bins: raise ValueError("Covariance matrices are not square")
     samples_shape = single_array_shape[:-2]
