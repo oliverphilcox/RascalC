@@ -82,28 +82,28 @@ def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full
     return c2s, c3s, c4s
 
 def add_cov_terms_multi(c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.ndarray[float], alphas: list[float] | np.ndarray[float], ntracers: int = 2):
-    def construct_fields(j1, j2, j3, j4, alpha1, alpha2):
+    def construct_fields(t1, t2, t3, t4, alpha1, alpha2):
         # Reconstruct the full field for given input fields and rescaling parameters
 
         # Create kronecker deltas
-        d_xw = (j1 == j4)
-        d_xz = (j1 == j3)
-        d_yw = (j2 == j4)
-        d_yz = (j2 == j3)
+        d_xw = (t1 == t4)
+        d_xz = (t1 == t3)
+        d_yw = (t2 == t4)
+        d_yz = (t2 == t3)
 
-        full = c4s[j1, j2, j3, j4] + 0.25 * alpha1 * (d_xw * c3s[j1, j2, j3] + d_xz * c3s[j1, j2, j4]) + 0.25 * alpha2 * (d_yw * c3s[j2, j1, j3] + d_yz * c3s[j2, j1, j4]) + 0.5 * alpha1 * alpha2 * (d_xw * d_yz + d_xz * d_yw) * c2s[j1, j2]
+        full = c4s[t1, t2, t3, t4] + 0.25 * alpha1 * (d_xw * c3s[t1, t2, t3] + d_xz * c3s[t1, t2, t4]) + 0.25 * alpha2 * (d_yw * c3s[t2, t1, t3] + d_yz * c3s[t2, t1, t4]) + 0.5 * alpha1 * alpha2 * (d_xw * d_yz + d_xz * d_yw) * c2s[t1, t2]
         return full
 
-    corr_indices = []
+    corr_tracers = []
     for t2 in range(ntracers):
         for t1 in range(t2+1):
-            corr_indices.append([t1, t2])
+            corr_tracers.append([t1, t2])
     # for ntracers = 1, gives [[0, 0]]
     # for ntracers = 2, gives [[0, 0], [0, 1], [1, 1]], consistent with the old convention
     # when a tracer is added, the list begins in the same way
 
     n_corr = ntracers * (ntracers + 1) // 2
-    assert len(corr_indices) == n_corr, "Mismatch in correlation functions counting or indices generation"
+    assert len(corr_tracers) == n_corr, "Mismatch in correlation functions counting or indices generation"
 
     single_array_shape = list(c2s.shape)[2:]
     if c2s.shape != [ntracers] * 2 + single_array_shape: raise ValueError("Unexpected shape of 2-point array")
@@ -117,21 +117,21 @@ def add_cov_terms_multi(c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.
     c_tot = np.zeros([n_corr] * 2 + samples_shape + [n_bins] * 2) # array with each individual covariance accessible
     c_comb = np.zeros(samples_shape + [n_corr * n_bins] * 2) # full array suitable for inversion
 
-    for j1 in range(3):
-        ind1, ind2 = corr_indices[j1]
-        alpha1, alpha2 = alphas[ind1], alphas[ind2]
-        for j2 in range(3):
-            ind3, ind4 = corr_indices[j2]
-            tmp = construct_fields(ind1, ind2, ind3, ind4, alpha1, alpha2)
-            c_tot[j1, j2] = tmp
+    for i_corr1 in range(n_corr):
+        t1, t2 = corr_tracers[i_corr1]
+        alpha1, alpha2 = alphas[t1], alphas[t2]
+        for i_corr2 in range(n_corr):
+            t3, t4 = corr_tracers[i_corr2]
+            tmp = construct_fields(t1, t2, t3, t4, alpha1, alpha2)
+            c_tot[i_corr1, i_corr2] = tmp
             if samples_shape: # need extra sample axis
-                c_comb[:, j1*n_bins:(j1+1)*n_bins, j2*n_bins:(j2+1)*n_bins] = tmp
+                c_comb[:, i_corr1*n_bins:(i_corr1+1)*n_bins, i_corr2*n_bins:(i_corr2+1)*n_bins] = tmp
             else:
-                c_comb[j1*n_bins:(j1+1)*n_bins, j2*n_bins:(j2+1)*n_bins] = tmp
+                c_comb[i_corr1*n_bins:(i_corr1+1)*n_bins, i_corr2*n_bins:(i_corr2+1)*n_bins] = tmp
 
     return c_tot, symmetrized(c_comb) # add all remaining symmetries
 
-def post_process_default_multi(file_root: str, n: int, m: int, n_samples: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, skip_r_bins: int = 0, print_function = print):
+def post_process_default_multi(file_root: str, n: int, m: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, skip_r_bins: int = 0, print_function = print):
     cov_filter = cov_filter_smu(n, m, skip_r_bins)
 
     input_file = load_raw_covariances_smu(file_root, n, m, print_function)
@@ -171,18 +171,17 @@ def post_process_default_multi(file_root: str, n: int, m: int, n_samples: int, o
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
-    if len(sys.argv) not in (6, 8, 9):
-        print("Usage: python post_process_default_multi.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2} [{SKIP_R_BINS}]]")
+    if len(sys.argv) not in (5, 7, 8):
+        print("Usage: python post_process_default_multi.py {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING_1} {SHOT_NOISE_RESCALING_2} [{SKIP_R_BINS}]]")
         sys.exit(1)
 
     file_root = str(sys.argv[1])
     n = int(sys.argv[2])
     m = int(sys.argv[3])
-    n_samples = int(sys.argv[4])
-    outdir = str(sys.argv[5])
+    outdir = str(sys.argv[4])
     from utils import get_arg_safe
-    alpha_1 = get_arg_safe(6, float, 1)
-    alpha_2 = get_arg_safe(7, float, 1)
-    skip_r_bins = get_arg_safe(8, int, 0)
+    alpha_1 = get_arg_safe(5, float, 1)
+    alpha_2 = get_arg_safe(6, float, 1)
+    skip_r_bins = get_arg_safe(7, int, 0)
 
-    post_process_default_multi(file_root, n, m, n_samples, outdir, alpha_1, alpha_2, skip_r_bins)
+    post_process_default_multi(file_root, n, m, outdir, alpha_1, alpha_2, skip_r_bins)
