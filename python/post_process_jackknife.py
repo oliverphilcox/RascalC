@@ -8,7 +8,7 @@ from utils import symmetrized, cov_filter_smu, load_matrices_single, check_eigva
 from collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
-def load_disconnected_term(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float], weights: np.ndarray[float], tracer: int = 1, full: bool = True) -> np.ndarray[float]:
+def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float], weights: np.ndarray[float], tracer: int = 1, full: bool = True) -> np.ndarray[float]:
     suffix = "_" + str(tracer) * 2 + "_full" * full
     EEaA1 = input_data["EE1" + suffix]
     EEaA2 = input_data["EE2" + suffix]
@@ -77,14 +77,14 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     # Load in full jackknife theoretical matrices
     print_function("Loading best estimate of jackknife covariance matrix")
     c2j, c3j, c4j = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = True)
-    c4j += load_disconnected_term(input_file, cov_filter, RR, weights, tracer, full = True)
+    c4j += load_disconnected_term_single(input_file, cov_filter, RR, weights, tracer, full = True)
 
     # Check matrix convergence
     check_eigval_convergence(c2j, c4j, "Jackknife")
 
     # Load in partial jackknife theoretical matrices
     c2s, c3s, c4s = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = True)
-    c4s += load_disconnected_term(input_file, cov_filter, RR, weights, tracer, full = False)
+    c4s += load_disconnected_term_single(input_file, cov_filter, RR, weights, tracer, full = False)
 
     # Now optimize for shot-noise rescaling parameter alpha
     print_function("Optimizing for the shot-noise rescaling parameter")

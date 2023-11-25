@@ -238,6 +238,19 @@ def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full
 
     return c2, c3, c4
 
+def gen_corr_tracers(ntracers: int = 2) -> list[tuple[int, int]]:
+    corr_tracers = []
+    for t2 in range(ntracers):
+        for t1 in range(t2+1):
+            corr_tracers.append((t1, t2))
+    # for ntracers = 1, gives [(0, 0)]
+    # for ntracers = 2, gives [(0, 0), (0, 1), (1, 1)], consistent with the old convention
+    # when a tracer is added, the list begins in the same way
+
+    n_corr = ntracers * (ntracers + 1) // 2
+    assert len(corr_tracers) == n_corr, "Mismatch in correlation functions counting or indices generation"
+    return corr_tracers
+
 def add_cov_terms_multi(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alphas: list[float] | np.ndarray[float], ntracers: int = 2) -> (np.ndarray[float], np.ndarray[float]):
     def construct_fields(t1: int, t2: int, t3: int, t4: int, alpha1: float, alpha2: float):
         # Reconstruct the full field for given input fields and rescaling parameters
@@ -251,17 +264,6 @@ def add_cov_terms_multi(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.nda
         full = c4[t1, t2, t3, t4] + 0.25 * alpha1 * (d_xw * c3[t1, t2, t3] + d_xz * c3[t1, t2, t4]) + 0.25 * alpha2 * (d_yw * c3[t2, t1, t3] + d_yz * c3[t2, t1, t4]) + 0.5 * alpha1 * alpha2 * (d_xw * d_yz + d_xz * d_yw) * c2[t1, t2]
         return full
 
-    corr_tracers = []
-    for t2 in range(ntracers):
-        for t1 in range(t2+1):
-            corr_tracers.append([t1, t2])
-    # for ntracers = 1, gives [[0, 0]]
-    # for ntracers = 2, gives [[0, 0], [0, 1], [1, 1]], consistent with the old convention
-    # when a tracer is added, the list begins in the same way
-
-    n_corr = ntracers * (ntracers + 1) // 2
-    assert len(corr_tracers) == n_corr, "Mismatch in correlation functions counting or indices generation"
-
     single_array_shape = list(c2.shape)[2:]
     if c2.shape != [ntracers] * 2 + single_array_shape: raise ValueError("Unexpected shape of 2-point array")
     if c3.shape != [ntracers] * 3 + single_array_shape: raise ValueError("Unexpected shape of 3-point array")
@@ -271,14 +273,15 @@ def add_cov_terms_multi(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.nda
     samples_shape = single_array_shape[:-2]
     if len(samples_shape) > 1: raise ValueError("Multiple sample axes not implemented")
 
+    corr_tracers = gen_corr_tracers(ntracers)
+    n_corr = len(corr_tracers)
+
     c_tot = np.zeros([n_corr] * 2 + samples_shape + [n_bins] * 2) # array with each individual covariance accessible
     c_comb = np.zeros(samples_shape + [n_corr * n_bins] * 2) # full array suitable for inversion
 
-    for i_corr1 in range(n_corr):
-        t1, t2 = corr_tracers[i_corr1]
+    for i_corr1, (t1, t2) in enumerate(corr_tracers):
         alpha1, alpha2 = alphas[t1], alphas[t2]
-        for i_corr2 in range(n_corr):
-            t3, t4 = corr_tracers[i_corr2]
+        for i_corr2, (t3, t4) in enumerate(corr_tracers):
             tmp = construct_fields(t1, t2, t3, t4, alpha1, alpha2)
             c_tot[i_corr1, i_corr2] = tmp
             if samples_shape: # need extra sample axis

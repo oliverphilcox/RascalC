@@ -5,98 +5,150 @@
 import numpy as np
 import sys,os
 from tqdm import tqdm
+from warnings import warn
+from utils import gen_corr_tracers, cov_filter_smu, load_matrices_multi, check_eigval_convergence, fit_shot_noise_rescaling, add_cov_terms_multi, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
-def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str, jackknife_file_22: str, weight_dir: str, file_root: str, m: int, n_samples: int, outdir: str, skip_r_bins: int = 0, print_function = print):
-    if n_samples < 2: raise ValueError("Need more than 1 subsample for matrix inversion; exiting.")
+def load_disconnected_term_multi(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float] | list[np.ndarray[float]], weights: np.ndarray[float] | list[np.ndarray[float]], full: bool = True, ntracers: int = 2) -> (np.ndarray[float], np.ndarray[float], np.ndarray[float]):
+    suffix_full = "_full" * full
 
-    skip_bins = skip_r_bins * m
+    disconnected_array_names = ["EE1", "RR1", "EE2", "RR2"]
 
-    # Create output directory
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+    EE_RR_single_array_shape = list(input_data[disconnected_array_names[0] + "_11" + suffix_full][cov_filter].shape)
 
+    disconnected_arrays = np.zeros([len(disconnected_array_names)] + [ntracers] * 2 + EE_RR_single_array_shape)
+
+    # put EE1/2 and RR1/2 into arrays with tracer indices
+    for matrix_name, matrices in input_data.values():
+        matrix_name_split = matrix_name.split("_")
+        if len(matrix_name_split) != 2 + full: continue # should skip full if not loading full, and skip subsamples if loading full
+        if full and matrix_name_split[-1] != "full": continue # double-check for safety
+        matrix_name = matrix_name_split[0]
+        if matrix_name not in disconnected_array_names: continue # only process the disconnected arrays
+        matrix_index = disconnected_array_names.index(matrix_name)
+        index = matrix_name_split[1]
+        if len(index) != 2: raise ValueError(f"Wrong 2-point index length for {index}")
+        t1, t2 = [int(c)-1 for c in index]
+        # assign the array with normal tracer order
+        disconnected_arrays[matrix_index, t1, t2] = matrices
+        # assign the array with swapped tracers, only makes sense if they are not the same
+        if t1 != t2:
+            disconnected_arrays[matrix_index, t2, t1] = matrices
+
+    RR_full = np.zeros([ntracers] * 2 + list(RR[0].shape))
+    weights_full = np.zeros([ntracers] * 2 + list(weights[0].shape))
+
+    # put full RR and weights into arrays with tracer indices
+    for i_corr, (t1, t2) in gen_corr_tracers(ntracers):
+        # assign the arrays with normal tracer order
+        RR_full[t1, t2] = RR[i_corr]
+        weights_full[t1, t2] = weights[i_corr]
+        # assign the arrays with swapped tracers, only makes sense if they are not the same
+        if t1 != t2:
+            RR_full[t2, t1] = RR[i_corr]
+            weights_full[t2, t1] = weights[i_corr]
+
+    c4_single_array_shape = np.array(input_data["c4_11,11" + suffix_full].shape) # take reference shape from c4_11,11, with _full suffix if loading full
+    c4_single_array_shape[:-2] = np.array(np.zeros(c4_single_array_shape[:-2])[cov_filter].shape) # account for the shape change with cov_filter
+    c4_single_array_shape = list(c4_single_array_shape)
+
+    cx = np.zeros([ntracers] * 4 + c4_single_array_shape)
+
+    # Finally, fill cx
+    for t1 in range(ntracers):
+        for t2 in range(ntracers):
+            for t3 in range(ntracers):
+                for t4 in range(ntracers):
+                    RRaRRb = np.matmul(np.asmatrix(RR_full[t1, t2]).T, np.asmatrix(RR_full[t3, t4]))
+                    fact = 1 - np.matmul(np.asmatrix(weights_full[t1, t2]).T, weights_full[t3, t4])
+                    norm = RRaRRb * fact
+
+                    def compute_disconnected_term(EEaA1: np.ndarray[float], RRaA1: np.ndarray[float], EEaA2: np.ndarray[float], RRaA2: np.ndarray[float]):
+                        w_aA1 = RRaA1 / RRaA1.sum(axis = 0)
+                        w_aA2 = RRaA2 / RRaA2.sum(axis = 0)
+                        diff1 = EEaA1 - w_aA1 * EEaA1.sum(axis = 0)
+                        diff2 = EEaA2 - w_aA2 * EEaA2.sum(axis = 0)
+                        cx = np.matmul(diff1.T, diff2) / norm
+                        return cx[cov_filter]
+                    
+                    def get_disconnected_terms(disconnected_arrays: np.ndarray[float]):
+                        # applies symmetry
+                        # uses the fact that first two arrays are EE1 and RR1 and the last two are EE2 and RR2
+                        return 0.5 * (compute_disconnected_term(*disconnected_arrays[:2, t1, t2], *disconnected_arrays[-2:, t3, t4]) + compute_disconnected_term(*disconnected_arrays[-2:, t1, t2], *disconnected_arrays[:2, t3, t4]))
+                        # note that tracer indices are NOT generally swappable because of the way the norm is fixed beforehand, while EE/RR 1/2 with the same indices are in principle interchangeable
+                    
+                    if full: # 2D arrays
+                        cx[t1, t2, t3, t4] = get_disconnected_terms(disconnected_arrays)
+                    else:
+                        cx[t1, t2, t3, t4] = np.array(list(map(get_disconnected_terms, np.moveaxis(disconnected_arrays, 3, 0))))
+                        # first axis of disconnected_arrays is the array type, the next two are tracer indices, then comes the subsample axis, which we put in front and loop over
+
+    return cx
+
+def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str, jackknife_file_22: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int = 0, print_function = print):
     ## First load jackknife xi estimates from data:
     print_function("Loading correlation function jackknife estimates")
-    xi_jack_11 = np.loadtxt(jackknife_file_11, skiprows=2)[:, skip_bins:]
-    xi_jack_12 = np.loadtxt(jackknife_file_12, skiprows=2)[:, skip_bins:]
-    xi_jack_22 = np.loadtxt(jackknife_file_22, skiprows=2)[:, skip_bins:]
-    if not (xi_jack_11.shape==xi_jack_22.shape==xi_jack_12.shape): raise ValueError('Must have the same number of jackknifes for each field.')
+    xi_jack_11 = np.loadtxt(jackknife_file_11, skiprows=2)
+    xi_jack_12 = np.loadtxt(jackknife_file_12, skiprows=2)
+    xi_jack_22 = np.loadtxt(jackknife_file_22, skiprows=2)
+    if not (xi_jack_11.shape == xi_jack_22.shape == xi_jack_12.shape): raise ValueError('Must have the same configuration of jackknifes for each field.')
 
     n_bins = xi_jack_11.shape[1] # total bins
     n_jack = xi_jack_11.shape[0] # total jackknives
-    n = n_bins // m + skip_r_bins # radial bins
-    xi_jack_all = [xi_jack_11,xi_jack_22]
+    n = n_bins // m # radial bins
 
     # First exclude any dodgy jackknife regions
     good_jk = np.where(np.all(np.isfinite(xi_jack_11) & np.isfinite(xi_jack_12) & np.isfinite(xi_jack_22), axis=1))[0] # all xi in jackknife have to be normal numbers
-    print_function("Using %d out of %d jackknives"%(len(good_jk),n_jack))
-
-    # Initialize full data covariance matrix (ordering [xi_11, xi_12, xi_22])
-    data_cov = np.zeros([3*n_bins,3*n_bins])
+    if len(good_jk) < n_jack:
+        warn("Using only %d out of %d jackknives - some xi values were not finite" % (len(good_jk), n_jack))
 
     xi_all = np.zeros([len(good_jk),3*n_bins])
     weights_all = np.zeros_like(xi_all)
 
     # Load in all xi functions
-    xi_all[:,:n_bins]=xi_jack_11[good_jk]
-    xi_all[:,n_bins:2*n_bins]=xi_jack_12[good_jk]
-    xi_all[:,2*n_bins:]=xi_jack_22[good_jk]
+    xi_all[:, :n_bins] = xi_jack_11[good_jk]
+    xi_all[:, n_bins:2*n_bins] = xi_jack_12[good_jk]
+    xi_all[:, 2*n_bins:] = xi_jack_22[good_jk]
 
     # Load in all weights:
     weight_file11 = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_11.dat'%(n,m,n_jack))
     weight_file12 = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_12.dat'%(n,m,n_jack))
     weight_file22 = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_22.dat'%(n,m,n_jack))
-    weights11 = np.loadtxt(weight_file11)[:, 1+skip_bins:]
-    weights12 = np.loadtxt(weight_file12)[:, 1+skip_bins:]
-    weights22 = np.loadtxt(weight_file22)[:, 1+skip_bins:]
-    weights_all[:,:n_bins] = weights11[good_jk]
-    weights_all[:,n_bins:2*n_bins] = weights12[good_jk]
-    weights_all[:,2*n_bins:] = weights22[good_jk]
-    weights_all /= np.sum(weights_all, axis=0) # renormalize after possibly discarding some jackknives
+    weights11 = np.loadtxt(weight_file11)[:, 1:]
+    weights12 = np.loadtxt(weight_file12)[:, 1:]
+    weights22 = np.loadtxt(weight_file22)[:, 1:]
+    weights = np.array([these_weights[good_jk] for these_weights in (weights11, weights12, weights22)])
+    weights /= np.sum(weights, axis = 1) # renormalize after possibly discarding some jackknives
+    weights_all = weights.swapaxes(0, 1).reshape(len(good_jk), 3*n_bins)
 
     # Compute full covariance matrix:
-    tmp_cov = np.zeros([len(good_jk),3*n_bins])
-    mean_xi = np.sum(xi_all*weights_all, axis=0)
-    tmp_cov = weights_all*(xi_all-mean_xi)
+    tmp_cov = np.zeros([len(good_jk), 3*n_bins])
+    mean_xi = np.sum(xi_all * weights_all, axis=0)
+    tmp_cov = weights_all * (xi_all-mean_xi)
 
     print_function("Computing full data covariance matrix")
     # Now compute covariance matrix:
-    num = np.matmul(tmp_cov.T,tmp_cov)
-    denom = np.matmul(weights_all.T,weights_all)
+    num = np.matmul(tmp_cov.T, tmp_cov)
+    denom = np.matmul(weights_all.T, weights_all)
     data_cov = num/(np.ones_like(denom)-denom)
 
-    def load_matrices(index,field,jack=True):
-        """Load intermediate or full autocovariance matrices.
-        The field parameter controls which field covariance matrix to load"""
-        if jack:
-            cov_root = os.path.join(file_root, 'CovMatricesJack/')
-        else:
-            cov_root = os.path.join(file_root, 'CovMatricesAll/')
-        suffix2 = '_n%d_m%d_%s%s_%s.txt'%(n,m,field,field,index)
-        suffix3 = '_n%d_m%d_%s,%s%s_%s.txt'%(n,m,field,field,field,index)
-        suffix4 = '_n%d_m%d_%s%s,%s%s_%s.txt'%(n,m,field,field,field,field,index)
-        c2 = np.diag(np.loadtxt(cov_root+'c2'+suffix2)[skip_bins:])
-        c3 = np.loadtxt(cov_root+'c3'+suffix3)[skip_bins:, skip_bins:]
-        c4 = np.loadtxt(cov_root+'c4'+suffix4)[skip_bins:, skip_bins:]
-        if jack:
-            EEaA1 = np.loadtxt(cov_root+'EE1'+suffix2)[:, skip_bins:]
-            EEaA2 = np.loadtxt(cov_root+'EE2'+suffix2)[:, skip_bins:]
-            RRaA1 = np.loadtxt(cov_root+'RR1'+suffix2)[:, skip_bins:]
-            RRaA2 = np.loadtxt(cov_root+'RR2'+suffix2)[:, skip_bins:]
+    # Load in all RR counts:
+    RR_file11 = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_11.dat'%(n,m,n_jack))
+    RR_file12 = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_12.dat'%(n,m,n_jack))
+    RR_file22 = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_22.dat'%(n,m,n_jack))
+    RR11 = np.loadtxt(RR_file11)[:, 1:]
+    RR12 = np.loadtxt(RR_file12)[:, 1:]
+    RR22 = np.loadtxt(RR_file22)[:, 1:]
+    RRs = np.array((RR11, RR12, RR22))
 
-            # Compute disconnected term
-            w_aA1 = RRaA1/np.sum(RRaA1,axis=0)
-            w_aA2 = RRaA2/np.sum(RRaA2,axis=0)
-            diff1 = EEaA1-w_aA1*EEaA1.sum(axis=0)
-            diff2 = EEaA2-w_aA2*EEaA2.sum(axis=0)
-            RRaRRb = np.matmul(np.asmatrix(RR).T,np.asmatrix(RR))
-            fact = np.ones_like(c4)-np.matmul(np.asmatrix(weights).T,np.asmatrix(weights))
-            cx = np.asarray(np.matmul(diff1.T,diff2)/np.matmul(fact,RRaRRb))
-            c4+=cx
+    cov_filter = cov_filter_smu(n, m, skip_r_bins)
 
-        # Now symmetrize and return matrices
-        return c2,0.5*(c3+c3.T),0.5*(c4+c4.T)
+    input_file = load_raw_covariances_smu(file_root, n, m, print_function)
+
+    # Create output directory
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     # Load autocovariance from data-covariance
     data_cov_11 = data_cov[:n_bins,:n_bins]
@@ -105,306 +157,72 @@ def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str,
 
     alpha_best = np.zeros(2)
 
-    indices = ['11','22']
+    # Load full jack matrices
+    c2j, c3j, c4j = load_matrices_multi(input_file, cov_filter, full = True, jack = True)
+    c4j += load_disconnected_term_multi(input_file, cov_filter, RRs, weights, full = True)
+    # Load subsample jack matrices
+    c2s, c3s, c4s = load_matrices_multi(input_file, cov_filter, full = False, jack = True)
+    c4s += load_disconnected_term_multi(input_file, cov_filter, RRs, weights, full = False)
 
     ## Optimize for alpha_1 and alpha_2 separately.
-    for i,index in enumerate(indices):
+    for t, this_data_cov in enumerate(auto_data_cov):
 
-        RR_file = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_%s.dat' % (n,m,n_jack,index))
-        weight_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_%s.dat' % (n,m,n_jack,index))
-        print_function("Loading weights file from %s" % weight_file)
-        weights = np.loadtxt(weight_file)[:, 1+skip_bins:]
-        print_function("Loading weights file from %s" % RR_file)
-        RR=np.loadtxt(RR_file)[skip_bins:]
-
-        # Filter out bad jackknifes
-        xi_jack = xi_jack_all[i][good_jk]
-        weights = weights[good_jk]
-
-        # Read in data covariance matrix
-        this_data_cov = auto_data_cov[i]
-
-        # Load in full jackknife theoretical matrices
-        print_function("Loading best estimate of jackknife covariance matrix for field %d"%(i+1))
-        c2j,c3j,c4j=load_matrices('full',i+1)
+        # Load single-tracer parts
+        this_c2j = c2j[t, t]
+        this_c2s = c2s[t, t]
+        this_c3j = c3j[t, t, t]
+        this_c3s = c3s[t, t, t]
+        this_c4j = c4j[t, t, t, t]
+        this_c4s = c4s[t, t, t, t]
 
         # Check matrix convergence
-        from numpy.linalg import eigvalsh
-        eig_c4 = eigvalsh(c4j)
-        eig_c2 = eigvalsh(c2j)
-        if min(eig_c4)<-1.*min(eig_c2):
-            raise ValueError("Jackknife 4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = %.2e, min eigenvalue of C2 = %.2e" % (min(eig_c4), min(eig_c2)))
-
-        # Load in partial jackknife theoretical matrices
-        c2s, c3s, c4s = [], [], []
-        for j in tqdm(range(n_samples), f"Loading field {i+1} jackknife subsamples"):
-            c2,c3,c4=load_matrices(j,i+1)
-            c2s.append(c2)
-            c3s.append(c3)
-            c4s.append(c4)
-        c2s, c3s, c4s = [np.array(a) for a in (c2s, c3s, c4s)]
-
-        # Compute inverted matrix
-        def Psi(alpha):
-            """Compute precision matrix from covariance matrix, removing quadratic order bias terms."""
-            c_tot = c2j*alpha**2.+c3j*alpha+c4j
-            partial_cov = alpha**2 * c2s + alpha * c3s + c4s
-            sum_partial_cov = np.sum(partial_cov, axis=0)
-            tmp=0.
-            for i in range(n_samples):
-                c_excl_i = (sum_partial_cov - partial_cov[i]) / (n_samples - 1)
-                tmp+=np.matmul(np.linalg.inv(c_excl_i), partial_cov[i])
-            D_est=(n_samples-1.)/n_samples * (-1.*np.eye(n_bins) + tmp/n_samples)
-            Psi = np.matmul(np.eye(n_bins)-D_est,np.linalg.inv(c_tot))
-            return Psi
-
-        def neg_log_L1(alpha):
-            """Return negative log L1 likelihood between data and theory covariance matrices"""
-            Psi_alpha = Psi(alpha)
-            logdet = np.linalg.slogdet(Psi_alpha)
-            if logdet[0]<0:
-                # Remove any dodgy inversions
-                return np.inf
-            return np.trace(np.matmul(Psi_alpha,this_data_cov))-logdet[1]
+        check_eigval_convergence(this_c2j, this_c4j, f"Tracer {t+1} jackknife")
 
         # Now optimize for shot-noise rescaling parameter alpha
-        print_function("Optimizing for the shot-noise rescaling parameter alpha_%d"%(i+1))
-        from scipy.optimize import fmin
-        optimal_alpha = fmin(neg_log_L1,1.)
-        print_function("Optimization complete for field %d - optimal rescaling parameter is alpha_%d = %.6f"%(i+1,i+1,optimal_alpha))
+        print_function("Optimizing for the shot-noise rescaling parameter alpha_%d" % (t+1))
+        optimal_alpha = fit_shot_noise_rescaling(this_data_cov, this_c2j, this_c3j, this_c4j, this_c2s, this_c3s, this_c4s)
+        print_function("Optimization complete for field %d - optimal rescaling parameter is alpha_%d = %.6f" % (t+1, t+1,optimal_alpha))
 
-        alpha_best[i]=optimal_alpha
-
-    # input indices
-    I1 = [1,1,1,1,1,2,2]
-    I2 = [1,2,2,2,1,1,2]
-    I3 = [1,1,2,1,2,2,2]
-    I4 = [1,1,1,2,2,2,2]
-
-    def matrix_readin(suffix='full'):
-        """Read in multi-field covariance matrices. This returns lists of full and jackknife covariance matrices"""
-
-        ## Define arrays for covariance matrices
-        c2s, c2js = np.zeros([2, 2, 2, n_bins, n_bins])
-        RRs = np.zeros([2, 2, n_bins])
-        diff1s, diff2s, JK_weights = np.zeros([3, 2, 2, n_jack, n_bins])
-        c3s, c3js = np.zeros([2, 2, 2, 2, n_bins, n_bins])
-        c4s, c4js = np.zeros([2, 2, 2, 2, 2, n_bins, n_bins])
-        ## Normalization arrays for covariance matrices
-        n2s = np.zeros([2, 2])
-        n3s = np.zeros([2, 2, 2])
-        n4s = np.zeros([2, 2, 2, 2])
-
-        for ii in range(len(I1)):
-            index4 = "%d%d,%d%d" % (I1[ii], I2[ii], I3[ii], I4[ii])
-            index3 = "%d,%d%d" % (I2[ii], I1[ii], I3[ii])
-            index2 = "%d%d" % (I1[ii], I2[ii])
-
-            j1, j2, j3,j4=I1[ii]-1, I2[ii]-1, I3[ii]-1, I4[ii]-1 # internal indexing
-
-            # Define input files
-            file_root_all = os.path.join(file_root, 'CovMatricesAll/')
-            file_root_jack = os.path.join(file_root, 'CovMatricesJack/')
-            jndex = index2
-            if jndex[0] > jndex[1]: # e.g. "21"
-                jndex = jndex[::-1] # to get correct weights
-            rr_true_file = os.path.join(weight_dir, 'binned_pair_counts_n%d_m%d_j%d_%s.dat' % (n, m, n_jack, jndex))
-            weights_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_%s.dat' % (n, m, n_jack, jndex))
-
-            if suffix == 'full':
-                counts_file = file_root_all + 'total_counts_n%d_m%d_%s.txt' % (n, m, index4)
-                # Load total number of counts
-                try:
-                    total_counts = np.loadtxt(counts_file)
-                    print_function("Reading in integral components for C_{%s}, which used %.2e pairs, %.2e triples and %.2e quads of particles" % (index4, total_counts[0], total_counts[1], total_counts[2]))
-                except (FileNotFoundError, IOError): pass
-            else:
-                print_function("Reading in integral components for C_{%s}, iteration %s" % (index4, suffix))
-
-            # Load jackknife weights
-            weights = np.loadtxt(weights_file)[:, 1:]
-
-            # Load pair counts
-            rr_true = np.loadtxt(rr_true_file)
-
-            # Load full integrals
-            c2 = np.diag(np.loadtxt(file_root_all + 'c2_n%d_m%d_%s_%s.txt' % (n, m, index2, suffix))[skip_bins:])
-            c3 = np.loadtxt(file_root_all + 'c3_n%d_m%d_%s_%s.txt' % (n, m, index3, suffix))[skip_bins:, skip_bins:]
-            c4 = np.loadtxt(file_root_all + 'c4_n%d_m%d_%s_%s.txt' % (n, m, index4, suffix))[skip_bins:, skip_bins:]
-
-            # Load jackknife integrals
-            c2j = np.diag(np.loadtxt(file_root_jack + 'c2_n%d_m%d_%s_%s.txt' % (n, m, index2, suffix))[skip_bins:])
-            c3j = np.loadtxt(file_root_jack + 'c3_n%d_m%d_%s_%s.txt' % (n, m, index3, suffix))[skip_bins:, skip_bins:]
-            c4j = np.loadtxt(file_root_jack + 'c4_n%d_m%d_%s_%s.txt' % (n, m, index4, suffix))[skip_bins:, skip_bins:]
-
-            # Define cxj components
-            EEaA1 = np.loadtxt(file_root_jack + 'EE1_n%d_m%d_%s_%s.txt' % (n, m, index2, suffix))[:, skip_bins:]
-            EEaA2 = np.loadtxt(file_root_jack + 'EE2_n%d_m%d_%s_%s.txt' % (n, m, index2, suffix))[:, skip_bins:]
-            RRaA1 = np.loadtxt(file_root_jack + 'RR1_n%d_m%d_%s_%s.txt' % (n, m, index2, suffix))[:, skip_bins:]
-            RRaA2 = np.loadtxt(file_root_jack + 'RR2_n%d_m%d_%s_%s.txt' % (n, m, index2, suffix))[:, skip_bins:]
-            w_aA1 = RRaA1/np.sum(RRaA1,axis=0)
-            w_aA2 = RRaA2/np.sum(RRaA2,axis=0)
-            EEa1 = np.sum(EEaA1, axis=0)
-            EEa2 = np.sum(EEaA2, axis=0)
-            diff1 = EEaA1-w_aA1*EEa1
-            diff2 = EEaA2-w_aA2*EEa2
-
-            # Save 2-point components
-            RRs[j1, j2] += rr_true
-            JK_weights[j1, j2] += weights
-            c2s[j1, j2] += c2
-            c2js[j1, j2] += c2j
-            diff1s[j1, j2] += diff1
-            diff2s[j1, j2] += diff2
-            n2s[j1, j2] += 1
-            # interchange indices
-            RRs[j2, j1] += rr_true
-            JK_weights[j2, j1] += weights
-            c2s[j2, j1] += c2.T
-            c2js[j2, j1] += c2j.T
-            diff1s[j2, j1] += diff1
-            diff2s[j2, j1] += diff2
-            n2s[j2, j1] += 1
-
-            # 3-point components
-            c3s[j2, j1, j3] += c3
-            c3js[j2, j1, j3] += c3j
-            n3s[j2, j1, j3] += 1
-            # interchange last two indices
-            c3s[j2, j3, j1] += c3.T
-            c3js[j2, j3, j1] += c3j.T
-            n3s[j2, j3, j1] += 1
-
-            # All symmetries possible for c4 without transpositions
-            permutations4 = ((j1, j2, j3, j4), # original
-                            (j2, j1, j3, j4), # first two indices interchanged
-                            (j1, j2, j4, j3), # last two indices interchanged
-                            (j2, j1, j4, j3), # first and last two indices interchanged at the same time
-                            )
-            
-            # 4-point components
-            for (i1, i2, i3, i4) in permutations4:
-                c4s[i1, i2, i3, i4] += c4
-                c4js[i1, i2, i3, i4] += c4j
-                n4s[i1, i2, i3, i4] += 1
-                # now swap indices and transpose
-                c4s[i3, i4, i1, i2] += c4.T
-                c4js[i3, i4, i1, i2] += c4j.T
-                n4s[i3, i4, i1, i2] += 1
-        
-        # normalize the 2-point components
-        RRs /= n2s[:, :, None, None]
-        JK_weights /= n2s[:, :, None, None]
-        c2s /= n2s[:, :, None, None]
-        c2js /= n2s[:, :, None, None]
-        diff1s /= n2s[:, :, None, None]
-        diff2s /= n2s[:, :, None, None]
-        # 3-point components
-        c3s /= n3s[:, :, :, None, None]
-        c3js /= n3s[:, :, :, None, None]
-        # 4-point components
-        c4s /= n4s[:, :, :, :, None, None]
-        c4js /= n4s[:, :, :, :, None, None]
-
-        def construct_fields(j1, j2, j3, j4, alpha1, alpha2):
-            # Reconstruct the full field for given input fields and rescaling parameters
-
-            # Create kronecker deltas
-            d_xw = (j1 == j4)
-            d_xz = (j1 == j3)
-            d_yw = (j2 == j4)
-            d_yz = (j2 == j3)
-
-            # Compute disconnected piece
-            t1 = np.matmul(diff1s[j1, j2].T, diff2s[j3, j4])
-            t2 = np.asarray(np.matmul(np.asmatrix(RRs[j1, j2]).T, np.asmatrix(RRs[j3, j4])))
-            t3 = 1. - np.matmul(JK_weights[j1, j2].T, JK_weights[j3, j4])
-            cxj = t1/(t2*t3)
-
-            full = c4s[j1, j2, j3, j4] + 0.25 * alpha1 * (d_xw * c3s[j1, j2, j3] + d_xz * c3s[j1, j2, j4]) + 0.25 * alpha2 * (d_yw * c3s[j2, j1, j3] + d_yz * c3s[j2, j1, j4]) + 0.5 * alpha1 * alpha2 * (d_xw * d_yz + d_xz * d_yw) * c2s[j1, j2]
-            jack = c4js[j1, j2, j3, j4] + 0.25 * alpha1 * (d_xw * c3js[j1, j2, j3] + d_xz * c3js[j1, j2, j4]) + 0.25 * alpha2 * (d_yw * c3js[j2, j1, j3] + d_yz * c3js[j2, j1, j4]) + 0.5 * alpha1 * alpha2 * (d_xw * d_yz + d_xz * d_yw) * c2js[j1, j2] + cxj
-            return full, jack
-
-        # Index in ordering (P_11,P_12,P_22)
-        cov_indices = [[0, 0], [0, 1], [1, 1]]
-
-        c_tot = np.zeros([3, 3, n_bins, n_bins]) # array with each individual covariance accessible
-        cj_tot = np.zeros([3, 3, n_bins, n_bins])
-        c_comb = np.zeros([3*n_bins, 3*n_bins]) # full array suitable for inversion
-        cj_comb = np.zeros([3*n_bins, 3*n_bins])
-
-        for j1 in range(3):
-            ind1, ind2 = cov_indices[j1]
-            alpha_1, alpha_2 = alpha_best[[ind1, ind2]]
-            for j2 in range(3):
-                ind3, ind4 = cov_indices[j2]
-                tmp, tmpj = construct_fields(ind1, ind2, ind3, ind4, alpha_1, alpha_2)
-                c_tot[j1, j2] = tmp
-                cj_tot[j1, j2] = tmpj
-                c_comb[j1*n_bins:(j1+1)*n_bins, j2*n_bins:(j2+1)*n_bins] = tmp
-                cj_comb[j1*n_bins:(j1+1)*n_bins, j2*n_bins:(j2+1)*n_bins] = tmpj
-
-        return c_tot, 0.5*(c_comb+c_comb.T), cj_tot, 0.5*(cj_comb+cj_comb.T) # add all remaining symmetries
+        alpha_best[t] = optimal_alpha
 
     # Load full matrices
-    c_tot,c_comb, cj_tot, cj_comb = matrix_readin()
-    n_bins = len(c_tot[0,0])
+    c2f, c3f, c4f = load_matrices_multi(input_file, cov_filter, full = True, jack = False)
+    c_tot, c_comb = add_cov_terms_multi(c2f, c3f, c4f, alpha_best)
 
     # Check positive definiteness
-    if np.any(np.linalg.eigvalsh(c_comb) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
+    check_positive_definiteness(c_comb)
 
-    # Load subsampled matrices
-    c_subsamples,cj_subsamples=[],[]
-    for i in tqdm(range(n_samples), "Loading full and jackknife subsamples"):
-        _, tmp, _, tmpj = matrix_readin(i)
-        c_subsamples.append(tmp)
-        cj_subsamples.append(tmpj)
+    # Compute subsampled matrices (all submatrices combined)
+    c2fs, c3fs, c4fs = load_matrices_multi(input_file, cov_filter, full = False, jack = False)
+    _, c_comb_subsamples = add_cov_terms_multi(c2fs, c3fs, c4fs, alpha_best)
+    
+    # Compute jackknive totals
+    cj_tot, cj_comb = add_cov_terms_multi(c2j, c3j, c4j, alpha_best)
+    _, cj_comb_subsamples = add_cov_terms_multi(c2s, c3s, c4s, alpha_best)
 
+    # Now compute precision matrices
+    D_est, prec_comb = compute_D_precision_matrix(c_comb_subsamples, c_comb)
+    Dj_est, precj_comb = compute_D_precision_matrix(cj_comb_subsamples, cj_comb)
+    print_function("Full precision matrix estimate computed")
 
-    # Now compute all precision matrices
-    iden = np.eye(len(c_comb))
+    # Now compute effective N:
+    N_eff = compute_N_eff_D(D_est, print_function)
+    # Nj_eff = compute_N_eff_D(Dj_est, print_function)
 
-    def compute_precision(entire_matrix, subsamples):
-        summ=0.
-        sum_subsamples = np.sum(subsamples, axis=0)
-        for i in range(n_samples):
-            c_excl_i = (sum_subsamples - subsamples[i]) / (n_samples - 1)
-            summ+=np.matmul(np.linalg.inv(c_excl_i), subsamples[i])
-        D_est = (summ/n_samples-iden)*(n_samples-1.)/n_samples
-        logdetD = np.linalg.slogdet(D_est)
-        if logdetD[0]<0:
-            N_eff_D = 0.
-        else:
-            D_value = logdetD[0]*np.exp(logdetD[1]/n_bins)
-            N_eff_D = (n_bins+1.)/D_value+1.
-        precision = np.matmul(iden-D_est,np.linalg.inv(entire_matrix))
-        return precision,N_eff_D,D_est
-
-    print_function("Computing precision matrices and N_eff")
-    prec_comb,N_eff,D_est = compute_precision(c_comb,c_subsamples)
-    precj_comb,Nj_eff,Dj_est = compute_precision(cj_comb,cj_subsamples)
+    output_dict = {"full_theory_covariance": c_comb, "all_covariances": c_tot, "shot_noise_rescaling": alpha_best, "full_theory_precision": prec_comb, "N_eff": N_eff, "full_theory_D_matrix": D_est, "individual_theory_covariances": c_comb_subsamples, "jackknife_data_covariance": data_cov, "jackknife_theory_covariance": cj_comb, "all_jackknife_covariances": cj_tot, "jackknife_theory_precision": precj_comb, "individual_theory_jackknife_covariances": cj_comb_subsamples}
 
     output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz' % (n, m, n_jack))
 
-    np.savez(output_name, jackknife_theory_covariance=cj_comb,
-            full_theory_covariance=c_comb,
-            all_covariances=c_tot,
-            all_jackknife_covariances=cj_tot,
-            shot_noise_rescaling=alpha_best,
-            full_theory_precision=prec_comb,
-            jackknife_theory_precision=precj_comb,
-            N_eff=N_eff,
-            full_theory_D_matrix=D_est,
-            jackknife_data_covariance=data_cov,
-            individual_theory_covariances=c_subsamples,
-            individual_theory_jackknife_covariances=cj_subsamples)
+    np.savez(output_name, **output_dict)
 
     print_function("Saved output covariance matrices as %s" % output_name)
 
+    return output_dict
+
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
-    if len(sys.argv) not in (9, 10):
-        print("Usage: python post_process_jackknife_multi.py {XI_JACKKNIFE_FILE_11} {XI_JACKKNIFE_FILE_12} {XI_JACKKNIFE_FILE_22} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {N_SUBSAMPLES} {OUTPUT_DIR} [{SKIP_R_BINS}]")
+    if len(sys.argv) not in (8, 9):
+        print("Usage: python post_process_jackknife_multi.py {XI_JACKKNIFE_FILE_11} {XI_JACKKNIFE_FILE_12} {XI_JACKKNIFE_FILE_22} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {OUTPUT_DIR} [{SKIP_R_BINS}]")
         sys.exit(1)
 
     jackknife_file_11 = str(sys.argv[1])
@@ -413,9 +231,8 @@ if __name__ == "__main__": # if invoked as a script
     weight_dir = str(sys.argv[4])
     file_root = str(sys.argv[5])
     m = int(sys.argv[6])
-    n_samples = int(sys.argv[7])
-    outdir = str(sys.argv[8])
+    outdir = str(sys.argv[7])
     from utils import get_arg_safe
-    skip_r_bins = get_arg_safe(9, int, 0)
+    skip_r_bins = get_arg_safe(8, int, 0)
 
-    post_process_jackknife_multi(jackknife_file_11, jackknife_file_12, jackknife_file_22, weight_dir, file_root, m, n_samples, outdir, skip_r_bins)
+    post_process_jackknife_multi(jackknife_file_11, jackknife_file_12, jackknife_file_22, weight_dir, file_root, m, outdir, skip_r_bins)
