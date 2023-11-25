@@ -8,18 +8,31 @@ from utils import symmetrized, cov_filter_smu, load_matrices_single, check_eigva
 from collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
-def compute_disconnected_term(EEaA1: np.ndarray[float], EEaA2: np.ndarray[float], RRaA1: np.ndarray[float], RRaA2: np.ndarray[float], RR: np.ndarray[float], weights: np.ndarray[float]):
-    n_bins = len(RR)
-    w_aA1 = RRaA1 / np.sum(RRaA1, axis=0)
-    w_aA2 = RRaA2 / np.sum(RRaA2, axis=0)
-    diff1 = EEaA1 - w_aA1 * EEaA1.sum(axis=0)
-    diff2 = EEaA2 - w_aA2 * EEaA2.sum(axis=0)
-    RRaRRb = np.matmul(np.asmatrix(RR).T, np.asmatrix(RR))
-    fact = np.ones((n_bins, n_bins)) - np.matmul(np.asmatrix(weights).T, np.asmatrix(weights))
-    cx = np.asarray(np.matmul(diff1.T, diff2) / np.matmul(fact, RRaRRb))
-    return symmetrized(cx)
+def load_disconnected_term(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float], weights: np.ndarray[float], tracer: int = 1, full: bool = True) -> np.ndarray[float]:
+    suffix = "_" + str(tracer) * 2 + "_full" * full
+    EEaA1 = input_data["EE1" + suffix]
+    EEaA2 = input_data["EE2" + suffix]
+    RRaA1 = input_data["RR1" + suffix]
+    RRaA2 = input_data["RR2" + suffix]
 
-def optimize_alpha_jackknife(jackknife_file: str, weight_dir: str, input_file: dict, cov_filter: np.ndarray[int], tracer: int = 1, print_function = print) -> (float, int, np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]):
+    RRaRRb = np.matmul(np.asmatrix(RR).T, np.asmatrix(RR))
+    fact = 1 - np.matmul(np.asmatrix(weights).T, np.asmatrix(weights))
+    norm = RRaRRb * fact
+
+    def compute_disconnected_term(EEaA1: np.ndarray[float], EEaA2: np.ndarray[float], RRaA1: np.ndarray[float], RRaA2: np.ndarray[float]):
+        w_aA1 = RRaA1 / RRaA1.sum(axis = 0)
+        w_aA2 = RRaA2 / RRaA2.sum(axis = 0)
+        diff1 = EEaA1 - w_aA1 * EEaA1.sum(axis = 0)
+        diff2 = EEaA2 - w_aA2 * EEaA2.sum(axis = 0)
+        cx = np.matmul(diff1.T, diff2) / norm
+        return cx[cov_filter]
+    
+    if full: # 2D array
+        return symmetrized(compute_disconnected_term(EEaA1, EEaA2, RRaA1, RRaA2))
+    else: # 3D array, need to loop over first index
+        return symmetrized(np.array([compute_disconnected_term(*_) for _ in zip(EEaA1, EEaA2, RRaA1, RRaA2)]))
+
+def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
     # Load jackknife xi estimates from data
     print_function(f"Loading correlation function jackknife estimates from {jackknife_file}")
     xi_jack = np.loadtxt(jackknife_file, skiprows=2)
@@ -53,17 +66,25 @@ def optimize_alpha_jackknife(jackknife_file: str, weight_dir: str, input_file: d
     print_function(f"Loading weights file from {RR_file}")
     RR = np.loadtxt(RR_file)
 
+    cov_filter = cov_filter_smu(n, m, skip_r_bins)
+    
+    input_file = load_raw_covariances_smu(file_root, n, m, print_function)
+
+    # Create output directory
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
     # Load in full jackknife theoretical matrices
     print_function("Loading best estimate of jackknife covariance matrix")
     c2j, c3j, c4j = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = True)
-    c4j += compute_disconnected_term(input_file[f"EE1_{tracer}{tracer}_full"], input_file[f"EE2_{tracer}{tracer}_full"], input_file[f"RR1_{tracer}{tracer}_full"], input_file[f"RR2_{tracer}{tracer}_full"], RR, weights)[cov_filter]
+    c4j += load_disconnected_term(input_file, cov_filter, RR, weights, tracer, full = True)
 
     # Check matrix convergence
     check_eigval_convergence(c2j, c4j, "Jackknife")
 
     # Load in partial jackknife theoretical matrices
     c2s, c3s, c4s = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = True)
-    c4s += np.array([compute_disconnected_term(EE1, EE2, RR1, RR2, RR, weights)[cov_filter]] for (EE1, EE2, RR1, RR2) in zip(input_file[f"EE1_{tracer}{tracer}"], input_file[f"EE2_{tracer}{tracer}"], input_file[f"RR1_{tracer}{tracer}"], input_file[f"RR2_{tracer}{tracer}"]))
+    c4s += load_disconnected_term(input_file, cov_filter, RR, weights, tracer, full = False)
 
     # Now optimize for shot-noise rescaling parameter alpha
     print_function("Optimizing for the shot-noise rescaling parameter")
@@ -74,19 +95,6 @@ def optimize_alpha_jackknife(jackknife_file: str, weight_dir: str, input_file: d
     jack_cov = add_cov_terms_single(c2j, c3j, c4j, alpha_best)
     partial_jack_cov = add_cov_terms_single(c2s, c3s, c4s, alpha_best)
     _, jack_prec = compute_D_precision_matrix(partial_jack_cov, jack_cov)
-
-    return alpha_best, n_jack, data_cov, jack_cov, partial_jack_cov, jack_prec
-
-def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
-    cov_filter = cov_filter_smu(n, m, skip_r_bins)
-    
-    input_file = load_raw_covariances_smu(file_root, n, m, print_function)
-
-    # Create output directory
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-
-    alpha_best, n_jack, data_cov, jack_cov, partial_jack_cov, jack_prec = optimize_alpha_jackknife(jackknife_file, weight_dir, input_file, cov_filter, tracer, print_function, full_return = True)
 
     # Load full covariance matrix terms
     c2f, c3f, c4f = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = False)
@@ -121,17 +129,16 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
-    if len(sys.argv) not in (6, 7):
-        print("Usage: python post_process_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {OUTPUT_DIR} [{SKIP_R_BINS}]")
+    if len(sys.argv) not in (5, 6):
+        print("Usage: python post_process_jackknife.py {XI_JACKKNIFE_FILE} {WEIGHTS_DIR} {COVARIANCE_DIR} {N_MU_BINS} {OUTPUT_DIR} [{SKIP_R_BINS}]")
         sys.exit(1)
 
     jackknife_file = str(sys.argv[1])
     weight_dir = str(sys.argv[2])
     file_root = str(sys.argv[3])
-    n = int(sys.argv[4])
-    m = int(sys.argv[5])
-    outdir = str(sys.argv[6])
+    m = int(sys.argv[4])
+    outdir = str(sys.argv[5])
     from utils import get_arg_safe
-    skip_r_bins = get_arg_safe(7, int, 0)
+    skip_r_bins = get_arg_safe(6, int, 0)
 
-    post_process_jackknife(jackknife_file, weight_dir, file_root, n, m, outdir, skip_r_bins)
+    post_process_jackknife(jackknife_file, weight_dir, file_root, m, outdir, skip_r_bins)
