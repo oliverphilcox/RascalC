@@ -24,9 +24,13 @@ def my_str_to_bool(s: str) -> bool:
     # naive conversion to bool for all non-empty strings is True, and one can't give an empty string as a command line argument, so need to make it more explicit
     return s not in ("0", "false")
 
-def symmetrized(A):
-    # symmetrize a 2D matrix
-    return 0.5 * (A + A.T)
+def transposed(A: np.ndarray):
+    # swap last two (matrix) axes
+    return A.swapaxes(-2, -1)
+
+def symmetrized(A: np.ndarray):
+    # symmetrize a 2+D matrix over the last two axes
+    return 0.5 * (A + transposed(A))
 
 def parse_FKP_arg(FKP_weights: str) -> bool | tuple[float, str]:
     if not my_str_to_bool(FKP_weights): return False
