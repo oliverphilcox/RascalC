@@ -3,7 +3,7 @@
 
 import numpy as np
 import sys, os
-from utils import cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from utils import cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
 from collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
@@ -24,7 +24,7 @@ def post_process_default(file_root: str, n: int, m: int, outdir: str, alpha: flo
     check_eigval_convergence(c2, c4)
 
     # Compute full covariance matrices and precision
-    full_cov = add_cov_terms(c2, c3, c4, alpha)
+    full_cov = add_cov_terms_single(c2, c3, c4, alpha)
 
     # Check positive definiteness
     check_positive_definiteness(full_cov)
@@ -34,7 +34,7 @@ def post_process_default(file_root: str, n: int, m: int, outdir: str, alpha: flo
     # Load in partial theoretical matrices
     c2s, c3s, c4s = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = False)
 
-    partial_cov = add_cov_terms(c2s, c3s, c4s, alpha)
+    partial_cov = add_cov_terms_single(c2s, c3s, c4s, alpha)
     full_D_est, full_prec = compute_D_precision_matrix(partial_cov, full_cov)
     print_function("Full precision matrix estimate computed")
 

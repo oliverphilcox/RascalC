@@ -4,7 +4,7 @@
 import numpy as np
 import sys, os
 from warnings import warn
-from utils import symmetrized, cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms, fit_shot_noise_rescaling, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from utils import symmetrized, cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, fit_shot_noise_rescaling, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
 from collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
@@ -71,8 +71,8 @@ def optimize_alpha_jackknife(jackknife_file: str, weight_dir: str, input_file: d
     print_function("Optimization complete - optimal rescaling parameter is %.6f"%alpha_best)
 
     # Compute jackknife covariance and precision matrices
-    jack_cov = add_cov_terms(c2j, c3j, c4j, alpha_best)
-    partial_jack_cov = add_cov_terms(c2s, c3s, c4s, alpha_best)
+    jack_cov = add_cov_terms_single(c2j, c3j, c4j, alpha_best)
+    partial_jack_cov = add_cov_terms_single(c2s, c3s, c4s, alpha_best)
     _, jack_prec = compute_D_precision_matrix(partial_jack_cov, jack_cov)
 
     return alpha_best, n_jack, data_cov, jack_cov, partial_jack_cov, jack_prec
@@ -91,7 +91,7 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     # Load full covariance matrix terms
     c2f, c3f, c4f = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = False)
     # Compute full covariance matrix
-    full_cov = add_cov_terms(c2f, c3f, c4f, alpha_best)
+    full_cov = add_cov_terms_single(c2f, c3f, c4f, alpha_best)
 
     # Check convergence
     check_eigval_convergence(c2f, c4f, "Full")
@@ -103,7 +103,7 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     print_function("Computing the full precision matrix estimate:")
     # Load in partial jackknife theoretical matrices
     c2fs, c3fs, c4fs = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = False)
-    partial_cov = add_cov_terms(c2fs, c3fs, c4fs, alpha_best)
+    partial_cov = add_cov_terms_single(c2fs, c3fs, c4fs, alpha_best)
     full_D_est, full_prec = compute_D_precision_matrix(partial_cov, full_cov)
     print_function("Full precision matrix estimate computed")    
 

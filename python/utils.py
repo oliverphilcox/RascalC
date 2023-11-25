@@ -111,8 +111,8 @@ def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], kind:
 def check_positive_definiteness(full_cov: np.ndarray[float]) -> None:
     if np.any(np.linalg.eigvalsh(full_cov) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
 
-def add_cov_terms(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alpha: float = 1) -> np.ndarray[float]:
-    return c4 + c3 * alpha + c4 * alpha**2
+def add_cov_terms_single(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alpha: float = 1) -> np.ndarray[float]:
+    return c4 + c3 * alpha + c2 * alpha**2
 
 def compute_D_precision_matrix(partial_cov: np.ndarray[float], full_cov: np.ndarray[float]) -> (np.ndarray[float], np.ndarray[float]):
     n_samples = len(partial_cov)
@@ -140,8 +140,8 @@ def compute_N_eff_D(full_D_est: np.ndarray[float], print_function = blank_functi
 
 def Psi(alpha: float, c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.ndarray[float]):
     """Compute precision matrix from covariance matrix, removing quadratic order bias terms."""
-    c_tot = add_cov_terms(c2, c3, c4, alpha)
-    partial_covs = add_cov_terms(c2s, c3s, c4s)
+    c_tot = add_cov_terms_single(c2, c3, c4, alpha)
+    partial_covs = add_cov_terms_single(c2s, c3s, c4s, alpha)
     _, Psi = compute_D_precision_matrix(partial_covs, c_tot)
     return Psi
 

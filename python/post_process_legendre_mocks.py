@@ -3,7 +3,7 @@
 
 import numpy as np
 import sys,os
-from utils import cov_filter_legendre, load_matrices_single, check_eigval_convergence, add_cov_terms, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
+from utils import cov_filter_legendre, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
 from collect_raw_covariance_matrices import load_raw_covariances_legendre
 
 
@@ -44,14 +44,14 @@ def post_process_legendre_mocks(mock_cov_file: str, file_root: str, n: int, max_
     print_function("Optimization complete - optimal rescaling parameter is %.6f" % alpha_best)
 
     # Compute full covariance matrices and precision
-    full_cov = add_cov_terms(c2f, c3f, c4f, alpha_best)
+    full_cov = add_cov_terms_single(c2f, c3f, c4f, alpha_best)
 
     # Check positive definiteness
     check_positive_definiteness(full_cov)
 
     # Compute full precision matrix
     print_function("Computing the full precision matrix estimate:")
-    partial_cov = add_cov_terms(c2s, c3s, c4s, alpha_best)
+    partial_cov = add_cov_terms_single(c2s, c3s, c4s, alpha_best)
     full_D_est, full_prec = compute_D_precision_matrix(partial_cov, full_cov)
     print_function("Full precision matrix estimate computed")
 
