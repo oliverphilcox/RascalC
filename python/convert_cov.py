@@ -2,7 +2,10 @@
 
 import numpy as np
 import sys
+from print_shot_noise_rescaling import get_shot_noise_rescaling
 
+def get_cov_header(rascalc_results_file: str):
+    return "shot_noise_rescaling = " + str(get_shot_noise_rescaling(rascalc_results_file))
 
 def load_cov(rascalc_results_file: str, print_function = print) -> np.ndarray[float]:
     with np.load(rascalc_results_file) as f:
@@ -18,4 +21,4 @@ if __name__ == "__main__": # if invoked as a script
     rascalc_results = str(sys.argv[1])
     output_cov_file = str(sys.argv[2])
 
-    np.savetxt(output_cov_file, load_cov(rascalc_results))
+    np.savetxt(output_cov_file, load_cov(rascalc_results), header = get_cov_header(rascalc_results))

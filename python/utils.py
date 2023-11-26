@@ -2,6 +2,7 @@
 # Not intended for execution from command line
 import sys, os
 import numpy as np
+import pycorr
 from warnings import warn
 from astropy.io import fits
 from scipy.optimize import fmin
@@ -74,6 +75,42 @@ def write_binning_file(out_file: str, r_edges: np.ndarray[float], print_function
     # Save bin edges array into a Corrfunc (and RascalC) radial binning file format
     np.savetxt(out_file, np.array((r_edges[:-1], r_edges[1:])).T)
     print_function("Binning file '%s' written successfully." % out_file)
+
+def fix_bad_bins_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
+    # fixes bins with negative wcounts by overwriting their content by reflection
+    # only known cause for now is self-counts (DD, RR) in bin 0, n_mu_orig/2-1 – subtraction is sometimes not precise enough, especially with float32
+    cls = xi_estimator.__class__
+    kw = {}
+    for name in xi_estimator.count_names:
+        counts = getattr(xi_estimator, name)
+        bad_bins_mask = counts.wcounts < 0
+        for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
+            warn(f"Negative {name}.wcounts ({counts.wcounts[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.wcounts[s_bin, -1-mu_bin]:.2e})")
+            counts.wcounts[s_bin, mu_bin] = counts.wcounts[s_bin, -1-mu_bin]
+        kw[name] = counts
+    return cls(**kw)
+
+def reshape_pycorr(xi_estimator: pycorr.TwoPointEstimator, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, skip_r_bins: int = 0) -> pycorr.TwoPointEstimator:
+    n_mu_orig = xi_estimator.shape[1]
+    if n_mu_orig % 2 != 0: raise ValueError("Wrapping not possible")
+    if n_mu:
+        if n_mu_orig % (2 * n_mu) != 0: raise ValueError("Angular rebinning not possible")
+        mu_factor = n_mu_orig // 2 // n_mu
+    else: mu_factor = 1 # leave the original number of mu bins
+
+    # determine the radius step in pycorr
+    r_steps_orig = np.diff(xi_estimator.edges[0])
+    r_step_orig = np.mean(r_steps_orig)
+    if not np.allclose(r_steps_orig, r_step_orig, rtol=5e-3, atol=5e-3): raise ValueError("Binning appears not linear with integer step; such case is not supported")
+    r_factor_exact = r_step_orig / r_step
+    r_factor = int(np.rint(r_factor_exact))
+    if not np.allclose(r_factor, r_factor_exact, rtol=5e-3): raise ValueError("Radial rebinning seems impossible")
+
+    # Apply r_max cut
+    r_values = xi_estimator.sepavg(axis = 0)
+    xi_estimator = xi_estimator[r_values <= r_max]
+
+    return fix_bad_bins_pycorr(xi_estimator[skip_r_bins * r_factor:])[::r_factor, ::mu_factor].wrap() # first skip bins, then fix bad bins, then rebin and wrap to positive mu
 
 def cov_filter_smu(n: int, m: int, skip_r_bins: int = 0):
     indices_1d = np.arange(m * skip_r_bins, m * n)
