@@ -8,23 +8,23 @@ from .utils import blank_function
 
 
 # methods to assess similarity
-def rms_eig_inv_test_covs(C1, C2):
+def rms_eig_inv_test_covs(C1: np.ndarray[float], C2: np.ndarray[float]) -> float:
     Psi1 = np.linalg.inv(C1)
     N = len(C2)
     tmp = Psi1.dot(C2) - np.eye(N)
     return np.sqrt(np.sum(np.diag(tmp.dot(tmp))) / N)
 
-def KL_div_covs(C1, C2):
+def KL_div_covs(C1: np.ndarray[float], C2: np.ndarray[float]) -> float:
     Psi1 = np.linalg.inv(C1)
     Psi1C2 = Psi1.dot(C2)
     return (np.trace(Psi1C2) - len(C2) - np.log(np.linalg.det(Psi1C2)))/2
 
-def chi2_red_covs(C1, C2):
+def chi2_red_covs(C1: np.ndarray[float], C2: np.ndarray[float]) -> float:
     Psi1 = np.linalg.inv(C1)
     Psi1C2 = Psi1.dot(C2)
     return np.trace(Psi1C2)/len(C2)
 
-def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_function = blank_function) -> dict:
+def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_function = blank_function) -> dict[str, float]:
     result = dict()
 
     result["R_inv"] = (rms_eig_inv_test_covs(cov_first, cov_second), rms_eig_inv_test_covs(cov_second, cov_first))
@@ -38,7 +38,7 @@ def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_f
 
     return result
 
-def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: int | None = None, print_function = blank_function) -> dict:
+def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, float]]:
     if n_samples is None: n_samples = len(c_samples)
     n_samples_2 = n_samples // 2
 
@@ -56,21 +56,19 @@ def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: 
 
     return result
 
-def convergence_check_extra(rascalc_results_file: str, n_samples: int | None = None, print_function = blank_function) -> dict:
-    with np.load(rascalc_results_file) as f:
-        c_samples = f["individual_theory_covariances"]
-        jack_key = "individual_theory_jackknife_covariances"
-        do_jack = (jack_key in f.keys())
-        if do_jack: cj_samples = f[jack_key]
-
-    result = dict()
-    
+def convergence_check_extra(rascalc_results: dict[str], n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, dict[str, float]]]:
     print_function("Full covariance")
-    result["full"] = convergence_check_extra_splittings(c_samples, n_samples, print_function)
-    if do_jack:
+    result = {"full": convergence_check_extra_splittings(rascalc_results["individual_theory_covariances"], n_samples, print_function)}
+
+    jack_key = "individual_theory_jackknife_covariances"
+    if jack_key in rascalc_results.keys():
         print_function("Jack covariance")
-        result["jack"] = convergence_check_extra_splittings(cj_samples, n_samples, print_function)
+        result["jack"] = convergence_check_extra_splittings(rascalc_results[jack_key], n_samples, print_function)
     return result
+
+def convergence_check_extra_file(rascalc_results_file: str, n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, dict[str, float]]]:
+    with np.load(rascalc_results_file) as f:
+        return convergence_check_extra(f, n_samples, print_function)
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
@@ -83,4 +81,4 @@ if __name__ == "__main__": # if invoked as a script
     from .utils import get_arg_safe
     n_samples = get_arg_safe(2, int)
 
-    convergence_check_extra(rascalc_results, n_samples, print_function = print)
+    convergence_check_extra_file(rascalc_results, n_samples, print_function = print)
