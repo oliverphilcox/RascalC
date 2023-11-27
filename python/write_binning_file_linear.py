@@ -2,26 +2,23 @@
 
 import sys
 import numpy as np
+from .utils import write_binning_file
 
-if len(sys.argv)<5:
-    print("Please specify input parameters in the form {N_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}.")
-    sys.exit(1)
-nrbins = int(sys.argv[1])
-r_min = float(sys.argv[2])
-r_max = float(sys.argv[3])
-out_file = str(sys.argv[4])
 
-print("Using LINEAR binning");
+def write_binning_file_linear(out_file: str, r_min: float, r_max: float, nrbins: int, print_function = print):
+    print_function("Using LINEAR binning")
+    # Define radial bins
+    r_edges = np.linspace(r_min, r_max, nrbins+1)
+    if r_edges[0] <= 1e-4: r_edges[0] = 1e-4 # exclude very small separations for stability
+    write_binning_file(out_file, r_edges, print_function)
 
-# Define radial bins
-rbins = np.linspace(r_min,r_max,nrbins+1)
+if __name__ == "__main__": # if invoked as a script
+    if len(sys.argv)<5:
+        print("Please specify input parameters in the form {N_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}.")
+        sys.exit(1)
+    nrbins = int(sys.argv[1])
+    r_min = float(sys.argv[2])
+    r_max = float(sys.argv[3])
+    out_file = str(sys.argv[4])
 
-if rbins[0]<=1e-4:
-    rbins[0]=1e-4 # for stability
-
-# PRINT binning:
-with open(out_file,'w+') as writefile:
-    for i in range(nrbins-1):
-        writefile.write("%.8f\t%.8f\n" %(rbins[i],rbins[i+1]))
-    writefile.write("%.8f\t%.8f" %(rbins[nrbins-1],rbins[nrbins]))
-print("Binning file '%s' written successfully."%out_file)
+    write_binning_file_linear(out_file, r_min, r_max, nrbins)

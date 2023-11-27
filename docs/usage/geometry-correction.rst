@@ -69,10 +69,24 @@ See the :ref:`RR_counts` parameters above. Additionally;
 
 **Notes**:
 
-- **NB:** For aperiodic data, this assumes that the weights are FKP weights, such that they can be used to find the random number density at each galaxy position. This is not assumed for periodic data (where number density is constant everywhere).
 - Output files are saved as ``BinCorrectionFactor_n{N}_m{M}_{INDEX}.txt`` (aperiodic) or ``BinCorrectionFactor_n{N}_periodic_{INDEX}.txt`` (periodic) for N radial (and M angular) bins, with INDEX specfiying which fields are used. If run for two distinct fields, three correction factors are output, for each non-trivial combination of bins.
-- File format is a list of N rows (for N radial bins) with 7 columns specfiying the fitting paramters (as specified in Philcox & Eisenstein 2019). This is automatically read by the main C++ code.
+- File format is a list of N rows (for N radial bins) with 7 columns specfiying the fitting paramters (as specified in `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_). This is automatically read by the main C++ code.
 - For a periodic data-set, we output a set of parameters which will lead to the survey correction function being reconstructed as unity everywhere.
+
+
+.. _mu_bin_legendre_factors:
+
+Computing mu bin Legendre factors
+-----------------------------------------------------
+
+This is a simple script to produce the file with projection factors from :math:`\mu` bins to Legendre multipoles for the C++ code in LEGENDRE_MIX mode.
+The computation is much easier in Python than in C++, and only needs to be done once, because the factors are the same for all radial bins and tracers, only depending on the number of :math:`\mu` bins (assumed linear between 0 and 1) and the number of Legendre multipoles in computation.
+
+Usage::
+
+    python python/mu_bin_legendre_factors.py {N_MU_BINS} {MAX_L} {OUTPUT_DIR}
+
+The output file will have the name ``mu_bin_legendre_factors_m{N_MU_BINS}_l{MAX_L}.txt`` and located in the ``{OUTPUT_DIR}``.
 
 
 .. _RRR_counts:
@@ -114,7 +128,7 @@ Usage
 
 See the :ref:`RR_counts` parameters above. Additionally;
 
-- {RRR_COUNTS} *(Only required if dataset is periodic)*: RRR counts computed by the :ref:`RRR_counts` script, or externally. These should be normalized by the sum of the cubed random weights (done natively by the above code).
+- {RRR_COUNTS} *(Only required if dataset is aperiodic)*: RRR counts computed by the :ref:`RRR_counts` script, or externally. These should be normalized by the sum of the cubed random weights (done natively by the above code).
 
 **Notes**:
 

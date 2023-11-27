@@ -2,24 +2,30 @@
 
 import numpy as np
 import sys
+from .convert_cov import load_cov, get_cov_header
 
-## PARAMETERS
-if len(sys.argv) != 4:
-    print("Usage: python convert_cov_legendre.py {RASCALC_RESULTS_FILE} {N_R_BINS} {OUTPUT_COV_FILE}.")
-    sys.exit(1)
-rascalc_results = str(sys.argv[1])
-n = int(sys.argv[2])
-output_cov_file = str(sys.argv[3])
 
-with np.load(rascalc_results) as f:
-    cov = f['full_theory_covariance']
-    print(f"Max abs eigenvalue of bias correction matrix is {np.max(np.abs(np.linalg.eigvals(f['full_theory_D_matrix']))):.2e}")
-    # if the printed value is small the cov matrix should be safe to invert as is
+def convert_cov_legendre(cov: np.ndarray[float], max_l: int):
+    if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
+    n_l = max_l // 2 + 1
+    n_bins = len(cov)
+    if n_bins % n_l != 0: raise ValueError("Number of bins in the covariance must be divisible by the number of even multipoles")
+    n_r_bins = n_bins // n_l
+    cov = cov.reshape(n_r_bins, n_l, n_r_bins, n_l) # convert to 4D from 2D with [r, l] ordering for both rows and columns
+    cov = cov.transpose(1, 0, 3, 2) # change orderng to [l, r] for both rows and columns
+    cov = cov.reshape(n_bins, n_bins) # convert back from 4D to 2D
+    return cov
 
-n_bins = len(cov)
-assert n_bins % n == 0, "Number of bins mismatch"
-n_l = n_bins // n
-cov = cov.reshape(n, n_l, n, n_l) # convert to 4D from 2D with [r, l] ordering for both rows and columns
-cov = cov.transpose(1, 0, 3, 2) # change orderng to [l, r] for both rows and columns
-cov = cov.reshape(n_bins, n_bins) # convert back from 4D to 2D
-np.savetxt(output_cov_file, cov)
+def load_cov_legendre(rascalc_results_file: str, max_l: int, print_function = print):
+    return convert_cov_legendre(load_cov(rascalc_results_file, print_function), max_l)
+
+if __name__ == "__main__": # if invoked as a script
+    ## PARAMETERS
+    if len(sys.argv) != 4:
+        print("Usage: python convert_cov_legendre.py {RASCALC_RESULTS_FILE} {MAX_L} {OUTPUT_COV_FILE}.")
+        sys.exit(1)
+    rascalc_results = str(sys.argv[1])
+    max_l = int(sys.argv[2])
+    output_cov_file = str(sys.argv[3])
+
+    np.savetxt(output_cov_file, load_cov_legendre(rascalc_results, max_l), header = get_cov_header(rascalc_results))

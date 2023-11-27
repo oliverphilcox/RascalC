@@ -1,16 +1,28 @@
-## Script to post-process the single-field integrals computed by the C++ code. This computes the shot-noise rescaling parameter, alpha, from a mock derived covariance matrix.
+## Script to post-process the single-field Legendre binned integrals computed by the C++ code. This computes the shot-noise rescaling parameter, alpha, from a mock derived covariance matrix.
 ## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 
 import numpy as np
-import sys, os
-from .utils import cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
-from .collect_raw_covariance_matrices import load_raw_covariances_smu
+import sys,os
+from .utils import cov_filter_legendre, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
+from .collect_raw_covariance_matrices import load_raw_covariances_legendre
 
-def post_process_default_mocks(mock_cov_file: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 0, print_function = print) -> dict[str]:
-    cov_filter = cov_filter_smu(n, m, skip_r_bins)
-    mock_cov = np.loadtxt(mock_cov_file)[cov_filter] # load external mock covariance matrix
 
-    input_file = load_raw_covariances_smu(file_root, n, m, print_function)
+def cov_filter_legendre_mocks(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 0):
+    if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
+    n_l = max_l // 2 + 1
+    l_indices = np.arange(n_l - skip_l)
+    r_indices = np.arange(skip_r_bins, n)
+    indices_l_r = (n * l_indices)[None, :] + r_indices[:, None] # this will transpose from pycorr to RascalC convention
+    indices_1d = indices_l_r.ravel()
+    return np.ix_(indices_1d, indices_1d)
+
+def post_process_legendre_mocks(mock_cov_file: str, file_root: str, n: int, max_l: int, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
+    cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
+    cov_filter_mocks = cov_filter_legendre_mocks(n, max_l, skip_r_bins, skip_l)
+
+    mock_cov = np.loadtxt(mock_cov_file)[cov_filter_mocks] # load external mock covariance matrix
+    
+    input_file = load_raw_covariances_legendre(file_root, n, max_l, print_function)
 
     # Create output directory
     if not os.path.exists(outdir):
@@ -48,25 +60,26 @@ def post_process_default_mocks(mock_cov_file: str, file_root: str, n: int, m: in
 
     output_dict = {"full_theory_covariance": full_cov, "shot_noise_rescaling": alpha_best, "full_theory_precision": full_prec, "N_eff": N_eff_D, "full_theory_D_matrix": full_D_est, "individual_theory_covariances": partial_cov, "mock_covariance": mock_cov}
 
-    output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Default_Mocks_n%d_m%d.npz'%(n,m))
-    np.savez(output_name, **output_dict)
+    output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Legendre_Mocks_n%d_l%d.npz' % (n, max_l))
+    np.savez(output_name, **output_name)
 
-    print_function("Saved output covariance matrices as %s"%output_name)
+    print_function("Saved output covariance matrices as %s" % output_name)
 
     return output_dict
 
 if __name__ == "__main__": # if invoked as a script
     # PARAMETERS
-    if len(sys.argv) not in (6, 7):
-        print("Usage: python post_process_default_mocks.py {MOCK_COV_FILE} {COVARIANCE_DIR} {N_R_BINS} {N_MU_BINS} {OUTPUT_DIR} [{SKIP_R_BINS}]")
+    if len(sys.argv) not in (6, 7, 8):
+        print("Usage: python post_process_legendre_mocks.py {MOCK_COV_FILE} {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {OUTPUT_DIR} [{SKIP_R_BINS} [{SKIP_L}]]")
         sys.exit(1)
             
     mock_cov_file = str(sys.argv[1])
     file_root = str(sys.argv[2])
     n = int(sys.argv[3])
-    m = int(sys.argv[4])
+    max_l = int(sys.argv[4])
     outdir = str(sys.argv[5])
     from .utils import get_arg_safe
     skip_r_bins = get_arg_safe(6, int, 0)
-    
-    post_process_default_mocks(mock_cov_file, file_root, n, m, outdir, skip_r_bins)
+    skip_l = get_arg_safe(7, int, 0)
+
+    post_process_legendre_mocks(mock_cov_file, file_root, n, max_l, outdir, skip_r_bins, skip_l)

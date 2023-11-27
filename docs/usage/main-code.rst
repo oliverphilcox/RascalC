@@ -7,9 +7,11 @@ Overview
 This is the main section of RascalC, where 2PCF or 3PCF covariance matrix estimates are computed via Monte Carlo integration from a given set of input particles. For the 2PCF, depending on the number of input fields the code will compute either components for a single covariance matrix or all required components for 6 cross-covariance matrices (i.e. for multi-tracer analysis).
 
 **Prerequisites**:
-- In JACKKNIFE mode, the jackknife weights and binned pair counts must be computed via the :doc:`jackknife-weights` script before the C++ code is run.
-- In DEFAULT mode, the RR pair counts must be computed via the :doc:`geometry-correction` script before the C++ code is run.
-- In LEGENDRE and 3PCF modes, the survey correction functions :math:`\Phi` must be computed via the :doc:`geometry-correction` script before the C++ code is run.
+
+- In JACKKNIFE mode (including LEGENDRE_MIX mode with JACKKNIFE), the jackknife weights and binned pair counts must be computed via the :doc:`jackknife-weights` script before the C++ code is run.
+- In DEFAULT mode, or LEGENDRE_MIX mode without JACKKNIFE, the RR pair counts must be computed via the :ref:`RR_counts` script before the C++ code is run.
+- In LEGENDRE and 3PCF modes, the survey correction functions :math:`\Phi` must be computed via the :ref:`survey_correction_2PCF` script before the C++ code is run.
+- In LEGENDRE_MIX mode, the projection coefficients from :math:`\mu` bins to Legendre multipoles musst be computed via the :ref:`mu_bin_legendre_factors` script before the C++ code is run.
 
 .. _particle-grid:
 
@@ -51,9 +53,11 @@ The first line produces the ``./cov`` file by compiling the code; running ``make
 
 - ``-DOPENMP``: (Recommended) Run code in parallel with OpenMP, using the OpenMP installation specfied by the ``-lgomp`` and ``-fopenmp`` flags.
 - ``-DPERIODIC``: Use periodic boundary conditions (appropriate for a cubic simulation box, but not mock surveys).
-- ``-DJACKKNIFE``: Compute both full-survey and jackknife 2PCF covariance matrix terms in :math:`(r,\mu)` binning, allowing for shot-noise-rescaling calibration from the survey itself.
-- ``-DLEGENDRE``: Compute the full-survey covariance matrix terms for (even) Legendre multipoles of the 2PCF.
+- ``-DJACKKNIFE``: Compute both full-survey and jackknife 2PCF covariance matrix terms, allowing for shot-noise-rescaling calibration from the survey itself.
+- ``-DLEGENDRE``: Compute the full-survey covariance matrix terms for (even) Legendre multipoles of the 2PCF accumulated directly. Incompatible with jackknives.
+- ``-DLEGENDRE_MIX``: Compute the full-survey covariance matrix terms for (even) Legendre multipoles of the 2PCF projected from (a typically large number of) :math:`mu` bins (estimated in this way in `pycorr <https://py2pcf.readthedocs.io>`, for example). Compatible with jackknives; all the counts should be computed with sufficiently large number of :math:`mu` bins, ideally as many of them as the Legendre multipoles are projected from. For jackknife covariance, the disconnected term is dropped (should not make a significant difference since the term has been found tiny in practice).
 - ``-DTHREE_PCF``: Compute the full-survey covariance matrix terms for (even and odd) Legendre multipoles of the isotropic 3PCF.
+- DEFAULT mode refers to the case when neither ``LEGENDRE`` (nor ``LEGENDRE_MIX``) nor ``THREE_PCF`` are enabled. Then the covariance is computed for :math:`(r,\mu)`-binned correlation function.
 
 **NB**: For a summary of input command line parameters, simply run ``./cov`` with no arguments.
 
@@ -76,7 +80,7 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-nthread`` (*nthread*): Number of parallel processing threads used if code is compiled with OpenMPI.
 - ``-perbox`` (*perbox*): Whether or not we are using a periodic box.
 
-**DEFAULT and JACKKNIFE mode Binning Parameters**:
+**DEFAULT and LEGENDRE_MIX mode Binning Parameters**:
 
 - ``-mbin`` (*mbin*): Number of :math:`\mu` bins used. This must match that used to create the jackknife weights.
 - ``-RRbin`` (*RR_bin_file*): Location of the ``binned_pair_counts_n{N}_m{M}_j{J}_11.dat`` ASCII file containing the summed pair counts in each bin (:math:`RR_{aA}^{11}`), created by the :file:`jackknife_weights` scripts.
@@ -87,8 +91,9 @@ Input parameters for the RascalC code may be specified by passing options on the
 
 **LEGENDRE and 3PCF mode Parameters**:
 
-- ``max_l`` (*max_l*): Maximum Legendre moment to compute. This must be even in the LEGENDRE mode.
-- ``phi_file`` (*phi_file*): Location of the file containing the survey correction function parameters, as created by the :doc:`geometry-correction` script.
+- ``max_l`` (*max_l*): Maximum Legendre moment to compute. This must be even in the LEGENDRE or LEGENDRE_MIX mode.
+- ``phi_file`` (*phi_file*): Location of the file containing the survey correction function parameters, as created by the :ref:`survey_correction_2PCF` or :ref:`survey_correction_3PCF` script. Must not be given in LEGENDRE_MIX mode.
+- ``mu_bin_legendre_file`` (*mu_bin_legendre_file*): Location of the file containing the projection factors from :math:`\mu` bins to Legendre multipoles as produced by the :ref:`mu_bin_legendre_factors` script, only for LEGENDRE_MIX mode.
 
 **Precision Parameters**
 
@@ -104,7 +109,7 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-cor2`` (*corname2*): Input autocorrelation function for the second set of particles, either user-defined or created by :ref:`full-correlations`.
 - ``-norm2`` (*nofznorm2*): Number of galaxies in the second set of tracer particles. This is used to rescale the random particle covariances.
 
-**DEFAULT and JACKKNIFE mode Multi Field Parameters**:
+**DEFAULT and LEGENDRE_MIX mode Multi Field Parameters**:
 
 - ``-jackknife12`` (*jk_weight_file12*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_12.dat`` file containing the jackknife weights for each bin for the combination of random particle sets 1 and 2 (:math:`w_{aA}^{12}`), as created by the :file:`jackknife_weights` scripts.
 - ``-jackknife2`` (*jk_weight_file2*): Location of the ``jackknife_weights_n{N}_m{M}_j{J}_22.dat`` file containing the jackknife weights for each bin for the second set of random particles (:math:`w_{aA}^{22}`), as created by the :file:`jackknife_weights` scripts.

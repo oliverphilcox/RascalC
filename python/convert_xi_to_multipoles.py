@@ -2,57 +2,50 @@
 ### This computes all even multipoles up to a specified maximum ell, approximating the integral by a sum.
 ### The output form is a text file with the first column specifying the r-bin, the second giving xi_0(r), the third with xi_2(r) etc.
 
-from scipy.special import legendre
-import os,sys,numpy as np
+import sys
+import numpy as np
+from .utils import read_xi_file
+from .mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 
-## PARAMETERS
-if len(sys.argv)!=4:
-    print("Usage: python convert_xi_to_multipoles.py {INFILE} {MAX_L} {OUTFILE}")
-    sys.exit(1)
 
-infile = str(sys.argv[1])
-max_l = int(sys.argv[2])
-outfile = str(sys.argv[3])
+def convert_xi_to_multipoles(xi_vals: np.ndarray[float], mu_edges: np.ndarray[float], max_l: int):
+    ## Convert s, mu-binned correlation function to Legendre multipoles
+    return xi_vals.dot(compute_mu_bin_legendre_factors(mu_edges, max_l))
 
-assert max_l>=0, "Maxmum multipole must be positive"
-assert max_l%2==0, "Only even Legendre multipoles can be computed"
-assert max_l<8, "High order multipoles cannot be reliably computed"
+def convert_xi_to_multipoles_files(infile, max_l, outfile):
+    r_vals, mu_vals, xi_vals = read_xi_file(infile)
 
-if not os.path.exists(infile):
-    raise Exception('Could not find input file %s'%infile)
+    mu_edges = np.linspace(0, 1, len(mu_vals)+1) # edges of the mu bins, assumes uniform
 
-r_bins = np.genfromtxt(infile, max_rows=1)
-mu_bins = np.genfromtxt(infile, max_rows=1, skip_header=1)
-xi_vals = np.genfromtxt(infile, skip_header=2)
+    xi_mult = convert_xi_to_multipoles(xi_vals, mu_edges, max_l)
 
-mu_edges = np.linspace(0, 1, len(mu_bins)+1) # edges of the mu bins, assumes uniform
+    with open(outfile,"w+") as out:
 
-## Now convert to Legendre multipoles
-xi_mult = np.zeros((len(r_bins), max_l//2+1))
-
-for ell in np.arange(0, max_l+1, 2):
-    leg_pol = legendre(ell) # Legendre polynomial
-    leg_pol_int = np.polyint(leg_pol) # its indefinite integral (analytic)
-    leg_mu_ints = np.diff(leg_pol_int(mu_edges)) # differences of indefinite integral between edges of mu bins = integral of Legendre polynomial over each mu bin
-
-    # Compute integral as Int_0^1 dmu L_ell(mu) xi(r, mu) * (2 ell + 1)
-    xi_mult[:, ell//2] = np.sum(leg_mu_ints * xi_vals, axis=1) * (2*ell+1)
-
-with open(outfile,"w+") as out:
-
-    # First row contains labels
-    out.write("# r-bin (Mpc/h)\t")
-
-    for ell in np.arange(0,max_l+1,2):
-        out.write("# ell = %s\t"%ell)
-    out.write("\n")
-
-    # Now write data to file with each radial bin in a separate row
-    for r_i,r in enumerate(r_bins):
-        out.write("%.8e\t"%r)
+        # First row contains labels
+        out.write("# r-bin (Mpc/h)\t")
 
         for ell in np.arange(0,max_l+1,2):
-            out.write("%.8e\t"%xi_mult[r_i,ell//2])
+            out.write("# ell = %s\t"%ell)
         out.write("\n")
 
-print("Output file saved to %s"%outfile)
+        # Now write data to file with each radial bin in a separate row
+        for r_i,r in enumerate(r_vals):
+            out.write("%.8e\t"%r)
+
+            for ell in np.arange(0,max_l+1,2):
+                out.write("%.8e\t"%xi_mult[r_i,ell//2])
+            out.write("\n")
+
+    print("Output file saved to %s"%outfile)
+
+if __name__ == "__main__": # if invoked as a script
+    ## PARAMETERS
+    if len(sys.argv) != 4:
+        print("Usage: python convert_xi_to_multipoles.py {INFILE} {MAX_L} {OUTFILE}")
+        sys.exit(1)
+
+    infile = str(sys.argv[1])
+    max_l = int(sys.argv[2])
+    outfile = str(sys.argv[3])
+
+    convert_xi_to_multipoles_files(infile, max_l, outfile)
