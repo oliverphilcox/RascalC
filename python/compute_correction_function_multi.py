@@ -8,14 +8,14 @@ import os
 import numpy as np
 from .compute_correction_function import compute_V_n_w_bar_from_file, compute_phi_periodic, load_RR, compute_phi_aperiodic
 
-def compute_correction_function_multi(gal_file: str, gal_file2: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, RR_file12: str | None = None, RR_file2: str | None = None, print_function = print) -> None:
+def compute_correction_function_multi(random_file: str, random_file2: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, RR_file12: str | None = None, RR_file2: str | None = None, print_function = print) -> None:
     if periodic:
         print_function("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
     elif any(file is None for file in (RR_file, RR_file12, RR_file2)):
         raise TypeError("All the RR files must be specified if aperiodic")
 
-    V1, n_bar1, w_bar1 = compute_V_n_w_bar_from_file(gal_file, print_function = print_function)
-    V2, n_bar2, w_bar2 = compute_V_n_w_bar_from_file(gal_file, index = 2, print_function = print_function)
+    V1, n_bar1, w_bar1 = compute_V_n_w_bar_from_file(random_file, print_function = print_function)
+    V2, n_bar2, w_bar2 = compute_V_n_w_bar_from_file(random_file2, index = 2, print_function = print_function)
 
     # Load in binning files
     r_bins = np.loadtxt(binfile)
@@ -61,8 +61,8 @@ if __name__ == "__main__": # if invoked as a script
     if len(sys.argv) not in (6, 9):
         print("Usage: python compute_correction_function_multi.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]")
         sys.exit(1)
-    gal_file = str(sys.argv[1])
-    gal_file2 = str(sys.argv[2])
+    random_file = str(sys.argv[1])
+    random_file2 = str(sys.argv[2])
     binfile = str(sys.argv[3])
     outdir = str(sys.argv[4])
     periodic = int(sys.argv[5])
@@ -72,4 +72,4 @@ if __name__ == "__main__": # if invoked as a script
     RR_file12 = get_arg_safe(7)
     RR_file2 = get_arg_safe(8)
 
-    compute_correction_function_multi(gal_file, gal_file2, binfile, outdir, periodic, RR_file, RR_file12, RR_file2)
+    compute_correction_function_multi(random_file, random_file2, binfile, outdir, periodic, RR_file, RR_file12, RR_file2)

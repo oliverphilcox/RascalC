@@ -86,22 +86,22 @@ def compute_phi_aperiodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: f
 
     return np.asarray(fit_params) / norm
 
-def compute_V_n_w_bar(gal_pos: np.ndarray[float], gal_w: np.ndarray[float]) -> tuple[float, float, float]:
+def compute_V_n_w_bar(randoms_pos: np.ndarray[float], gal_w: np.ndarray[float]) -> tuple[float, float, float]:
     w_bar = np.mean(gal_w)
     N_gal = len(gal_w)
 
-    if gal_pos.shape[1] != 3: gal_pos = gal_pos.T
-    if gal_pos.shape[1] != 3: raise ValueError("Galaxy positions do not appear 3D")
+    if randoms_pos.shape[1] != 3: randoms_pos = randoms_pos.T
+    if randoms_pos.shape[1] != 3: raise ValueError("Galaxy positions do not appear 3D")
 
     ## Find survey volume via ConvexHull in Scipy
-    V = ss.ConvexHull(gal_pos).volume # presumably in (Mpc/h)^3
+    V = ss.ConvexHull(randoms_pos).volume # presumably in (Mpc/h)^3
 
     n_bar = N_gal / V
     return V, n_bar, w_bar
 
-def compute_V_n_w_bar_from_file(gal_file: str, index = 1, print_function = print) -> tuple[float, float, float]:
+def compute_V_n_w_bar_from_file(random_file: str, index = 1, print_function = print) -> tuple[float, float, float]:
     print_function(f"Loading galaxy set {index}")
-    all_gal = np.loadtxt(gal_file)
+    all_gal = np.loadtxt(random_file)
 
     V, n_bar, w_bar = compute_V_n_w_bar(all_gal[:, :3], all_gal[:, 3])
     print_function(f'Survey volume {index} is approximately: {V/1e9:.2f} (Gpc/h)^3')
@@ -111,12 +111,12 @@ def load_RR(RR_file: str, n: int) -> np.ndarray[float]:
     RR_flat = np.loadtxt(RR_file) # not change normalization here
     return RR_flat.reshape((n, -1))
 
-def compute_correction_function(gal_file: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, print_function = print) -> None:
+def compute_correction_function(random_file: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, print_function = print) -> None:
     if periodic:
         print("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
     elif RR_file is None: raise TypeError("The RR file must be specified if aperiodic")
     
-    V, n_bar, w_bar = compute_V_n_w_bar(gal_file)
+    V, n_bar, w_bar = compute_V_n_w_bar(random_file)
 
     # Load in binning files 
     r_bins = np.loadtxt(binfile)
@@ -146,7 +146,7 @@ if __name__ == "__main__": # if invoked as a script
     if len(sys.argv) not in (5, 6):
         print("Usage: python compute_correction_function.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS}] ")
         sys.exit(1)
-    gal_file = str(sys.argv[1])
+    random_file = str(sys.argv[1])
     binfile = str(sys.argv[2])
     outdir = str(sys.argv[3])
     periodic = int(sys.argv[4])
@@ -154,4 +154,4 @@ if __name__ == "__main__": # if invoked as a script
     from .utils import get_arg_safe
     RR_file = get_arg_safe(5)
 
-    compute_correction_function(gal_file, binfile, outdir, periodic, RR_file)
+    compute_correction_function(random_file, binfile, outdir, periodic, RR_file)
