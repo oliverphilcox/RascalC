@@ -2,7 +2,7 @@
 ## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 
 import numpy as np
-import sys,os
+import sys, os
 from tqdm import trange
 
 
@@ -122,7 +122,7 @@ if __name__ == "__main__": # if invoked as a script
     max_l = int(sys.argv[3])
     n_samples = int(sys.argv[4])
     outdir = str(sys.argv[5])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     alpha = get_arg_safe(6, float, 1)
 
     post_process_3pcf(file_root, n, max_l, n_samples, outdir, alpha)

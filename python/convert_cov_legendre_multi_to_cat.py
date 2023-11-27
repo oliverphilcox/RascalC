@@ -3,13 +3,13 @@
 from pycorr import TwoPointCorrelationFunction
 import numpy as np
 import sys
-from utils import reshape_pycorr
-from convert_cov_legendre_multi import get_cov_header, load_cov_legendre_multi
-from convert_counts_from_pycorr import get_counts_from_pycorr
-from mu_bin_legendre_factors import compute_mu_bin_legendre_factors
+from .utils import reshape_pycorr
+from .convert_cov_legendre_multi import get_cov_header, load_cov_legendre_multi
+from .convert_counts_from_pycorr import get_counts_from_pycorr
+from .mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 
 
-def load_cov_text(filename: str) -> (np.ndarray[float], str):
+def load_cov_text(filename: str) -> tuple[np.ndarray[float], str]:
     cov = np.loadtxt(filename)
     # read header line if present
     header = '' # blank header by default
@@ -73,7 +73,7 @@ if __name__ == "__main__": # if invoked as a script
     max_l = int(sys.argv[6])
     skip_r_bins = int(sys.argv[7])
     output_cov_file = str(sys.argv[8])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     bias1 = get_arg_safe(9, float, 1)
     bias2 = get_arg_safe(10, float, 1)
 

@@ -3,8 +3,8 @@
 import pycorr
 import numpy as np
 import sys
-from utils import reshape_pycorr, fix_bad_bins_pycorr, write_xi_file
-from convert_counts_from_pycorr import get_counts_from_pycorr
+from .utils import reshape_pycorr, fix_bad_bins_pycorr, write_xi_file
+from .convert_counts_from_pycorr import get_counts_from_pycorr
 
 
 def jack_realization_rascalc(jack_estimator: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator, i) -> pycorr.TwoPointEstimator:
@@ -19,7 +19,7 @@ def jack_realization_rascalc(jack_estimator: pycorr.twopoint_jackknife.Jackknife
 def jack_realizations_rascalc(jack_estimator: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator) -> list[pycorr.TwoPointEstimator]:
     return [jack_realization_rascalc(jack_estimator, i) for i in jack_estimator.realizations]
 
-def get_jack_xi_weights_counts_from_pycorr(jack_estimator: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator, counts_factor: float | None = None, split_above: float = np.inf) -> (np.ndarray[float], np.ndarray[float], np.ndarray[float]):
+def get_jack_xi_weights_counts_from_pycorr(jack_estimator: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator, counts_factor: float | None = None, split_above: float = np.inf) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
     realizations = jack_realizations_rascalc(jack_estimator)
 
     xi_jack = np.array([jack.corr.ravel() for jack in realizations]) # already wrapped
@@ -60,7 +60,7 @@ if __name__ == "__main__": # if invoked as a script
     jackweights_name = str(sys.argv[3])
     jackpairs_name = str(sys.argv[4])
     binpairs_name = str(sys.argv[5])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     r_step = get_arg_safe(6, float, 1)
     n_mu = get_arg_safe(7, int, None)
     counts_factor = get_arg_safe(8, float, None) # basically number of randoms used for these counts, used to convert from total to 1 catalog count estimate

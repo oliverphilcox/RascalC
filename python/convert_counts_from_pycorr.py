@@ -3,7 +3,7 @@
 import pycorr
 import numpy as np
 import sys
-from utils import reshape_pycorr
+from .utils import reshape_pycorr
 
 
 def get_counts_from_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator, counts_factor: float | None = None, split_above: float = np.inf) -> np.ndarray[float]:
@@ -31,7 +31,7 @@ if __name__ == "__main__": # if invoked as a script
         sys.exit(1)
     infile_name = str(sys.argv[1])
     outfile_name = str(sys.argv[2])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     r_step = get_arg_safe(3, float, 1)
     n_mu = get_arg_safe(4, int, None)
     counts_factor = get_arg_safe(5, float, None) # basically number of randoms used for these counts, used to convert from total to 1 catalog count estimate

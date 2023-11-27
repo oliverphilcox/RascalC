@@ -15,10 +15,10 @@ Output file format has (Ra,Dec,z,w) coordinates
 
 import sys
 import numpy as np
-from utils import read_particles_fits_file
+from .utils import read_particles_fits_file
 
 
-def redshift_cut_files(input_file: str, output_file: str, z_min: float, z_max: float, FKP_weights: bool | (float, str) = False, mask: int = 0, use_weights: bool = True, print_function = print):
+def redshift_cut_files(input_file: str, output_file: str, z_min: float, z_max: float, FKP_weights: bool | tuple[float, str] = False, mask: int = 0, use_weights: bool = True, print_function = print):
     # Load in data:
     print_function("Reading input file %s in Ra,Dec,z coordinates\n"%input_file)
     if input_file.endswith(".fits"):
@@ -50,7 +50,7 @@ if __name__ == "__main__": # if invoked as a script
     z_min = float(sys.argv[3])
     z_max = float(sys.argv[4])
 
-    from utils import get_arg_safe, parse_FKP_arg, my_str_to_bool
+    from .utils import get_arg_safe, parse_FKP_arg, my_str_to_bool
     # The next only applies to (DESI) FITS files
     FKP_weights = parse_FKP_arg(get_arg_safe(5, str, "False")) # determine whether to use FKP weights
     mask = get_arg_safe(6, int, 0) # default is 0 - no mask filtering

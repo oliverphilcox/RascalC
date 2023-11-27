@@ -3,8 +3,8 @@
 ## Should work in any case - default, jackknife, Legendre, multi-tracer - as it utilizes universal data from RascalC file
 
 import numpy as np
-import sys,os
-from utils import blank_function
+import sys
+from .utils import blank_function
 
 
 # methods to assess similarity
@@ -80,7 +80,7 @@ if __name__ == "__main__": # if invoked as a script
 
     rascalc_results = str(sys.argv[1])
 
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     n_samples = get_arg_safe(2, int)
 
     convergence_check_extra(rascalc_results, n_samples, print_function = print)

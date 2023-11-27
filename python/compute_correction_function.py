@@ -86,7 +86,7 @@ def compute_phi_aperiodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: f
 
     return np.asarray(fit_params) / norm
 
-def compute_V_n_w_bar(gal_pos: np.ndarray[float], gal_w: np.ndarray[float]) -> (float, float, float):
+def compute_V_n_w_bar(gal_pos: np.ndarray[float], gal_w: np.ndarray[float]) -> tuple[float, float, float]:
     w_bar = np.mean(gal_w)
     N_gal = len(gal_w)
 
@@ -99,7 +99,7 @@ def compute_V_n_w_bar(gal_pos: np.ndarray[float], gal_w: np.ndarray[float]) -> (
     n_bar = N_gal / V
     return V, n_bar, w_bar
 
-def compute_V_n_w_bar_from_file(gal_file: str, index = 1, print_function = print) -> (float, float, float):
+def compute_V_n_w_bar_from_file(gal_file: str, index = 1, print_function = print) -> tuple[float, float, float]:
     print_function(f"Loading galaxy set {index}")
     all_gal = np.loadtxt(gal_file)
 
@@ -151,7 +151,7 @@ if __name__ == "__main__": # if invoked as a script
     outdir = str(sys.argv[3])
     periodic = int(sys.argv[4])
 
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     RR_file = get_arg_safe(5)
 
     compute_correction_function(gal_file, binfile, outdir, periodic, RR_file)

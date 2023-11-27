@@ -4,8 +4,8 @@
 import numpy as np
 import sys, os
 from warnings import warn
-from utils import cov_filter_legendre, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
-from collect_raw_covariance_matrices import load_raw_covariances_legendre
+from .utils import cov_filter_legendre, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
+from .collect_raw_covariance_matrices import load_raw_covariances_legendre
 
 
 def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, max_l: int, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
@@ -118,7 +118,7 @@ if __name__ == "__main__": # if invoked as a script
     m = int(sys.argv[4])
     max_l = int(sys.argv[5])
     outdir = str(sys.argv[6])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     skip_r_bins = get_arg_safe(7, int, 0)
     skip_l = get_arg_safe(8, int, 0)
 

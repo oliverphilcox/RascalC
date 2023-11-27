@@ -42,7 +42,7 @@ def parse_FKP_arg(FKP_weights: str) -> bool | tuple[float, str]:
     if len(arg_FKP_split) == 1: return True
     raise ValueError("FKP parameter matched neither USE_FKP_WEIGHTS (true/false in any register or 0/1) nor P0,NZ_name (float and string without space).")
 
-def read_particles_fits_file(input_file: str, FKP_weights: bool | (float, str) = False, mask: int = 0, use_weights: bool = True):
+def read_particles_fits_file(input_file: str, FKP_weights: bool | tuple[float, str] = False, mask: int = 0, use_weights: bool = True):
     # Read FITS file with particles. Can apply mask filtering and compute FKP weights in different ways. Works for DESI setups
     filt = True # default pre-filter is true
     with fits.open(input_file) as f:
@@ -126,7 +126,7 @@ def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 
     indices_1d = indices_l_r.ravel()
     return np.ix_(indices_1d, indices_1d)
 
-def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tracer: int = 1, full: bool = True, jack: bool = False) -> (np.ndarray[float], np.ndarray[float], np.ndarray[float]):
+def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tracer: int = 1, full: bool = True, jack: bool = False) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
     joint = "j" * jack + "_"
     suffix = + str(tracer) * 2 + "_full" * full
     c2 = input_data["c2" + joint + suffix]
@@ -138,9 +138,10 @@ def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tra
         return symmetrized(a[cov_filter])
     
     if full: # 2D matrices, filter can be applied directly
-        return [finalize_matrix(a) for a in matrices]
+        c234 = [finalize_matrix(a) for a in matrices]
     else: # 3D matrices, need to loop over the first index first
-        return [np.array(list(map(finalize_matrix, a))) for a in matrices]
+        c234 = [np.array(list(map(finalize_matrix, a))) for a in matrices]
+    return tuple(c234)
 
 def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], kind: str = "") -> None:
     eig_c4 = np.linalg.eigvalsh(c4)
@@ -155,7 +156,7 @@ def check_positive_definiteness(full_cov: np.ndarray[float]) -> None:
 def add_cov_terms_single(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alpha: float = 1) -> np.ndarray[float]:
     return c4 + c3 * alpha + c2 * alpha**2
 
-def compute_D_precision_matrix(partial_cov: np.ndarray[float], full_cov: np.ndarray[float]) -> (np.ndarray[float], np.ndarray[float]):
+def compute_D_precision_matrix(partial_cov: np.ndarray[float], full_cov: np.ndarray[float]) -> tuple[np.ndarray[float], np.ndarray[float]]:
     n_samples = len(partial_cov)
     n_bins = len(full_cov)
     sum_partial_cov = np.sum(partial_cov, axis = 0)
@@ -199,7 +200,7 @@ def fit_shot_noise_rescaling(target_cov: np.ndarray[float], c2: np.ndarray[float
     alpha_best = fmin(neg_log_L1, 1., args = (target_cov, c2, c3, c4, c2s, c3s, c4s))
     return alpha_best
 
-def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full: bool = True, jack: bool = False, ntracers: int = 2) -> (np.ndarray[float], np.ndarray[float], np.ndarray[float]):
+def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full: bool = True, jack: bool = False, ntracers: int = 2) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
     suffix_jack = "j" * jack
     suffix_full = "_full" * full
     single_array_shape = np.array(input_data["c4_11,11" + suffix_full].shape) # take reference shape from c4_11,11, with _full suffix if loading full
@@ -291,7 +292,7 @@ def gen_corr_tracers(ntracers: int = 2) -> list[tuple[int, int]]:
     assert len(corr_tracers) == n_corr, "Mismatch in correlation functions counting or indices generation"
     return corr_tracers
 
-def add_cov_terms_multi(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alphas: list[float] | np.ndarray[float], ntracers: int = 2) -> (np.ndarray[float], np.ndarray[float]):
+def add_cov_terms_multi(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alphas: list[float] | np.ndarray[float], ntracers: int = 2) -> tuple[np.ndarray[float], np.ndarray[float]]:
     def construct_fields(t1: int, t2: int, t3: int, t4: int, alpha1: float, alpha2: float):
         # Reconstruct the full field for given input fields and rescaling parameters
 

@@ -2,11 +2,9 @@
 ## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 
 import numpy as np
-import sys,os
-from tqdm import trange
-from warnings import warn
-from utils import cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
-from collect_raw_covariance_matrices import load_raw_covariances_smu
+import sys, os
+from .utils import cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
+from .collect_raw_covariance_matrices import load_raw_covariances_smu
 
 def post_process_default_mocks(mock_cov_file: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 0, print_function = print) -> dict[str]:
     cov_filter = cov_filter_smu(n, m, skip_r_bins)
@@ -68,7 +66,7 @@ if __name__ == "__main__": # if invoked as a script
     n = int(sys.argv[3])
     m = int(sys.argv[4])
     outdir = str(sys.argv[5])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     skip_r_bins = get_arg_safe(6, int, 0)
     
     post_process_default_mocks(mock_cov_file, file_root, n, m, outdir, skip_r_bins)

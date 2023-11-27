@@ -3,10 +3,10 @@
 from pycorr import TwoPointCorrelationFunction
 import numpy as np
 import sys
-from utils import reshape_pycorr
-from convert_cov_legendre_multi import get_cov_header, load_cov_legendre_multi
-from convert_counts_from_pycorr import get_counts_from_pycorr
-from mu_bin_legendre_factors import compute_mu_bin_legendre_factors
+from .utils import reshape_pycorr
+from .convert_cov_legendre_multi import get_cov_header, load_cov_legendre_multi
+from .convert_counts_from_pycorr import get_counts_from_pycorr
+from .mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 
 
 def combine_covs_legendre_multi(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function = print):
@@ -68,7 +68,7 @@ if __name__ == "__main__": # if invoked as a script
     max_l = int(sys.argv[10])
     skip_r_bins = int(sys.argv[11])
     output_cov_file = str(sys.argv[12])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     output_cov_file1 = get_arg_safe(13, str, None)
     output_cov_file2 = get_arg_safe(14, str, None)
     

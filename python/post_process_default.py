@@ -3,8 +3,8 @@
 
 import numpy as np
 import sys, os
-from utils import cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
-from collect_raw_covariance_matrices import load_raw_covariances_smu
+from .utils import cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from .collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
 def post_process_default(file_root: str, n: int, m: int, outdir: str, alpha: float = 1, skip_r_bins: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
@@ -60,7 +60,7 @@ if __name__ == "__main__": # if invoked as a script
     n = int(sys.argv[2])
     m = int(sys.argv[3])
     outdir = str(sys.argv[4])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     alpha = get_arg_safe(5, float, 1)
     skip_r_bins = get_arg_safe(6, int, 0)
     

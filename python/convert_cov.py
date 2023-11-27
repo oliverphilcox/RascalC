@@ -2,7 +2,7 @@
 
 import numpy as np
 import sys
-from print_shot_noise_rescaling import get_shot_noise_rescaling
+from .print_shot_noise_rescaling import get_shot_noise_rescaling
 
 def get_cov_header(rascalc_results_file: str):
     return "shot_noise_rescaling = " + str(get_shot_noise_rescaling(rascalc_results_file))

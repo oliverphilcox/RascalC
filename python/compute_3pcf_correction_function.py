@@ -128,7 +128,7 @@ if __name__ == "__main__": # if invoked as a script
     outdir = str(sys.argv[3])
     periodic = int(sys.argv[4])
 
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     RRR_file = get_arg_safe(5)
 
     compute_3pcf_correction_function(gal_file, binfile, outdir, periodic, RRR_file)

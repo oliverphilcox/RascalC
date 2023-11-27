@@ -5,9 +5,8 @@
 
 import numpy as np
 import sys,os
-sys.path.append('..') # to use functions from ../utils.py and ../convergence_check_extra.py
-from utils import symmetrized
-from convergence_check_extra import convergence_check_extra_splittings
+from ..utils import symmetrized
+from ..convergence_check_extra import convergence_check_extra_splittings
 
 
 def convergence_check_extra_jack(n: int, m: int, input_root: str, n_samples: int, weight_file: str, RR_file: str, alpha: float = 1, skip_r_bins: int = 0, print_function = print):
@@ -80,7 +79,7 @@ if __name__ == "__main__": # if invoked as a script
     n_samples = int(sys.argv[4])
     weight_file = str(sys.argv[5])
     RR_file = str(sys.argv[6])
-    from utils import get_arg_safe
+    from ..utils import get_arg_safe
     alpha = get_arg_safe(7, float, 1)
     skip_r_bins = get_arg_safe(8, int, 0)
 

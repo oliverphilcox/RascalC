@@ -2,7 +2,7 @@
 
 import sys
 import numpy as np
-from utils import write_binning_file
+from .utils import write_binning_file
 
 
 def write_binning_file_log(out_file: str, r_min: float, r_max: float, nrbins: int, print_function = print):

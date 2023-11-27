@@ -5,8 +5,8 @@
 
 from scipy.signal import savgol_filter
 import sys, numpy as np
-from mu_bin_legendre_factors import compute_mu_bin_legendre_factors
-from utils import read_xi_file, write_xi_file
+from .mu_bin_legendre_factors import compute_mu_bin_legendre_factors
+from .utils import read_xi_file, write_xi_file
 
 
 def smoothen_xi_multipoles(xi_mult: np.ndarray[float], r_vals: np.ndarray[float], window_length: int, polyorder: int):

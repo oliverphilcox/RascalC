@@ -3,8 +3,8 @@
 
 import numpy as np
 import sys, os
-from utils import cov_filter_smu, load_matrices_multi, check_eigval_convergence, fit_shot_noise_rescaling, add_cov_terms_multi, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
-from collect_raw_covariance_matrices import load_raw_covariances_smu
+from .utils import cov_filter_smu, load_matrices_multi, check_eigval_convergence, fit_shot_noise_rescaling, add_cov_terms_multi, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from .collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
 def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int, m: int, n_samples: int, outdir: str, skip_r_bins: int = 0, print_function = print) -> dict[str]:
@@ -92,7 +92,7 @@ if __name__ == "__main__": # if invoked as a script
     m = int(sys.argv[4])
     n_samples = int(sys.argv[5])
     outdir = str(sys.argv[6])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     skip_r_bins = get_arg_safe(7, int, 0) # convert from radial to total number of bins right away
 
     post_process_default_mocks_multi(mock_cov_file, file_root, n, m, n_samples, outdir, skip_r_bins)

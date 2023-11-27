@@ -6,7 +6,7 @@
 import sys
 import os
 import numpy as np
-from compute_correction_function import compute_V_n_w_bar_from_file, compute_phi_periodic, load_RR, compute_phi_aperiodic
+from .compute_correction_function import compute_V_n_w_bar_from_file, compute_phi_periodic, load_RR, compute_phi_aperiodic
 
 def compute_correction_function_multi(gal_file: str, gal_file2: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, RR_file12: str | None = None, RR_file2: str | None = None, print_function = print) -> None:
     if periodic:
@@ -67,7 +67,7 @@ if __name__ == "__main__": # if invoked as a script
     outdir = str(sys.argv[4])
     periodic = int(sys.argv[5])
 
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     RR_file = get_arg_safe(6)
     RR_file12 = get_arg_safe(7)
     RR_file2 = get_arg_safe(8)

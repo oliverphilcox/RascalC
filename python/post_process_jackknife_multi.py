@@ -6,11 +6,11 @@ import numpy as np
 import sys,os
 from tqdm import tqdm
 from warnings import warn
-from utils import gen_corr_tracers, cov_filter_smu, load_matrices_multi, check_eigval_convergence, fit_shot_noise_rescaling, add_cov_terms_multi, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
-from collect_raw_covariance_matrices import load_raw_covariances_smu
+from .utils import gen_corr_tracers, cov_filter_smu, load_matrices_multi, check_eigval_convergence, fit_shot_noise_rescaling, add_cov_terms_multi, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from .collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
-def load_disconnected_term_multi(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float] | list[np.ndarray[float]], weights: np.ndarray[float] | list[np.ndarray[float]], full: bool = True, ntracers: int = 2) -> (np.ndarray[float], np.ndarray[float], np.ndarray[float]):
+def load_disconnected_term_multi(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float] | list[np.ndarray[float]], weights: np.ndarray[float] | list[np.ndarray[float]], full: bool = True, ntracers: int = 2) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
     suffix_full = "_full" * full
 
     disconnected_array_names = ["EE1", "RR1", "EE2", "RR2"]
@@ -232,7 +232,7 @@ if __name__ == "__main__": # if invoked as a script
     file_root = str(sys.argv[5])
     m = int(sys.argv[6])
     outdir = str(sys.argv[7])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     skip_r_bins = get_arg_safe(8, int, 0)
 
     post_process_jackknife_multi(jackknife_file_11, jackknife_file_12, jackknife_file_22, weight_dir, file_root, m, outdir, skip_r_bins)

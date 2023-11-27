@@ -3,7 +3,7 @@
 import pycorr
 import numpy as np
 import sys
-from utils import reshape_pycorr
+from .utils import reshape_pycorr
 
 
 def sample_cov_from_pycorr(xi_estimators: list[list[pycorr.twopoint_estimator.BaseTwoPointEstimator]], n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf):

@@ -2,7 +2,7 @@
 
 import sys
 import numpy as np
-from utils import blank_function
+from .utils import blank_function
 
 
 def get_shot_noise_rescaling(rascalc_filename: str) -> float | np.ndarray[float]:

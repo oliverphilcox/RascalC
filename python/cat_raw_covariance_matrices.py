@@ -6,7 +6,7 @@
 import numpy as np
 import sys
 from warnings import warn
-from collect_raw_covariance_matrices import load_raw_covariances, save_safe
+from .collect_raw_covariance_matrices import load_raw_covariances, save_safe
 
 
 def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_samples: list[int], output_root: str, collapse_factor: int = 1, print_function = print) -> dict[str]:

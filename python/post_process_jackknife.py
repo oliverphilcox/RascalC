@@ -4,8 +4,8 @@
 import numpy as np
 import sys, os
 from warnings import warn
-from utils import symmetrized, cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, fit_shot_noise_rescaling, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
-from collect_raw_covariance_matrices import load_raw_covariances_smu
+from .utils import symmetrized, cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, fit_shot_noise_rescaling, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from .collect_raw_covariance_matrices import load_raw_covariances_smu
 
 
 def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float], weights: np.ndarray[float], tracer: int = 1, full: bool = True) -> np.ndarray[float]:
@@ -142,7 +142,7 @@ if __name__ == "__main__": # if invoked as a script
     file_root = str(sys.argv[3])
     m = int(sys.argv[4])
     outdir = str(sys.argv[5])
-    from utils import get_arg_safe
+    from .utils import get_arg_safe
     skip_r_bins = get_arg_safe(6, int, 0)
 
     post_process_jackknife(jackknife_file, weight_dir, file_root, m, outdir, skip_r_bins)

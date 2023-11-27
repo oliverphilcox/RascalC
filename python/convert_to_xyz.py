@@ -19,13 +19,8 @@ import sys
 import numpy as np
 from astropy.constants import c as c_light
 import astropy.units as u
-from utils import read_particles_fits_file
-
-# Load the wcdm module from Daniel Eisenstein
-import os
-dirname=os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0, str(dirname)+'/wcdm/')
-import wcdm
+from .utils import read_particles_fits_file
+from .wcdm.wcdm import coorddist
 
 
 def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1) -> np.ndarray[float]:
@@ -35,7 +30,7 @@ def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega
 
     all_ra, all_dec, all_z = ra_dec_z_pos
 
-    all_comoving_radius = wcdm.coorddist(all_z, Omega_m, w_dark_energy, Omega_k)
+    all_comoving_radius = coorddist(all_z, Omega_m, w_dark_energy, Omega_k)
 
     # Convert to Mpc/h
     H_0_h = 100*u.km/u.s/u.Mpc # to ensure we get output in Mpc/h units
@@ -51,7 +46,7 @@ def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega
     all_y = comoving_radius_Mpc * np.sin(all_theta_rad) * np.sin(all_phi_rad)
     return np.array((all_x, all_y, all_z)).T
 
-def convert_to_xyz_files(input_file: str, output_file: str, Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1, FKP_weights: bool | (float, str) = False, mask: int = 0, use_weights: bool = True, print_function = print):
+def convert_to_xyz_files(input_file: str, output_file: str, Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1, FKP_weights: bool | tuple[float, str] = False, mask: int = 0, use_weights: bool = True, print_function = print):
     # default cosmology from the BOSS DR12 2016 clustering paper assuming LCDM
     print_function(f"Using cosmological parameters as Omega_m = {Omega_m}, Omega_k = {Omega_k}, w = {w_dark_energy}")
     # Load in data:
@@ -78,7 +73,7 @@ if __name__ == "__main__": # if invoked as a script
     input_file = str(sys.argv[1])
     output_file = str(sys.argv[2])
 
-    from utils import get_arg_safe, parse_FKP_arg, my_str_to_bool
+    from .utils import get_arg_safe, parse_FKP_arg, my_str_to_bool
     # Read in optional cosmology parameters
     Omega_m = get_arg_safe(3, float, 0.31)
     Omega_k = get_arg_safe(4, float, 0)

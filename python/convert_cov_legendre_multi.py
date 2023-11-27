@@ -2,7 +2,7 @@
 
 import numpy as np
 import sys
-from convert_cov import load_cov, get_cov_header
+from .convert_cov import load_cov, get_cov_header
 
 
 def convert_cov_legendre_multi(cov: np.ndarray[float], max_l: int):

@@ -2,9 +2,10 @@
 ### This computes all even multipoles up to a specified maximum ell, approximating the integral by a sum.
 ### The output form is a text file with the first column specifying the r-bin, the second giving xi_0(r), the third with xi_2(r) etc.
 
-import os, sys, numpy as np
-from utils import read_xi_file
-from mu_bin_legendre_factors import compute_mu_bin_legendre_factors
+import sys
+import numpy as np
+from .utils import read_xi_file
+from .mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 
 
 def convert_xi_to_multipoles(xi_vals: np.ndarray[float], mu_edges: np.ndarray[float], max_l: int):
