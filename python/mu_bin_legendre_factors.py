@@ -24,7 +24,7 @@ def compute_mu_bin_legendre_factors(mu_edges: np.ndarray[float], max_l: int, do_
         return mu_leg_factors, leg_mu_factors
     return mu_leg_factors
 
-def write_mu_bin_legendre_factors(n_mu_bins, max_l, output_dir):
+def write_mu_bin_legendre_factors(n_mu_bins: int, max_l: int, output_dir: str) -> str:
     mu_edges = np.linspace(0, 1, n_mu_bins+1) # edges of the mu bins, assumes uniform
     mu_bin_legendre_factors = compute_mu_bin_legendre_factors(mu_edges, max_l)
 
