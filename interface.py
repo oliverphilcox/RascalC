@@ -1,21 +1,40 @@
 """Implements an interface to estimate the covariance of 2-point correlation function."""
 
+import pycorr
 import numpy as np
+import os
+from python.utils import write_binning_file
+from python.mu_bin_legendre_factors import write_mu_bin_legendre_factors
+from python.compute_correction_function import compute_correction_function
+from python.compute_correction_function_multi import compute_correction_function_multi
 
-def run_cov(mode: str, s_edges,
+
+suffixes_tracer_all = ("", "2") # all supported tracer suffixes
+indices_corr_all = ("11", "12", "22") # all supported 2PCF indices
+suffixes_corr_all = ("", "12", "2") # all supported 2PCF suffixes
+tracer1_corr = (0, 0, 1)
+tracer2_corr = (0, 1, 1)
+
+
+def run_cov(mode: str, s_edges: np.ndarray[float],
             nthread: int, N2: int, N3: int, N4: int, n_loops: int, loops_per_sample: int,
             out_dir: str, tmp_dir: str,
-            randoms_positions1, randoms_weights1,
-            pycorr_allcounts_11,
-            xi_table_11, xi_table_12 = None, xi_table_22 = None,
+            randoms_positions1: np.ndarray[float], randoms_weights1: np.ndarray[float],
+            pycorr_allcounts_11: pycorr.twopoint_estimator.BaseTwoPointEstimator,
+            xi_table_11: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]],
+            xi_table_12: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | None = None,
+            xi_table_22: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | None = None,
             xi_cut_s: float = 250,
-            pycorr_allcounts_12 = None, pycorr_allcounts_22 = None,
+            pycorr_allcounts_12: pycorr.twopoint_estimator.BaseTwoPointEstimator | None = None, pycorr_allcounts_22: pycorr.twopoint_estimator.BaseTwoPointEstimator | None = None,
             normalize_wcounts: bool = True,
             no_data_galaxies1: float | None = None, no_data_galaxies2: float | None = None,
-            randoms_samples1 = None,
-            randoms_positions2 = None, randoms_weights2 = None, randoms_samples2 = None,
+            randoms_samples1: np.ndarray[int] | None = None,
+            randoms_positions2: np.ndarray[float] | None = None, randoms_weights2: np.ndarray[float] | None = None, randoms_samples2: np.ndarray[int] | None = None,
             n_mu_bins: int | None = None, max_l: int | None = None,
-            boxsize: float | None = None):
+            boxsize: float | None = None,
+            skip_s_bins: int = 0, skip_l: int = 0,
+            shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1,
+            sampling_grid_size: int = 301, coordinate_scaling: float = 1) -> dict[str]:
     r"""
     Run the 2-point correlation function covariance integration.
 
@@ -156,9 +175,31 @@ def run_cov(mode: str, s_edges,
     tmp_dir : string
         Directory for temporary files.
         More disk space required - needs to store all the input arrays in the current implementation.
+
+    skip_s_bins : int
+        (Optional) number of lowest separations bins to skip at the post-processing stage. Those tend to converge worse and probably will not be precise due to the limitations of the formalism. Default 0 (no skipping).
+
+    skip_l : int
+        (Only for the Legendre modes; optional) number of highest (even) multipoles to skip at the post-processing stage. Those tend to converge worse. Default 0 (no skipping).
+
+    shot_noise_rescaling1 : float
+        (Optional) shot-noise rescaling value for the first tracer if known beforehand. Default 1 (no rescaling).
+        Will be ignored in jackknife mode - then shot-noise rescaling is optimized on the auto-covariance.
+
+    shot_noise_rescaling2 : float
+        (Optional) shot-noise rescaling value for the second tracer if known beforehand. Default 1 (no rescaling).
+        Will be ignored in jackknife mode - then shot-noise rescaling is optimized on the auto-covariance.
+
+    sampling_grid_size : int
+        (Optional) first guess for the sampling grid size.
+        The code should be able to find a suitable number automatically.
+
+    coordinate_scaling : float
+        (Optional) scaling factor for all the Cartesian coordinates. Default 1 (no rescaling).
+        This option is supported by the C++ code, but its use cases are unclear.
     """
 
-    assert mode in ("s_mu", "legendre_accumulated", "legendre_projected"), "Given mode not supported"
+    if mode not in ("s_mu", "legendre_accumulated", "legendre_projected"): raise ValueError("Given mode not supported")
 
     # Set mode flags
     legendre_orig = (mode == "legendre_accumulated")
@@ -166,30 +207,152 @@ def run_cov(mode: str, s_edges,
     legendre = legendre_orig or legendre_mix
     jackknife = randoms_samples1 is not None
 
-    assert not (legendre_orig and jackknife), "Original Legendre mode is not compatible with jackknife"
+    if (legendre_orig and jackknife): raise ValueError("Direct accumulation Legendre mode is not compatible with jackknives")
 
     if legendre:
-        assert max_l is not None, "Max ell must be provided in Legendre mode"
-        assert max_l % 2 == 0, "Only even Legendre multipoles supported"
+        if max_l is None: raise TypeError("Max ell must be provided in Legendre mode")
+        if max_l % 2 != 0: raise ValueError("Only even Legendre multipoles supported")
     else:
-        assert n_mu_bins is not None, "Number of µ bins for the covariance matrix must be provided in s_mu mode"
+        if n_mu_bins is None: raise TypeError("Number of µ bins for the covariance matrix must be provided in s_mu mode")
 
     # Set some other flags
     periodic = boxsize is not None
     two_tracers = randoms_positions2 is not None
 
     if two_tracers: # check that everything is set accordingly
-        assert randoms_weights2 is not None, "Second tracer weights must be provided in two-tracer mode"
+        if randoms_weights2 is None: raise TypeError("Second tracer weights must be provided in two-tracer mode")
         if jackknife: # although this case has not been used so far
-            assert randoms_samples2 is not None, "Second tracer jackknife region numbers must be provided in two-tracer jackknife mode"
-        assert pycorr_allcounts_12 is not None, "Cross-counts must be provided in two-tracer mode"
-        assert pycorr_allcounts_22 is not None, "Second tracer auto-counts must be provided in two-tracer mode"
-        assert xi_table_12 is not None, "Cross-correlation function must be provided in two-tracer mode"
-        assert xi_table_22 is not None, "Second tracer auto-correlation function must be provided in two-tracer mode"
+            if randoms_samples2 is None: raise TypeError("Second tracer jackknife region numbers must be provided in two-tracer jackknife mode")
+        if pycorr_allcounts_12 is None: raise TypeError("Cross-counts must be provided in two-tracer mode")
+        if pycorr_allcounts_22 is None: raise TypeError("Second tracer auto-counts must be provided in two-tracer mode")
+        if xi_table_12 is None: raise TypeError("Cross-correlation function must be provided in two-tracer mode")
+        if xi_table_22 is None: raise TypeError("Second tracer auto-correlation function must be provided in two-tracer mode")
     
-    assert n_loops % loops_per_sample == 0, "The sample collapsing factor must divide the number of loops"
+    if n_loops % loops_per_sample != 0: raise ValueError("The sample collapsing factor must divide the number of loops")
+
+    ntracers = 2 if two_tracers else 1
+    ncorr = ntracers * (ntracers + 1) // 2
+    suffixes_tracer = suffixes_tracer_all[:ntracers]
+    indices_corr = indices_corr_all[:ncorr]
+    suffixes_corr = suffixes_corr_all[:ncorr]
+
+    n_r_bins = len(s_edges) - 1
+    if jackknife:
+        jack_region_numbers = np.unique(randoms_samples1)
+        njack = len(jack_region_numbers)
+        if two_tracers:
+            jack_region_numbers2 = np.unique(randoms_samples2)
+            if len(jack_region_numbers) != len(jack_region_numbers2) or np.all(jack_region_numbers == jack_region_numbers2):
+                # the second comparison is okay because unique results are sorted
+                raise ValueError("The jackkknife labels of the two tracers must be consistent")
+
+    # set the technical filenames
+    input_filenames = [os.path.join(tmp_dir, str(t) + ".txt") for t in ntracers]
+    cornames = [os.path.join(out_dir, f"xi/xi_{index}.dat") for index in indices_corr]
+    binned_pair_names = [os.path.join(out_dir, "weights/" + ("binned_pair" if jackknife else "RR") + f"_counts_n{n_r_bins}_m{n_mu_bins}" + (f"_j{njack}" if jackknife else "") + f"_{index}.dat") for index in indices_corr]
+    if jackknife:
+        jackknife_weights_names = [os.path.join(out_dir, f"weights/jackknife_weights_n{n_r_bins}_m{n_mu_bins}_j{njack}_{index}.dat") for index in indices_corr]
+        xi_jack_names = [os.path.join(out_dir, f"xi_jack/xi_jack_n{n_r_bins}_m{n_mu_bins}_j{njack}_{index}.dat") for index in indices_corr]
+        jackknife_pairs_names = [os.path.join(out_dir, f"weights/jackknife_pair_counts_n{n_r_bins}_m{n_mu_bins}_j{njack}_{index}.dat") for index in indices_corr]
+    if legendre_orig:
+        phi_names = [f"BinCorrectionFactor_n{n_r_bins}_" + ("periodic" if periodic else f'm{n_mu_bins}') + f"_{index}.txt" for index in indices_corr]
+    
+    # make sure the dirs exist
+    os.makedirs(out_dir, exist_ok = True)
+    os.makedirs(tmp_dir, exist_ok = True)
+    
+    # Create a log file in output directory
+    logfilename = "log.txt"
+    logfile = os.path.join(out_dir, logfilename)
+
+    def print_log(s: object) -> None:
+        os.system(f"echo \"{s}\" >> {logfile}")
+
+    def print_and_log(s: object) -> None:
+        print(s)
+        print_log(s)
+
+    ndata = (no_data_galaxies1, no_data_galaxies2)[:ntracers]
+
+    # convert counts and jackknife xi if needed; loading ndata too whenever not given
+
+    if any(not tracer_ndata for tracer_ndata in ndata): raise ValueError("Not given and not recovered all the necessary normalization factors (no_data_galaxies1/2)")
+    
+    # write the xi file(s); need to set the 2PCF binning (even if only technical) and decide whether to rescale the 2PCF in the C++ code
+    
+    # write the randoms file(s)
+
+    # write the binning files
+    binfile = os.path.join(tmp_dir, "radial_binning_cov.csv")
+    write_binning_file(binfile, s_edges)
+    binfile_cf = os.path.join(tmp_dir, "radial_binning_corr.csv")
+    write_binning_file(binfile_cf, xi_s_edges)
 
     # Select the executable name
     exec_name = "bin/cov." + mode + "_jackknife" * jackknife + "_periodic" * periodic
+    # the above must be true relative to the script location
+    # below we should make it absolute, i.e. right regardless of the working directory
+    exec_path = os.path.join(os.path.realpath(os.path.dirname(__file__)), exec_name)
 
-    pass
+    # form the command line
+    command = f"{exec_path} -output {out_dir} -boxsize {boxsize} -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {mbin_cf}" # here are universally acceptable parameters
+    command += "".join([f" -in{suffixes_tracer[t]} {input_filenames[t]}" for t in range(ntracers)]) # provide all the random filenames
+    command += "".join([f" -norm{suffixes_tracer[t]} {ndata[t]}" for t in range(ntracers)]) # provide all ndata for normalization
+    command += "".join([f" -cor{suffixes_corr[c]} {cornames[c]}" for c in range(ncorr)]) # provide all correlation functions
+    if legendre: # only provide max multipole l for now
+        command += f" -max_l {max_l}"
+    if legendre_mix: # generate and provide factors filename
+        mu_bin_legendre_file = write_mu_bin_legendre_factors(n_mu_bins, max_l, out_dir)
+        command += f" -mu_bin_legendre_file {mu_bin_legendre_file}"
+    if not legendre_orig: # provide binned pair counts files and number of mu bin
+        command += "".join([f" -RRbin{suffixes_corr[c]} {binned_pair_names[c]}" for c in range(ncorr)]) + f" -mbin {n_mu_bins}"
+    if periodic: # append periodic flag
+        command += " -perbox"
+    if jackknife: # provide jackknife weight files for all correlations
+        command += "".join([f" -jackknife{suffixes_corr[c]} {jackknife_weights_names[c]}" for c in range(ncorr)])
+
+    # compute the correction function if original Legendre
+    if legendre_orig: # need correction function
+        if ntracers == 1:
+            compute_correction_function(input_filenames[0], binfile, out_dir, periodic, binned_pair_names[0], print_and_log)
+        elif ntracers == 2:
+            compute_correction_function_multi(*input_filenames, binfile, out_dir, periodic, *binned_pair_names, print_function = print_and_log)
+        command += "".join([f" -phi_file{suffixes_corr[c]} {os.path.join(out_dir, phi_names[c])}" for c in range(ncorr)])
+    
+    # run the main code
+    print_and_log(f"Launching the C++ code with command: {command}")
+    status = os.system(f"bash -c 'set -o pipefail; stdbuf -oL -eL {command} 2>&1 | tee -a {logfile}'")
+    # tee prints what it gets to stdout AND saves to file
+    # stdbuf -oL -eL should solve the output delays due to buffering without hurting the performance too much
+    # without pipefail, the exit_code would be of tee, not reflecting main command failures
+    # feed the command to bash because on Ubuntu it was executed in sh (dash) where pipefail is not supported
+    exit_code = os.waitstatus_to_exitcode(status) # assumes we are in Unix-based OS; on Windows status is the exit code
+    if exit_code: raise RuntimeError(f"The C++ code terminated with an error: exit code {exit_code}")
+
+    # post-processing
+    if two_tracers:
+        if legendre:
+            from python.post_process_legendre_multi import post_process_legendre_multi
+            results = post_process_legendre_multi(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, print_function = print_and_log)
+        elif jackknife:
+            from python.post_process_jackknife_multi import post_process_jackknife_multi
+            results = post_process_jackknife_multi(*xi_jack_names, os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
+        else: # default
+            from python.post_process_default_multi import post_process_default_multi
+            results = post_process_default_multi(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, print_function = print_and_log)
+    else:
+        if legendre:
+            if jackknife:
+                from python.post_process_legendre_mix_jackknife import post_process_legendre_mix_jackknife
+                results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
+            else:
+                from python.post_process_legendre import post_process_legendre
+                results = post_process_legendre(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, skip_s_bins, skip_l, print_function = print_and_log)
+        elif jackknife:
+            from python.post_process_jackknife import post_process_jackknife
+            results = post_process_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
+        else: # default
+            from python.post_process_default import post_process_default
+            results = post_process_default(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, skip_s_bins, print_function = print_and_log)
+
+    return results
