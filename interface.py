@@ -318,7 +318,7 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
                 xi_s_edges = (r_vals[:-1] + r_vals[1:]) / 2 # middle values as midpoints of r_vals to be safe
                 xi_s_edges = [1e-4] + xi_s_edges + [2 * r_vals[-1] - xi_s_edges[-1]] # set the lowest edge near 0 and the highest beyond the last point of r_vals
         else: raise TypeError(f"Xi table {indices_corr[c]} must be either a pycorr.TwoPointEstimator or a tuple")
-    # currently, rescale_xi flag means nothing, but it should enable/disable the xi rescaling in the C++ code
+    xi_refinement_loops = 10 * rescale_xi # set number of xi refinement loops; 0 if rescale_xi = False would mean no rescaling as desired
     
     # write the randoms file(s)
     randoms_positions = (randoms_positions1, randoms_positions2)
@@ -350,7 +350,7 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
     exec_path = os.path.join(os.path.realpath(os.path.dirname(__file__)), exec_name)
 
     # form the command line
-    command = f"{exec_path} -output {out_dir} -boxsize {boxsize} -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {xi_n_mu_bins}" # here are universally acceptable parameters
+    command = f"{exec_path} -output {out_dir} -boxsize {boxsize} -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {xi_n_mu_bins} -cf_loops {xi_refinement_loops}" # here are universally acceptable parameters
     command += "".join([f" -in{suffixes_tracer[t]} {input_filenames[t]}" for t in range(ntracers)]) # provide all the random filenames
     command += "".join([f" -norm{suffixes_tracer[t]} {ndata[t]}" for t in range(ntracers)]) # provide all ndata for normalization
     command += "".join([f" -cor{suffixes_corr[c]} {cornames[c]}" for c in range(ncorr)]) # provide all correlation functions
