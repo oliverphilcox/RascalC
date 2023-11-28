@@ -3,7 +3,10 @@
 import pycorr
 import numpy as np
 import os
-from python.utils import write_binning_file
+from python.utils import write_binning_file, write_xi_file
+from python.convert_xi_jack_from_pycorr import convert_jack_xi_weights_counts_from_pycorr_to_files
+from python.convert_counts_from_pycorr import convert_counts_from_pycorr_to_file
+from python.convert_xi_from_pycorr import convert_xi_from_pycorr_to_file
 from python.mu_bin_legendre_factors import write_mu_bin_legendre_factors
 from python.compute_correction_function import compute_correction_function
 from python.compute_correction_function_multi import compute_correction_function_multi
@@ -63,7 +66,7 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
         All the coordinates need to be between 0 and ``boxsize``.
         If None (default), assumed aperiodic.
     
-    randoms_positions1 : array of floats, shape (3, N_randoms)
+    randoms_positions1 : array of floats, shape (N_randoms, 3)
         Cartesian coordinates of random points for the first tracer.
     
     randoms_weights1 : array of floats of length N_randoms
@@ -74,7 +77,7 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
         If given and not None, enables the jackknife functionality (tuning of shot-noise rescaling on jackknife correlation function estimates).
         The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_11`` (and ``pycorr_allcounts_12`` in multi-tracer mode).
 
-    randoms_positions2 : None or array of floats, shape (3, N_randoms2)
+    randoms_positions2 : None or array of floats, shape (N_randoms2, 3)
         (Optional) cartesian coordinates of random points for the second tracer.
         If given and not None, enables the multi-tracer functionality (full two-tracer covariance estimation).
     
@@ -241,10 +244,8 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
         jack_region_numbers = np.unique(randoms_samples1)
         njack = len(jack_region_numbers)
         if two_tracers:
-            jack_region_numbers2 = np.unique(randoms_samples2)
-            if len(jack_region_numbers) != len(jack_region_numbers2) or np.all(jack_region_numbers == jack_region_numbers2):
-                # the second comparison is okay because unique results are sorted
-                raise ValueError("The jackkknife labels of the two tracers must be consistent")
+            if not np.array_equal(jack_region_numbers, np.unique(randoms_samples2)): # comparison is good because unique results are sorted
+                raise ValueError("The sets of jackkknife labels of the two tracers must be the same")
 
     # set the technical filenames
     input_filenames = [os.path.join(tmp_dir, str(t) + ".txt") for t in ntracers]
@@ -272,15 +273,69 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
         print(s)
         print_log(s)
 
+    r_step = np.mean(np.diff(s_edges))
+    r_max = np.max(s_edges)
+    if not np.allclose(s_edges, np.arange(len(s_edges) + 1) * r_step, atol = 1e-2, rtol = 1e-2): raise ValueError("Separation bin edges must start from 0 and be linear; other options not supported yet")
+    counts_factor = None if normalize_wcounts else 1
     ndata = (no_data_galaxies1, no_data_galaxies2)[:ntracers]
 
     # convert counts and jackknife xi if needed; loading ndata too whenever not given
+    pycorr_allcounts_all = (pycorr_allcounts_11, pycorr_allcounts_12, pycorr_allcounts_22)
+    for c, pycorr_allcounts in enumerate(pycorr_allcounts_all[:ncorr]):
+        if jackknife:
+            convert_jack_xi_weights_counts_from_pycorr_to_files(pycorr_allcounts, xi_jack_names[c], jackknife_weights_names[c], jackknife_pairs_names[c], binned_pair_names[c], n_mu_bins, r_step, r_max, counts_factor)
+        else:
+            convert_counts_from_pycorr_to_file(pycorr_allcounts, binned_pair_names[c], n_mu_bins, r_step, r_max, counts_factor)
+        tracer1 = tracer1_corr[c]
+        if not ndata[tracer1]:
+            ndata[tracer1] = pycorr_allcounts.D1D2.size1
 
     if any(not tracer_ndata for tracer_ndata in ndata): raise ValueError("Not given and not recovered all the necessary normalization factors (no_data_galaxies1/2)")
     
     # write the xi file(s); need to set the 2PCF binning (even if only technical) and decide whether to rescale the 2PCF in the C++ code
+    all_xi = (xi_table_11, xi_table_12, xi_table_22)
+    xi_s_edges = None
+    xi_n_mu_bins = None
+    rescale_xi = False
+    for c, xi in enumerate(all_xi[:ncorr]):
+        if isinstance(xi, pycorr.twopoint_estimator.BaseTwoPointEstimator):
+            convert_xi_from_pycorr_to_file([xi], cornames[c], n_mu_bins)
+            if xi_s_edges is None: xi_s_edges = xi.edges[0]
+            elif not np.array_equal(xi_s_edges, xi.edges[0]): raise ValueError("Different binning for different correlation functions not supported")
+            rescale_xi = True
+        elif isinstance(xi, tuple) or isinstance(xi, list):
+            if len(xi) == 4: # the last element is the edges
+                if xi_s_edges is None: xi_s_edges = xi[-1]
+                elif not np.array_equal(xi_s_edges, xi[-1]): raise ValueError("Different binning for different correlation functions not supported")
+                rescale_xi = True
+                xi = xi[:-1]
+            if len(xi) != 3: raise ValueError(f"xi_table {indices_corr[c]} must have 3 or 4 elements if a tuple")
+            r_vals, mu_vals, xi_vals = xi
+            if len(xi_vals) != len(r_vals): raise ValueError(f"xi_values {indices_corr[c]} must have the same number of rows as r_values")
+            if len(xi_vals[0]) != len(mu_vals): raise ValueError(f"xi_values {indices_corr[c]} must have the same number of columns as mu_values")
+            write_xi_file(cornames[c], r_vals, mu_vals, xi_vals)
+            if not rescale_xi:
+                xi_s_edges = (r_vals[:-1] + r_vals[1:]) / 2 # middle values as midpoints of r_vals to be safe
+                xi_s_edges = [1e-4] + xi_s_edges + [2 * r_vals[-1] - xi_s_edges[-1]] # set the lowest edge near 0 and the highest beyond the last point of r_vals
+        else: raise TypeError(f"Xi table {indices_corr[c]} must be either a pycorr.TwoPointEstimator or a tuple")
+    # currently, rescale_xi flag means nothing, but it should enable/disable the xi rescaling in the C++ code
     
     # write the randoms file(s)
+    randoms_positions = (randoms_positions1, randoms_positions2)
+    randoms_weights = (randoms_weights1, randoms_weights2)
+    randoms_samples = (randoms_samples1, randoms_samples2)
+    for t, input_filename in enumerate(input_filenames):
+        if randoms_positions[t].ndim != 2: raise ValueError(f"Positions of randoms {t+1} not contained in a 2D array")
+        if randoms_positions[t].shape[1] != 3: raise ValueError(f"Positions of randoms {t+1} are not 3-dimensional by the first axis")
+        nrandoms = len(randoms_positions[t])
+        if randoms_weights[t].ndim != 1: raise ValueError(f"Weights of randoms {t+1} not contained in a 1D array")
+        if len(randoms_weights[t]) != nrandoms: raise ValueError(f"Number of weights for randoms {t+1} mismatches the number of positions")
+        output_array = np.hstack((randoms_positions[t], randoms_weights[t]))
+        if jackknife:
+            if randoms_samples[t].ndim != 1: raise ValueError(f"Weights of sample labels {t+1} not contained in a 1D array")
+            if len(randoms_samples[t]) != nrandoms: raise ValueError(f"Number of sample labels for randoms {t+1} mismatches the number of positions")
+            output_array = np.hstack((output_array, randoms_samples[t]))
+        np.savetxt(input_filename, output_array)
 
     # write the binning files
     binfile = os.path.join(tmp_dir, "radial_binning_cov.csv")
@@ -295,7 +350,7 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
     exec_path = os.path.join(os.path.realpath(os.path.dirname(__file__)), exec_name)
 
     # form the command line
-    command = f"{exec_path} -output {out_dir} -boxsize {boxsize} -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {mbin_cf}" # here are universally acceptable parameters
+    command = f"{exec_path} -output {out_dir} -boxsize {boxsize} -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {xi_n_mu_bins}" # here are universally acceptable parameters
     command += "".join([f" -in{suffixes_tracer[t]} {input_filenames[t]}" for t in range(ntracers)]) # provide all the random filenames
     command += "".join([f" -norm{suffixes_tracer[t]} {ndata[t]}" for t in range(ntracers)]) # provide all ndata for normalization
     command += "".join([f" -cor{suffixes_corr[c]} {cornames[c]}" for c in range(ncorr)]) # provide all correlation functions
