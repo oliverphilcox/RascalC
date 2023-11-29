@@ -29,6 +29,7 @@
 
 # Executables
 cov
+bin
 triple
 *.exe
 *.out
