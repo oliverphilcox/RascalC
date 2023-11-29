@@ -83,7 +83,8 @@ def run_cov(mode: str,
 
     pycorr_allcounts_11 : ``pycorr.TwoPointEstimator``
         ``pycorr.TwoPointEstimator`` with auto-counts for the first tracer.
-        Must be rebinned to the number of separation (s) bins desired for the covariance.
+        Must be rebinned and/or cut to the separation (s) bins desired for the covariance.
+        Note that more bins result in slower convergence. A typical configuration has been 4 Mpc/h wide bins between 20 and 200 Mpc/h.
         The counts will be wrapped to positive µ, so if the µ range in them is from -1 to 1, the number of µ bins must be even.
         Providing unwrapped counts (µ from -1 to 1) is preferrable, because some issues can be fixed by assuming symmetry.
         In "s_mu" ``mode``, the covariance will be done for the given number of µ bins (after wrapping).
