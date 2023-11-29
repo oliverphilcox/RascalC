@@ -52,11 +52,11 @@ OBJDIR	= obj
 EXECDIR	= bin
 
 VAR_SRC_BASE	= grid_covariance
-VAR_SRC	= $(VAR_SRC_BASE).cpp
+VAR_SRC	= ../$(VAR_SRC_BASE).cpp
 VAR_OBJ_BASE	= $(OBJDIR)/$(VAR_SRC_BASE)
 
 EXEC_BASE	= $(EXECDIR)/cov
-COMMON_OBJS	= ./cubature/hcubature.o ./ransampl/ransampl.o
+COMMON_OBJS	= ../cubature/hcubature.o ../ransampl/ransampl.o
 
 ALL_OBJS	= $(COMMON_OBJS)
 
