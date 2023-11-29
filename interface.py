@@ -3,10 +3,10 @@
 import pycorr
 import numpy as np
 import os
-from python.utils import write_binning_file, write_xi_file
-from python.convert_xi_jack_from_pycorr import convert_jack_xi_weights_counts_from_pycorr_to_files
-from python.convert_counts_from_pycorr import convert_counts_from_pycorr_to_file
-from python.convert_xi_from_pycorr import convert_xi_from_pycorr_to_file
+from python.utils import fix_bad_bins_pycorr, write_binning_file, write_xi_file
+from python.convert_xi_jack_from_pycorr import get_jack_xi_weights_counts_from_pycorr
+from python.convert_counts_from_pycorr import get_counts_from_pycorr
+from python.convert_xi_from_pycorr import get_input_xi_from_pycorr
 from python.mu_bin_legendre_factors import write_mu_bin_legendre_factors
 from python.compute_correction_function import compute_correction_function
 from python.compute_correction_function_multi import compute_correction_function_multi
@@ -19,7 +19,7 @@ tracer1_corr = (0, 0, 1)
 tracer2_corr = (0, 1, 1)
 
 
-def run_cov(mode: str, s_edges: np.ndarray[float],
+def run_cov(mode: str,
             nthread: int, N2: int, N3: int, N4: int, n_loops: int, loops_per_sample: int,
             out_dir: str, tmp_dir: str,
             randoms_positions1: np.ndarray[float], randoms_weights1: np.ndarray[float],
@@ -33,7 +33,7 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
             no_data_galaxies1: float | None = None, no_data_galaxies2: float | None = None,
             randoms_samples1: np.ndarray[int] | None = None,
             randoms_positions2: np.ndarray[float] | None = None, randoms_weights2: np.ndarray[float] | None = None, randoms_samples2: np.ndarray[int] | None = None,
-            n_mu_bins: int | None = None, max_l: int | None = None,
+            max_l: int | None = None,
             boxsize: float | None = None,
             skip_s_bins: int = 0, skip_l: int = 0,
             shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1,
@@ -49,13 +49,6 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
             - "s_mu": compute covariance of the correlation function in s, µ bins. Only linear µ binning between 0 and 1 supported.
             - "legendre_projected": compute covariance of the correlation function Legendre multipoles in separation (s) bins projected from µ bins (only linear µ binning supported between 0 and 1). Procedure matches ``pycorr``. Works with jackknives, may be less efficient in periodic geometry.
             - "legendre_accumulated": compute covariance of the correlation function Legendre multipoles in separation (s) bins accumulated directly, without first doing µ-binned counts. Incompatible with jackknives.
-
-    s_edges : sequence (list, array, tuple, etc) of floats
-        Edges of the separation (s) bins.
-
-    n_mu_bins : integer
-        Number of µ bins (required in "s_mu" ``mode``).
-        Only linear µ binning between 0 and 1 supported.
     
     max_l : integer
         Max Legendre multipole index (required in both "legendre" ``mode``s).
@@ -90,10 +83,12 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
 
     pycorr_allcounts_11 : ``pycorr.TwoPointEstimator``
         ``pycorr.TwoPointEstimator`` with auto-counts for the first tracer.
-        Must be rebinnable (possibly approximately) to the requested s bins (``s_edges``).
+        Must be rebinned to the number of separation (s) bins desired for the covariance.
         The counts will be wrapped to positive µ, so if the µ range in them is from -1 to 1, the number of µ bins must be even.
-        In "s_mu" ``mode``, must be rebinnable to the requested number of µ bins after wrapping.
-        In any of the Legendre ``mode``s, it will be assumed that Legendre multipoles are produced from the same number of µ bins as present in these counts.
+        Providing unwrapped counts (µ from -1 to 1) is preferrable, because some issues can be fixed by assuming symmetry.
+        In "s_mu" ``mode``, the covariance will be done for the given number of µ bins (after wrapping).
+        In "legendre_projected" ``mode``, it will be assumed that Legendre multipoles are projected from the same number of µ bins as present in these counts. One might consider rebinning more coarsely for faster performance but less guaranteed accuracy (neither effect has been tested yet).
+        In "legendre_accumulated" ``mode``, all the present µ bins (after wrapping) will be used to fit the survey correction functions.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1``.
 
     pycorr_allcounts_12 : ``pycorr.TwoPointEstimator``
@@ -123,11 +118,11 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
     xi_table_11 : ``pycorr.TwoPointEstimator``, or sequence (tuple or list) of 3 elements: (s_values, mu_values, xi_values), or sequence (tuple or list) of 4 elements: (s_values, mu_values, xi_values, s_edges)
         Table of first tracer auto-correlation function in separation (s) and µ bins.
         The code will use it for interpolation in the covariance matrix integrals.
-        Important: if the given correlation function is an average in s, µ bins, the separation bin edges need to be provided (and the µ bins are assumed to be linear) for rescaling procedure which ensures that the interpolation results averaged over s, µ bins returns the given correlation function. In case of ``pycorr.TwoPointEstimator``, the edges will be recovered automatically.
+        Important: if the given correlation function is an average in s, µ bins, the separation bin edges need to be provided (and the µ bins are assumed to be linear) for rescaling procedure which ensures that the interpolation results averaged over s, µ bins returns the given correlation function. In case of ``pycorr.TwoPointEstimator``, the edges will be recovered automatically. Unwrapped estimators (µ from -1 to 1) are preferred, because symmetry allows to fix some issues.
         In the sequence format:
 
             - s_values must be a 1D array of reference separation (s) values for the table of length N;
-            - mu_values must be a 1D array of reference µ values for the table of length M;
+            - mu_values must be a 1D array of reference µ values (covering the range from 0 to 1) for the table of length M;
             - xi_values must be an array of correlation function values at those s, µ values of shape (N, M);
             - s_edges, if given, must be a 1D array of separation bin edges of length N+1. The bins must come close to zero separation (say start at ``s <= 0.01``).
 
@@ -239,7 +234,10 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
     indices_corr = indices_corr_all[:ncorr]
     suffixes_corr = suffixes_corr_all[:ncorr]
 
+    s_edges = pycorr_allcounts_11.edges[0]
     n_r_bins = len(s_edges) - 1
+    n_mu_bins = pycorr_allcounts_11.shape[1]
+    if pycorr_allcounts_11.edges[1][0] < 0: n_mu_bins //= 2 # will be wrapped
     if jackknife:
         jack_region_numbers = np.unique(randoms_samples1)
         njack = len(jack_region_numbers)
@@ -273,19 +271,28 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
         print(s)
         print_log(s)
 
-    r_step = np.mean(np.diff(s_edges))
-    r_max = np.max(s_edges)
-    if not np.allclose(s_edges, np.arange(len(s_edges) + 1) * r_step, atol = 1e-2, rtol = 1e-2): raise ValueError("Separation bin edges must start from 0 and be linear; other options not supported yet")
     counts_factor = None if normalize_wcounts else 1
     ndata = (no_data_galaxies1, no_data_galaxies2)[:ntracers]
 
     # convert counts and jackknife xi if needed; loading ndata too whenever not given
     pycorr_allcounts_all = (pycorr_allcounts_11, pycorr_allcounts_12, pycorr_allcounts_22)
     for c, pycorr_allcounts in enumerate(pycorr_allcounts_all[:ncorr]):
+        if pycorr_allcounts.edges[1][0] < 0: # try to fix and wrap
+            pycorr_allcounts = fix_bad_bins_pycorr(pycorr_allcounts)
+            print_and_log(f"Wrapping pycorr_allcounts_{indices_corr[c]} to µ>=0")
+            pycorr_allcounts = pycorr_allcounts.wrap()
+        if not np.allclose(pycorr_allcounts.edges[1], np.linspace(0, 1, n_mu_bins + 1)): raise ValueError(f"pycorr_allcounts_{indices_corr[c]} µ binning is not consistent with linear between 0 and 1 (after wrapping)")
+        RR_counts = get_counts_from_pycorr(pycorr_allcounts, counts_factor)
+        np.savetxt(binned_pair_names[c], RR_counts.reshape(-1, 1)) # the file needs to have 1 column
         if jackknife:
-            convert_jack_xi_weights_counts_from_pycorr_to_files(pycorr_allcounts, xi_jack_names[c], jackknife_weights_names[c], jackknife_pairs_names[c], binned_pair_names[c], n_mu_bins, r_step, r_max, counts_factor)
-        else:
-            convert_counts_from_pycorr_to_file(pycorr_allcounts, binned_pair_names[c], n_mu_bins, r_step, r_max, counts_factor)
+            xi_jack, jack_weights, jack_RR_counts = get_jack_xi_weights_counts_from_pycorr(pycorr_allcounts, counts_factor)
+            if not np.allclose(np.sum(jack_RR_counts, axis=0), RR_counts): raise ValueError("Total counts mismatch")
+            ## Write to files using numpy functions
+            write_xi_file(xi_jack_names[c], pycorr_allcounts.sepavg(axis = 0), pycorr_allcounts.sepavg(axis = 1), xi_jack)
+            jack_numbers = np.array(xi.realizations).reshape(-1, 1) # column of jackknife numbers, may be useless but needed for format compatibility
+            np.savetxt(jackknife_weights_names[c], np.hstack((jack_numbers, jack_weights)))
+            np.savetxt(jackknife_pairs_names[c], np.hstack((jack_numbers, jack_RR_counts))) # not really needed for the C++ code or processing but let it be
+        # fill ndata if not given
         tracer1 = tracer1_corr[c]
         if not ndata[tracer1]:
             ndata[tracer1] = pycorr_allcounts.D1D2.size1
@@ -299,20 +306,27 @@ def run_cov(mode: str, s_edges: np.ndarray[float],
     rescale_xi = False
     for c, xi in enumerate(all_xi[:ncorr]):
         if isinstance(xi, pycorr.twopoint_estimator.BaseTwoPointEstimator):
-            convert_xi_from_pycorr_to_file([xi], cornames[c], n_mu_bins)
+            if xi.edges[1][0] < 0:
+                xi = fix_bad_bins_pycorr(xi)
+                print_and_log(f"Wrapping xi_table_{indices_corr[c]} to µ>=0")
+                xi = xi.wrap()
+            if c == 0: xi_n_mu_bins = xi.shape[1]
+            if not np.allclose(xi.edges[1], np.linspace(0, 1, xi_n_mu_bins + 1)): raise ValueError(f"xi_table_{indices_corr[c]} µ binning is not consistent with linear between 0 and 1 (after wrapping)")
+            write_xi_file(cornames[c], xi.sepavg(axis = 0), xi.sepavg(axis = 1), get_input_xi_from_pycorr(xi))
             if xi_s_edges is None: xi_s_edges = xi.edges[0]
-            elif not np.array_equal(xi_s_edges, xi.edges[0]): raise ValueError("Different binning for different correlation functions not supported")
+            elif not np.allclose(xi_s_edges, xi.edges[0]): raise ValueError("Different binning for different correlation functions not supported")
             rescale_xi = True
         elif isinstance(xi, tuple) or isinstance(xi, list):
             if len(xi) == 4: # the last element is the edges
                 if xi_s_edges is None: xi_s_edges = xi[-1]
-                elif not np.array_equal(xi_s_edges, xi[-1]): raise ValueError("Different binning for different correlation functions not supported")
+                elif not np.allclose(xi_s_edges, xi[-1]): raise ValueError("Different binning for different correlation functions not supported")
                 rescale_xi = True
                 xi = xi[:-1]
             if len(xi) != 3: raise ValueError(f"xi_table {indices_corr[c]} must have 3 or 4 elements if a tuple")
             r_vals, mu_vals, xi_vals = xi
             if len(xi_vals) != len(r_vals): raise ValueError(f"xi_values {indices_corr[c]} must have the same number of rows as r_values")
             if len(xi_vals[0]) != len(mu_vals): raise ValueError(f"xi_values {indices_corr[c]} must have the same number of columns as mu_values")
+            if c == 0: xi_n_mu_bins = len(mu_vals)
             write_xi_file(cornames[c], r_vals, mu_vals, xi_vals)
             if not rescale_xi:
                 xi_s_edges = (r_vals[:-1] + r_vals[1:]) / 2 # middle values as midpoints of r_vals to be safe
