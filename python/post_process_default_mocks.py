@@ -49,7 +49,7 @@ def post_process_default_mocks(mock_cov_file: str, file_root: str, n: int, m: in
     output_dict = {"full_theory_covariance": full_cov, "shot_noise_rescaling": alpha_best, "full_theory_precision": full_prec, "N_eff": N_eff_D, "full_theory_D_matrix": full_D_est, "individual_theory_covariances": partial_cov, "mock_covariance": mock_cov}
 
     output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Default_Mocks_n%d_m%d.npz'%(n,m))
-    np.savez(output_name, **output_dict)
+    np.savez_compressed(output_name, **output_dict)
 
     print_function("Saved output covariance matrices as %s"%output_name)
 

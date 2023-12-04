@@ -39,7 +39,7 @@ def post_process_default_multi(file_root: str, n: int, m: int, outdir: str, alph
     output_dict = {"full_theory_covariance": c_comb, "all_covariances": c_tot, "shot_noise_rescaling": alphas, "full_theory_precision": prec_comb, "N_eff": N_eff, "full_theory_D_matrix": D_est, "individual_theory_covariances": c_comb_subsamples}
 
     output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Default_n%d_m%d.npz'%(n,m))
-    np.savez(output_name, **output_dict)
+    np.savez_compressed(output_name, **output_dict)
 
     print_function("Saved output covariance matrices as %s"%output_name)
 

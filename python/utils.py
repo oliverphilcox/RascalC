@@ -128,13 +128,13 @@ def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 
 
 def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tracer: int = 1, full: bool = True, jack: bool = False) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
     joint = "j" * jack + "_"
-    suffix = + str(tracer) * 2 + "_full" * full
+    suffix = str(tracer) * 2 + "_full" * full
     c2 = input_data["c2" + joint + suffix]
     c3 = input_data["c3" + joint + str(tracer) + "," + suffix]
     c4 = input_data["c4" + joint + str(tracer) * 2 + "," + suffix]
     matrices = (c2, c3, c4)
 
-    def finalize_matrix(a: np.ndarra):
+    def finalize_matrix(a: np.ndarray):
         return symmetrized(a[cov_filter])
     
     if full: # 2D matrices, filter can be applied directly

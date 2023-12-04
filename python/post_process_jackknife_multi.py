@@ -213,7 +213,7 @@ def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str,
 
     output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz' % (n, m, n_jack))
 
-    np.savez(output_name, **output_dict)
+    np.savez_compressed(output_name, **output_dict)
 
     print_function("Saved output covariance matrices as %s" % output_name)
 

@@ -46,7 +46,7 @@ def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[s
         warn(f"The default output filename for group {output_group_name}, {output_filename}, already exists. Will try to find a replacement.")
         i = 1
         while True:
-            output_filename = os.path.join(cov_dir, f"Raw_Covariance_Matrices_{output_group_name}.{i}.npz")
+            output_filename = os.path.join(output_dir, f"Raw_Covariance_Matrices_{output_group_name}.{i}.npz")
             if not os.path.exists(output_filename):
                 warn(f"Found unused name {output_filename}, will save there.")
                 break
@@ -54,7 +54,7 @@ def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[s
             
     np.savez_compressed(output_filename, **output_dictionary)
 
-def collect_raw_covariance_matrices(cov_dir: str, print_function = print) -> None:
+def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_function = print) -> dict[str, dict[str, np.ndarray[float]]]:
     cov_dir_all = os.path.join(cov_dir, 'CovMatricesAll/')
     cov_dir_jack = os.path.join(cov_dir, 'CovMatricesJack/')
 
@@ -68,7 +68,7 @@ def collect_raw_covariance_matrices(cov_dir: str, print_function = print) -> Non
     for input_filename in glob(cov_dir_jack + "*.txt"):
         organize_filename(input_filename, output_groups, jack = True)
     
-    print_function(f"Detected {len(output_groups)} output groups in {cov_dir}")
+    print_function(f"Detected {len(output_groups)} output group(s) in {cov_dir}")
 
     return_dictionary = {}
     
@@ -105,7 +105,8 @@ def collect_raw_covariance_matrices(cov_dir: str, print_function = print) -> Non
                 output_dictionary[matrix_name][suffix] = matrix
 
             # special treatment for string suffixes (at the moment, only "full")
-            for suffix in output_dictionary[matrix_name].keys():
+            tmp_keys = list(output_dictionary[matrix_name].keys())
+            for suffix in tmp_keys:
                 if isinstance(suffix, str):
                     output_dictionary[matrix_name + "_" + suffix] = output_dictionary[matrix_name].pop(suffix)
                     # this creates a separate array to be saved
@@ -129,15 +130,17 @@ def collect_raw_covariance_matrices(cov_dir: str, print_function = print) -> Non
 
         # now that the file is saved (not any earlier to be sure), can remove all the text files
         # the list contains only the files that had their contents loaded and saved
-        for matrix_filenames_dictionary in output_group.values():
-            for input_filename in matrix_filenames_dictionary.values():
-                os.remove(input_filename)
+        if cleanup:
+            for matrix_filenames_dictionary in output_group.values():
+                for input_filename in matrix_filenames_dictionary.values():
+                    os.remove(input_filename)
         
         print_function(f"Finished with output group {output_group_name}")
 
     # remove subdirectories too if they are empty
-    rmdir_safe(cov_dir_all)
-    rmdir_safe(cov_dir_jack)
+    if cleanup:
+        rmdir_safe(cov_dir_all)
+        rmdir_safe(cov_dir_jack)
 
     return return_dictionary
 
