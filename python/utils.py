@@ -44,7 +44,6 @@ def parse_FKP_arg(FKP_weights: str) -> bool | tuple[float, str]:
 
 def read_particles_fits_file(input_file: str, FKP_weights: bool | tuple[float, str] = False, mask: int = 0, use_weights: bool = True):
     # Read FITS file with particles. Can apply mask filtering and compute FKP weights in different ways. Works for DESI setups
-    filt = True # default pre-filter is true
     with fits.open(input_file) as f:
         data = f[1].data
         all_ra = data["RA"]
@@ -56,7 +55,9 @@ def read_particles_fits_file(input_file: str, FKP_weights: bool | tuple[float, s
             all_w *= 1/(1+FKP_weights[0]*data[FKP_weights[1]]) if FKP_weights != True else data["WEIGHT_FKP"]
         if "WEIGHT" not in colnames and not FKP_weights: warn("No weights found, assigned unit weight to each particle.")
         if mask: filt = (data["STATUS"] & mask == mask) # all 1-bits from mask have to be set in STATUS; skip if mask=0
-    return np.array((all_ra, all_dec, all_z, all_w)).T[filt]
+    result = np.array((all_ra, all_dec, all_z, all_w)).T
+    if mask: result = result[filt]
+    return result
 
 def read_xi_file(xi_file: str):
     # Interpret RascalC text format using numpy functions
@@ -90,7 +91,7 @@ def fix_bad_bins_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEsti
         kw[name] = counts
     return cls(**kw)
 
-def reshape_pycorr(xi_estimator: pycorr.TwoPointEstimator, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, skip_r_bins: int = 0) -> pycorr.TwoPointEstimator:
+def reshape_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator, n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf, skip_r_bins: int = 0) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
     n_mu_orig = xi_estimator.shape[1]
     if n_mu_orig % 2 != 0: raise ValueError("Wrapping not possible")
     if n_mu:
@@ -98,17 +99,20 @@ def reshape_pycorr(xi_estimator: pycorr.TwoPointEstimator, n_mu: int | None = No
         mu_factor = n_mu_orig // 2 // n_mu
     else: mu_factor = 1 # leave the original number of mu bins
 
-    # determine the radius step in pycorr
-    r_steps_orig = np.diff(xi_estimator.edges[0])
-    r_step_orig = np.mean(r_steps_orig)
-    if not np.allclose(r_steps_orig, r_step_orig, rtol=5e-3, atol=5e-3): raise ValueError("Binning appears not linear with integer step; such case is not supported")
-    r_factor_exact = r_step_orig / r_step
-    r_factor = int(np.rint(r_factor_exact))
-    if not np.allclose(r_factor, r_factor_exact, rtol=5e-3): raise ValueError("Radial rebinning seems impossible")
+    if not r_step: r_factor = 1
+    else:
+        # determine the radius step in pycorr
+        r_steps_orig = np.diff(xi_estimator.edges[0])
+        r_step_orig = np.mean(r_steps_orig)
+        if not np.allclose(r_steps_orig, r_step_orig, rtol=5e-3, atol=5e-3): raise ValueError("Radial rebinning only supported for linear bins")
+        r_factor_exact = r_step / r_step_orig
+        r_factor = int(np.rint(r_factor_exact))
+        if not np.allclose(r_factor, r_factor_exact, rtol=5e-3): raise ValueError(f"Radial rebinning seems impossible: exact ratio of steps is {r_factor_exact}, closest integer is {r_factor} and that is too far")
 
     # Apply r_max cut
     r_values = xi_estimator.sepavg(axis = 0)
-    xi_estimator = xi_estimator[r_values <= r_max]
+    r_bins_indices = np.where(r_values <= r_max)[0]
+    xi_estimator = xi_estimator[:r_bins_indices.max() + 1] # can not apply mask to pycorr estimators; the bins are adjacent anyway
 
     return fix_bad_bins_pycorr(xi_estimator[skip_r_bins * r_factor:])[::r_factor, ::mu_factor].wrap() # first skip bins, then fix bad bins, then rebin and wrap to positive mu
 

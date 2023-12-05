@@ -291,8 +291,8 @@ def run_cov(mode: str,
             ## Write to files using numpy functions
             write_xi_file(xi_jack_names[c], pycorr_allcounts.sepavg(axis = 0), pycorr_allcounts.sepavg(axis = 1), xi_jack)
             jack_numbers = np.array(xi.realizations).reshape(-1, 1) # column of jackknife numbers, may be useless but needed for format compatibility
-            np.savetxt(jackknife_weights_names[c], np.hstack((jack_numbers, jack_weights)))
-            np.savetxt(jackknife_pairs_names[c], np.hstack((jack_numbers, jack_RR_counts))) # not really needed for the C++ code or processing but let it be
+            np.savetxt(jackknife_weights_names[c], np.column_stack((jack_numbers, jack_weights)))
+            np.savetxt(jackknife_pairs_names[c], np.column_stack((jack_numbers, jack_RR_counts))) # not really needed for the C++ code or processing but let it be
         # fill ndata if not given
         tracer1 = tracer1_corr[c]
         if not ndata[tracer1]:
@@ -345,11 +345,11 @@ def run_cov(mode: str,
         nrandoms = len(randoms_positions[t])
         if randoms_weights[t].ndim != 1: raise ValueError(f"Weights of randoms {t+1} not contained in a 1D array")
         if len(randoms_weights[t]) != nrandoms: raise ValueError(f"Number of weights for randoms {t+1} mismatches the number of positions")
-        output_array = np.hstack((randoms_positions[t], randoms_weights[t]))
+        output_array = np.column_stack((randoms_positions[t], randoms_weights[t]))
         if jackknife:
             if randoms_samples[t].ndim != 1: raise ValueError(f"Weights of sample labels {t+1} not contained in a 1D array")
             if len(randoms_samples[t]) != nrandoms: raise ValueError(f"Number of sample labels for randoms {t+1} mismatches the number of positions")
-            output_array = np.hstack((output_array, randoms_samples[t]))
+            output_array = np.column_stack((output_array, randoms_samples[t]))
         np.savetxt(input_filename, output_array)
 
     # write the binning files

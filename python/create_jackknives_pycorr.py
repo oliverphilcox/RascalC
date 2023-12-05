@@ -13,7 +13,7 @@ def get_subsampler_xirunpc(ref_positions: np.ndarray[float], njack: int) -> pyco
 def add_subsample_labels(subsampler: pycorr.twopoint_jackknife.BaseSubsampler, pos_etc: np.ndarray[float], position_type: str = "xyz") -> np.ndarray[float]:
     positions = pos_etc[:, :3]
     labels = subsampler.label(positions.T, position_type = position_type)
-    return np.hstack((pos_etc, labels))
+    return np.column_stack((pos_etc, labels))
 
 def create_jackknives_pycorr_files(reffile_name: str, infile_name: str, outfile_name: str, njack: int, print_function = print):
     import time

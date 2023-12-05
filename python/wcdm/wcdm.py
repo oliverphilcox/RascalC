@@ -80,7 +80,7 @@ either expressed or implied, of the FreeBSD Project.
 
 import numpy as np
 import scipy.special
-from incomplete_beta import beta_cont_frac_gsl
+from .incomplete_beta import beta_cont_frac_gsl
 
 ############### Implementation of the Incomplete Beta Function ###########
 

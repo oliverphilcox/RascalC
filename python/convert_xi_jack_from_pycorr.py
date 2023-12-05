@@ -34,7 +34,7 @@ def get_jack_xi_weights_counts_from_pycorr(jack_estimator: pycorr.twopoint_jackk
 
 def convert_jack_xi_weights_counts_from_pycorr_to_files(xi_estimator_orig: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator, xi_jack_name: str, jackweights_name: str, jackpairs_name: str, binpairs_name: str, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, counts_factor: float | None = None, split_above: float = np.inf):
     xi_estimator = reshape_pycorr(xi_estimator_orig, n_mu, r_step, r_max)
-    binpairs = get_counts_from_pycorr(xi_estimator, counts_factor, split_above)
+    binpairs = get_counts_from_pycorr(xi_estimator, counts_factor, split_above).ravel()
 
     xi_jack, jack_weights, jack_pairs = get_jack_xi_weights_counts_from_pycorr(xi_estimator, counts_factor, split_above)
     if not np.allclose(np.sum(jack_pairs, axis=0), binpairs): raise ValueError("Total counts mismatch")
@@ -43,8 +43,8 @@ def convert_jack_xi_weights_counts_from_pycorr_to_files(xi_estimator_orig: pycor
     np.savetxt(binpairs_name, binpairs.reshape(-1, 1)) # this file must have 1 column
     write_xi_file(xi_jack_name, xi_estimator.sepavg(axis = 0), xi_estimator.sepavg(axis = 1), xi_jack)
     jack_numbers = np.array(xi_estimator.realizations).reshape(-1, 1) # column of jackknife numbers, may be useless but needed for format compatibility
-    np.savetxt(jackweights_name, np.hstack((jack_numbers, jack_weights)))
-    np.savetxt(jackpairs_name, np.hstack((jack_numbers, jack_pairs)))
+    np.savetxt(jackweights_name, np.column_stack((jack_numbers, jack_weights)))
+    np.savetxt(jackpairs_name, np.column_stack((jack_numbers, jack_pairs)))
 
 def convert_jack_xi_weights_counts_from_pycorr_files(infile_name: str, xi_jack_name: str, jackweights_name: str, jackpairs_name: str, binpairs_name: str, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, counts_factor: float | None = None, split_above: float = np.inf):
     xi_estimator = pycorr.TwoPointCorrelationFunction.load(infile_name)

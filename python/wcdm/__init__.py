@@ -1,1 +1,1 @@
-from wcdm import *
+from .wcdm import *

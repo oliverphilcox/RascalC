@@ -148,7 +148,7 @@ def load_raw_covariances(file_root: str, label: str, print_function = print) -> 
     input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_{label}.npz")
     if not os.path.isfile(input_filename):
         print_function(f"Collecting the raw covariance matrices from {file_root}.")
-        result = collect_raw_covariance_matrices(file_root, print_function)
+        result = collect_raw_covariance_matrices(file_root, print_function = print_function)
         if label not in result:
             raise ValueError(f"Raw covariance matrices for {label} not produced. Check the n and m/max_l values.")
         return result[label]

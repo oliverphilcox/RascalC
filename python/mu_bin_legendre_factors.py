@@ -5,14 +5,14 @@ import numpy as np
 import os, sys
 
 
-def compute_mu_bin_legendre_factors(mu_edges: np.ndarray[float], max_l: int, do_inverse: bool = False) -> np.ndarray[float] | (np.ndarray[float], np.ndarray[float]):
+def compute_mu_bin_legendre_factors(mu_edges: np.ndarray[float], max_l: int, do_inverse: bool = False) -> np.ndarray[float] | tuple[np.ndarray[float], np.ndarray[float]]:
     if max_l < 0: raise ValueError("Maximum multipole must be positive")
     if max_l % 2 != 0: raise ValueError("Odd multipoles not supported")
     n_l = max_l // 2 + 1 # number of multipoles
 
     ells = np.arange(0, max_l+1, 2) # Legendre multipole indices, even only
-    mu_leg_factors = np.zeros((len(mu_edges), n_l))
-    if do_inverse: leg_mu_factors = np.zeros((n_l, len(mu_edges)))
+    mu_leg_factors = np.zeros((len(mu_edges) - 1, n_l))
+    if do_inverse: leg_mu_factors = np.zeros((n_l, len(mu_edges) - 1))
 
     for i, ell in enumerate(ells):
         leg_pol = legendre(ell) # Legendre polynomial
