@@ -26,6 +26,10 @@ build:
 
     # golang: "1.20"
 
+  apt_packages:
+
+    - graphviz
+
 
 # Build documentation in the "docs/" directory with Sphinx
 
