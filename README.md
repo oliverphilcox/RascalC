@@ -9,6 +9,8 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 
 ***New for version 2***: Legendre moment covariances and the 3PCF
 
+***New for version 3***: [Python interface](https://github.com/misharash/RascalC/blob/master/python/interface.py)
+
 ## Authors
 
 - Oliver Philcox (Columbia / Simons Foundation)
