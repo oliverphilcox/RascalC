@@ -23,6 +23,10 @@ from .utils import read_particles_fits_file
 from .wcdm.wcdm import coorddist
 
 
+H0_h = 100 * u.km / u.s / u.Mpc # h = 1
+D_H_Mpch = (c_light / H0_h).to(u.Mpc).value # Hubble distance in Mpc/h
+
+
 def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1) -> np.ndarray[float]:
     # default cosmology from the BOSS DR12 2016 clustering paper assuming LCDM
     if ra_dec_z_pos.shape[0] != 3: ra_dec_z_pos = ra_dec_z_pos.T
@@ -30,20 +34,20 @@ def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega
 
     all_ra, all_dec, all_z = ra_dec_z_pos
 
+    # Compute comoving radius in Hubble distances
     all_comoving_radius = coorddist(all_z, Omega_m, w_dark_energy, Omega_k)
 
     # Convert to Mpc/h
-    H_0_h = 100*u.km/u.s/u.Mpc # to ensure we get output in Mpc/h units
-    comoving_radius_Mpc = ((all_comoving_radius/H_0_h*c_light).to(u.Mpc)).value
+    comoving_radius_Mpch = all_comoving_radius * D_H_Mpch
 
     # Convert to polar coordinates in radians
     all_phi_rad = np.deg2rad(all_ra)
     all_theta_rad = np.deg2rad(90 - all_dec)
 
     # Now convert to x,y,z coordinates
-    all_z = comoving_radius_Mpc * np.cos(all_theta_rad)
-    all_x = comoving_radius_Mpc * np.sin(all_theta_rad) * np.cos(all_phi_rad)
-    all_y = comoving_radius_Mpc * np.sin(all_theta_rad) * np.sin(all_phi_rad)
+    all_z = comoving_radius_Mpch * np.cos(all_theta_rad)
+    all_x = comoving_radius_Mpch * np.sin(all_theta_rad) * np.cos(all_phi_rad)
+    all_y = comoving_radius_Mpch * np.sin(all_theta_rad) * np.sin(all_phi_rad)
     return np.array((all_x, all_y, all_z)).T
 
 def convert_to_xyz_files(input_file: str, output_file: str, Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1, FKP_weights: bool | tuple[float, str] = False, mask: int = 0, use_weights: bool = True, print_function = print):

@@ -42,7 +42,7 @@ if __name__ == "__main__": # if invoked as a script
         sys.exit(1)
     infile_names = sys.argv[1:-3]
     outfile_name = str(sys.argv[-3])
-    r_step = int(sys.argv[-2])
+    r_step = float(sys.argv[-2])
     n_mu = int(sys.argv[-1])
 
     convert_xi_from_pycorr_files(infile_names, outfile_name, n_mu, r_step)

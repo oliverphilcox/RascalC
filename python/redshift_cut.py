@@ -30,9 +30,10 @@ def redshift_cut_files(input_file: str, output_file: str, z_min: float, z_max: f
     print_function("Performing redshift cut")
     all_z = particles[:, 2] # assume the redshift is the third column
     filt = np.logical_and(z_min <= all_z, all_z < z_max)
+    particles = particles[filt]
 
     print_function("Writing to file %s:"%output_file)
-    np.savetxt(output_file, particles[filt])
+    np.savetxt(output_file, particles)
     print_function("Output positions (of length %d) written succesfully!" % len(particles))
 
 if __name__ == "__main__": # if invoked as a script
