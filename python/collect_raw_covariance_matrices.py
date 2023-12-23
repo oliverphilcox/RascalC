@@ -36,8 +36,8 @@ def organize_filename(filename: str, output_groups: dict, jack: bool = False) ->
     output_groups[output_group_name][matrix_name][suffix] = filename
 
 def rmdir_safe(dirname: str) -> None:
-    # remove directory if it exists and not empty, otherwise leave it
-    if os.path.isdir(dirname) and len(os.listdir(dirname)) > 0:
+    # remove directory if it exists and is empty, otherwise leave it
+    if os.path.isdir(dirname) and len(os.listdir(dirname)) <= 0:
         os.rmdir(dirname)
 
 def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[str]):
@@ -147,7 +147,7 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_fu
 def load_raw_covariances(file_root: str, label: str, print_function = print) -> dict[str]:
     input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_{label}.npz")
     if not os.path.isfile(input_filename):
-        print_function(f"Collecting the raw covariance matrices from {file_root}.")
+        print_function(f"Collecting the raw covariance matrices from {file_root}")
         result = collect_raw_covariance_matrices(file_root, print_function = print_function)
         if label not in result:
             raise ValueError(f"Raw covariance matrices for {label} not produced. Check the n and m/max_l values.")
