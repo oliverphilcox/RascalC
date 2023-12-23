@@ -16,7 +16,7 @@ def load_cov(rascalc_results_file: str, print_function: Callable = print) -> np.
         return f['full_theory_covariance']
 
 def export_cov(rascalc_results_file: str, output_cov_file: str, print_function: Callable = print) -> None:
-    np.savetxt(output_cov_file, load_cov(rascalc_results_file, print_function = print_function), header = get_cov_header(rascalc_results))
+    np.savetxt(output_cov_file, load_cov(rascalc_results_file, print_function = print_function), header = get_cov_header(rascalc_results_file))
 
 if __name__ == "__main__": # if invoked as a script
     ## PARAMETERS

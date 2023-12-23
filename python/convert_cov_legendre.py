@@ -21,7 +21,7 @@ def load_cov_legendre(rascalc_results_file: str, max_l: int, print_function: Cal
     return convert_cov_legendre(load_cov(rascalc_results_file, print_function), max_l)
 
 def export_cov_legendre(rascalc_results_file: str, max_l: int, output_cov_file: str, print_function: Callable = print) -> None:
-    np.savetxt(output_cov_file, load_cov_legendre(rascalc_results_file, max_l, print_function = print_function), header = get_cov_header(rascalc_results))
+    np.savetxt(output_cov_file, load_cov_legendre(rascalc_results_file, max_l, print_function = print_function), header = get_cov_header(rascalc_results_file))
 
 if __name__ == "__main__": # if invoked as a script
     ## PARAMETERS
