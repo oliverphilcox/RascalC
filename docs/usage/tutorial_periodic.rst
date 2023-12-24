@@ -36,8 +36,8 @@ Let's create the radial binning files next. We'll create two binning files; one 
 
 For the covariance matrix, we'll use a linear binning file with :math:`\Delta r = 5` for :math:`r\in[25,150]` and for the correlation function we'll use a linear binning file with :math:`\Delta r = 1` for :math:`r\in[0,200]`. **NB**: The correlation function binning file must extend down to :math:`r = 0`::
 
-    python python/write_binning_file_linear.py 25 25 150 radial_binning_cov.csv
-    python python/write_binning_file_linear.py 200 0 200 radial_binning_corr.csv
+    python scripts/write_binning_file_linear.py 25 25 150 radial_binning_cov.csv
+    python scripts/write_binning_file_linear.py 200 0 200 radial_binning_corr.csv
 
 (See :ref:`write-binning-file`).
 
@@ -60,7 +60,7 @@ This all looks as expected.
 
 Using the galaxy position file, we can obtain estimates of the 2-point correlation function. This is needed to compute the theoretical covariance matrices. Even though our desired output is a covariance matrix of the 2PCF in Legendre multipoles, the main C++ code uses an input 2PCF in :math:`(r,\mu)` space for speed. Here, let's use 20 :math:`\mu` bins in :math:`[0,1]` and the correlation function binning specified above. Since we have periodic data, we must use the ``xi_estimator_periodic.py`` script to compute this. (This is much faster than for the aperiodic case since we can compute the random particle counts analytically.)::
 
-    python python/xi_estimator_periodic.py nbody_simulation.txt radial_binning_corr.csv 1000 1. 20 10 xi/
+    python scripts/legacy/xi_estimator_periodic.py nbody_simulation.txt radial_binning_corr.csv 1000 1. 20 10 xi/
 
 (See :ref:`full-correlations`).
 
@@ -68,7 +68,7 @@ This uses Corrfunc to perform pair counting and computes :math:`\xi_a` for each 
 
 The main C++ code requires an input *survey correction function* to account for non-trivial survey geometries. For a periodic box, the correction function :math:`\Phi(r_a,\mu)` is constant, but the normalization carries important information including the survey volume and number density. This is simply computed via::
 
-    python python/compute_correction_function.py nbody_randoms_10x.txt radial_binning_cov.csv ./ 1
+    python scripts/compute_correction_function.py nbody_randoms_10x.txt radial_binning_cov.csv ./ 1
 
 (See :ref:`survey_correction_2PCF`)
 
@@ -177,7 +177,7 @@ Although the C++ code computes all the relevant parts of the covariance matrices
 
 For a single field analysis, this is run as follows, specifying the jackknife correlation functions, output covariance term directory and weights::
 
-    python python/post_process_legendre.py ./ 25 2 10 ./ 1.
+    python scripts/post_process_legendre.py ./ 25 2 10 ./ 1.
 
 (See :ref:`post-processing-general`).
 

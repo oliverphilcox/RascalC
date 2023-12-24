@@ -1,7 +1,7 @@
 Computing Random Counts and Survey Correction Functions
 ========================================================
 
-Here, we describe the scripts provided to compute RR and RRR random counts, in addition to the *survey correction functions*, defined as the ratio of ideal to true RR (RRR) counts for the 2PCF (3PCF). The RR counts are computed using the `Corrfunc <https://corrfunc.readthedocs.io>`_ code of Sinha & Garrison. We additionally provide functionality to compute multi-field RR and survey-correction functions for the 2PCF. Most of the scripts below are in the ``python/`` directory, and must be run before the main C++ code.
+Here, we describe the scripts provided to compute RR and RRR random counts, in addition to the *survey correction functions*, defined as the ratio of ideal to true RR (RRR) counts for the 2PCF (3PCF). The RR counts are computed using the `Corrfunc <https://corrfunc.readthedocs.io>`_ code of Sinha & Garrison. We additionally provide functionality to compute multi-field RR and survey-correction functions for the 2PCF. Most of the scripts below are in the ``scripts/`` directory, and must be run before the main C++ code.
 
 **Note on Periodicity**
 
@@ -19,11 +19,11 @@ Usage
 ~~~~~~~
 For a single field analysis::
 
-    python python/RR_counts.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} {NORMED}
+    python scripts/legacy/RR_counts.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} {NORMED}
 
 For an analysis using two distinct fields::
 
-    python python/RR_counts_multi.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} {NORMED}
+    python scripts/legacy/RR_counts_multi.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {MU_MAX} {N_MU_BINS} {NTHREADS} {PERIODIC} {OUTPUT_DIR} {NORMED}
 
 **Input Parameters**
 
@@ -55,11 +55,11 @@ Usage
 
 For a single field analysis::
 
-    python python/compute_correction_function.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS}]
+    python scripts/compute_correction_function.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS}]
 
 For an analysis using two distinct fields::
 
-    python python/compute_correction_function_multi.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]
+    python scripts/compute_correction_function_multi.py {RANDOM_PARTICLE_FILE_1} {RANDOM_PARTICLE_FILE_2} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RR_COUNTS_11} {RR_COUNTS_12} {RR_COUNTS_22}]
 
 **Input Parameters**:
 
@@ -84,7 +84,7 @@ The computation is much easier in Python than in C++, and only needs to be done 
 
 Usage::
 
-    python python/mu_bin_legendre_factors.py {N_MU_BINS} {MAX_L} {OUTPUT_DIR}
+    python scripts/mu_bin_legendre_factors.py {N_MU_BINS} {MAX_L} {OUTPUT_DIR}
 
 The output file will have the name ``mu_bin_legendre_factors_m{N_MU_BINS}_l{MAX_L}.txt`` and located in the ``{OUTPUT_DIR}``.
 
@@ -122,7 +122,7 @@ Usage
 ~~~~~~
  ::
 
-    python python/compute_3pcf_correction_function.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RRR_COUNTS}]
+    python scripts/compute_3pcf_correction_function.py {RANDOM_PARTICLE_FILE} {BIN_FILE} {OUTPUT_DIR} {PERIODIC} [{RRR_COUNTS}]
 
 **Input Parameters**:
 
