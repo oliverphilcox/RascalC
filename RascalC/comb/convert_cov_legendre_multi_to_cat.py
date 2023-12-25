@@ -33,7 +33,7 @@ def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[s
     # Read pycorr files to figure out weights
     weights = []
     for pycorr_file in pycorr_files:
-        xi_estimator = reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file), n_mu_bins = None, r_step = r_step, skip_r_bins = skip_r_bins)
+        xi_estimator = reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file), n_mu = None, r_step = r_step, skip_r_bins = skip_r_bins)
         weights.append(get_counts_from_pycorr(xi_estimator, counts_factor = 1))
     weights = np.array(weights)
 

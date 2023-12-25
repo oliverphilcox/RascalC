@@ -19,7 +19,7 @@ def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: 
     # Read pycorr files to figure out weights
     results1 = []
     for pycorr_file1 in pycorr_files1:
-        results1.append(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file1), n_mu_bins = None, r_step = r_step, skip_r_bins = skip_r_bins))
+        results1.append(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file1), n_mu = None, r_step = r_step, skip_r_bins = skip_r_bins))
     assert len(results1) == 3, "Wrong number of xi1s"
 
     n = results1[0].shape[0]
@@ -27,7 +27,7 @@ def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: 
 
     results2 = []
     for pycorr_file2 in pycorr_files2:
-        results2.append(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file2), n_mu_bins = None, r_step = r_step, skip_r_bins = skip_r_bins))
+        results2.append(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file2), n_mu = None, r_step = r_step, skip_r_bins = skip_r_bins))
     assert len(results2) == 3, "Wrong number of xi2s"
 
     # Add weighting by bias for each tracer

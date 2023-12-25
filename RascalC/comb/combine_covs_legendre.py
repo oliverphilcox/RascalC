@@ -21,11 +21,11 @@ def combine_covs_legendre(rascalc_results1: str, rascalc_results2: str, pycorr_f
     header = f"combined from {rascalc_results1} with {header1} and {rascalc_results2} with {header2}" # form the final header to include both
 
     # Read pycorr files to figure out weights of s, mu binned 2PCF
-    xi_estimator1 = reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file1), n_mu_bins = None, r_step = r_step, skip_r_bins = skip_r_bins)
+    xi_estimator1 = reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file1), n_mu = None, r_step = r_step, skip_r_bins = skip_r_bins)
     n_r_bins = xi_estimator1.shape[0]
     mu_edges = xi_estimator1.edges[1]
     weight1 = get_counts_from_pycorr(xi_estimator1, counts_factor = 1)
-    weight2 = get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file2), n_mu_bins = None, r_step = r_step, skip_r_bins = skip_r_bins), counts_factor = 1)
+    weight2 = get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file2), n_mu = None, r_step = r_step, skip_r_bins = skip_r_bins), counts_factor = 1)
 
     # Normalize weights
     sum_weight = weight1 + weight2
