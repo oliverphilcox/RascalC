@@ -196,7 +196,7 @@ There's two ways to run the code here; firstly we could edit parameters in the `
 
     ....
 
-Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Note that the ``nofznorm`` parameter is set to the summed galaxy weights we found before. Now, we'll compile the code:
+Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Note that the ``nofznorm`` parameter is set to the number of galaxies we found before. Now, we'll compile the code:
 
 .. code-block:: bash
 
