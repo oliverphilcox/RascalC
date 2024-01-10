@@ -2,10 +2,9 @@
 
 from pycorr import TwoPointCorrelationFunction
 import numpy as np
-import sys
-from ..pycorr.utils import reshape_pycorr
+from ..pycorr_utils.utils import reshape_pycorr
 from ..cov_utils import get_cov_header, load_cov_legendre_multi
-from ..pycorr.counts import get_counts_from_pycorr
+from ..pycorr_utils.counts import get_counts_from_pycorr
 from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 
 
