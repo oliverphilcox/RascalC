@@ -107,7 +107,7 @@ def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full
     suffix_jack = "j" * jack
     suffix_full = "_full" * full
     single_array_shape = np.array(input_data["c4_11,11" + suffix_full].shape) # take reference shape from c4_11,11, with _full suffix if loading full
-    single_array_shape[:-2] = np.array(np.zeros(single_array_shape[:-2])[cov_filter].shape) # account for the shape change with cov_filter
+    single_array_shape[-2:] = np.zeros(single_array_shape[-2:])[cov_filter].shape # account for the shape change with cov_filter
     single_array_shape = list(single_array_shape)
 
     # arrays to store cN with first N indices being tracers
