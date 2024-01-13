@@ -129,7 +129,7 @@ public:
             fprintf(stderr, "Failed to obtain a correlation function estimate for rescaling.\nTry increasing N2 and/or number of integration loops, or using coarser correlation function binning, or providing denser randoms.\n");
             exit(1);
         }
-        printf("Smallest number of pairs sampled is %" PRIu64 " in correlation function bin %d (radial %d, angular %d). If the number is not large, consider increasing N2 and/or number of integration loops, or using coarser correlation function binning, or providing denser randoms.", min_binct, min_binct_bin, min_binct_bin / mbin, min_binct_bin % mbin);
+        printf("Smallest number of pairs sampled is %" PRIu64 " in correlation function bin %d (radial %d, angular %d). If the number is not large, consider increasing N2 and/or number of integration loops, or using coarser correlation function binning, or providing denser randoms.\n", min_binct, min_binct_bin, min_binct_bin / mbin, min_binct_bin % mbin);
     }
 
     void sum(correlation_integral* corr){
