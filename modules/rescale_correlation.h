@@ -4,6 +4,7 @@
 #define RESCALE_CORRELATION_H
 
 #include <algorithm>
+#include <inttypes.h>
 
 class correlation_integral{
 public:
@@ -105,8 +106,14 @@ public:
         // Normalize the accumulated integrals and reweight by N_gal/N_rand
         double corrf2 = norm1*norm2; // correction factor
         bool fail_flag = false;
+        uint64 min_binct = binct[0];
+        int min_binct_bin = 0;
 
         for(int i = 0; i<nbin*mbin;i++){
+            if (binct[i] < min_binct) {
+                min_binct = binct[i];
+                min_binct_bin = i;
+            }
             if (binct[i] == 0) {
                 fprintf(stderr, "No pairs sampled in correlation function bin %d (radial %d, angular %d)!\n", i, i / mbin, i % mbin);
                 fail_flag = true;
@@ -122,6 +129,7 @@ public:
             fprintf(stderr, "Failed to obtain a correlation function estimate for rescaling.\nTry increasing N2 and/or number of integration loops, or using coarser correlation function binning, or providing denser randoms.\n");
             exit(1);
         }
+        printf("Smallest number of pairs sampled is %" PRIu64 " in correlation function bin %d (radial %d, angular %d). If the number is not large, consider increasing N2 and/or number of integration loops, or using coarser correlation function binning, or providing denser randoms.", min_binct, min_binct_bin, min_binct_bin / mbin, min_binct_bin % mbin);
     }
 
     void sum(correlation_integral* corr){
