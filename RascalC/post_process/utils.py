@@ -123,7 +123,7 @@ def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full
         return a[cov_filter]
 
     # accumulate the values
-    for matrix_name, matrices in input_data.values():
+    for matrix_name, matrices in input_data.items():
         matrix_name_split = matrix_name.split("_")
         if len(matrix_name_split) != 2 + full: continue # should skip full if not loading full, and skip subsamples if loading full
         if full and matrix_name_split[-1] != "full": continue # double-check for safety
@@ -176,9 +176,9 @@ def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full
     if np.count_nonzero(n4 == 0) > 0: raise ValueError("Some 4-point terms missing")
 
     # now can normalize safely
-    c2 /= n2
-    c3 /= n4
-    c4 /= n4
+    c2 /= n2.reshape([ntracers] * 2 + [1] * len(single_array_shape))
+    c3 /= n3.reshape([ntracers] * 3 + [1] * len(single_array_shape))
+    c4 /= n4.reshape([ntracers] * 4 + [1] * len(single_array_shape))
 
     return c2, c3, c4
 
@@ -211,9 +211,9 @@ def add_cov_terms_multi(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.nda
         return full
 
     single_array_shape = list(c2.shape)[2:]
-    if c2.shape != [ntracers] * 2 + single_array_shape: raise ValueError("Unexpected shape of 2-point array")
-    if c3.shape != [ntracers] * 3 + single_array_shape: raise ValueError("Unexpected shape of 3-point array")
-    if c4.shape != [ntracers] * 4 + single_array_shape: raise ValueError("Unexpected shape of 4-point array")
+    if c2.shape != tuple([ntracers] * 2 + single_array_shape): raise ValueError("Unexpected shape of 2-point array")
+    if c3.shape != tuple([ntracers] * 3 + single_array_shape): raise ValueError("Unexpected shape of 3-point array")
+    if c4.shape != tuple([ntracers] * 4 + single_array_shape): raise ValueError("Unexpected shape of 4-point array")
     n_bins = single_array_shape[-1]
     if single_array_shape[-2] != n_bins: raise ValueError("Covariance matrices are not square")
     samples_shape = single_array_shape[:-2]
