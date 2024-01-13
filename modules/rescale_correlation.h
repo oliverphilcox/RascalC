@@ -52,6 +52,7 @@ public:
     ~correlation_integral(){
         free(cf_estimate);
         free(rr_estimate);
+        free(binct);
     }
 private:
     inline int getbin(Float r, Float mu){
@@ -128,6 +129,7 @@ public:
         for(int i=0;i<nbin*mbin;i++){
             cf_estimate[i]+=corr->cf_estimate[i];
             rr_estimate[i]+=corr->rr_estimate[i];
+            binct[i] += corr->binct[i];
         }
     }
 
