@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 
 import os
@@ -30,11 +30,9 @@ if version_info[0] < min_py_major or \
                                       min_py_major, min_py_minor))
 
 try:
-    from setuptools import setup, Extension
-    from setuptools.command.build_ext import build_ext
+    from setuptools import setup
 except ImportError:
-    from distutils.core import setup, Extension
-    from distutils.command.build_ext import build_ext
+    from distutils.core import setup
 
 if sys.argv[-1] == "publish":
     os.system("python setup.py sdist upload")
@@ -141,7 +139,7 @@ def setup_packages():
         install_requires=['setuptools',
                           'numpy>={0}.{1}'.format(min_np_major, min_np_minor),
                           'scipy',
-                          'future',
+                          'astropy',
                           'pycorr'],
         zip_safe=False)
 
