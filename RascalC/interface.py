@@ -201,7 +201,7 @@ def run_cov(mode: str,
     Returns
     -------
     post_processing_results : dict[str, np.ndarray[float]]
-        Post-processing results as a dictionary with string keys and Numpy array values. All this information is also saved in a *.npz file in the output directory.
+        Post-processing results as a dictionary with string keys and Numpy array values. All this information is also saved in a Rescaled_Covariance_Matrices*.npz file in the output directory.
         Selected common keys are: "full_theory_covariance" for the final covariance matrix and "shot_noise_rescaling" for the shot-noise rescaling value(s).
     """
 
