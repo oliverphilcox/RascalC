@@ -11,7 +11,15 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 
 ## Python interface (alpha-testing before version 3.0)
 
-### Installation
+### Installation for DESI members at NERSC
+
+```
+cd /global/common/software/desi/users/mrash/RascalC
+pip install -e .
+```
+This installs the library from my software folder in the development mode, so that after I update it e.g. with some fix, you will have the new version without the need to re-install.
+
+### Generic installation (if the above is unavailable)
 
 ```
 git clone https://github.com/misharash/RascalC
