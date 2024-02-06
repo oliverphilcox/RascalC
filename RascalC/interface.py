@@ -278,6 +278,12 @@ def run_cov(mode: str,
     def print_and_log(s: object) -> None:
         print(s)
         print_log(s)
+    
+    print_and_log(f"Mode: {mode}")
+    print_and_log(f"Periodic box: {periodic}")
+    if periodic: print_and_log(f"Box side: {boxsize}")
+    print_and_log(f"Jackknife: {jackknife}")
+    print_and_log(f"Number of tracers: {1 + two_tracers}")
 
     counts_factor = None if normalize_wcounts else 1
     ndata = (no_data_galaxies1, no_data_galaxies2)[:ntracers]
