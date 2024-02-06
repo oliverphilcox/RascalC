@@ -162,7 +162,9 @@ def run_cov(mode: str,
         Number of integration loops.
         For optimal balancing and minimal idle time, should be a few times (at least twice) ``nthread`` and exactly divisible by it.
         The runtime roughly scales as the number of quads per the number of threads, O(N_randoms * N2 * N3 * N4 * n_loops / nthread).
-        For reference, on NERSC Perlmutter CPU node the code processed about 5 millions (5e6) quads per second per hyperthread (a node has 256 of them) as of October 2023. (In Legendre projected mode, which is probably the slowest, with N2=5, N3=10, N4=20.)
+        For reference, on NERSC Perlmutter CPU node the code processed about 5 millions (5e6) quads per second per (hyper)thread (a node has 256 of them) as of October 2023. (In Legendre projected mode, which is probably the slowest, with N2=5, N3=10, N4=20.)
+        In single-tracer mode, the number of quads is ``N_randoms * N2 * N3 * N4 * n_loops``.
+        In two-tracer mode, the number of quads is ``(5 * N_randoms1 + 2 * N_randoms2) * N2 * N3 * N4 * n_loops``.
 
     loops_per_sample : integer
         Number of loops to merge into one output sample.
