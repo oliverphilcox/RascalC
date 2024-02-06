@@ -3,6 +3,7 @@
 import pycorr
 import numpy as np
 import os
+from datetime import datetime
 from .pycorr_utils.utils import fix_bad_bins_pycorr, write_xi_file
 from .write_binning_file import write_binning_file
 from .pycorr_utils.jack import get_jack_xi_weights_counts_from_pycorr
@@ -284,6 +285,7 @@ def run_cov(mode: str,
     if periodic: print_and_log(f"Box side: {boxsize}")
     print_and_log(f"Jackknife: {jackknife}")
     print_and_log(f"Number of tracers: {1 + two_tracers}")
+    print_and_log(datetime.now())
 
     counts_factor = None if normalize_wcounts else 1
     ndata = (no_data_galaxies1, no_data_galaxies2)[:ntracers]
@@ -396,6 +398,7 @@ def run_cov(mode: str,
 
     # compute the correction function if original Legendre
     if legendre_orig: # need correction function
+        print_and_log(datetime.now())
         if ntracers == 1:
             compute_correction_function(input_filenames[0], binfile, out_dir, periodic, binned_pair_names[0], print_and_log)
         elif ntracers == 2:
@@ -403,6 +406,7 @@ def run_cov(mode: str,
         command += "".join([f" -phi_file{suffixes_corr[c]} {os.path.join(out_dir, phi_names[c])}" for c in range(ncorr)])
     
     # run the main code
+    print_and_log(datetime.now())
     print_and_log(f"Launching the C++ code with command: {command}")
     status = os.system(f"bash -c 'set -o pipefail; stdbuf -oL -eL {command} 2>&1 | tee -a {logfile}'")
     # tee prints what it gets to stdout AND saves to file
@@ -411,8 +415,11 @@ def run_cov(mode: str,
     # feed the command to bash because on Ubuntu it was executed in sh (dash) where pipefail is not supported
     exit_code = os.waitstatus_to_exitcode(status) # assumes we are in Unix-based OS; on Windows status is the exit code
     if exit_code: raise RuntimeError(f"The C++ code terminated with an error: exit code {exit_code}")
+    print_and_log("The C++ code finished succesfully")
 
     # post-processing
+    print_and_log(datetime.now())
+    print_and_log("Starting post-processing")
     if two_tracers:
         if legendre:
             from .post_process.legendre_multi import post_process_legendre_multi
@@ -438,4 +445,6 @@ def run_cov(mode: str,
             from .post_process.default import post_process_default
             results = post_process_default(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, skip_s_bins, print_function = print_and_log)
 
+    print_and_log("Finished post-processing")
+    print_and_log(datetime.now())
     return results
