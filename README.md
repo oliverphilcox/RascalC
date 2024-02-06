@@ -13,9 +13,11 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 
 ### Installation for DESI members at NERSC
 
+Recommended to use with `cosmodesi` environment.
+In particular, load it before installing:
 ```
-cd /global/common/software/desi/users/mrash/RascalC
-pip install -e .
+source /global/common/software/desi/users/adematti/cosmodesi_environment.sh main
+pip install -e /global/common/software/desi/users/mrash/RascalC
 ```
 This installs the library from my software folder in the development mode, so that after I update it e.g. with some fix, you will have the new version without the need to re-install or any other action.
 
@@ -24,9 +26,9 @@ This installs the library from my software folder in the development mode, so th
 ```
 git clone https://github.com/misharash/RascalC
 cd RascalC
-pip install -e .
+pip install .
 ```
-`-e` flag installs the library in development mode, so that when you pull the code updates, they are reflected immediately.
+Make sure to reinstall after pulling updates.
 At this early stage, the fixes might be needed quite often.
 
 ### Very minimal usage guide
