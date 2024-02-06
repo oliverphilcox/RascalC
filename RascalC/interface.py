@@ -372,9 +372,9 @@ def run_cov(mode: str,
         np.savetxt(input_filename, output_array)
 
     # write the binning files
-    binfile = os.path.join(tmp_dir, "radial_binning_cov.csv")
+    binfile = os.path.join(out_dir, "radial_binning_cov.csv")
     write_binning_file(binfile, s_edges)
-    binfile_cf = os.path.join(tmp_dir, "radial_binning_corr.csv")
+    binfile_cf = os.path.join(out_dir, "radial_binning_corr.csv")
     write_binning_file(binfile_cf, xi_s_edges)
 
     # Select the executable name
