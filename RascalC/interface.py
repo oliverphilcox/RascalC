@@ -287,6 +287,7 @@ def run_cov(mode: str,
     if periodic: print_and_log(f"Box side: {boxsize}")
     print_and_log(f"Jackknife: {jackknife}")
     print_and_log(f"Number of tracers: {1 + two_tracers}")
+    print_and_log(f"Normalizing weights and weighted counts: {normalize_wcounts}")
     print_and_log(datetime.now())
 
     counts_factor = None if normalize_wcounts else 1
@@ -316,6 +317,7 @@ def run_cov(mode: str,
             ndata[tracer1] = pycorr_allcounts.D1D2.size1
 
     if any(not tracer_ndata for tracer_ndata in ndata): raise ValueError("Not given and not recovered all the necessary normalization factors (no_data_galaxies1/2)")
+    print_and_log(f"Number(s) of data galaxies: {ndata}")
     
     # write the xi file(s); need to set the 2PCF binning (even if only technical) and decide whether to rescale the 2PCF in the C++ code
     all_xi = (xi_table_11, xi_table_12, xi_table_22)
@@ -401,6 +403,7 @@ def run_cov(mode: str,
     # compute the correction function if original Legendre
     if legendre_orig: # need correction function
         print_and_log(datetime.now())
+        print_and_log(f"Computing the correction function")
         if ntracers == 1:
             compute_correction_function(input_filenames[0], binfile, out_dir, periodic, binned_pair_names[0], print_and_log)
         elif ntracers == 2:
