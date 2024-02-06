@@ -17,7 +17,7 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 cd /global/common/software/desi/users/mrash/RascalC
 pip install -e .
 ```
-This installs the library from my software folder in the development mode, so that after I update it e.g. with some fix, you will have the new version without the need to re-install.
+This installs the library from my software folder in the development mode, so that after I update it e.g. with some fix, you will have the new version without the need to re-install or any other action.
 
 ### Generic installation (if the above is unavailable)
 
@@ -26,8 +26,8 @@ git clone https://github.com/misharash/RascalC
 cd RascalC
 pip install -e .
 ```
-This installs the in development mode, so that when you pull the code updates, they are reflected immediately.
-At this stage, the fixes might be required pretty often.
+`-e` flag installs the library in development mode, so that when you pull the code updates, they are reflected immediately.
+At this early stage, the fixes might be needed quite often.
 
 ### Very minimal usage guide
 
