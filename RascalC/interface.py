@@ -176,7 +176,7 @@ def run_cov(mode: str,
         Moderate disk space required (up to a few hundred megabytes), but increases with covariance matrix size and number of samples (see above).
 
     tmp_dir : string
-        Directory for temporary files.
+        Directory for temporary files. Contents can be deleted after the code has run, but this will not be done automatically.
         More disk space required - needs to store all the input arrays in the current implementation.
 
     skip_s_bins : int
@@ -206,6 +206,7 @@ def run_cov(mode: str,
     post_processing_results : dict[str, np.ndarray[float]]
         Post-processing results as a dictionary with string keys and Numpy array values. All this information is also saved in a Rescaled_Covariance_Matrices*.npz file in the output directory.
         Selected common keys are: "full_theory_covariance" for the final covariance matrix and "shot_noise_rescaling" for the shot-noise rescaling value(s).
+        There will also be a Raw_Covariance_Matices*.npz file in the output directory (as long as the C++ code has run without errors), which can be post-processed separately in a different way.
     """
 
     if mode not in ("s_mu", "legendre_accumulated", "legendre_projected"): raise ValueError("Given mode not supported")
