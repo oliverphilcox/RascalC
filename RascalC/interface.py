@@ -145,6 +145,7 @@ def run_cov(mode: str,
     nthread : integer
         Number of hyperthreads to use.
         Can not utilize more threads than ``n_loops``.
+        IMPORTANT: AVOID multi-threading in the Python process calling this function (e.g. at NERSC this would mean not setting `OMP_*` and other `*_THREADS` environment variables; the code should be able to set them by itself). Otherwise the code may run effectively single-threaded. If you need multi-threaded calculations, run them separately or spawn sub-processes.
     
     N2 : integer
         Number of secondary points to sample per each primary random point.
@@ -385,7 +386,8 @@ def run_cov(mode: str,
     exec_path = os.path.join(os.path.realpath(os.path.dirname(__file__)), exec_name)
 
     # form the command line
-    command = f"{exec_path} -output {out_dir} -boxsize {boxsize} -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {xi_n_mu_bins} -cf_loops {xi_refinement_loops}" # here are universally acceptable parameters
+    command = "env OMP_PROC_BIND=spread OMP_PLACES=threads" # set OMP environment variables, should not be set before
+    command += f"{exec_path} -output {out_dir} -boxsize {boxsize} -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {xi_n_mu_bins} -cf_loops {xi_refinement_loops}" # here are universally acceptable parameters
     command += "".join([f" -in{suffixes_tracer[t]} {input_filenames[t]}" for t in range(ntracers)]) # provide all the random filenames
     command += "".join([f" -norm{suffixes_tracer[t]} {ndata[t]}" for t in range(ntracers)]) # provide all ndata for normalization
     command += "".join([f" -cor{suffixes_corr[c]} {cornames[c]}" for c in range(ncorr)]) # provide all correlation functions
