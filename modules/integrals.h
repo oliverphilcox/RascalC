@@ -658,9 +658,8 @@ public:
     void save_counts(uint64 pair_counts,uint64 triple_counts,uint64 quad_counts){
         // Print the counts for each integral (used for combining the estimates outside of C++)
         // This is the number of counts used in each loop [always the same]
-        char counts_file[1000];
-        snprintf(counts_file, sizeof counts_file, "%sCovMatricesAll/total_counts_n%d_m%d_%d%d,%d%d.txt",out_file,nbin,mbin,I1,I2,I3,I4);
-        FILE * CountsFile = fopen(counts_file,"w");
+        std::string counts_file = string_format("%sCovMatricesAll/total_counts_n%d_m%d_%d%d,%d%d.txt",out_file,nbin,mbin,I1,I2,I3,I4);
+        FILE * CountsFile = fopen(counts_file.c_str(), "w");
         fprintf(CountsFile,"%llu\n",pair_counts);
         fprintf(CountsFile,"%llu\n",triple_counts);
         fprintf(CountsFile,"%llu\n",quad_counts);
@@ -670,31 +669,30 @@ public:
     }
 
 
-    void save_integrals(char* suffix, bool save_all) {
+    void save_integrals(const char* suffix, bool save_all) {
     /* Print integral outputs to file.
         * In txt files {c2,c3,c4,RR}_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 and RR_a that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
         */
         // Create output files
 
-        char c2name[1000], c3name[1000], c4name[1000];
+        std::string c2name, c3name, c4name;
 #ifdef LEGENDRE_MIX
-        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
-        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
-        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
+        c2name = string_format("%sCovMatricesAll/c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
+        c3name = string_format("%sCovMatricesAll/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
+        c4name = string_format("%sCovMatricesAll/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
 #else
-        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1, I2, suffix);
-        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2, I1, I3, suffix);
-        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1, I2, I3, I4,suffix);
+        c2name = string_format("%sCovMatricesAll/c2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1, I2, suffix);
+        c3name = string_format("%sCovMatricesAll/c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2, I1, I3, suffix);
+        c4name = string_format("%sCovMatricesAll/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1, I2, I3, I4, suffix);
 #endif
 #ifndef LEGENDRE_MIX
-        char RRname[1000];
-        snprintf(RRname, sizeof RRname, "%sCovMatricesAll/RR_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        std::string RRname = string_format("%sCovMatricesAll/RR_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1, I2, suffix);
 #endif
-        FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
-        FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
-        FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
+        FILE * C2File = fopen(c2name.c_str(), "w"); // for c2 part of integral
+        FILE * C3File = fopen(c3name.c_str(), "w"); // for c3 part of integral
+        FILE * C4File = fopen(c4name.c_str(), "w"); // for c4 part of integral
 #ifndef LEGENDRE_MIX
-        FILE * RRFile = fopen(RRname,"w"); // for RR part of integral
+        FILE * RRFile = fopen(RRname.c_str(), "w"); // for RR part of integral
 #endif
 
 #ifndef LEGENDRE_MIX
@@ -729,19 +727,19 @@ public:
         fclose(RRFile);
 #endif
         if (save_all) {
-            char bin4name[1000], bin3name[1000], bin2name[1000];
+            std::string bin4name, bin3name, bin2name;
 #ifdef LEGENDRE_MIX
-            snprintf(bin4name, sizeof bin4name, "%sCovMatricesAll/binct_c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
-            snprintf(bin3name, sizeof bin3name, "%sCovMatricesAll/binct_c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
-            snprintf(bin2name, sizeof bin2name, "%sCovMatricesAll/binct_c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
+            bin4name = string_format("%sCovMatricesAll/binct_c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
+            bin3name = string_format("%sCovMatricesAll/binct_c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
+            bin2name = string_format("%sCovMatricesAll/binct_c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
 #else
-            snprintf(bin4name, sizeof bin4name, "%sCovMatricesAll/binct_c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1, I2, I3, I4, suffix);
-            snprintf(bin3name, sizeof bin3name, "%sCovMatricesAll/binct_c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2, I1, I3, suffix);
-            snprintf(bin2name, sizeof bin2name, "%sCovMatricesAll/binct_c2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1, I2,suffix);
+            bin4name = string_format("%sCovMatricesAll/binct_c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1, I2, I3, I4, suffix);
+            bin3name = string_format("%sCovMatricesAll/binct_c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2, I1, I3, suffix);
+            bin2name = string_format("%sCovMatricesAll/binct_c2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1, I2, suffix);
 #endif
-            FILE * Bin4File = fopen(bin4name, "w");
-            FILE * Bin3File = fopen(bin3name, "w");
-            FILE * Bin2File = fopen(bin2name, "w");
+            FILE * Bin4File = fopen(bin4name.c_str(), "w");
+            FILE * Bin3File = fopen(bin3name.c_str(), "w");
+            FILE * Bin2File = fopen(bin2name.c_str(), "w");
 
 #ifndef LEGENDRE_MIX
             for (int j=0; j<no_bins; j++) {
@@ -770,38 +768,34 @@ public:
     }
 
 #ifdef JACKKNIFE
-    void save_jackknife_integrals(char* suffix) {
+    void save_jackknife_integrals(const char* suffix) {
     /* Print jackknife integral outputs to file.
         * In txt files {c2,c3,c4,RR}_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 and RR_a that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
         */
         // Create output files
 
-        char c2name[1000], c3name[1000], c4name[1000];
+        std::string c2name, c3name, c4name;
 #ifdef LEGENDRE_MIX
-        snprintf(c2name, sizeof c2name, "%sCovMatricesJack/c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
-        snprintf(c3name, sizeof c3name, "%sCovMatricesJack/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
-        snprintf(c4name, sizeof c4name, "%sCovMatricesJack/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
+        c2name = string_format("%sCovMatricesJack/c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
+        c3name = string_format("%sCovMatricesJack/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
+        c4name = string_format("%sCovMatricesJack/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
 #else
-        snprintf(c2name, sizeof c2name, "%sCovMatricesJack/c2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1, I2, suffix);
-        snprintf(c3name, sizeof c3name, "%sCovMatricesJack/c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2, I1, I3, suffix);
-        snprintf(c4name, sizeof c4name, "%sCovMatricesJack/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1, I2, I3, I4, suffix);
+        c2name = string_format("%sCovMatricesJack/c2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1, I2, suffix);
+        c3name = string_format("%sCovMatricesJack/c3_n%d_m%d_%d,%d%d_%s.txt", out_file, nbin, mbin, I2, I1, I3, suffix);
+        c4name = string_format("%sCovMatricesJack/c4_n%d_m%d_%d%d,%d%d_%s.txt", out_file, nbin, mbin, I1, I2, I3, I4, suffix);
 #endif
-        FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
-        FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
-        FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
+        FILE * C2File = fopen(c2name.c_str(), "w"); // for c2 part of integral
+        FILE * C3File = fopen(c3name.c_str(), "w"); // for c3 part of integral
+        FILE * C4File = fopen(c4name.c_str(), "w"); // for c4 part of integral
 #ifndef LEGENDRE_MIX
-        char RR1name[1000];
-        snprintf(RR1name,sizeof RR1name, "%sCovMatricesJack/RR1_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
-        char RR2name[1000];
-        snprintf(RR2name,sizeof RR2name, "%sCovMatricesJack/RR2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
-        char EE1name[1000];
-        snprintf(EE1name,sizeof EE1name, "%sCovMatricesJack/EE1_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
-        char EE2name[1000];
-        snprintf(EE2name,sizeof EE2name, "%sCovMatricesJack/EE2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
-        FILE * EE1File = fopen(EE1name, "w"); // for EE1 integral
-        FILE * EE2File = fopen(EE2name,"w"); // for EE2 integral
-        FILE * RR1File = fopen(RR1name, "w"); // for RR1 integral
-        FILE * RR2File = fopen(RR2name,"w"); // for RR2 integral
+        std::string RR1name = string_format("%sCovMatricesJack/RR1_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        std::string RR2name = string_format("%sCovMatricesJack/RR2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        std::string EE1name = string_format("%sCovMatricesJack/EE1_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        std::string EE2name = string_format("%sCovMatricesJack/EE2_n%d_m%d_%d%d_%s.txt", out_file, nbin, mbin, I1,I2,suffix);
+        FILE * EE1File = fopen(EE1name.c_str(), "w"); // for EE1 integral
+        FILE * EE2File = fopen(EE2name.c_str(), "w"); // for EE2 integral
+        FILE * RR1File = fopen(RR1name.c_str(), "w"); // for RR1 integral
+        FILE * RR2File = fopen(RR2name.c_str(), "w"); // for RR2 integral
         for (int j = 0; j < no_bins; j++) {
             fprintf(C2File,"%le\n",c2j[j]);
         }

@@ -655,31 +655,27 @@ private:
 	    if (mkdir(out_file,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)==0){
             printf("\nCreating output directory\n");
         }
-	    char cname[1000];
 #ifdef THREE_PCF
-        snprintf(cname, sizeof cname, "%s3PCFCovMatricesAll/",out_file);
+        std::string cname = string_format("%s3PCFCovMatricesAll/", out_file);
 #elif defined POWER
-        snprintf(cname, sizeof cname, "%sPowerCovMatrices/",out_file);
+        std::string cname = string_format("%sPowerCovMatrices/", out_file);
 #else
-	    snprintf(cname, sizeof cname, "%sCovMatricesAll/",out_file);
+	    std::string cname = string_format("%sCovMatricesAll/", out_file);
 #endif
-        if (mkdir(cname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0){
-            }
+        mkdir(cname.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         // Check if this was successful:
         struct stat info;
 
-        if( stat( cname, &info ) != 0 ){
-            printf( "\nCreation of directory %s failed\n", cname);
+        if( stat( cname.c_str(), &info ) != 0 ){
+            printf( "\nCreation of directory %s failed\n", cname.c_str());
             exit(1);
         }
 #ifdef JACKKNIFE
-        char cjname[1000];
-        snprintf(cjname, sizeof cjname, "%sCovMatricesJack/",out_file);
-        if (mkdir(cjname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)!=0){
-        }
+        std::string cjname = string_format("%sCovMatricesJack/",out_file);
+        mkdir(cjname.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-        if(stat(cjname,&info)!=0){
-            printf("\nCreation of directory %s failed\n",cjname);
+        if(stat(cjname.c_str(), &info) != 0) {
+            printf("\nCreation of directory %s failed\n", cjname.c_str());
             exit(1);
         }
 #endif

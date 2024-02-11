@@ -41,6 +41,7 @@ typedef double3 Float3;
 
 
 // Define module files
+    #include "modules/string_format.h"
     #include "modules/parameters.h"
     #include "modules/cell_utilities.h"
     #include "modules/grid.h"

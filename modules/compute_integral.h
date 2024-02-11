@@ -481,16 +481,15 @@
                 // Save output if the group is done
                 if (completed_loops % par->loops_per_sample == 0) {
                     sumint.sum_ints(&outint); // add to grand total
-                    char output_string[50];
-                    snprintf(output_string, 50, "%d", subsample_index);
+                    std::string output_string = string_format("%d", subsample_index);
 #ifndef POWER
                     outint.normalize(grid1->norm, grid2->norm, grid3->norm, grid4->norm, (Float)used_pairs_per_sample, (Float)used_triples_per_sample, (Float)used_quads_per_sample);
 #else
                     outint.normalize(grid1->norm, grid2->norm, grid3->norm, grid4->norm, (Float)used_pairs_per_sample, (Float)used_triples_per_sample, (Float)used_quads_per_sample, par->power_norm);
 #endif
-                    outint.save_integrals(output_string, 0);
+                    outint.save_integrals(output_string.c_str(), 0);
 #ifdef JACKKNIFE
-                    outint.save_jackknife_integrals(output_string);
+                    outint.save_jackknife_integrals(output_string.c_str());
 #endif
                     // Reset the current output sample variables
                     outint.reset();
@@ -546,9 +545,8 @@
         printf("\nTrial speed: %.2e quads per core per second\n",double(tot_quads)/(runtime*double(par->nthread)));
         printf("Acceptance speed: %.2e quads per core per second\n",double(cnt4)/(runtime*double(par->nthread)));
 
-        char out_string[5];
-        snprintf(out_string, 5, "full");
-        sumint.save_integrals(out_string,1); // save integrals to file
+        const char out_string[5] = "full";
+        sumint.save_integrals(out_string, 1); // save integrals to file
         sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file
 #ifdef POWER
         printf("Printed integrals to file in the %sPowerCovMatrices/ directory\n",par->out_file);

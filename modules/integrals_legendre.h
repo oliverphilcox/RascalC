@@ -363,9 +363,8 @@ public:
     void save_counts(uint64 pair_counts,uint64 triple_counts,uint64 quad_counts){
         // Print the counts for each integral (used for combining the estimates outside of C++)
         // This is the number of counts used in each loop [always the same]
-        char counts_file[1000];
-        snprintf(counts_file, sizeof counts_file, "%sCovMatricesAll/total_counts_n%d_l%d_%d%d,%d%d.txt",out_file,nbin,max_l,I1,I2,I3,I4);
-        FILE * CountsFile = fopen(counts_file,"w");
+        std::string counts_file = string_format("%sCovMatricesAll/total_counts_n%d_l%d_%d%d,%d%d.txt",out_file,nbin,max_l,I1,I2,I3,I4);
+        FILE * CountsFile = fopen(counts_file.c_str(), "w");
         fprintf(CountsFile,"%llu\n",pair_counts);
         fprintf(CountsFile,"%llu\n",triple_counts);
         fprintf(CountsFile,"%llu\n",quad_counts);
@@ -375,21 +374,18 @@ public:
     }
 
 
-    void save_integrals(char* suffix, bool save_all) {
+    void save_integrals(const char* suffix, bool save_all) {
     /* Print integral outputs to file.
         * In txt files {c2,c3,c4}_leg_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
         */
         // Create output files
 
-        char c2name[1000];
-        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_l%d_%d%d_%s.txt", out_file,nbin, max_l,I1,I2,suffix);
-        char c3name[1000];
-        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l,I2,I1,I3,suffix);
-        char c4name[1000];
-        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1,I2,I3,I4,suffix);
-        FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
-        FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
-        FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
+        std::string c2name = string_format("%sCovMatricesAll/c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
+        std::string c3name = string_format("%sCovMatricesAll/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
+        std::string c4name = string_format("%sCovMatricesAll/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
+        FILE * C2File = fopen(c2name.c_str(), "w"); // for c2 part of integral
+        FILE * C3File = fopen(c3name.c_str(), "w"); // for c3 part of integral
+        FILE * C4File = fopen(c4name.c_str(), "w"); // for c4 part of integral
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
                 fprintf(C2File,"%le\t",c2[i*nbin*mbin+j]);
@@ -407,17 +403,14 @@ public:
         fclose(C4File);
 
         if(save_all==1){
-            char binname4[1000];
-            snprintf(binname4,sizeof binname4, "%sCovMatricesAll/binct_c4_n%d_l%d_%d%d,%d%d_%s.txt",out_file, nbin,max_l,I1,I2,I3,I4,suffix);
-            FILE * BinFile4 = fopen(binname4,"w");
+            std::string binname4 = string_format("%sCovMatricesAll/binct_c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
+            FILE * BinFile4 = fopen(binname4.c_str(),"w");
 
-            char binname3[1000];
-            snprintf(binname3,sizeof binname3, "%sCovMatricesAll/binct_c3_n%d_l%d_%d,%d%d_%s.txt",out_file, nbin,max_l,I2,I1,I3,suffix);
-            FILE * BinFile3 = fopen(binname3,"w");
+            std::string binname3 = string_format("%sCovMatricesAll/binct_c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
+            FILE * BinFile3 = fopen(binname3.c_str(),"w");
 
-            char binname2[1000];
-            snprintf(binname2,sizeof binname2, "%sCovMatricesAll/binct_c2_n%d_l%d_%d%d_%s.txt",out_file, nbin,max_l,I1,I2,suffix);
-            FILE * BinFile2 = fopen(binname2,"w");
+            std::string binname2 = string_format("%sCovMatricesAll/binct_c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
+            FILE * BinFile2 = fopen(binname2.c_str(),"w");
 
             for(int i=0;i<nbin*mbin;i++){
                 for(int j=0;j<nbin*mbin;j++){
