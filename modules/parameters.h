@@ -643,6 +643,14 @@ private:
 
 	void create_directory(){
         // Initialize output directory:
+        size_t out_file_len = strlen(out_file);
+        if (out_file[out_file_len - 1] != '/') { // append the slash if absent
+            out_file_len += 2; // add one for the slash, and another for the terminating zero which was not included
+            char * tmp_out_file = (char *) malloc(sizeof(char) * out_file_len); // one more character for the slash and another for zero terminator
+            snprintf(tmp_out_file, out_file_len, "%s/", out_file);
+            out_file = tmp_out_file;
+            // one might think the old out_file should be freed, but actually not, because out_file is either pointing to default_out_file (a constant member of this Parameters class) or an element of argv[], neither can and should be freed. There is still some additional memory usage, but should be small in realistic cases.
+        }
 	    // First create whole directory if it doesn't exist:
 	    if (mkdir(out_file,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)==0){
             printf("\nCreating output directory\n");
@@ -671,7 +679,7 @@ private:
         }
 
         if(stat(cjname,&info)!=0){
-            printf("\nCreation of directory %s fiailed\n",cjname);
+            printf("\nCreation of directory %s failed\n",cjname);
             exit(1);
         }
 #endif
