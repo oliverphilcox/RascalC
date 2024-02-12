@@ -227,7 +227,7 @@ def run_cov(mode: str,
         if n_mu_bins is None: raise TypeError("Number of µ bins for the covariance matrix must be provided in s_mu mode")
 
     # Set some other flags
-    periodic = boxsize is not None
+    periodic = bool(boxsize) # False for None (default) and 0
     two_tracers = randoms_positions2 is not None
 
     if two_tracers: # check that everything is set accordingly
@@ -259,7 +259,7 @@ def run_cov(mode: str,
                 raise ValueError("The sets of jackkknife labels of the two tracers must be the same")
 
     # set the technical filenames
-    input_filenames = [os.path.join(tmp_dir, str(t) + ".txt") for t in ntracers]
+    input_filenames = [os.path.join(tmp_dir, str(t) + ".txt") for t in range(ntracers)]
     cornames = [os.path.join(out_dir, f"xi/xi_{index}.dat") for index in indices_corr]
     binned_pair_names = [os.path.join(out_dir, "weights/" + ("binned_pair" if jackknife else "RR") + f"_counts_n{n_r_bins}_m{n_mu_bins}" + (f"_j{njack}" if jackknife else "") + f"_{index}.dat") for index in indices_corr]
     if jackknife:
@@ -267,11 +267,14 @@ def run_cov(mode: str,
         xi_jack_names = [os.path.join(out_dir, f"xi_jack/xi_jack_n{n_r_bins}_m{n_mu_bins}_j{njack}_{index}.dat") for index in indices_corr]
         jackknife_pairs_names = [os.path.join(out_dir, f"weights/jackknife_pair_counts_n{n_r_bins}_m{n_mu_bins}_j{njack}_{index}.dat") for index in indices_corr]
     if legendre_orig:
-        phi_names = [f"BinCorrectionFactor_n{n_r_bins}_" + ("periodic" if periodic else f'm{n_mu_bins}') + f"_{index}.txt" for index in indices_corr]
+        phi_names = [os.path.join(out_dir, f"BinCorrectionFactor_n{n_r_bins}_" + ("periodic" if periodic else f'm{n_mu_bins}') + f"_{index}.txt") for index in indices_corr]
     
     # make sure the dirs exist
     os.makedirs(out_dir, exist_ok = True)
     os.makedirs(tmp_dir, exist_ok = True)
+    os.makedirs(os.path.join(out_dir, "xi"), exist_ok = True)
+    os.makedirs(os.path.join(out_dir, "weights"), exist_ok = True)
+    if jackknife: os.makedirs(os.path.join(out_dir, "xi_jack"), exist_ok = True)
     
     # Create a log file in output directory
     logfilename = "log.txt"
@@ -307,10 +310,10 @@ def run_cov(mode: str,
         np.savetxt(binned_pair_names[c], RR_counts.reshape(-1, 1)) # the file needs to have 1 column
         if jackknife:
             xi_jack, jack_weights, jack_RR_counts = get_jack_xi_weights_counts_from_pycorr(pycorr_allcounts, counts_factor)
-            if not np.allclose(np.sum(jack_RR_counts, axis=0), RR_counts): raise ValueError("Total counts mismatch")
+            if not np.allclose(np.sum(jack_RR_counts, axis=0), RR_counts.ravel()): raise ValueError("Total counts mismatch")
             ## Write to files using numpy functions
             write_xi_file(xi_jack_names[c], pycorr_allcounts.sepavg(axis = 0), pycorr_allcounts.sepavg(axis = 1), xi_jack)
-            jack_numbers = np.array(xi.realizations).reshape(-1, 1) # column of jackknife numbers, may be useless but needed for format compatibility
+            jack_numbers = pycorr_allcounts.realizations # column of jackknife numbers, may be useless but needed for format compatibility
             np.savetxt(jackknife_weights_names[c], np.column_stack((jack_numbers, jack_weights)))
             np.savetxt(jackknife_pairs_names[c], np.column_stack((jack_numbers, jack_RR_counts))) # not really needed for the C++ code or processing but let it be
         # fill ndata if not given
@@ -358,7 +361,7 @@ def run_cov(mode: str,
     
     # write the randoms file(s)
     randoms_positions = (randoms_positions1, randoms_positions2)
-    randoms_weights = (randoms_weights1, randoms_weights2)
+    randoms_weights = [randoms_weights1, randoms_weights2]
     randoms_samples = (randoms_samples1, randoms_samples2)
     for t, input_filename in enumerate(input_filenames):
         if randoms_positions[t].ndim != 2: raise ValueError(f"Positions of randoms {t+1} not contained in a 2D array")
@@ -366,6 +369,7 @@ def run_cov(mode: str,
         nrandoms = len(randoms_positions[t])
         if randoms_weights[t].ndim != 1: raise ValueError(f"Weights of randoms {t+1} not contained in a 1D array")
         if len(randoms_weights[t]) != nrandoms: raise ValueError(f"Number of weights for randoms {t+1} mismatches the number of positions")
+        if normalize_wcounts: randoms_weights[t] /= np.sum(randoms_weights[t])
         output_array = np.column_stack((randoms_positions[t], randoms_weights[t]))
         if jackknife:
             if randoms_samples[t].ndim != 1: raise ValueError(f"Weights of sample labels {t+1} not contained in a 1D array")
@@ -386,20 +390,20 @@ def run_cov(mode: str,
     exec_path = os.path.join(os.path.realpath(os.path.dirname(__file__)), exec_name)
 
     # form the command line
-    command = "env OMP_PROC_BIND=spread OMP_PLACES=threads" # set OMP environment variables, should not be set before
-    command += f"{exec_path} -output {out_dir} -boxsize {boxsize} -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {xi_n_mu_bins} -cf_loops {xi_refinement_loops}" # here are universally acceptable parameters
+    command = "env OMP_PROC_BIND=spread OMP_PLACES=threads " # set OMP environment variables, should not be set before
+    command += f"{exec_path} -output {out_dir}/ -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {xi_n_mu_bins} -cf_loops {xi_refinement_loops}" # here are universally acceptable parameters
     command += "".join([f" -in{suffixes_tracer[t]} {input_filenames[t]}" for t in range(ntracers)]) # provide all the random filenames
     command += "".join([f" -norm{suffixes_tracer[t]} {ndata[t]}" for t in range(ntracers)]) # provide all ndata for normalization
     command += "".join([f" -cor{suffixes_corr[c]} {cornames[c]}" for c in range(ncorr)]) # provide all correlation functions
     if legendre: # only provide max multipole l for now
         command += f" -max_l {max_l}"
     if legendre_mix: # generate and provide factors filename
-        mu_bin_legendre_file = write_mu_bin_legendre_factors(n_mu_bins, max_l, out_dir)
+        mu_bin_legendre_file = write_mu_bin_legendre_factors(n_mu_bins, max_l, os.path.join(out_dir, "weights"))
         command += f" -mu_bin_legendre_file {mu_bin_legendre_file}"
     if not legendre_orig: # provide binned pair counts files and number of mu bin
         command += "".join([f" -RRbin{suffixes_corr[c]} {binned_pair_names[c]}" for c in range(ncorr)]) + f" -mbin {n_mu_bins}"
-    if periodic: # append periodic flag
-        command += " -perbox"
+    if periodic: # append periodic flag and box size
+        command += f" -perbox -boxsize {boxsize}"
     if jackknife: # provide jackknife weight files for all correlations
         command += "".join([f" -jackknife{suffixes_corr[c]} {jackknife_weights_names[c]}" for c in range(ncorr)])
 
@@ -411,7 +415,7 @@ def run_cov(mode: str,
             compute_correction_function(input_filenames[0], binfile, out_dir, periodic, binned_pair_names[0], print_and_log)
         elif ntracers == 2:
             compute_correction_function_multi(*input_filenames, binfile, out_dir, periodic, *binned_pair_names, print_function = print_and_log)
-        command += "".join([f" -phi_file{suffixes_corr[c]} {os.path.join(out_dir, phi_names[c])}" for c in range(ncorr)])
+        command += "".join([f" -phi_file{suffixes_corr[c]} {phi_names[c]}" for c in range(ncorr)])
     
     # run the main code
     print_and_log(datetime.now())
