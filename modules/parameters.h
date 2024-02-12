@@ -643,35 +643,39 @@ private:
 
 	void create_directory(){
         // Initialize output directory:
+        size_t out_file_len = strlen(out_file);
+        if (out_file[out_file_len - 1] != '/') { // append the slash if absent
+            out_file_len += 2; // add one for the slash, and another for the terminating zero which was not included
+            char * tmp_out_file = (char *) malloc(sizeof(char) * out_file_len); // one more character for the slash and another for zero terminator
+            snprintf(tmp_out_file, out_file_len, "%s/", out_file);
+            out_file = tmp_out_file;
+            // one might think the old out_file should be freed, but actually not, because out_file is either pointing to default_out_file (a constant member of this Parameters class) or an element of argv[], neither can and should be freed. There is still some additional memory usage, but should be small in realistic cases.
+        }
 	    // First create whole directory if it doesn't exist:
 	    if (mkdir(out_file,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)==0){
             printf("\nCreating output directory\n");
         }
-	    char cname[1000];
 #ifdef THREE_PCF
-        snprintf(cname, sizeof cname, "%s3PCFCovMatricesAll/",out_file);
+        std::string cname = string_format("%s3PCFCovMatricesAll/", out_file);
 #elif defined POWER
-        snprintf(cname, sizeof cname, "%sPowerCovMatrices/",out_file);
+        std::string cname = string_format("%sPowerCovMatrices/", out_file);
 #else
-	    snprintf(cname, sizeof cname, "%sCovMatricesAll/",out_file);
+	    std::string cname = string_format("%sCovMatricesAll/", out_file);
 #endif
-        if (mkdir(cname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0){
-            }
+        mkdir(cname.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         // Check if this was successful:
         struct stat info;
 
-        if( stat( cname, &info ) != 0 ){
-            printf( "\nCreation of directory %s failed\n", cname);
+        if( stat( cname.c_str(), &info ) != 0 ){
+            printf( "\nCreation of directory %s failed\n", cname.c_str());
             exit(1);
         }
 #ifdef JACKKNIFE
-        char cjname[1000];
-        snprintf(cjname, sizeof cjname, "%sCovMatricesJack/",out_file);
-        if (mkdir(cjname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)!=0){
-        }
+        std::string cjname = string_format("%sCovMatricesJack/",out_file);
+        mkdir(cjname.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-        if(stat(cjname,&info)!=0){
-            printf("\nCreation of directory %s fiailed\n",cjname);
+        if(stat(cjname.c_str(), &info) != 0) {
+            printf("\nCreation of directory %s failed\n", cjname.c_str());
             exit(1);
         }
 #endif

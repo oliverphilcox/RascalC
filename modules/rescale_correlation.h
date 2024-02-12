@@ -4,11 +4,13 @@
 #define RESCALE_CORRELATION_H
 
 #include <algorithm>
+#include <inttypes.h>
 
 class correlation_integral{
 public:
     Float *cf_estimate; // estimated correlation function in each bin
     Float *rr_estimate; // RR bin count estimate
+    uint64 *binct; // array to accumulate bin counts
     CorrelationFunction *old_cf; // input correlation function
     Integrals *integral; // integrals class
 private:
@@ -40,6 +42,7 @@ public:
         int ec=0;
         ec+=posix_memalign((void **) &cf_estimate, PAGE, sizeof(double)*nbin*mbin);
         ec+=posix_memalign((void **) &rr_estimate, PAGE, sizeof(double)*nbin*mbin);
+        ec+=posix_memalign((void **) &binct, PAGE, sizeof(uint64)*nbin*mbin);
         assert(ec==0);
 
         // Reset functions
@@ -50,6 +53,7 @@ public:
     ~correlation_integral(){
         free(cf_estimate);
         free(rr_estimate);
+        free(binct);
     }
 private:
     inline int getbin(Float r, Float mu){
@@ -94,17 +98,38 @@ public:
             // Add to local integral counts:
             cf_estimate[tmp_bin]+=xi_contrib;
             rr_estimate[tmp_bin]+=rr_contrib;
+            binct[tmp_bin]++;
         }
     }
 
     void normalize(Float norm1, Float norm2, Float n_pairs){
         // Normalize the accumulated integrals and reweight by N_gal/N_rand
         double corrf2 = norm1*norm2; // correction factor
+        bool fail_flag = false;
+        uint64 min_binct = binct[0];
+        int min_binct_bin = 0;
 
         for(int i = 0; i<nbin*mbin;i++){
+            if (binct[i] < min_binct) {
+                min_binct = binct[i];
+                min_binct_bin = i;
+            }
+            if (binct[i] == 0) {
+                fprintf(stderr, "No pairs sampled in correlation function bin %d (radial %d, angular %d)!\n", i, i / mbin, i % mbin);
+                fail_flag = true;
+            }
+            else if (rr_estimate[i] == 0) {
+                fprintf(stderr, "RR estimate in correlation function bin %d (radial %d, angular %d) is zero!\n", i, i / mbin, i % mbin);
+                fail_flag = true;
+            }
             rr_estimate[i]/=(n_pairs*corrf2);
             cf_estimate[i]/=(n_pairs*corrf2*rr_estimate[i]);
         }
+        if (fail_flag) {
+            fprintf(stderr, "Failed to obtain a correlation function estimate for rescaling.\nTry increasing N2 and/or number of integration loops, or using coarser correlation function binning, or providing denser randoms.\n");
+            exit(1);
+        }
+        printf("Smallest number of pairs sampled is %llu in correlation function bin %d (radial %d, angular %d). If the number is not large, consider increasing N2 and/or number of integration loops, or using coarser correlation function binning, or providing denser randoms.\n", (unsigned long long) min_binct, min_binct_bin, min_binct_bin / mbin, min_binct_bin % mbin);
     }
 
     void sum(correlation_integral* corr){
@@ -112,6 +137,7 @@ public:
         for(int i=0;i<nbin*mbin;i++){
             cf_estimate[i]+=corr->cf_estimate[i];
             rr_estimate[i]+=corr->rr_estimate[i];
+            binct[i] += corr->binct[i];
         }
     }
 
@@ -119,6 +145,7 @@ public:
         for(int i=0;i<nbin*mbin;i++){
             cf_estimate[i]=0;
             rr_estimate[i]=0;
+            binct[i]=0;
         }
     }
 

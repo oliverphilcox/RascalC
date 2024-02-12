@@ -9,6 +9,45 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 
 ***New for version 2***: Legendre moment covariances and the 3PCF
 
+## Python interface (alpha-testing before version 3.0)
+
+### Installation for DESI members at NERSC
+
+Recommended to use with `cosmodesi` environment.
+In particular, load it before installing:
+```
+source /global/common/software/desi/users/adematti/cosmodesi_environment.sh main
+pip install -e /global/common/software/desi/users/mrash/RascalC
+```
+This installs the library from my software folder in the development mode, so that after I update it e.g. with some fix, you will have the new version without the need to re-install or any other action.
+
+### Generic installation (if the above is unavailable)
+
+```
+git clone https://github.com/misharash/RascalC
+cd RascalC
+pip install .
+```
+Make sure to reinstall after pulling updates.
+At this early stage, the fixes might be needed quite often.
+
+### Very minimal usage guide
+
+```
+import RascalC
+result = RascalC.run_cov(...)
+```
+
+`run_cov` is the main function for the covariance matrix computation.
+Use `help(RascalC.run_cov)` to learn more about the inputs and outputs; many of them are similar to [pycorr](https://github.com/cosmodesi/pycorr) `TwoPointCorrelationFunction` and some others are `pycorr.TwoPointEstimator`s.
+
+It is strongly recommended NOT to use multi-threaded operations in the `python` process before launching `RascalC.run_cov` – this may cause the code to run effectively single-threaded.
+E.g. at NERSC this would mean not setting `OMP_*` and other `*_THREADS` environment variables; the code will set them by itself according to the number of threads you passed.
+This caveat does not seem to be unique for RascalC – different multi-threading backends can interfere.
+
+More documentation is coming, in the meantime please contact Michael 'Misha' Rashkovetskyi <mrashkovetskyi@cfa.harvard.edu> with any questions.
+Please also feel free to open [GitHub issues](https://github.com/misharash/RascalC/issues) both for problems and clarification requests.
+
 ## Authors
 
 - Oliver Philcox (Columbia / Simons Foundation)

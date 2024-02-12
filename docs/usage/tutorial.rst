@@ -31,8 +31,8 @@ For advanced users who would like to do things in parallel when possible, here i
 
 First, we'll convert these into Cartesian (x,y,z,weight) coordinates, using :math:`\Omega_m = 0.29`, :math:`\Omega_k = 0`, :math:`w_\Lambda = -1` (to be consistent with the QPM mock data creation)::
 
-    python python/convert_to_xyz.py mock_galaxy_DR12_CMASS_N_QPM_0001.txt qpm_galaxies.xyz 0.29 0. -1
-    python python/convert_to_xyz.py mock_random_DR12_CMASS_N_50x1.txt qpm_randoms_50x.xyz 0.29 0. -1
+    python scripts/convert_to_xyz.py mock_galaxy_DR12_CMASS_N_QPM_0001.txt qpm_galaxies.xyz 0.29 0. -1
+    python scripts/convert_to_xyz.py mock_random_DR12_CMASS_N_50x1.txt qpm_randoms_50x.xyz 0.29 0. -1
 
 (See :ref:`coord-conversion`).
 
@@ -40,8 +40,8 @@ These are saved as ``qpm_galaxies.xyz`` and ``qpm_randoms_50x.xyz`` in (x,y,z,we
 
 Now let's add some jackknives to these files. We'll use HEALPIX NSIDE=8 jackknife regions here::
 
-    python python/create_jackknives.py qpm_galaxies.xyz qpm_galaxies.xyzwj 8
-    python python/create_jackknives.py qpm_randoms_50x.xyz qpm_randoms_50x.xyzwj 8
+    python scripts/legacy/create_jackknives.py qpm_galaxies.xyz qpm_galaxies.xyzwj 8
+    python scripts/legacy/create_jackknives.py qpm_randoms_50x.xyz qpm_randoms_50x.xyzwj 8
 
 (See :ref:`create-jackknives`).
 
@@ -49,7 +49,7 @@ These are saved as ``qpm_galaxies.xyzwj`` and ``qpm_randoms_50x.xyzwj`` in (x,y,
 
 We've got 50x the number of random particles as galaxies here which seems a little big. Let's reduce this to 10x (noting that there are 642051 galaxies in the galaxy file)::
 
-    python python/take_subset_of_particles.py qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj 6420510
+    python scripts/take_subset_of_particles.py qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj 6420510
 
 (See :ref:`particle-subset`).
 
@@ -59,8 +59,8 @@ Let's create the radial binning files next. We'll create two binning files; one 
 
 For the covariance matrix, we'll use a linear binning file with :math:`\Delta r = 5` for :math:`r\in[20,200]` and for the correlation function we'll use a linear binning file with :math:`\Delta r = 1` for :math:`r\in[0,200]`. **NB**: The correlation function binning file must extend down to :math:`r = 0`::
 
-    python python/write_binning_file_linear.py 36 20 200 radial_binning_cov.csv
-    python python/write_binning_file_linear.py 200 0 200 radial_binning_corr.csv
+    python scripts/write_binning_file_linear.py 36 20 200 radial_binning_cov.csv
+    python scripts/write_binning_file_linear.py 200 0 200 radial_binning_corr.csv
 
 (See :ref:`write-binning-file`).
 
@@ -86,7 +86,7 @@ We're now ready to compute the jackknife weights :math:`w_{aA}` for this set of 
 
 Here we'll use 12 angular bins with :math:`\mu\in[0,1]` and recall that this dataset is non-periodic (so :math:`\mu` is measured from the line-of-sight, as opposed to the :math:`z`-axis). We'll run 10-threaded for speed and save in the ``weights/`` directory.::
 
-    python python/jackknife_weights.py qpm_randoms_10x.xyzwj radial_binning_cov.csv 1. 12 10 0 weights/
+    python scripts/jackknife_weights.py qpm_randoms_10x.xyzwj radial_binning_cov.csv 1. 12 10 0 weights/
 
 (See :doc:`jackknife-weights`).
 
@@ -100,7 +100,7 @@ The outputs are saved as ``weights/jackknife_weights_n36_m12_j169_11.dat``, ``we
 
 Using the galaxy and random particle files, we can obtain estimates of the correlation function. Firstly, we'll compute an estimate of :math:`\xi(r,\mu)` to be used to compute the theoretical covariance matrices. We'll use 120 :math:`\mu` bins in :math:`[0,1]` and set the code to run for aperiodic input data. This must use the *correlation function* radial binning file, giving us a finely binned estimate of the correlation function.::
 
-    python python/xi_estimator_aperiodic.py qpm_galaxies.xyzwj qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj radial_binning_corr.csv 1. 120 10 xi/
+    python scripts/legacy/xi_estimator_aperiodic.py qpm_galaxies.xyzwj qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj radial_binning_corr.csv 1. 120 10 xi/
 
 (See :ref:`full-correlations`).
 
@@ -108,7 +108,7 @@ This uses Corrfunc to perform pair counting and computes :math:`\xi_a` for each 
 
 Now let's compute the jackknnife correlation function estimates for each bin, :math:`\xi^J_{aA}`. These are the individual correlation functions obtained from each unrestricted jackknife, and we can use them to create a data jackknife covariance matrix which we can compare to theory. This is run in a similar way to before, but we must now use the *covariance matrix* radial binning file, since we use these to directly compute a covariance. Here, we'll use 10x randoms for RR counts and 50x randoms for DR counts, but we can skip some of the work by loading in the jackknife pair counts computed by the :doc:`jackknife-weights` script (in the same binning as here), which avoids recomputing RR counts. (The input 10x random file isn't loaded in this case).::
 
-    python python/xi_estimator_jack.py qpm_galaxies.xyzwj qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj radial_binning_cov.csv 1. 12 10 0 xi_jack/ weights/jackknife_pair_counts_n36_m12_j169_11.dat
+    python scripts/legacy/xi_estimator_jack.py qpm_galaxies.xyzwj qpm_randoms_50x.xyzwj qpm_randoms_10x.xyzwj radial_binning_cov.csv 1. 12 10 0 xi_jack/ weights/jackknife_pair_counts_n36_m12_j169_11.dat
 
 (See :ref:`jackknife-correlations`).
 
@@ -226,7 +226,7 @@ Although the C++ code computes all the relevant parts of the covariance matrices
 
 For a single field analysis, this is run as follows, specifying the jackknife correlation functions, output covariance term directory and weights. Since we used :math:`N_\mathrm{loops}=10` above, we'll set this as the number of subsamples here::
 
-    python python/post_process_jackknife.py xi_jack/xi_jack_n36_m12_j169_11.dat weights/ ./ 12 10 ./
+    python scripts/post_process_jackknife.py xi_jack/xi_jack_n36_m12_j169_11.dat weights/ ./ 12 10 ./
 
 (See :ref:`post-processing-general`).
 

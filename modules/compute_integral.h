@@ -481,16 +481,15 @@
                 // Save output if the group is done
                 if (completed_loops % par->loops_per_sample == 0) {
                     sumint.sum_ints(&outint); // add to grand total
-                    char output_string[50];
-                    snprintf(output_string, 50, "%d", subsample_index);
+                    std::string output_string = string_format("%d", subsample_index);
 #ifndef POWER
                     outint.normalize(grid1->norm, grid2->norm, grid3->norm, grid4->norm, (Float)used_pairs_per_sample, (Float)used_triples_per_sample, (Float)used_quads_per_sample);
 #else
                     outint.normalize(grid1->norm, grid2->norm, grid3->norm, grid4->norm, (Float)used_pairs_per_sample, (Float)used_triples_per_sample, (Float)used_quads_per_sample, par->power_norm);
 #endif
-                    outint.save_integrals(output_string, 0);
+                    outint.save_integrals(output_string.c_str(), 0);
 #ifdef JACKKNIFE
-                    outint.save_jackknife_integrals(output_string);
+                    outint.save_jackknife_integrals(output_string.c_str());
 #endif
                     // Reset the current output sample variables
                     outint.reset();
@@ -532,22 +531,22 @@
         printf("We tried %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(cell_attempt2),double(cell_attempt3),double(cell_attempt4));
         printf("Of these, we accepted %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(used_cell2),double(used_cell3),double(used_cell4));
         printf("We sampled %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(tot_pairs),double(tot_triples),double(tot_quads));
-        printf("Of these, we have integral contributions from %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(cnt2),double(cnt3),double(cnt4));
-        printf("Cell acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)used_cell2/cell_attempt2,(double)used_cell3/cell_attempt3,(double)used_cell4/cell_attempt4);
+        double real_cnt2 = cnt2, real_cnt3 = cnt3, real_cnt4 = cnt4;
 #if (defined LEGENDRE || LEGENDRE_MIX || POWER)
-        int n_l = par->max_l / 2 + 1; // more general expression. This is equal to mbin for LEGENDRE and POWER but not LEGENDRE_MIX
-        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n", (double)cnt2/tot_pairs/pow(n_l, 2), (double)cnt3/tot_triples/pow(n_l, 2), (double)cnt4/tot_quads/pow(n_l, 2));
-#else
-        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
+        int n_l = par->max_l / 2 + 1; // general expression for the number of multipoles. This is equal to mbin for LEGENDRE and POWER but not LEGENDRE_MIX
+        double cnt_norm = pow(n_l, 2); // in these modes, one pair contributes to all multipole "bins" so the real counts are n_l^2 times smaller
+        real_cnt2 /= cnt_norm; real_cnt3 /= cnt_norm; real_cnt4 /= cnt_norm;
 #endif
+        printf("Of these, we have integral contributions from %.2e pairs, %.2e triples and %.2e quads of particles.\n", real_cnt2, real_cnt3, real_cnt4);
+        printf("Cell acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n", (double)used_cell2/cell_attempt2, (double)used_cell3/cell_attempt3, (double)used_cell4/cell_attempt4);
+        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n", real_cnt2/tot_pairs, real_cnt3/tot_triples, real_cnt4/tot_quads);
         printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid1->np);
 
         printf("\nTrial speed: %.2e quads per core per second\n",double(tot_quads)/(runtime*double(par->nthread)));
         printf("Acceptance speed: %.2e quads per core per second\n",double(cnt4)/(runtime*double(par->nthread)));
 
-        char out_string[5];
-        snprintf(out_string, 5, "full");
-        sumint.save_integrals(out_string,1); // save integrals to file
+        const char out_string[5] = "full";
+        sumint.save_integrals(out_string, 1); // save integrals to file
         sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file
 #ifdef POWER
         printf("Printed integrals to file in the %sPowerCovMatrices/ directory\n",par->out_file);

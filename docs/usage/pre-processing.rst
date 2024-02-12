@@ -1,7 +1,7 @@
 Pre-Processing
 ===============
 
-We provide a suite of Python scripts to create input files for the RascalC code. These are found in the ``python/`` directory.
+We provide a suite of Python scripts to create input files for the RascalC code. These are found in the ``scripts/`` directory.
 
 .. _coord-conversion:
 
@@ -11,7 +11,7 @@ This converts a set of input particles (either random particle or galaxy positio
 
 **Usage**::
 
-    python python/convert_to_xyz.py {INFILE} {OUTFILE} [{OMEGA_M} {OMEGA_K} {W_DARK_ENERGY}]
+    python scripts/convert_to_xyz.py {INFILE} {OUTFILE} [{OMEGA_M} {OMEGA_K} {W_DARK_ENERGY}]
     
 **Parameters**:
 
@@ -29,7 +29,7 @@ This function assigns each particle (either random particles or galxy positions)
 
 **Usage**::
 
-    python python/create_jackknives.py {INFILE} {OUTFILE} {HEALPIX_NSIDE}
+    python scripts/legacy/create_jackknives.py {INFILE} {OUTFILE} {HEALPIX_NSIDE}
     
 **Parameters**:
 
@@ -65,9 +65,9 @@ A utility function to create radial binning files used by RascalC. We provide th
 
 **Usage**::
 
-    python python/write_binning_file_linear.py {N_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}
-    python python/write_binning_file_logarithmic.py {N_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}
-    python python/wrtie_binning_file_hybrid.py {N_LOG_BINS} {N_LIN_BINS} {MIN_R} {CUTOFF_R} {MAX_R} {OUTPUT_FILE}
+    python scripts/write_binning_file_linear.py {N_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}
+    python scripts/write_binning_file_logarithmic.py {N_BINS} {MIN_R} {MAX_R} {OUTPUT_FILE}
+    python scripts/wrtie_binning_file_hybrid.py {N_LOG_BINS} {N_LIN_BINS} {MIN_R} {CUTOFF_R} {MAX_R} {OUTPUT_FILE}
     
 **Parameters**:
 
