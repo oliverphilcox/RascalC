@@ -11,6 +11,7 @@ from .pycorr_utils.counts import get_counts_from_pycorr
 from .pycorr_utils.input_xi import get_input_xi_from_pycorr
 from .mu_bin_legendre_factors import write_mu_bin_legendre_factors
 from .correction_function import compute_correction_function, compute_correction_function_multi
+from .convergence_check_extra import convergence_check_extra
 
 
 suffixes_tracer_all = ("", "2") # all supported tracer suffixes
@@ -458,5 +459,11 @@ def run_cov(mode: str,
             results = post_process_default(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, skip_s_bins, print_function = print_and_log)
 
     print_and_log("Finished post-processing")
+    print_and_log(datetime.now())
+
+    print_and_log("Performing an extra convergence check")
+    convergence_check_extra(results, print_function = print_and_log)
+
+    print_and_log("Finished.")
     print_and_log(datetime.now())
     return results
