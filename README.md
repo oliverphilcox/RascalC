@@ -31,7 +31,7 @@ pip install .
 Make sure to reinstall after pulling updates.
 At this early stage, the fixes might be needed quite often.
 
-### Very minimal usage guide
+### Usage guide
 
 ```
 import RascalC
@@ -44,6 +44,8 @@ Use `help(RascalC.run_cov)` to learn more about the inputs and outputs; many of 
 It is strongly recommended NOT to use multi-threaded operations in the `python` process before launching `RascalC.run_cov` – this may cause the code to run effectively single-threaded.
 E.g. at NERSC this would mean not setting `OMP_*` and other `*_THREADS` environment variables; the code will set them by itself according to the number of threads you passed.
 This caveat does not seem to be unique for RascalC – different multi-threading backends can interfere.
+
+Some specific examples are available in the new separate script gallery: <https://github.com/misharash/RascalC-scripts>.
 
 More documentation is coming, in the meantime please contact Michael 'Misha' Rashkovetskyi <mrashkovetskyi@cfa.harvard.edu> with any questions.
 Please also feel free to open [GitHub issues](https://github.com/misharash/RascalC/issues) both for problems and clarification requests.
