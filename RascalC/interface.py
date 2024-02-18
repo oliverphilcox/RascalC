@@ -27,6 +27,7 @@ def run_cov(mode: str,
             randoms_positions1: np.ndarray[float], randoms_weights1: np.ndarray[float],
             pycorr_allcounts_11: pycorr.twopoint_estimator.BaseTwoPointEstimator,
             xi_table_11: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]],
+            position_type: str = "pos",
             xi_table_12: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | None = None,
             xi_table_22: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | None = None,
             xi_cut_s: float = 250,
@@ -60,8 +61,15 @@ def run_cov(mode: str,
         Periodic box side (one number only cubic supported so far).
         All the coordinates need to be between 0 and ``boxsize``.
         If None (default), assumed aperiodic.
+
+    position_type : string, default="pos"
+        Type of input positions, one of:
+
+            - "rdd": RA, Dec in degrees, distance
+            - "xyz": Cartesian positions, shape (3, N)
+            - "pos": Cartesian positions, shape (N, 3).
     
-    randoms_positions1 : array of floats, shape (N_randoms, 3)
+    randoms_positions1 : array of floats, shaped according to `position_type`
         Cartesian coordinates of random points for the first tracer.
     
     randoms_weights1 : array of floats of length N_randoms
@@ -72,7 +80,7 @@ def run_cov(mode: str,
         If given and not None, enables the jackknife functionality (tuning of shot-noise rescaling on jackknife correlation function estimates).
         The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_11`` (and ``pycorr_allcounts_12`` in multi-tracer mode).
 
-    randoms_positions2 : None or array of floats, shape (N_randoms2, 3)
+    randoms_positions2 : None or array of floats, shaped according to `position_type`
         (Optional) cartesian coordinates of random points for the second tracer.
         If given and not None, enables the multi-tracer functionality (full two-tracer covariance estimation).
     
@@ -361,22 +369,21 @@ def run_cov(mode: str,
     xi_refinement_loops = 10 * rescale_xi # set number of xi refinement loops; 0 if rescale_xi = False would mean no rescaling as desired
     
     # write the randoms file(s)
-    randoms_positions = (randoms_positions1, randoms_positions2)
+    randoms_positions = [randoms_positions1, randoms_positions2]
     randoms_weights = [randoms_weights1, randoms_weights2]
     randoms_samples = (randoms_samples1, randoms_samples2)
     for t, input_filename in enumerate(input_filenames):
-        if randoms_positions[t].ndim != 2: raise ValueError(f"Positions of randoms {t+1} not contained in a 2D array")
-        if randoms_positions[t].shape[1] != 3: raise ValueError(f"Positions of randoms {t+1} are not 3-dimensional by the first axis")
-        nrandoms = len(randoms_positions[t])
+        randoms_properties = pycorr.twopoint_counter._format_positions(randoms_positions[t], mode = "smu", position_type = position_type) # list of coordinate arrays; weights (and jackknife assignments if any) will be appended
+        nrandoms = len(randoms_properties[0])
         if randoms_weights[t].ndim != 1: raise ValueError(f"Weights of randoms {t+1} not contained in a 1D array")
         if len(randoms_weights[t]) != nrandoms: raise ValueError(f"Number of weights for randoms {t+1} mismatches the number of positions")
         if normalize_wcounts: randoms_weights[t] /= np.sum(randoms_weights[t])
-        output_array = np.column_stack((randoms_positions[t], randoms_weights[t]))
+        randoms_properties.append(randoms_weights[t])
         if jackknife:
             if randoms_samples[t].ndim != 1: raise ValueError(f"Weights of sample labels {t+1} not contained in a 1D array")
             if len(randoms_samples[t]) != nrandoms: raise ValueError(f"Number of sample labels for randoms {t+1} mismatches the number of positions")
-            output_array = np.column_stack((output_array, randoms_samples[t]))
-        np.savetxt(input_filename, output_array)
+            randoms_properties.append(randoms_samples[t])
+        np.savetxt(input_filename, np.column_stack(randoms_properties))
 
     # write the binning files
     binfile = os.path.join(out_dir, "radial_binning_cov.csv")
