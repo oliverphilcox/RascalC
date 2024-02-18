@@ -2,7 +2,6 @@
 
 import pycorr
 import numpy as np
-import sys
 from .utils import reshape_pycorr
 
 
