@@ -374,7 +374,7 @@ def run_cov(mode: str,
     randoms_weights = [randoms_weights1, randoms_weights2]
     randoms_samples = (randoms_samples1, randoms_samples2)
     for t, input_filename in enumerate(input_filenames):
-        randoms_properties = pycorr.twopoint_counter._format_positions(randoms_positions[t], mode = "smu", position_type = position_type) # list of coordinate arrays; weights (and jackknife assignments if any) will be appended
+        randoms_properties = pycorr.twopoint_counter._format_positions(randoms_positions[t], mode = "smu", position_type = position_type, dtype = np.float64) # list of x, y, z coordinate arrays; weights (and jackknife region numbers if any) will be appended
         nrandoms = len(randoms_properties[0])
         if randoms_weights[t].ndim != 1: raise ValueError(f"Weights of randoms {t+1} not contained in a 1D array")
         if len(randoms_weights[t]) != nrandoms: raise ValueError(f"Number of weights for randoms {t+1} mismatches the number of positions")
