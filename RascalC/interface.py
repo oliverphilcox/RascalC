@@ -323,6 +323,7 @@ def run_cov(mode: str,
             ## Write to files using numpy functions
             write_xi_file(xi_jack_names[c], pycorr_allcounts.sepavg(axis = 0), pycorr_allcounts.sepavg(axis = 1), xi_jack)
             jack_numbers = pycorr_allcounts.realizations # column of jackknife numbers, may be useless but needed for format compatibility
+            if not np.array_equal(np.array(jack_region_numbers, dtype = int), np.sort(np.array(jack_numbers, dtype = int))): raise ValueError(f"The code requires integer jackknife numbers consistent between the randoms_samples1 and pycorr_allcounts_{indices_corr[c]}") # jack_region_numbers are the unique jackknife labels from the data (already sorted)
             np.savetxt(jackknife_weights_names[c], np.column_stack((jack_numbers, jack_weights)))
             np.savetxt(jackknife_pairs_names[c], np.column_stack((jack_numbers, jack_RR_counts))) # not really needed for the C++ code or processing but let it be
         # fill ndata if not given
