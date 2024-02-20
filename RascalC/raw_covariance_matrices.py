@@ -3,6 +3,7 @@
 import numpy as np
 import os
 from glob import glob
+from shutil import copy2, copytree
 from warnings import warn
 
 
@@ -54,7 +55,8 @@ def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[s
                 warn(f"Found unused name {output_filename}, will save there.")
                 break
             i += 1
-            
+    
+    os.makedirs(os.path.dirname(output_filename), exist_ok = True) # make sure the directory exists
     np.savez_compressed(output_filename, **output_dictionary)
 
 
@@ -191,15 +193,14 @@ def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_sa
                 result = {key: result[key] for key in common_keys}
                 input_file = {key: input_file[key] for key in common_keys}
         # finally, loop over all the arrays
-        for matrix_name, matrices in input_file.values():
+        for matrix_name, matrices in input_file.items():
             if matrix_name.endswith("_full"): continue # ignore full arrays
             if n_samples is None: n_samples = len(matrices)
             if index != 0: result[matrix_name] = np.append(result[matrix_name], matrices[:n_samples], axis = 0)
             else: result[matrix_name] = matrices[:n_samples]
     
     # loop over all the matrix names
-    matrix_names = result.keys() # the dictionary will be changed
-    for matrix_name in matrix_names:
+    for matrix_name in list(result.keys()): # the dictionary will be changed
         if collapse_factor > 1:
             matrix_shape = result[matrix_name].shape
             result[matrix_name] = np.mean(result[matrix_name].reshape(matrix_shape[0] // collapse_factor, collapse_factor, *matrix_shape[1:]), axis = 1) # average over adjacent collapse_factor samples
@@ -208,5 +209,13 @@ def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_sa
         result[matrix_name_full] = np.mean(result[matrix_name], axis = 0)
     
     save_safe(output_root, label, result)
+
+    # copy other useful files from the first input root, unless identical with the output root
+    # assuming they are the same among output roots; otherwise catenation should not be sensible
+    if not os.path.samefile(input_roots[0], output_root):
+        for pattern in ("weights", "xi*", "radial_binning*.csv"):
+            for filename in glob(pattern, root_dir = input_roots[0]):
+                src = os.path.join(input_roots[0], filename)
+                (copytree if os.path.isdir(src) else copy2)(src, os.path.join(output_root, filename)) # need different functions for dirs and files
 
     return result
