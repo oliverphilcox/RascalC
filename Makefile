@@ -2,7 +2,8 @@
 
 CC = gcc
 CFLAGS = -O3 -Wall -MMD
-CXXFLAGS	= -O3 -Wall -MMD -std=c++11 -fopenmp -ffast-math $(shell pkg-config --cflags gsl)
+CXX = g++
+CXXFLAGS	= -O3 -Wall -MMD -std=c++11 -ffast-math $(shell pkg-config --cflags gsl)
 CXXFLAGS	+= -DOPENMP -DLEGENDRE_MIX -DJACKKNIFE -DPRINTPERCENTS
 #-DOPENMP  # use this to run multi-threaded with OPENMP
 #-DPERIODIC # use this to enable periodic behavior
@@ -17,18 +18,17 @@ LFLAGS	= $(shell pkg-config --libs gsl) # common part
 
 # Known OS-specific choices
 ifeq ($(shell uname -s),Darwin)
-# Here we use LLVM compiler to load the Mac OpenMP. Tested after installation commands:
-# brew install llvm
+# Here we load the Mac OpenMP. Tested after installation commands:
 # brew install libomp
 # This may need to be modified with a different installation
 ifndef HOMEBREW_PREFIX
 HOMEBREW_PREFIX = /usr/local
 endif
-CXX = ${HOMEBREW_PREFIX}/opt/llvm/bin/clang++
-LFLAGS	+= -fopenmp -lomp
+CXXFLAGS += -I$(HOMEBREW_PREFIX)/opt/libomp/include
+LFLAGS	+= -L$(HOMEBREW_PREFIX)/opt/libomp/lib -lomp
 else
 # default (Linux) case
-CXX = g++
+CXXFLAGS += -fopenmp
 LFLAGS	+= -lgomp
 endif
 
