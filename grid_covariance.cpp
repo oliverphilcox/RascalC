@@ -175,7 +175,8 @@ int main(int argc, char *argv[]) {
 
         // Create grid(s) and see if the particle density is acceptable
         bool nside_local_success = true; // assume this attempt succeeded be default, can be unset
-        for (int index = 0; index < no_fields; index++) {
+        int index;
+        for (index = 0; index < no_fields; index++) {
             // Now ready to compute!
             // Sort particles into grid(s)
             Float nofznorm = par.nofznorm;
@@ -212,19 +213,20 @@ int main(int argc, char *argv[]) {
             // Now save grid to global memory:
             all_grid[index].copy(&tmp_grid);
 
-            free(all_particles[index]); // Particles are now only stored in grid
-
             fflush(NULL);
         }
         if (nside_local_success) {
             nside_global_failure = false; // unset global failure
             break; // terminate attempt loop
         }
+        // finally, if this attempt has failed, destroy the grids that have been copied - the memory allocated inside them is not freed otherwise
+        for (int i = 0; i < index; i++) all_grid[i].~Grid(); // should only be relevant for multi-tracer, when the first tracer succeeds but the second fails
     }
     if (nside_global_failure) { // report and terminate
         fprintf(stderr, "# ERROR: could not meet mean grid density constraints after %d additional attempts.\n", nside_attempts);
         exit(1);
     }
+    for (int index = 0; index < no_fields; index++) free(all_particles[index]); // Particles are now only stored in grid; can't free earlier because of potentially repeated attempts, especially multi-tracer
 
     // Print the resulting grid size to be sure the stderr messages are not missed
     printf("Final grid = %d\n", par.nside);
