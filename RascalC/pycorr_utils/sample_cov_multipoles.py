@@ -35,5 +35,5 @@ def sample_cov_multipoles_from_pycorr_files(infile_names: list[list[str]], outfi
     if len(infile_names[0]) < 2: raise ValueError("Need at least two samples to compute the covariance matrix")
     if any(len(infile_names_c) != len(infile_names[0]) for infile_names_c in infile_names[1:]):
         raise ValueError("Need the same number of files for different correlation functions")
-    xi_estimators = [[pycorr.TwoPointCorrelationFunction.load(infile_name) for infile_name in infile_names_c] for infile_names_c in infile_names]
+    xi_estimators = [[reshape_pycorr(pycorr.TwoPointCorrelationFunction.load(infile_name), r_step = r_step, r_max = r_max, n_mu = None) for infile_name in infile_names_c] for infile_names_c in infile_names]
     sample_cov_multipoles_from_pycorr_to_file(xi_estimators, outfile_name, max_l, r_step, r_max)
