@@ -21,10 +21,10 @@ def combine_covs_multi(rascalc_results1: str, rascalc_results2: str, pycorr_file
     # Read pycorr files to figure out weights
     weight1 = np.zeros(0)
     for pycorr_file1 in pycorr_files1:
-        weight1 = np.append(weight1, get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file1), n_mu_bins, r_step, skip_r_bins = skip_r_bins), counts_factor = 1).ravel())
+        weight1 = np.append(weight1, get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file1).normalize(), n_mu_bins, r_step, skip_r_bins = skip_r_bins), counts_factor = 1).ravel())
     weight2 = np.zeros(0)
     for pycorr_file2 in pycorr_files2:
-        weight2 = np.append(weight2, get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file2), n_mu_bins, r_step, skip_r_bins = skip_r_bins), counts_factor = 1).ravel())
+        weight2 = np.append(weight2, get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file2).normalize(), n_mu_bins, r_step, skip_r_bins = skip_r_bins), counts_factor = 1).ravel())
 
     # Produce and save combined cov
     # following xi = (xi1 * weight1 + xi2 * weight2) / (weight1 + weight2)

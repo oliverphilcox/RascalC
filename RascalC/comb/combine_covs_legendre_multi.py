@@ -23,7 +23,7 @@ def combine_covs_legendre_multi(rascalc_results1: str, rascalc_results2: str, py
     # Read pycorr files to figure out weights
     weight1 = []
     for pycorr_file1 in pycorr_files1:
-        xi_estimator1 = reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file1), n_mu = None, r_step = r_step, skip_r_bins = skip_r_bins)
+        xi_estimator1 = reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file1), n_mu = None, r_step = r_step, skip_r_bins = skip_r_bins).normalize()
         weight1.append(get_counts_from_pycorr(xi_estimator1, counts_factor = 1))
     weight1 = np.array(weight1)
 
@@ -32,7 +32,7 @@ def combine_covs_legendre_multi(rascalc_results1: str, rascalc_results2: str, py
 
     weight2 = []
     for pycorr_file2 in pycorr_files2:
-        weight2.append(get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file2), n_mu = None, r_step = r_step, skip_r_bins = skip_r_bins), counts_factor = 1))
+        weight2.append(get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file2), n_mu = None, r_step = r_step, skip_r_bins = skip_r_bins).normalize(), counts_factor = 1))
     weight2 = np.array(weight2)
 
     # Normalize weights
