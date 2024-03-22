@@ -90,6 +90,7 @@ def Psi(alpha: float, c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarr
 
 def neg_log_L1(alpha: float, target_cov: np.ndarray[float], c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.ndarray[float]):
     """Return negative log L1 likelihood between data and theory covariance matrices"""
+    if alpha <= 0: return np.inf # negative shot-noise rescaling causes problems and does not make sense
     Psi_alpha = Psi(alpha, c2, c3, c4, c2s, c3s, c4s)
     logdet = np.linalg.slogdet(Psi_alpha)
     if logdet[0] < 0:
