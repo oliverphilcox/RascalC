@@ -26,6 +26,11 @@ H0_h = 100 * u.km / u.s / u.Mpc # h = 1
 D_H_Mpch = (c_light / H0_h).to(u.Mpc).value # Hubble distance in Mpc/h
 
 
+def comoving_distance_Mpch(z: np.ndarray[float], Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1) -> np.ndarray[float]:
+    # default cosmology from the BOSS DR12 2016 clustering paper assuming LCDM
+    comoving_distance_D_H = coorddist(z, Omega_m, w_dark_energy, Omega_k) # comoving distance in Hubble distances
+    return comoving_distance_D_H * D_H_Mpch
+
 def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1) -> np.ndarray[float]:
     # default cosmology from the BOSS DR12 2016 clustering paper assuming LCDM
     if ra_dec_z_pos.shape[0] != 3: ra_dec_z_pos = ra_dec_z_pos.T
@@ -33,11 +38,7 @@ def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega
 
     all_ra, all_dec, all_z = ra_dec_z_pos
 
-    # Compute comoving radius in Hubble distances
-    all_comoving_radius = coorddist(all_z, Omega_m, w_dark_energy, Omega_k)
-
-    # Convert to Mpc/h
-    comoving_radius_Mpch = all_comoving_radius * D_H_Mpch
+    comoving_radius_Mpch = comoving_distance_Mpch(all_z, Omega_m, w_dark_energy, Omega_k)
 
     # Convert to polar coordinates in radians
     all_phi_rad = np.deg2rad(all_ra)
