@@ -52,7 +52,7 @@ endef
 $(foreach variant,$(BASE_VARIANTS),$(eval $(call add_periodic_variant,$(variant))))
 
 define add_verbose_variant
-DEFINES_FOR_$(1)_periodic	= $$(DEFINES_FOR_$(1)) -DPRINTPERCENTS
+DEFINES_FOR_$(1)_verbose	= $$(DEFINES_FOR_$(1)) -DPRINTPERCENTS
 VARIANTS	+= $(1) $(1)_verbose
 endef
 
