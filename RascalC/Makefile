@@ -46,10 +46,17 @@ DEFINES_FOR_legendre_projected_jackknife=-DLEGENDRE_MIX -DJACKKNIFE
 
 define add_periodic_variant
 DEFINES_FOR_$(1)_periodic	= $$(DEFINES_FOR_$(1)) -DPERIODIC
-VARIANTS	+= $(1) $(1)_periodic
+VARIANTS_INT	+= $(1) $(1)_periodic
 endef
 
 $(foreach variant,$(BASE_VARIANTS),$(eval $(call add_periodic_variant,$(variant))))
+
+define add_verbose_variant
+DEFINES_FOR_$(1)_periodic	= $$(DEFINES_FOR_$(1)) -DPRINTPERCENTS
+VARIANTS	+= $(1) $(1)_verbose
+endef
+
+$(foreach variant,$(VARIANTS_INT),$(eval $(call add_verbose_variant,$(variant))))
 
 OBJDIR	= obj
 EXECDIR	= bin

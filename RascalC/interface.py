@@ -40,7 +40,8 @@ def run_cov(mode: str,
             boxsize: float | None = None,
             skip_s_bins: int = 0, skip_l: int = 0,
             shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1,
-            sampling_grid_size: int = 301, coordinate_scaling: float = 1) -> dict[str, np.ndarray[float]]:
+            sampling_grid_size: int = 301, coordinate_scaling: float = 1,
+            verbose: bool = False) -> dict[str, np.ndarray[float]]:
     r"""
     Run the 2-point correlation function covariance integration.
 
@@ -210,6 +211,10 @@ def run_cov(mode: str,
     coordinate_scaling : float
         (Optional) scaling factor for all the Cartesian coordinates. Default 1 (no rescaling).
         This option is supported by the C++ code, but its use cases are unclear.
+
+    verbose : bool
+        (Optional) report each 5% of each loop's progress by printing. Default False (off).
+        This can be a lot of output, only use when the number of loops is small.
 
     Returns
     -------
@@ -393,7 +398,7 @@ def run_cov(mode: str,
     write_binning_file(binfile_cf, xi_s_edges)
 
     # Select the executable name
-    exec_name = "bin/cov." + mode + "_jackknife" * jackknife + "_periodic" * periodic
+    exec_name = "bin/cov." + mode + "_jackknife" * jackknife + "_periodic" * periodic + "_verbose" * verbose
     # the above must be true relative to the script location
     # below we should make it absolute, i.e. right regardless of the working directory
     exec_path = os.path.join(os.path.realpath(os.path.dirname(__file__)), exec_name)
