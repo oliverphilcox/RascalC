@@ -26,18 +26,22 @@ This installs the library from my software folder in the development mode, so th
 ```
 git clone https://github.com/misharash/RascalC
 cd RascalC
-pip install .
+python3 -m pip install .
 ```
 Make sure to reinstall after pulling updates.
 At this early stage, the fixes might be needed quite often.
 
 Or you can install with just one command:
-```python3 -m pip install https://github.com/misharash/RascalC.git```
+```
+python3 -m pip install https://github.com/misharash/RascalC.git
+```
 
 The code requires [`pycorr`](https://github.com/cosmodesi/pycorr) to deal with pair counts and data correlation function estimators.
 To compute pair counts of catalogs (which is part of this tutorial), you need a [custom version of `Corrfunc`](https://github.com/adematti/Corrfunc) (see also [`pycorr` installation instructions](https://py2pcf.readthedocs.io/en/latest/user/building.html)).
 Both can be installed quickly via
-```python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'```
+```
+python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'
+```
 
 ### Usage guide
 
