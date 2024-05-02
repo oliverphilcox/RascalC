@@ -92,7 +92,7 @@ def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str,
     xi_jack_11 = np.loadtxt(jackknife_file_11, skiprows=2)
     xi_jack_12 = np.loadtxt(jackknife_file_12, skiprows=2)
     xi_jack_22 = np.loadtxt(jackknife_file_22, skiprows=2)
-    if not (xi_jack_11.shape == xi_jack_22.shape == xi_jack_12.shape): raise ValueError('Must have the same configuration of jackknifes for each field.')
+    if not (xi_jack_11.shape == xi_jack_22.shape == xi_jack_12.shape): raise ValueError('Must have the same configuration of jackknives for each field.')
 
     n_bins = xi_jack_11.shape[1] # total bins
     n_jack = xi_jack_11.shape[0] # total jackknives

@@ -70,7 +70,7 @@ N_gal = len(dX) # number of particles
 print("Number of random particles %.1e (DR) %.1e (RR)"%(N_randDR, N_randRR))
 print("Number of galaxy particles %.1e"%N_gal)
 
-# Determine number of jackknifes
+# Determine number of jackknives
 if len(RRname)==0:
     J_regions = np.unique(np.concatenate([rJ_RR,rJ_DR,dJ]))
 else:

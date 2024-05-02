@@ -91,7 +91,7 @@ print("Number of random particles in field 2: %.1e (DR) %.1e (RR)"%(N_rand2_DR,N
 print("Number of galaxies particles in field 2: %.1e"%N_gal2)
 
 
-# Determine number of jackknifes
+# Determine number of jackknives
 if len(RRname11)==0:
     J_regions = np.unique(np.concatenate([random1_RR[4],random1_DR[4],random2_RR[4],random2_DR[4],data1[4],data2[4]]))
 else:
