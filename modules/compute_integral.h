@@ -215,10 +215,13 @@
 #endif
 
     //-----------INITIALIZE OPENMP + CLASSES----------
-            std::random_device urandom("/dev/urandom");
-            unsigned long seed_step = std::numeric_limits<unsigned long>::max() / (unsigned long)(par->nthread);
-            std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
-            unsigned long seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * thread + seed_shift, where thread goes from 0 to nthread-1 => no overflow and guaranteed unique for each thread
+            unsigned long seed_step = (unsigned long)(std::numeric_limits<uint32_t>::max()) / (unsigned long)(par->max_loops); // restrict the seeds to 32 bits to avoid possible collisions, as most GSL random generators only accept 32-bit seeds and truncate the higher bits. unsigned long is at least 32 bits but can be more.
+            unsigned long seed_shift = par->seed % seed_step; // for each loop, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+            if (par->random_seed) {
+                std::random_device urandom("/dev/urandom");
+                std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
+                seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+            }
 
             gsl_rng_env_setup(); // initialize gsl rng
             int completed_loops = 0; // counter of completed loops, since may not finish in index order
@@ -308,7 +311,6 @@
             Integrals locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // Accumulates the integral contribution of each thread
 #endif
             gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-            gsl_rng_set(locrng, seed_step * (unsigned long)thread + seed_shift); // the second number, seed, will not overflow and will be unique for each thread in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively. Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
 
             // Assign memory for intermediate steps
             int ec=0;
@@ -331,6 +333,10 @@
 #endif
                 loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;
                 LoopTimes[n_loops].Start();
+
+                // Set/reset the RNG seed based on loop number instead of thread number to reproduce results with different number of threads but other parameters kept the same. Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
+                gsl_rng_set(locrng, seed_step * (unsigned long)n_loops + seed_shift); // the second number, seed, will not overflow and will be unique for each loop in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively.
+                // Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
 
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid1->nf;n1++){

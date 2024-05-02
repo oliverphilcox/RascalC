@@ -40,7 +40,7 @@ def run_cov(mode: str,
             boxsize: float | None = None,
             skip_s_bins: int = 0, skip_l: int = 0,
             shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1,
-            sampling_grid_size: int = 301, coordinate_scaling: float = 1,
+            sampling_grid_size: int = 301, coordinate_scaling: float = 1, seed: int | None = None,
             verbose: bool = False) -> dict[str, np.ndarray[float]]:
     r"""
     Run the 2-point correlation function covariance integration.
@@ -211,6 +211,11 @@ def run_cov(mode: str,
     coordinate_scaling : float
         (Optional) scaling factor for all the Cartesian coordinates. Default 1 (no rescaling).
         This option is supported by the C++ code, but its use cases are unclear.
+
+    seed : integer or None
+        (Optional) If given as an integer, allows to reproduce the results with the same settings, except the number of threads.
+        Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
+        If None (default), the initialization will be random.
 
     verbose : bool
         (Optional) report each 5% of each loop's progress by printing. Default False (off).
@@ -430,6 +435,11 @@ def run_cov(mode: str,
         elif ntracers == 2:
             compute_correction_function_multi(*input_filenames, binfile, out_dir, periodic, *binned_pair_names, print_function = print_and_log)
         command += "".join([f" -phi_file{suffixes_corr[c]} {phi_names[c]}" for c in range(ncorr)])
+
+    # deal with the seed
+    if seed is not None: # need to pass to the C++ code and make sure it can be received properly
+        seed &= 2**32 - 1 # this bitwise AND truncates the seed into a 32-bit unsigned (positive) integer (definitely a subset of unsigned long)
+        command += f" -seed {seed}"
     
     # run the main code
     print_and_log(datetime.now())

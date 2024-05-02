@@ -236,6 +236,10 @@ public:
     // Variable to decide if we are using multiple tracers:
     bool multi_tracers;
 
+    // Options for a deterministic/reproducible run
+    bool random_seed = true;
+    unsigned long seed = 0;
+
     // Constructor
 	Parameters(int argc, char *argv[]){
 
@@ -322,6 +326,7 @@ public:
 			np = tmp;
 			make_random=1;
 		    }
+		else if (!strcmp(argv[i],"-seed")) { random_seed = false; sscanf(argv[++i], "%lu", &seed); }
 		else if (!strcmp(argv[i],"-def")) { fname = NULL; }
 		else {
 		    fprintf(stderr, "Don't recognize %s\n", argv[i]);
@@ -635,6 +640,9 @@ private:
 	    fprintf(stderr, "   -balance: Rescale the negative weights so that the total weight is zero.\n");
         fprintf(stderr, "   -np <np>: Ignore any file and use np random perioidic points instead.\n");
         fprintf(stderr, "   -rs <rstart>:  If inverting particle weights, this sets the index from which to start weight inversion. Default 0\n");
+        fprintf(stderr, "   -seed <seed>:  If given, allows to reproduce the results with the same settings, except the number of threads.\n");
+        fprintf(stderr, "      Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.\n");
+        fprintf(stderr, "      Needs to be a non-negative integer fitting into 32 bits (max 4294967295). If not given (default), the seed will be created randomly.\n");
 	    fprintf(stderr, "\n");
 	    fprintf(stderr, "\n");
 
