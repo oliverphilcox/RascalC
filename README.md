@@ -31,6 +31,14 @@ pip install .
 Make sure to reinstall after pulling updates.
 At this early stage, the fixes might be needed quite often.
 
+Or you can install with just one command:
+```python3 -m pip install https://github.com/misharash/RascalC.git```
+
+The code requires [`pycorr`](https://github.com/cosmodesi/pycorr) to deal with pair counts and data correlation function estimators.
+To compute pair counts of catalogs (which is part of this tutorial), you need a [custom version of `Corrfunc`](https://github.com/adematti/Corrfunc) (see also [`pycorr` installation instructions](https://py2pcf.readthedocs.io/en/latest/user/building.html)).
+Both can be installed quickly via
+```python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'```
+
 ### Usage guide
 
 ```
@@ -60,4 +68,5 @@ Please also feel free to open [GitHub issues](https://github.com/misharash/Rasca
 - Alexander Wiegand (Garching)
 - Misha Rashkovetskyi (Harvard)
 
-We thank Yuting Wang and Ryuichiro Hada for pointing out and fixing a number of issues with the code and its documentation. We are particularly grateful to Uendert Andrade for finding a wide variety of improvements and bugs!
+We thank Yuting Wang and Ryuichiro Hada for pointing out and fixing a number of issues with the code and its documentation.
+We are particularly grateful to Uendert Andrade for finding a wide variety of improvements and bugs, and to Jiaxi Yu for feedback on the Python interface and Jupyter notebook tutorial!
