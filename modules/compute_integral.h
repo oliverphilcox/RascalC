@@ -310,7 +310,7 @@
 #else
             Integrals locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // Accumulates the integral contribution of each thread
 #endif
-            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
+            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread, seed will be set later inside the loop
 
             // Assign memory for intermediate steps
             int ec=0;

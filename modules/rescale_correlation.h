@@ -217,9 +217,13 @@ public:
         // Rescale the xi function by computing the binned xi from some estimate and comparing it to the known value. Return a correlation function object with an updated estimate of the xi at the bin-centers.
 
         // gsl and random class setup
-        std::random_device urandom("/dev/urandom");
-        std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
-        unsigned long int steps = dist(urandom);
+        unsigned long seed_step = (unsigned long)(std::numeric_limits<uint32_t>::max()) / (unsigned long)(par->max_loops); // restrict the seeds to 32 bits to avoid possible collisions, as most GSL random generators only accept 32-bit seeds and truncate the higher bits. unsigned long is at least 32 bits but can be more.
+        unsigned long seed_shift = par->seed % seed_step; // for each loop, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+        if (par->random_seed) {
+            std::random_device urandom("/dev/urandom");
+            std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
+            seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+        }
         gsl_rng_env_setup(); // initialize gsl rng
         correlation_integral full_xi_function(par,old_cf); // full correlation function class
         uint64 used_pairs=0;
@@ -243,8 +247,7 @@ public:
         integer3 delta2,prim_id,sec_id;
         double p2;
         Float3 cell_sep2;
-        gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-        gsl_rng_set(locrng, steps*(thread+1));
+        gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread, seed will be set later inside the loop
 
         correlation_integral thread_xi_function(par, old_cf);
 
@@ -259,6 +262,9 @@ public:
 #pragma omp for schedule(dynamic)
 #endif
         for(int n_loops = 0; n_loops<par->max_loops; n_loops++){
+            // Set/reset the RNG seed based on loop number instead of thread number to reproduce results with different number of threads but other parameters kept the same. Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
+            gsl_rng_set(locrng, seed_step * (unsigned long)n_loops + seed_shift); // the second number, seed, will not overflow and will be unique for each loop in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively.
+            // Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
             for(int n1=0;n1<grid1->nf;n1++){
                 // Pick first particle
                 prim_id_1D = grid1-> filled[n1]; // 1d ID for cell i
