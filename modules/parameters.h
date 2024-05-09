@@ -68,7 +68,7 @@ public:
 
     //-------- LEGENDRE PARAMETERS -------------------------------------------
 
-#if (defined LEGENDRE || defined LEGENDRE_MIX)
+#if (defined LEGENDRE || defined LEGENDRE_MIX || defined THREE_PCF)
     int max_l = 2; // max Legendre moment (must be even unless computing 3PCF)
 #endif
 
@@ -79,7 +79,7 @@ public:
     MuBinLegendreFactors mu_bin_legendre_factors;
 #endif
 
-#ifdef LEGENDRE
+#if (defined LEGENDRE || defined THREE_PCF)
     char *phi_file = NULL; // Survey correction function coefficient file
     const char default_phi_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/BinCorrectionFactor_n25_periodic_11.txt";
 #endif
@@ -151,7 +151,7 @@ public:
 
     //-------- LEGENDRE MULTI-FIELD PARAMETERS -------------------------------
 
-#ifdef LEGENDRE
+#if (defined LEGENDRE || defined THREE_PCF)
     const char default_phi_file12[500] = "";
     char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
 
@@ -420,19 +420,19 @@ public:
 
 	    // Decide if we are using multiple tracers:
 	    if (strlen(fname2)!=0){
-#if (defined LEGENDRE || defined POWER)
-#ifdef LEGENDRE
-            if ((strlen(phi_file12)==0)||(strlen(phi_file2)==0)){
-                printf("Two random particle sets input but not enough survey correction function files! Exiting.");
-                exit(1);
-            }
-#else
+#if (defined LEGENDRE || defined POWER || defined THREE_PCF)
+#ifdef POWER
             if ((strlen(inv_phi_file12)==0)||(strlen(inv_phi_file2)==0)){
                 printf("Two random particle sets input but not enough survey correction function files! Exiting.");
                 exit(1);
             }
             else if ((power_norm12==0)||(power_norm2==0)){
                 printf("Two random particle sets input but not enough power normalizations provided; exiting.");
+                exit(1);
+            }
+#else
+            if ((strlen(phi_file12)==0)||(strlen(phi_file2)==0)){
+                printf("Two random particle sets input but not enough survey correction function files! Exiting.");
                 exit(1);
             }
 #endif
@@ -454,14 +454,14 @@ public:
             printf("\nUsing a single set of tracer particles\n");
             multi_tracers=false;
             // set variables for later use
-#ifdef LEGENDRE
-            phi_file12=phi_file;
-            phi_file2=phi_file;
-#else
+#ifdef POWER
             inv_phi_file12=inv_phi_file;
             inv_phi_file2=inv_phi_file;
             power_norm2 = power_norm;
             power_norm12 = power_norm;
+#else
+            phi_file12=phi_file;
+            phi_file2=phi_file;
 #endif
             nofznorm2=nofznorm;
             corname12=corname;
