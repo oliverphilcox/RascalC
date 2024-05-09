@@ -4,6 +4,7 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
+#include "string_format.h"
 #ifdef LEGENDRE_MIX
 #include "legendre_mix_utilities.h"
 #endif
