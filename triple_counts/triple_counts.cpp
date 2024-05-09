@@ -304,9 +304,14 @@ class compute_triples{
             initial.Start(); 
             
             //-----------INITIALIZE OPENMP + CLASSES----------
-            std::random_device urandom("/dev/urandom");
-            std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
-            unsigned long int steps = dist(urandom);        
+            unsigned long seed_step = (unsigned long)(std::numeric_limits<uint32_t>::max()) / (unsigned long)(par->max_loops); // restrict the seeds to 32 bits to avoid possible collisions, as most GSL random generators only accept 32-bit seeds and truncate the higher bits. unsigned long is at least 32 bits but can be more.
+            unsigned long seed_shift = par->seed % seed_step; // for each loop, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+            if (par->random_seed) {
+                std::random_device urandom("/dev/urandom");
+                std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
+                seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+            }
+            
             gsl_rng_env_setup(); // initialize gsl rng
 
             uint64 tot_pairs=0, tot_triples=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
@@ -325,7 +330,7 @@ class compute_triples{
             TotalTime.Start(); // Start timer
             
 #ifdef OPENMP      
-    #pragma omp parallel firstprivate(steps,par,grid) shared(global_counts,TotalTime,gsl_rng_default,rd) reduction(+:cell_attempt2,cell_attempt3,used_cell2,used_cell3,tot_pairs,tot_triples)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid) shared(global_counts,TotalTime,gsl_rng_default,rd) reduction(+:cell_attempt2,cell_attempt3,used_cell2,used_cell3,tot_pairs,tot_triples)
             { // start parallel loop
             // Decide which thread we are in
             int thread = omp_get_thread_num();
@@ -353,8 +358,7 @@ class compute_triples{
             
             TripleCounts local_counts(par); // holds triple counts for each thread
             
-            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-            gsl_rng_set(locrng, steps*(thread+1));
+            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread, seed will be set later inside the loop
             
             // Assign memory for intermediate steps
             int ec=0;
@@ -370,7 +374,11 @@ class compute_triples{
     #endif
            for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
                 percent_counter=0.;
-                loc_used_pairs=0; loc_used_triples=0;  
+                loc_used_pairs=0; loc_used_triples=0;
+
+                // Set/reset the RNG seed based on loop number instead of thread number to reproduce results with different number of threads but other parameters kept the same. Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
+                gsl_rng_set(locrng, seed_step * (unsigned long)n_loops + seed_shift); // the second number, seed, will not overflow and will be unique for each loop in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively.
+                // Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
                 
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid->nf;n1++){
