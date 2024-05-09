@@ -229,7 +229,7 @@ public:
         uint64 used_pairs=0;
 
 #ifdef OPENMP
-#pragma omp parallel firstprivate(steps,par,grid1, grid2, old_cf) shared(gsl_rng_default,rd) reduction(+:used_pairs)
+#pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,old_cf) shared(gsl_rng_default,rd) reduction(+:used_pairs)
         { // start parallel loop
         // Decide thread
         int thread = omp_get_thread_num();
