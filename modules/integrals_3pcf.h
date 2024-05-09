@@ -771,9 +771,8 @@ public:
     void save_counts(uint64 triple_counts,uint64 quad_counts, uint64 quint_counts, uint64 hex_counts, int index){
         // Print the counts for each integral (used for combining the estimates outside of C++)
         // This is the number of counts used in each loop [always the same]
-        char counts_file[1000];
-        snprintf(counts_file, sizeof counts_file, "%s3PCFCovMatricesAll/total_counts_n%d_l%d_%d.txt",out_file,nbin,max_l,index);
-        FILE * CountsFile = fopen(counts_file,"w");
+        std::string counts_file = string_format("%s3PCFCovMatricesAll/total_counts_n%d_l%d_%d.txt", out_file, nbin, max_l, index);
+        FILE * CountsFile = fopen(counts_file.c_str(), "w");
         fprintf(CountsFile,"%llu\n",triple_counts);
         fprintf(CountsFile,"%llu\n",quad_counts);
         fprintf(CountsFile,"%llu\n",quint_counts);
@@ -784,25 +783,21 @@ public:
     }
         
     
-    void save_integrals(char* suffix, bool save_all,int index) {
+    void save_integrals(const char* suffix, bool save_all, int index) {
     /* Print integral outputs to file. 
         * In txt files {c2,c3,c4}_leg_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
         */
         // Create output files
         
-        char c3name[1000];
-        snprintf(c3name, sizeof c3name, "%s3PCFCovMatricesAll/c3_n%d_l%d_%d_%s.txt", out_file, nbin, max_l,index,suffix);
-        char c4name[1000];
-        snprintf(c4name, sizeof c4name, "%s3PCFCovMatricesAll/c4_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
-        char c5name[1000];
-        snprintf(c5name, sizeof c5name, "%s3PCFCovMatricesAll/c5_n%d_l%d_%d_%s.txt", out_file,nbin, max_l,index, suffix);
-        char c6name[1000];
-        snprintf(c6name, sizeof c6name, "%s3PCFCovMatricesAll/c6_n%d_l%d_%d_%s.txt", out_file,nbin, max_l,index,suffix);
+        std::string c3name = string_format("%s3PCFCovMatricesAll/c3_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
+        std::string c4name = string_format("%s3PCFCovMatricesAll/c4_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
+        std::string c5name = string_format("%s3PCFCovMatricesAll/c5_n%d_l%d_%d_%s.txt", out_file,nbin, max_l,index, suffix);
+        std::string c6name = string_format("%s3PCFCovMatricesAll/c6_n%d_l%d_%d_%s.txt", out_file,nbin, max_l,index,suffix);
         
-        FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
-        FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
-        FILE * C5File = fopen(c5name,"w"); // for c5 part of integral
-        FILE * C6File = fopen(c6name,"w"); // for c6 part of integral
+        FILE * C3File = fopen(c3name.c_str(), "w"); // for c3 part of integral
+        FILE * C4File = fopen(c4name.c_str(), "w"); // for c4 part of integral
+        FILE * C5File = fopen(c5name.c_str(), "w"); // for c5 part of integral
+        FILE * C6File = fopen(c6name.c_str(), "w"); // for c6 part of integral
         
         for(int i=0;i<array_len;i++){
             for(int j=0;j<array_len;j++){
@@ -826,21 +821,17 @@ public:
         fclose(C6File);
         
         if(save_all==1){
-            char binname6[1000];
-            snprintf(binname6,sizeof binname6, "%s3PCFCovMatricesAll/binct_c6_n%d_l%d_%d_%s.txt",out_file, nbin,max_l,index, suffix);
-            FILE * BinFile6 = fopen(binname6,"w");
+            std::string binname6 = string_format("%s3PCFCovMatricesAll/binct_c6_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
+            FILE * BinFile6 = fopen(binname6.c_str(), "w");
         
-            char binname5[1000];
-            snprintf(binname5,sizeof binname5, "%s3PCFCovMatricesAll/binct_c5_n%d_l%d_%d_%s.txt",out_file, nbin,max_l,index, suffix);
-            FILE * BinFile5 = fopen(binname5,"w");
+            std::string binname5 = string_format("%s3PCFCovMatricesAll/binct_c5_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
+            FILE * BinFile5 = fopen(binname5.c_str(), "w");
             
-            char binname4[1000];
-            snprintf(binname4,sizeof binname4, "%s3PCFCovMatricesAll/binct_c4_n%d_l%d_%d_%s.txt",out_file, nbin,max_l,index, suffix);
-            FILE * BinFile4 = fopen(binname4,"w");
+            std::string binname4 = string_format("%s3PCFCovMatricesAll/binct_c4_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
+            FILE * BinFile4 = fopen(binname4.c_str(), "w");
             
-            char binname3[1000];
-            snprintf(binname3,sizeof binname3, "%s3PCFCovMatricesAll/binct_c3_n%d_l%d_%d_%s.txt",out_file, nbin,max_l,index,suffix);
-            FILE * BinFile3 = fopen(binname3,"w");
+            std::string binname3 = string_format("%s3PCFCovMatricesAll/binct_c3_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
+            FILE * BinFile3 = fopen(binname3.c_str(), "w");
             
             for(int i=0;i<array_len;i++){
                 for(int j=0;j<array_len;j++){

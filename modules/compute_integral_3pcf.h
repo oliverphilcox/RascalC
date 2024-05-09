@@ -318,11 +318,10 @@ class compute_integral{
                 sumint.sum_ints(&locint); 
                 
                 // Save output after each loop
-                char output_string[50];
-                sprintf(output_string,"%d", n_loops);
+                std::string output_string = string_format("%d", n_loops);
                 
                 locint.normalize(grid->norm,(Float)loc_used_triples, (Float)loc_used_quads, (Float)loc_used_quints, (Float)loc_used_hexes);
-                locint.save_integrals(output_string,0,iter_no);
+                locint.save_integrals(output_string.c_str(), 0, iter_no);
                 locint.sum_total_counts(cnt3, cnt4, cnt5, cnt6); 
                 locint.reset();
                 
@@ -371,8 +370,7 @@ class compute_integral{
         printf("\nTrial speed: %.2e hexes per core per second\n",double(tot_hexes)/(runtime*double(par->nthread)));
         printf("Acceptance speed: %.2e hexes per core per second\n",double(cnt6)/(runtime*double(par->nthread)));
         
-        char out_string[5];
-        sprintf(out_string,"full");
+        const char out_string[5] = "full";
         sumint.save_integrals(out_string,1,iter_no); // save integrals to file
         sumint.save_counts(tot_triples,tot_quads,tot_quints,tot_hexes,iter_no); // save total pair/triple/quads attempted to file
         printf("Printed integrals to file in the %s3PCFCovMatricesAll/ directory\n",par->out_file);
