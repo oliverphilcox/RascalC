@@ -7,7 +7,7 @@ from .utils import cov_filter_smu, load_matrices_multi, check_eigval_convergence
 from ..raw_covariance_matrices import load_raw_covariances_smu
 
 
-def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int = 0, print_function = print) -> dict[str]:
+def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int = 0, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
     skip_bins = skip_r_bins * m
     n_bins = n * m - skip_bins
 
@@ -16,7 +16,7 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
 
     cov_filter = cov_filter_smu(n, m, skip_r_bins)
 
-    input_file = load_raw_covariances_smu(file_root, n, m, print_function)
+    input_file = load_raw_covariances_smu(file_root, n, m, n_samples, print_function)
 
     # Create output directory
     if not os.path.exists(outdir):

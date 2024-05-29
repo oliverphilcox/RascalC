@@ -7,10 +7,10 @@ from .utils import cov_filter_legendre, load_matrices_multi, add_cov_terms_multi
 from ..raw_covariance_matrices import load_raw_covariances_legendre
 
 
-def post_process_legendre_multi(file_root: str, n: int, max_l: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, skip_r_bins: int = 0, skip_l: int = 0, print_function = print) -> dict[str]:
+def post_process_legendre_multi(file_root: str, n: int, max_l: int, outdir: str, alpha_1: float = 1, alpha_2: float = 1, skip_r_bins: int = 0, skip_l: int = 0, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
     cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
 
-    input_file = load_raw_covariances_legendre(file_root, n, max_l, print_function)
+    input_file = load_raw_covariances_legendre(file_root, n, max_l, n_samples, print_function)
 
     alphas = [alpha_1, alpha_2]
 

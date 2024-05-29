@@ -37,7 +37,7 @@ def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[
     return symmetrized(cx)
 
 
-def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
+def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 1, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
     # Load jackknife xi estimates from data
     print_function(f"Loading correlation function jackknife estimates from {jackknife_file}")
     xi_jack = np.loadtxt(jackknife_file, skiprows=2)
@@ -73,7 +73,7 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
 
     cov_filter = cov_filter_smu(n, m, skip_r_bins)
     
-    input_file = load_raw_covariances_smu(file_root, n, m, print_function)
+    input_file = load_raw_covariances_smu(file_root, n, m, n_samples, print_function)
 
     # Create output directory
     if not os.path.exists(outdir):

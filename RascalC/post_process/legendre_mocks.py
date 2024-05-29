@@ -17,13 +17,13 @@ def cov_filter_legendre_mocks(n: int, max_l: int, skip_r_bins: int = 0, skip_l: 
     return np.ix_(indices_1d, indices_1d)
 
 
-def post_process_legendre_mocks(mock_cov_file: str, file_root: str, n: int, max_l: int, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
+def post_process_legendre_mocks(mock_cov_file: str, file_root: str, n: int, max_l: int, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
     cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
     cov_filter_mocks = cov_filter_legendre_mocks(n, max_l, skip_r_bins, skip_l)
 
     mock_cov = np.loadtxt(mock_cov_file)[cov_filter_mocks] # load external mock covariance matrix
     
-    input_file = load_raw_covariances_legendre(file_root, n, max_l, print_function)
+    input_file = load_raw_covariances_legendre(file_root, n, max_l, n_samples, print_function)
 
     # Create output directory
     if not os.path.exists(outdir):

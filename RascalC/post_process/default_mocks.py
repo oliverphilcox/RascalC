@@ -7,11 +7,11 @@ from .utils import cov_filter_smu, load_matrices_single, check_eigval_convergenc
 from ..raw_covariance_matrices import load_raw_covariances_smu
 
 
-def post_process_default_mocks(mock_cov_file: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 0, print_function = print) -> dict[str]:
+def post_process_default_mocks(mock_cov_file: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 0, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
     cov_filter = cov_filter_smu(n, m, skip_r_bins)
     mock_cov = np.loadtxt(mock_cov_file)[cov_filter] # load external mock covariance matrix
 
-    input_file = load_raw_covariances_smu(file_root, n, m, print_function)
+    input_file = load_raw_covariances_smu(file_root, n, m, n_samples, print_function)
 
     # Create output directory
     if not os.path.exists(outdir):

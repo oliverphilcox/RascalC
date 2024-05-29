@@ -151,28 +151,39 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_fu
     return return_dictionary
 
 
-def load_raw_covariances(file_root: str, label: str, print_function = print) -> dict[str]:
+def load_raw_covariances(file_root: str, label: str, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
     input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_{label}.npz")
-    if not os.path.isfile(input_filename):
+    if not os.path.isfile(input_filename): raw_cov = np.load(input_filename)
+    else:
         print_function(f"Collecting the raw covariance matrices from {file_root}")
         result = collect_raw_covariance_matrices(file_root, print_function = print_function)
         if label not in result:
             raise ValueError(f"Raw covariance matrices for {label} not produced. Check the n and m/max_l values.")
-        return result[label]
-    return np.load(input_filename)
+        raw_cov = result[label]
+    if n_samples is None: return raw_cov # return the full set
+    elif isinstance(n_samples, int):
+        if n_samples <= 0: raise ValueError("Number of samples must be positive if integer")
+        n_samples = np.arange(n_samples)
+    else: n_samples = np.array(n_samples, dtype = int) # list of indices
+    # select the given samples and update the averages
+    keys = [key for key in raw_cov.keys() if not key.endswith("_full")]
+    for key in keys:
+        raw_cov[key] = raw_cov[key][n_samples]
+        raw_cov[key + "_full"] = np.mean(raw_cov[key], axis = 0)
+    return raw_cov
 
 
-def load_raw_covariances_smu(file_root: str, n: int, m: int, print_function = print) -> dict[str]:
+def load_raw_covariances_smu(file_root: str, n: int, m: int, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
     label = f"n{n}_m{m}"
-    return load_raw_covariances(file_root, label, print_function)
+    return load_raw_covariances(file_root, label, n_samples, print_function)
 
 
-def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, print_function = print) -> dict[str]:
+def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
     label = f"n{n}_l{max_l}"
-    return load_raw_covariances(file_root, label, print_function)
+    return load_raw_covariances(file_root, label, n_samples, print_function)
 
 
-def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_samples: list[int], output_root: str, collapse_factor: int = 1, print_function = print) -> dict[str]:
+def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_samples: list[None | int | list[int]], output_root: str, collapse_factor: int = 1, print_function = print) -> dict[str]:
     if collapse_factor <= 0: raise ValueError("Collapsing factor must be positive")
     if len(input_roots) < 1: raise ValueError("Need at least one input directory")
     if len(ns_samples) != len(input_roots): raise ValueError("Number of input dirs and subsamples to use from them must be the same")
@@ -180,7 +191,7 @@ def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_sa
     label = f"n{n}_{mstr}"
     result = {}
     for index, (input_root, n_samples) in enumerate(zip(input_roots, ns_samples)):
-        input_file = load_raw_covariances(input_root, label, print_function)
+        input_file = load_raw_covariances(input_root, label, n_samples, print_function)
         # ignore full arrays
         input_file = {key: value for (key, value) in input_file.items() if not key.endswith("_full")}
         # check that the keys are the same, unless the result is brand new
@@ -195,9 +206,8 @@ def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_sa
         # finally, loop over all the arrays
         for matrix_name, matrices in input_file.items():
             if matrix_name.endswith("_full"): continue # ignore full arrays
-            if n_samples is None: n_samples = len(matrices)
-            if index != 0: result[matrix_name] = np.append(result[matrix_name], matrices[:n_samples], axis = 0)
-            else: result[matrix_name] = matrices[:n_samples]
+            if index != 0: result[matrix_name] = np.append(result[matrix_name], matrices, axis = 0)
+            else: result[matrix_name] = matrices
     
     # loop over all the matrix names
     for matrix_name in list(result.keys()): # the dictionary will be changed

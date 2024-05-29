@@ -8,7 +8,7 @@ from .utils import cov_filter_legendre, load_matrices_single, check_eigval_conve
 from ..raw_covariance_matrices import load_raw_covariances_legendre
 
 
-def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, max_l: int, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, print_function = print) -> dict[str]:
+def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, max_l: int, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
     # Load jackknife xi estimates from data
     print_function("Loading correlation function jackknife estimates from %s" % jackknife_file)
     xi_jack = np.loadtxt(jackknife_file, skiprows = 2)
@@ -52,7 +52,7 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
     cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
     n_l = max_l // 2 + 1 # number of multipoles
     
-    input_file = load_raw_covariances_legendre(file_root, n, max_l, print_function)
+    input_file = load_raw_covariances_legendre(file_root, n, max_l, n_samples, print_function)
 
     # Create output directory
     if not os.path.exists(outdir):
