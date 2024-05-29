@@ -5,6 +5,7 @@ import os
 from glob import glob
 from shutil import copy2, copytree
 from warnings import warn
+from collections.abc import Iterable
 
 
 def convert_suffix(suffix: str) -> int | str:
@@ -151,9 +152,9 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_fu
     return return_dictionary
 
 
-def load_raw_covariances(file_root: str, label: str, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
+def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
     input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_{label}.npz")
-    if not os.path.isfile(input_filename): raw_cov = np.load(input_filename)
+    if os.path.isfile(input_filename): raw_cov = np.load(input_filename)
     else:
         print_function(f"Collecting the raw covariance matrices from {file_root}")
         result = collect_raw_covariance_matrices(file_root, print_function = print_function)
@@ -164,7 +165,11 @@ def load_raw_covariances(file_root: str, label: str, n_samples: None | int | lis
     elif isinstance(n_samples, int):
         if n_samples <= 0: raise ValueError("Number of samples must be positive if integer")
         n_samples = np.arange(n_samples)
-    else: n_samples = np.array(n_samples, dtype = int) # list of indices
+    elif isinstance(n_samples, Iterable):
+        if all(isinstance(_, int) for _ in n_samples): n_samples = np.array(n_samples, dtype = int)
+        elif all(isinstance(_, bool) for _ in n_samples): n_samples = np.array(n_samples, dtype = bool)
+        else: raise TypeError("n_samples elements must be all either int (indices) or bool (mask)")
+    else: raise TypeError("n_samples must be None, positive int or iterable of int or bool")
     # select the given samples and update the averages
     keys = [key for key in raw_cov.keys() if not key.endswith("_full")]
     for key in keys:
@@ -173,12 +178,12 @@ def load_raw_covariances(file_root: str, label: str, n_samples: None | int | lis
     return raw_cov
 
 
-def load_raw_covariances_smu(file_root: str, n: int, m: int, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
+def load_raw_covariances_smu(file_root: str, n: int, m: int, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
     label = f"n{n}_m{m}"
     return load_raw_covariances(file_root, label, n_samples, print_function)
 
 
-def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
+def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
     label = f"n{n}_l{max_l}"
     return load_raw_covariances(file_root, label, n_samples, print_function)
 

@@ -5,7 +5,7 @@ import numpy as np
 import os
 from warnings import warn
 from .utils import symmetrized, cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, fit_shot_noise_rescaling, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
-from ..raw_covariance_matrices import load_raw_covariances_smu
+from ..raw_covariance_matrices import load_raw_covariances_smu, Iterable
 
 
 def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float], weights: np.ndarray[float], tracer: int = 1, full: bool = True) -> np.ndarray[float]:
@@ -37,7 +37,7 @@ def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[
     return symmetrized(cx)
 
 
-def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 1, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
+def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
     # Load jackknife xi estimates from data
     print_function(f"Loading correlation function jackknife estimates from {jackknife_file}")
     xi_jack = np.loadtxt(jackknife_file, skiprows=2)

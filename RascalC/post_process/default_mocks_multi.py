@@ -4,10 +4,10 @@
 import numpy as np
 import os
 from .utils import cov_filter_smu, load_matrices_multi, check_eigval_convergence, fit_shot_noise_rescaling, add_cov_terms_multi, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
-from ..raw_covariance_matrices import load_raw_covariances_smu
+from ..raw_covariance_matrices import load_raw_covariances_smu, Iterable
 
 
-def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int = 0, n_samples: None | int | list[int] | np.ndarray[int] = None, print_function = print) -> dict[str]:
+def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
     skip_bins = skip_r_bins * m
     n_bins = n * m - skip_bins
 
