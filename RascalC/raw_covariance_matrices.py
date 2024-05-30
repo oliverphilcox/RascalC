@@ -154,7 +154,7 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_fu
 
 def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
     input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_{label}.npz")
-    if os.path.isfile(input_filename): raw_cov = np.load(input_filename)
+    if os.path.isfile(input_filename): raw_cov = dict(np.load(input_filename))
     else:
         print_function(f"Collecting the raw covariance matrices from {file_root}")
         result = collect_raw_covariance_matrices(file_root, print_function = print_function)
