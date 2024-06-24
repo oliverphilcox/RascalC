@@ -388,6 +388,7 @@ def run_cov(mode: str,
     randoms_samples = (randoms_samples1, randoms_samples2)
     for t, input_filename in enumerate(input_filenames):
         randoms_properties = pycorr.twopoint_counter._format_positions(randoms_positions[t], mode = "smu", position_type = position_type, dtype = np.float64) # list of x, y, z coordinate arrays; weights (and jackknife region numbers if any) will be appended
+        if legendre_orig: randoms_positions[t] = np.array(randoms_properties) # save the formatted positions as an array for correction function computation
         nrandoms = len(randoms_properties[0])
         if randoms_weights[t].ndim != 1: raise ValueError(f"Weights of randoms {t+1} not contained in a 1D array")
         if len(randoms_weights[t]) != nrandoms: raise ValueError(f"Number of weights for randoms {t+1} mismatches the number of positions")
@@ -398,6 +399,7 @@ def run_cov(mode: str,
             if len(randoms_samples[t]) != nrandoms: raise ValueError(f"Number of sample labels for randoms {t+1} mismatches the number of positions")
             randoms_properties.append(randoms_samples[t])
         np.savetxt(input_filename, np.column_stack(randoms_properties))
+        randoms_properties = None
 
     # write the binning files
     binfile = os.path.join(out_dir, "radial_binning_cov.csv")
@@ -434,9 +436,9 @@ def run_cov(mode: str,
         print_and_log(datetime.now())
         print_and_log(f"Computing the correction function")
         if ntracers == 1:
-            compute_correction_function(input_filenames[0], binfile, out_dir, periodic, binned_pair_names[0], print_and_log)
+            compute_correction_function(randoms_positions[0], randoms_weights[0], binfile, out_dir, periodic, binned_pair_names[0], print_and_log)
         elif ntracers == 2:
-            compute_correction_function_multi(*input_filenames, binfile, out_dir, periodic, *binned_pair_names, print_function = print_and_log)
+            compute_correction_function_multi(randoms_positions[0], randoms_weights[0], randoms_positions[1], randoms_weights[1], binfile, out_dir, periodic, *binned_pair_names, print_function = print_and_log)
         command += "".join([f" -phi_file{suffixes_corr[c]} {phi_names[c]}" for c in range(ncorr)])
 
     # deal with the seed

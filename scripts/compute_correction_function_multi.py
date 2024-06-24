@@ -12,7 +12,7 @@ if len(sys.argv) not in (6, 9):
 
 from utils import adjust_path, get_arg_safe
 adjust_path()
-from RascalC.correction_function import compute_correction_function_multi
+from RascalC.correction_function import compute_correction_function_multi_from_files
 
 random_file = str(sys.argv[1])
 random_file2 = str(sys.argv[2])
@@ -23,4 +23,4 @@ RR_file = get_arg_safe(6)
 RR_file12 = get_arg_safe(7)
 RR_file2 = get_arg_safe(8)
 
-compute_correction_function_multi(random_file, random_file2, binfile, outdir, periodic, RR_file, RR_file12, RR_file2)
+compute_correction_function_multi_from_files(random_file, random_file2, binfile, outdir, periodic, RR_file, RR_file12, RR_file2)

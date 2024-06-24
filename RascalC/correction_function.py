@@ -7,6 +7,7 @@ import os
 import numpy as np
 import scipy.spatial as ss
 from scipy.optimize import curve_fit
+from .utils import blank_function
 
 
 def compute_phi_periodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: float, V: float, n: int) -> np.ndarray[float]:
@@ -87,27 +88,21 @@ def compute_phi_aperiodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: f
 
     return np.asarray(fit_params) / norm
 
-def compute_V_n_w_bar(randoms_pos: np.ndarray[float], gal_w: np.ndarray[float]) -> tuple[float, float, float]:
+
+def compute_V_n_w_bar(randoms_pos: np.ndarray[float], randoms_weights: np.ndarray[float], index: int = 1, print_function = blank_function) -> tuple[float, float, float]:
     "Compute the effective survey volume, average density and weight given positions of random particles."
-    w_bar = np.mean(gal_w)
-    N_gal = len(gal_w)
+    w_bar = np.mean(randoms_weights)
+    N = len(randoms_weights)
+    print_function(f"Found {N} tracer {index} particles")
 
     if randoms_pos.shape[1] != 3: randoms_pos = randoms_pos.T
-    if randoms_pos.shape[1] != 3: raise ValueError("Galaxy positions do not appear 3D")
+    if randoms_pos.shape[1] != 3: raise ValueError("Randoms positions do not appear 3D")
 
     ## Find survey volume via ConvexHull in Scipy
     V = ss.ConvexHull(randoms_pos).volume # presumably in (Mpc/h)^3
+    print_function(f"Survey volume for tracer {index} is {V:.02e}")
 
-    n_bar = N_gal / V
-    return V, n_bar, w_bar
-
-def compute_V_n_w_bar_from_file(random_file: str, index = 1, print_function = print) -> tuple[float, float, float]:
-    "Compute the effective survey volume, average density and weight given a random particles file."
-    print_function(f"Loading galaxy set {index}")
-    all_gal = np.loadtxt(random_file)
-
-    V, n_bar, w_bar = compute_V_n_w_bar(all_gal[:, :3], all_gal[:, 3])
-    print_function(f'Survey volume {index} is approximately: {V/1e9:.2f} (Gpc/h)^3')
+    n_bar = N / V
     return V, n_bar, w_bar
 
 
@@ -117,13 +112,21 @@ def load_RR(RR_file: str, n: int) -> np.ndarray[float]:
     return RR_flat.reshape((n, -1))
 
 
-def compute_correction_function(random_file: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, print_function = print) -> None:
+def load_randoms(random_filename: str) -> tuple[np.ndarray[float], np.ndarray[float]]:
+    "Helper function to load the text file of random particles"
+    random_file_contents = np.loadtxt(random_filename)
+    randoms_pos = random_file_contents[:, :3]
+    randoms_weights = random_file_contents[:, 3]
+    return randoms_pos, randoms_weights
+
+
+def compute_correction_function(randoms_pos: np.ndarray[float], randoms_weights: np.ndarray[float], binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, print_function = print) -> None:
     "Compute the single-tracer survey correction function coefficients and save to file."
     if periodic:
-        print("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
+        print_function("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
     elif RR_file is None: raise TypeError("The RR file must be specified if aperiodic")
     
-    V, n_bar, w_bar = compute_V_n_w_bar(random_file)
+    V, n_bar, w_bar = compute_V_n_w_bar(randoms_pos, randoms_weights)
 
     # Load in binning files 
     r_bins = np.loadtxt(binfile)
@@ -149,15 +152,21 @@ def compute_correction_function(random_file: str, binfile: str, outdir: str, per
     print_function("Saved (normalized) output to %s\n" % outfile)
 
 
-def compute_correction_function_multi(random_file: str, random_file2: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, RR_file12: str | None = None, RR_file2: str | None = None, print_function = print) -> None:
+def compute_correction_function_from_files(random_file: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, print_function = print) -> None:
+    "Compute the single-tracer survey correction function coefficients and save to file."
+    print_function("Loading randoms")
+    compute_correction_function(*load_randoms(random_file), binfile, outdir, periodic, RR_file, print_function = print_function)
+
+
+def compute_correction_function_multi(randoms_pos1: np.ndarray[float], randoms_weights1: np.ndarray[float], randoms_pos2: np.ndarray[float], randoms_weights2: np.ndarray[float], binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, RR_file12: str | None = None, RR_file2: str | None = None, print_function = print) -> None:
     "Compute the multi-tracer survey correction function coefficients and save to file."
     if periodic:
         print_function("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
     elif any(file is None for file in (RR_file, RR_file12, RR_file2)):
         raise TypeError("All the RR files must be specified if aperiodic")
 
-    V1, n_bar1, w_bar1 = compute_V_n_w_bar_from_file(random_file, print_function = print_function)
-    V2, n_bar2, w_bar2 = compute_V_n_w_bar_from_file(random_file2, index = 2, print_function = print_function)
+    V1, n_bar1, w_bar1 = compute_V_n_w_bar(randoms_pos1, randoms_weights1, print_function = print_function)
+    V2, n_bar2, w_bar2 = compute_V_n_w_bar(randoms_pos2, randoms_weights2, print_function = print_function, index = 2)
 
     # Load in binning files
     r_bins = np.loadtxt(binfile)
@@ -167,7 +176,7 @@ def compute_correction_function_multi(random_file: str, random_file2: str, binfi
         ## Periodic correction function is simple
 
         phi_11 = compute_phi_periodic(w_bar1, w_bar1, n_bar1, n_bar1, V1, n)
-        phi_12 = compute_phi_periodic(w_bar1, w_bar2, n_bar1, n_bar2, np.sqrt(V1*V2), n)
+        phi_12 = compute_phi_periodic(w_bar1, w_bar2, n_bar1, n_bar2, np.sqrt(V1*V2), n) # use geometrically average volume, should be not critical
         phi_22 = compute_phi_periodic(w_bar2, w_bar2, n_bar2, n_bar2, V2, n)
     else:
         ## Continue for aperiodic case
@@ -197,3 +206,9 @@ def compute_correction_function_multi(random_file: str, random_file2: str, binfi
             outfile = os.path.join(outdir, 'BinCorrectionFactor_n%d_m%d_11.%s'%(n, m, index))
         np.savetxt(outfile, phi)
         print_function("Saved (normalized) output for field %s to %s"%(index, outfile))
+
+
+def compute_correction_function_multi_from_files(random_file1: str, random_file2: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, print_function = print) -> None:
+    "Compute the multi-tracer survey correction function coefficients and save to file."
+    print_function("Loading randoms")
+    compute_correction_function_multi(*load_randoms(random_file1), *load_randoms(random_file2), binfile, outdir, periodic, RR_file, print_function = print_function)
