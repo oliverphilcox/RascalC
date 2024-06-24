@@ -185,10 +185,12 @@ def run_cov(mode: str,
     out_dir : string
         Directory for important outputs.
         Moderate disk space required (up to a few hundred megabytes), but increases with covariance matrix size and number of samples (see above).
+        Avoid ".." in this path because it makes os.makedirs() "confused".
 
     tmp_dir : string
         Directory for temporary files. Contents can be deleted after the code has run, but this will not be done automatically.
         More disk space required - needs to store all the input arrays in the current implementation.
+        Avoid ".." in this path because it makes os.makedirs() "confused".
 
     skip_s_bins : int
         (Optional) number of lowest separations bins to skip at the post-processing stage. Those tend to converge worse and probably will not be precise due to the limitations of the formalism. Default 0 (no skipping).
