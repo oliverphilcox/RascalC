@@ -6,6 +6,7 @@ from glob import glob
 from shutil import copy2, copytree
 from warnings import warn
 from collections.abc import Iterable
+from .utils import rmdir_if_exists_and_empty
 
 
 def convert_suffix(suffix: str) -> int | str:
@@ -37,12 +38,6 @@ def organize_filename(filename: str, output_groups: dict, jack: bool = False) ->
         output_groups[output_group_name][matrix_name] = {}
     
     output_groups[output_group_name][matrix_name][suffix] = filename
-
-
-def rmdir_safe(dirname: str) -> None:
-    # remove directory if it exists and is empty, otherwise leave it
-    if os.path.isdir(dirname) and len(os.listdir(dirname)) <= 0:
-        os.rmdir(dirname)
 
 
 def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[str]):
@@ -146,8 +141,8 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_fu
 
     # remove subdirectories too if they are empty
     if cleanup:
-        rmdir_safe(cov_dir_all)
-        rmdir_safe(cov_dir_jack)
+        rmdir_if_exists_and_empty(cov_dir_all)
+        rmdir_if_exists_and_empty(cov_dir_jack)
 
     return return_dictionary
 

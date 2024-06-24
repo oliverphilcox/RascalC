@@ -1,6 +1,7 @@
 # Contains some utility functions widely used in other scripts
 # Not intended for execution from command line
 import numpy as np
+import os
 
 
 def blank_function(*args, **kwargs) -> None:
@@ -22,3 +23,9 @@ def transposed(A: np.ndarray):
 def symmetrized(A: np.ndarray):
     # symmetrize a 2+D matrix over the last two axes
     return 0.5 * (A + transposed(A))
+
+
+def rmdir_if_exists_and_empty(dirname: str) -> None:
+    "remove directory if it exists and is empty, otherwise do nothing"
+    if os.path.isdir(dirname) and len(os.listdir(dirname)) <= 0:
+        os.rmdir(dirname)
