@@ -3,7 +3,7 @@ import numpy as np
 
 
 def write_binning_file(out_file: str, r_edges: np.ndarray[float], print_function = blank_function):
-    # Save bin edges array into a Corrfunc (and RascalC) radial binning file format
+    "Save bin edges array into a Corrfunc (and RascalC) radial binning file format"
     np.savetxt(out_file, np.array((r_edges[:-1], r_edges[1:])).T)
     print_function("Binning file '%s' written successfully." % out_file)
 

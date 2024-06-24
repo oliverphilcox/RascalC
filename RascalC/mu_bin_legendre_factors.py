@@ -6,6 +6,11 @@ import os
 
 
 def compute_mu_bin_legendre_factors(mu_edges: np.ndarray[float], max_l: int, do_inverse: bool = False) -> np.ndarray[float] | tuple[np.ndarray[float], np.ndarray[float]]:
+    """
+    Compute projection factors from angular (mu) bins (first index) to (even) Legendre multipoles (second index).
+    With do_inverse, also computes the projection factors from (even) Legendre multipoles (first index) to angular (mu) bins (second index).
+    These are independent of radial bins.
+    """
     if max_l < 0: raise ValueError("Maximum multipole must be positive")
     if max_l % 2 != 0: raise ValueError("Odd multipoles not supported")
     n_l = max_l // 2 + 1 # number of multipoles
@@ -26,6 +31,7 @@ def compute_mu_bin_legendre_factors(mu_edges: np.ndarray[float], max_l: int, do_
 
 
 def write_mu_bin_legendre_factors(n_mu_bins: int, max_l: int, output_dir: str) -> str:
+    "Writes projection factors from angular (mu) bins (first index) to (even) Legendre multipoles (second index) to file and returns its filename."
     mu_edges = np.linspace(0, 1, n_mu_bins+1) # edges of the mu bins, assumes uniform
     mu_bin_legendre_factors = compute_mu_bin_legendre_factors(mu_edges, max_l)
 

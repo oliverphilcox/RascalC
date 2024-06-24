@@ -16,7 +16,7 @@ def convert_suffix(suffix: str) -> int | str:
 
 
 def organize_filename(filename: str, output_groups: dict, jack: bool = False) -> None:
-    # interpret the filename
+    "Interpret the filename as saved by the C++ code and put it into output_groups array. Jack is for jackknife"
     filename_no_ext = os.path.basename(filename) # remove the directory name
     filename_no_ext = ".".join(filename_no_ext.split(".")[:-1]) # remove the extension
     filename_parts = filename_no_ext.split("_") # split the rest by underscore
@@ -41,6 +41,7 @@ def organize_filename(filename: str, output_groups: dict, jack: bool = False) ->
 
 
 def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[str]):
+    "Save the dictionary of Numpy arrays into directory avoiding name clashes"
     output_filename = os.path.join(output_dir, f"Raw_Covariance_Matrices_{output_group_name}.npz")
     if os.path.exists(output_filename):
         warn(f"The default output filename for group {output_group_name}, {output_filename}, already exists. Will try to find a replacement.")
@@ -57,6 +58,11 @@ def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[s
 
 
 def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_function = print) -> dict[str, dict[str, np.ndarray[float]]]:
+    """
+    Collect the covariance matrices from text files written by the C++ code and organize them into a Numpy .npz file.
+    With cleanup enabled (default), deletes the text files after collection.
+    """
+
     cov_dir_all = os.path.join(cov_dir, 'CovMatricesAll/')
     cov_dir_jack = os.path.join(cov_dir, 'CovMatricesJack/')
 
@@ -148,6 +154,19 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_fu
 
 
 def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+    """
+    Load the raw covariance matrices as a dictionary. Uses the Numpy file if it exists, otherwise tried to run the collection function.
+
+    file_root is the directory to look in.
+
+    label specifies the number of radial bins and either the number of angular (mu) bins (nN_mM) or the maximum (even) multipole index (nN_lL).
+
+    n_samples allows to select subsamples flexibly:
+    - if None (default) returns all samples;
+    - if a positive integer, returns as many samples from the beginning;
+    - if a sequence of integers, returns subsamples with indices from this sequence;
+    - sequence of boolean values is interpreted as a boolean mask for subsamples.
+    """
     input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_{label}.npz")
     if os.path.isfile(input_filename): raw_cov = dict(np.load(input_filename))
     else:
@@ -174,16 +193,58 @@ def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Ite
 
 
 def load_raw_covariances_smu(file_root: str, n: int, m: int, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+    """
+    Load the raw covariance matrices from the s_mu mode as a dictionary. Uses the Numpy file if it exists, otherwise tried to run the collection function.
+
+    file_root is the directory to look in.
+    n and m are numbers of radial and angular (mu) bins respectively.
+
+    n_samples allows to select subsamples flexibly:
+    - if None (default) returns all samples;
+    - if a positive integer, returns as many samples from the beginning;
+    - if a sequence of integers, returns subsamples with indices from this sequence;
+    - sequence of boolean values is interpreted as a boolean mask for subsamples.
+    """
     label = f"n{n}_m{m}"
     return load_raw_covariances(file_root, label, n_samples, print_function)
 
 
 def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+    """
+    Load the raw covariance matrices from the Legendre modes as a dictionary. Uses the Numpy file if it exists, otherwise tried to run the collection function.
+
+    file_root is the directory to look in.
+    n and m are numbers of radial and angular (mu) bins respectively.
+
+    n_samples allows to select subsamples flexibly:
+    - if None (default) returns all samples;
+    - if a positive integer, returns as many samples from the beginning;
+    - if a sequence of integers, returns subsamples with indices from this sequence;
+    - sequence of boolean values is interpreted as a boolean mask for subsamples.
+    """
     label = f"n{n}_l{max_l}"
     return load_raw_covariances(file_root, label, n_samples, print_function)
 
 
-def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_samples: list[None | int | list[int]], output_root: str, collapse_factor: int = 1, print_function = print) -> dict[str]:
+def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_samples: list[None | int | Iterable[int] | Iterable[bool]], output_root: str, collapse_factor: int = 1, print_function = print) -> dict[str]:
+    """
+    Catenate the raw covariance matrices from one or more input directories, assuming they are from similar runs: the same number of random points, N2, N3, N4 and loops per sample.
+
+    n is the number of radial bins.
+    mstr is m{number of angular bins} in s_mu mode and l{max_multipole} in Legendre modes.
+
+    input_roots are input directories.
+
+    Each element of ns_samples allows to select subsamples flexibly from the corresponding directory (according to `load_raw_covariances`):
+    - if None (default) returns all samples;
+    - if a positive integer, returns as many samples from the beginning;
+    - if a sequence of integers, returns subsamples with indices from this sequence;
+    - sequence of boolean values is interpreted as a boolean mask for subsamples.
+
+    output_root is the output directory.
+
+    collapse_factor allows to reduce the number of subsamples by averaging over a given number of adjacent subsamples.
+    """
     if collapse_factor <= 0: raise ValueError("Collapsing factor must be positive")
     if len(input_roots) < 1: raise ValueError("Need at least one input directory")
     if len(ns_samples) != len(input_roots): raise ValueError("Number of input dirs and subsamples to use from them must be the same")

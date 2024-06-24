@@ -10,6 +10,7 @@ from scipy.optimize import curve_fit
 
 
 def compute_phi_periodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: float, V: float, n: int) -> np.ndarray[float]:
+    "Compute the survey correction function coefficients for the periodic box geometry."
     ## Define normalization constant
     this_norm = n_bar1 * n_bar2 * w_bar1 * w_bar2 # keep it simple, only need to be self-consistent - use the same norm everywhere
 
@@ -23,6 +24,7 @@ def compute_phi_periodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: fl
 
 
 def compute_phi_aperiodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: float, V: float, r_bins: np.ndarray[float], this_RR: np.ndarray[float], index: str, print_function = print) -> np.ndarray[float]:
+    "Compute the survey correction function coefficients for the realistic survey geometry."
     print_function("\nComputing survey correction factor %s"%index)
     ## Define normalization constant
     this_norm = n_bar1 * n_bar2 * w_bar1 * w_bar2 # keep it simple, only need to be self-consistent - use the same norm everywhere
@@ -86,6 +88,7 @@ def compute_phi_aperiodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: f
     return np.asarray(fit_params) / norm
 
 def compute_V_n_w_bar(randoms_pos: np.ndarray[float], gal_w: np.ndarray[float]) -> tuple[float, float, float]:
+    "Compute the effective survey volume, average density and weight given positions of random particles."
     w_bar = np.mean(gal_w)
     N_gal = len(gal_w)
 
@@ -99,6 +102,7 @@ def compute_V_n_w_bar(randoms_pos: np.ndarray[float], gal_w: np.ndarray[float]) 
     return V, n_bar, w_bar
 
 def compute_V_n_w_bar_from_file(random_file: str, index = 1, print_function = print) -> tuple[float, float, float]:
+    "Compute the effective survey volume, average density and weight given a random particles file."
     print_function(f"Loading galaxy set {index}")
     all_gal = np.loadtxt(random_file)
 
@@ -108,11 +112,13 @@ def compute_V_n_w_bar_from_file(random_file: str, index = 1, print_function = pr
 
 
 def load_RR(RR_file: str, n: int) -> np.ndarray[float]:
+    "Helper function to read the RR counts."
     RR_flat = np.loadtxt(RR_file) # not change normalization here
     return RR_flat.reshape((n, -1))
 
 
 def compute_correction_function(random_file: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, print_function = print) -> None:
+    "Compute the single-tracer survey correction function coefficients and save to file."
     if periodic:
         print("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
     elif RR_file is None: raise TypeError("The RR file must be specified if aperiodic")
@@ -144,6 +150,7 @@ def compute_correction_function(random_file: str, binfile: str, outdir: str, per
 
 
 def compute_correction_function_multi(random_file: str, random_file2: str, binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, RR_file12: str | None = None, RR_file2: str | None = None, print_function = print) -> None:
+    "Compute the multi-tracer survey correction function coefficients and save to file."
     if periodic:
         print_function("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
     elif any(file is None for file in (RR_file, RR_file12, RR_file2)):

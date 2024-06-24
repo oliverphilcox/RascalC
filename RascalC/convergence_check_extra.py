@@ -8,6 +8,7 @@ from .utils import blank_function
 
 # methods to assess similarity
 def rms_eig_inv_test_covs(C1: np.ndarray[float], C2: np.ndarray[float]) -> float:
+    "Compute the R_inv comparison measure between two covariance matrices; the first is inverted."
     Psi1 = np.linalg.inv(C1)
     N = len(C2)
     tmp = Psi1.dot(C2) - np.eye(N)
@@ -15,18 +16,24 @@ def rms_eig_inv_test_covs(C1: np.ndarray[float], C2: np.ndarray[float]) -> float
 
 
 def KL_div_covs(C1: np.ndarray[float], C2: np.ndarray[float]) -> float:
+    "Compute the Kullback-Leibler divergence between two covariance matrices; the first is inverted."
     Psi1 = np.linalg.inv(C1)
     Psi1C2 = Psi1.dot(C2)
     return (np.trace(Psi1C2) - len(C2) - np.log(np.linalg.det(Psi1C2)))/2
 
 
 def chi2_red_covs(C1: np.ndarray[float], C2: np.ndarray[float]) -> float:
+    "Compute the reduced chi-squared comparison measure between two covariance matrices; the first is inverted."
     Psi1 = np.linalg.inv(C1)
     Psi1C2 = Psi1.dot(C2)
     return np.trace(Psi1C2)/len(C2)
 
 
 def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_function = blank_function) -> dict[str, float]:
+    """
+    Compute the selected comparison measures between two covariance matrices and save to dictionary.
+    Optionally, use print_function to report the results.
+    """
     result = dict()
 
     result["R_inv"] = (rms_eig_inv_test_covs(cov_first, cov_second), rms_eig_inv_test_covs(cov_second, cov_first))
@@ -42,6 +49,11 @@ def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_f
 
 
 def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, float]]:
+    """
+    Perform two different splittings in halves using the covariance matrix samples c_samples and compute the comparison measures between the two average covariance matrices.
+    Optionally, use only `n_samples` first samples.
+    Further optionally, use `print_function` to report the results.
+    """
     if n_samples is None: n_samples = len(c_samples)
     n_samples_2 = n_samples // 2
 
@@ -61,6 +73,12 @@ def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: 
 
 
 def convergence_check_extra(rascalc_results: dict[str], n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, dict[str, float]]]:
+    """
+    Perform two different splittings in halves using the RascalC results file/dictionary and compute the comparison measures between the two average covariance matrices.
+    Do this for full and jackknife covariance matrices (if the latter are present).
+    Optionally, use only `n_samples` first samples.
+    Further optionally, use `print_function` to report the results.
+    """
     print_function("Full covariance")
     result = {"full": convergence_check_extra_splittings(rascalc_results["individual_theory_covariances"], n_samples, print_function)}
 
@@ -71,6 +89,12 @@ def convergence_check_extra(rascalc_results: dict[str], n_samples: int | None = 
     return result
 
 
-def convergence_check_extra_file(rascalc_results_file: str, n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, dict[str, float]]]:
-    with np.load(rascalc_results_file) as f:
+def convergence_check_extra_file(rascalc_results_filename: str, n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, dict[str, float]]]:
+    """
+    Perform two different splittings in halves using the RascalC results filename and compute the comparison measures between the two average covariance matrices.
+    Do this for full and jackknife covariance matrices (if the latter are present).
+    Optionally, use only `n_samples` first samples.
+    Further optionally, use `print_function` to report the results.
+    """
+    with np.load(rascalc_results_filename) as f:
         return convergence_check_extra(f, n_samples, print_function)

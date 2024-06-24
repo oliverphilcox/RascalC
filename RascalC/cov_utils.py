@@ -6,10 +6,12 @@ from .get_shot_noise_rescaling import get_shot_noise_rescaling
 
 
 def get_cov_header(rascalc_results_file: str) -> str:
+    "Format the header for the covariance matrix text file; currently get the shot-noise rescaling value"
     return "shot_noise_rescaling = " + str(get_shot_noise_rescaling(rascalc_results_file))
 
 
 def convert_cov_legendre(cov: np.ndarray[float], max_l: int) -> np.ndarray[float]:
+    "Transpose the covariance matrix in Legendre mode for single tracer."
     if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
     n_l = max_l // 2 + 1
     n_bins = len(cov)
@@ -22,6 +24,7 @@ def convert_cov_legendre(cov: np.ndarray[float], max_l: int) -> np.ndarray[float
 
 
 def convert_cov_legendre_multi(cov: np.ndarray[float], max_l: int) -> np.ndarray[float]:
+    "Transpose the covariance matrix in Legendre mode for two tracers."
     if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
     n_l = max_l // 2 + 1
     n_bins = len(cov)
@@ -34,6 +37,7 @@ def convert_cov_legendre_multi(cov: np.ndarray[float], max_l: int) -> np.ndarray
 
 
 def load_cov(rascalc_results_file: str, print_function: Callable = print) -> np.ndarray[float]:
+    "Load the theoretical covariance matrix from RascalC results file as-is, intended for the s_mu mode."
     with np.load(rascalc_results_file) as f:
         print_function(f"Max abs eigenvalue of bias correction matrix is {np.max(np.abs(np.linalg.eigvals(f['full_theory_D_matrix']))):.2e}")
         # if the printed value is small the cov matrix should be safe to invert as is
@@ -41,20 +45,25 @@ def load_cov(rascalc_results_file: str, print_function: Callable = print) -> np.
 
 
 def load_cov_legendre(rascalc_results_file: str, max_l: int, print_function: Callable = print) -> np.ndarray[float]:
+    "Load the and transpose theoretical covariance matrix from RascalC results file in Legendre single-tracer mode."
     return convert_cov_legendre(load_cov(rascalc_results_file, print_function), max_l)
 
 
 def load_cov_legendre_multi(rascalc_results_file: str, max_l: int, print_function: Callable = print) -> np.ndarray[float]:
+    "Load the and transpose theoretical covariance matrix from RascalC results file in Legendre two-tracer mode."
     return convert_cov_legendre_multi(load_cov(rascalc_results_file, print_function), max_l)
 
 
 def export_cov(rascalc_results_file: str, output_cov_file: str, print_function: Callable = print) -> None:
+    "Export the theoretical covariance matrix from RascalC results file to a text file as-is, intended for the s_mu mode."
     np.savetxt(output_cov_file, load_cov(rascalc_results_file, print_function = print_function), header = get_cov_header(rascalc_results_file))
 
 
 def export_cov_legendre(rascalc_results_file: str, max_l: int, output_cov_file: str, print_function: Callable = print) -> None:
+    "Export the theoretical covariance matrix from RascalC results file to a text file with transposition appropriate for single-tracer Legendre modes."
     np.savetxt(output_cov_file, load_cov_legendre(rascalc_results_file, max_l, print_function = print_function), header = get_cov_header(rascalc_results_file))
 
 
 def export_cov_legendre_multi(rascalc_results_file: str, max_l: int, output_cov_file: str, print_function: Callable = print) -> None:
+    "Export the theoretical covariance matrix from RascalC results file to a text file with transposition appropriate for two-tracer Legendre modes."
     np.savetxt(output_cov_file, load_cov_legendre_multi(rascalc_results_file, max_l, print_function = print_function), header = get_cov_header(rascalc_results_file))
