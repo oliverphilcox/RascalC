@@ -94,7 +94,8 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 		   if(rstart>0&&j>=rstart)
 			   p[j].w = -tmp[stat-2]; //read in weights
 		   else
-			   p[j].w = tmp[stat-2]; 
+			   p[j].w = tmp[stat-2];
+        }
         int tmp_JK = tmp[stat-1]; // read in JK region
 		
 		// Collapse jacknife indices to only include filled JKs:
@@ -115,8 +116,8 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
                     p[j].w = -tmp[3]; // read in weights
                 else
                     p[j].w = tmp[3];
-#endif                
             }
+#endif
       	
 		j++;
     }
