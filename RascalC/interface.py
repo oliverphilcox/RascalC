@@ -163,7 +163,7 @@ def run_cov(mode: str,
     nthread : integer
         Number of hyperthreads to use.
         Can not utilize more threads than ``n_loops``.
-        IMPORTANT: AVOID multi-threading in the Python process calling this function (e.g. at NERSC this would mean not setting `OMP_*` and other `*_THREADS` environment variables; the code should be able to set them by itself). Otherwise the code may run effectively single-threaded. If you need multi-threaded calculations, run them separately or spawn sub-processes.
+        IMPORTANT: AVOID multi-threading in the Python process calling this function (e.g. at NERSC this would mean not setting `OMP_*` and other `*_THREADS` environment variables; the code should be able to set them by itself). Otherwise the code may run effectively single-threaded. If you need other multi-threaded calculations, run them separately or spawn sub-processes.
     
     N2 : integer
         Number of secondary points to sample per each primary random point.
@@ -455,6 +455,7 @@ def run_cov(mode: str,
 
     # deal with the seed
     if seed is not None: # need to pass to the C++ code and make sure it can be received properly
+        if not isinstance(seed, int): raise TypeError("Seed must be int or None")
         seed &= 2**32 - 1 # this bitwise AND truncates the seed into a 32-bit unsigned (positive) integer (definitely a subset of unsigned long)
         command += f" -seed {seed}"
     
