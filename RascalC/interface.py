@@ -482,27 +482,27 @@ def run_cov(mode: str,
     print_and_log("Starting post-processing")
     if two_tracers:
         if legendre:
-            from .post_process.legendre_multi import post_process_legendre_multi
+            from .post_process import post_process_legendre_multi
             results = post_process_legendre_multi(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, print_function = print_and_log)
         elif jackknife:
-            from .post_process.jackknife_multi import post_process_jackknife_multi
+            from .post_process import post_process_jackknife_multi
             results = post_process_jackknife_multi(*xi_jack_names, os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
         else: # default
-            from .post_process.default_multi import post_process_default_multi
+            from .post_process import post_process_default_multi
             results = post_process_default_multi(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, print_function = print_and_log)
     else:
         if legendre:
             if jackknife:
-                from .post_process.legendre_mix_jackknife import post_process_legendre_mix_jackknife
+                from .post_process import post_process_legendre_mix_jackknife
                 results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
             else:
-                from .post_process.legendre import post_process_legendre
+                from .post_process import post_process_legendre
                 results = post_process_legendre(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, skip_s_bins, skip_l, print_function = print_and_log)
         elif jackknife:
-            from .post_process.jackknife import post_process_jackknife
+            from .post_process import post_process_jackknife
             results = post_process_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
         else: # default
-            from .post_process.default import post_process_default
+            from .post_process import post_process_default
             results = post_process_default(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, skip_s_bins, print_function = print_and_log)
 
     print_and_log("Finished post-processing")

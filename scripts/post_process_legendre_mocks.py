@@ -10,7 +10,7 @@ if len(sys.argv) not in (6, 7, 8):
 
 from utils import adjust_path, get_arg_safe
 adjust_path()
-from RascalC.post_process.legendre_mocks import post_process_legendre_mocks
+from RascalC.post_process import post_process_legendre_mocks
         
 mock_cov_file = str(sys.argv[1])
 file_root = str(sys.argv[2])

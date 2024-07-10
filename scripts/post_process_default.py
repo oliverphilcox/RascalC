@@ -10,7 +10,7 @@ if len(sys.argv) not in (5, 6, 7):
 
 from utils import adjust_path, get_arg_safe
 adjust_path()
-from RascalC.post_process.default import post_process_default
+from RascalC.post_process import post_process_default
 
 file_root = str(sys.argv[1])
 n = int(sys.argv[2])

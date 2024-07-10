@@ -11,7 +11,7 @@ if len(sys.argv) not in (8, 9):
 
 from utils import adjust_path, get_arg_safe
 adjust_path()
-from RascalC.post_process.jackknife_multi import post_process_jackknife_multi
+from RascalC.post_process import post_process_jackknife_multi
 
 jackknife_file_11 = str(sys.argv[1])
 jackknife_file_12 = str(sys.argv[2])

@@ -10,7 +10,7 @@ if len(sys.argv) not in (7, 8, 9):
 
 from utils import adjust_path, get_arg_safe
 adjust_path()
-from RascalC.post_process.legendre_mix_jackknife import post_process_legendre_mix_jackknife
+from RascalC.post_process import post_process_legendre_mix_jackknife
         
 jackknife_file = str(sys.argv[1])
 weight_dir = str(sys.argv[2])
