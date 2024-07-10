@@ -27,11 +27,11 @@ def run_cov(mode: str,
             out_dir: str, tmp_dir: str,
             randoms_positions1: np.ndarray[float], randoms_weights1: np.ndarray[float],
             pycorr_allcounts_11: pycorr.twopoint_estimator.BaseTwoPointEstimator,
-            xi_table_11: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]],
+            xi_table_11: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | list[np.ndarray[float]],
             position_type: str = "pos",
-            xi_table_12: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | None = None,
-            xi_table_22: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | None = None,
-            xi_cut_s: float = 250,
+            xi_table_12: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | list[np.ndarray[float]] = None,
+            xi_table_22: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | list[np.ndarray[float]] = None,
+            xi_cut_s: float = 250, xi_refinement_iterations: int = 10,
             pycorr_allcounts_12: pycorr.twopoint_estimator.BaseTwoPointEstimator | None = None, pycorr_allcounts_22: pycorr.twopoint_estimator.BaseTwoPointEstimator | None = None,
             normalize_wcounts: bool = True,
             no_data_galaxies1: float | None = None, no_data_galaxies2: float | None = None,
@@ -134,10 +134,13 @@ def run_cov(mode: str,
         Important: if the given correlation function is an average in s, µ bins, the separation bin edges need to be provided (and the µ bins are assumed to be linear) for rescaling procedure which ensures that the interpolation results averaged over s, µ bins returns the given correlation function. In case of ``pycorr.TwoPointEstimator``, the edges will be recovered automatically. Unwrapped estimators (µ from -1 to 1) are preferred, because symmetry allows to fix some issues.
         In the sequence format:
 
-            - s_values must be a 1D array of reference separation (s) values for the table of length N;
-            - mu_values must be a 1D array of reference µ values (covering the range from 0 to 1) for the table of length M;
+            - s_values must be a 1D array of reference separation (s) values for the table, of length N;
+            - mu_values must be a 1D array of reference µ values (covering the range from 0 to 1) for the table, of length M;
             - xi_values must be an array of correlation function values at those s, µ values of shape (N, M);
             - s_edges, if given, must be a 1D array of separation bin edges of length N+1. The bins must come close to zero separation (say start at ``s <= 0.01``).
+        
+        The sequence containing 3 elements should be used for theoretical models evaluated at a grid of s, mu values.
+        The 4-element format should be used for bin-averaged estimates.
 
     xi_table_12 : None or the same format as ``xi_table_11``
         Table of the two tracer's cross-correlation function in separation (s) and µ bins.
@@ -150,8 +153,12 @@ def run_cov(mode: str,
         Required for multi-tracer functionality.
     
     xi_cut_s : float
-        (Optional) separation value beyond which the correlation function is assumed to be zero for the covariance matrix integrals.
+        (Optional) separation value beyond which the correlation function is assumed to be zero for the covariance matrix integrals. Default: 250.
         Between the maximum separation from ``xi_table``s and ``xi_cut_s``, the correlation function is extrapolated as :math:`\propto s^{-4}`.
+    
+    xi_refinement_iterations : int
+        (Optional) number of iterations in the correlation function refinement procedure for interpolation inside the code, ensuring that the bin-averaged interpolated values match the binned correlation function estimates. Default: 10.
+        Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table``s are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
 
     nthread : integer
         Number of hyperthreads to use.
@@ -351,36 +358,41 @@ def run_cov(mode: str,
     all_xi = (xi_table_11, xi_table_12, xi_table_22)
     xi_s_edges = None
     xi_n_mu_bins = None
-    rescale_xi = False
+    refine_xi = False
     for c, xi in enumerate(all_xi[:ncorr]):
+        if c > 0:
+            if type(xi) != type(all_xi[0]): raise TypeError(f"xi_table_{indices_corr[c]} must have the same type as xi_table_11")
+            if len(xi) != len(all_xi[0]): raise ValueError(f"xi_table_{indices_corr[c]} must have the same structure as xi_table_11")
         if isinstance(xi, pycorr.twopoint_estimator.BaseTwoPointEstimator):
+            refine_xi = True
             if xi.edges[1][0] < 0:
                 xi = fix_bad_bins_pycorr(xi)
                 print_and_log(f"Wrapping xi_table_{indices_corr[c]} to µ>=0")
                 xi = xi.wrap()
-            if c == 0: xi_n_mu_bins = xi.shape[1]
+            if c == 0:
+                xi_n_mu_bins = xi.shape[1]
+                xi_s_edges = xi.edges[0]
+            elif not np.allclose(xi_s_edges, xi.edges[0]): raise ValueError("Different binning for different correlation functions not supported")
             if not np.allclose(xi.edges[1], np.linspace(0, 1, xi_n_mu_bins + 1)): raise ValueError(f"xi_table_{indices_corr[c]} µ binning is not consistent with linear between 0 and 1 (after wrapping)")
             write_xi_file(cornames[c], xi.sepavg(axis = 0), xi.sepavg(axis = 1), get_input_xi_from_pycorr(xi))
-            if xi_s_edges is None: xi_s_edges = xi.edges[0]
-            elif not np.allclose(xi_s_edges, xi.edges[0]): raise ValueError("Different binning for different correlation functions not supported")
-            rescale_xi = True
         elif isinstance(xi, tuple) or isinstance(xi, list):
             if len(xi) == 4: # the last element is the edges
-                if xi_s_edges is None: xi_s_edges = xi[-1]
+                refine_xi = True
+                if c == 0: xi_s_edges = xi[-1]
                 elif not np.allclose(xi_s_edges, xi[-1]): raise ValueError("Different binning for different correlation functions not supported")
-                rescale_xi = True
                 xi = xi[:-1]
-            if len(xi) != 3: raise ValueError(f"xi_table {indices_corr[c]} must have 3 or 4 elements if a tuple")
+            if len(xi) != 3: raise ValueError(f"xi_table {indices_corr[c]} must have 3 or 4 elements if a tuple/list")
             r_vals, mu_vals, xi_vals = xi
             if len(xi_vals) != len(r_vals): raise ValueError(f"xi_values {indices_corr[c]} must have the same number of rows as r_values")
             if len(xi_vals[0]) != len(mu_vals): raise ValueError(f"xi_values {indices_corr[c]} must have the same number of columns as mu_values")
-            if c == 0: xi_n_mu_bins = len(mu_vals)
+            if c == 0:
+                xi_n_mu_bins = len(mu_vals)
+                if not refine_xi:
+                    xi_s_edges = (r_vals[:-1] + r_vals[1:]) / 2 # middle values as midpoints of r_vals to be safe
+                    xi_s_edges = [1e-4] + xi_s_edges + [2 * r_vals[-1] - xi_s_edges[-1]] # set the lowest edge near 0 and the highest beyond the last point of r_vals
             write_xi_file(cornames[c], r_vals, mu_vals, xi_vals)
-            if not rescale_xi:
-                xi_s_edges = (r_vals[:-1] + r_vals[1:]) / 2 # middle values as midpoints of r_vals to be safe
-                xi_s_edges = [1e-4] + xi_s_edges + [2 * r_vals[-1] - xi_s_edges[-1]] # set the lowest edge near 0 and the highest beyond the last point of r_vals
-        else: raise TypeError(f"Xi table {indices_corr[c]} must be either a pycorr.TwoPointEstimator or a tuple")
-    xi_refinement_loops = 10 * rescale_xi # set number of xi refinement loops; 0 if rescale_xi = False would mean no rescaling as desired
+        else: raise TypeError(f"Xi table {indices_corr[c]} must be either a pycorr.TwoPointEstimator or a tuple/list")
+    xi_refinement_iterations *= refine_xi # True is 1; False is 0 => 0 iterations => no refinement
     
     # write the randoms file(s)
     randoms_positions = [randoms_positions1, randoms_positions2]
@@ -415,7 +427,7 @@ def run_cov(mode: str,
 
     # form the command line
     command = "env OMP_PROC_BIND=spread OMP_PLACES=threads " # set OMP environment variables, should not be set before
-    command += f"{exec_path} -output {out_dir}/ -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {xi_n_mu_bins} -cf_loops {xi_refinement_loops}" # here are universally acceptable parameters
+    command += f"{exec_path} -output {out_dir}/ -nside {sampling_grid_size} -rescale {coordinate_scaling} -nthread {nthread} -maxloops {n_loops} -loopspersample {loops_per_sample} -N2 {N2} -N3 {N3} -N4 {N4} -xicut {xi_cut_s} -binfile {binfile} -binfile_cf {binfile_cf} -mbin_cf {xi_n_mu_bins} -cf_loops {xi_refinement_iterations}" # here are universally acceptable parameters
     command += "".join([f" -in{suffixes_tracer[t]} {input_filenames[t]}" for t in range(ntracers)]) # provide all the random filenames
     command += "".join([f" -norm{suffixes_tracer[t]} {ndata[t]}" for t in range(ntracers)]) # provide all ndata for normalization
     command += "".join([f" -cor{suffixes_corr[c]} {cornames[c]}" for c in range(ncorr)]) # provide all correlation functions
