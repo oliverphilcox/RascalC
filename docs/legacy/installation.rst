@@ -1,5 +1,5 @@
-Package Installation
-=====================
+Installation
+============
 
 To install RascalC, simply clone the Github repository and compile the C++ code (see :ref:`dependencies` below). This is done as follows::
 

@@ -37,7 +37,7 @@ python3 -m pip install https://github.com/misharash/RascalC.git
 ```
 
 The code requires [`pycorr`](https://github.com/cosmodesi/pycorr) to deal with pair counts and data correlation function estimators.
-To compute pair counts of catalogs (which is part of this tutorial), you need a [custom version of `Corrfunc`](https://github.com/adematti/Corrfunc) (see also [`pycorr` installation instructions](https://py2pcf.readthedocs.io/en/latest/user/building.html)).
+To compute pair counts of catalogs, you need a [custom version of `Corrfunc`](https://github.com/adematti/Corrfunc) (see also [`pycorr` installation instructions](https://py2pcf.readthedocs.io/en/latest/user/building.html)).
 Both can be installed quickly via
 ```
 python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'

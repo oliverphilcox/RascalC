@@ -14,6 +14,7 @@ The source code is publicly available on `Github <https://github.com/oliverphilc
    :maxdepth: 2
    :caption: Python library
 
+   library/installation
    library/api
 
 .. toctree::
