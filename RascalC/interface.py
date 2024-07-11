@@ -51,12 +51,12 @@ def run_cov(mode: str,
     mode : string
         Choice of binning setup, one of:
 
-            - "s_mu": compute covariance of the correlation function in s, µ bins. Only linear µ binning between 0 and 1 supported.
-            - "legendre_projected": compute covariance of the correlation function Legendre multipoles in separation (s) bins projected from µ bins (only linear µ binning supported between 0 and 1). Procedure matches ``pycorr``. Works with jackknives, may be less efficient in periodic geometry.
-            - "legendre_accumulated": compute covariance of the correlation function Legendre multipoles in separation (s) bins accumulated directly, without first doing µ-binned counts. Incompatible with jackknives.
+            - ``"s_mu"``: compute covariance of the correlation function in s, µ bins. Only linear µ binning between 0 and 1 supported.
+            - ``"legendre_projected"``: compute covariance of the correlation function Legendre multipoles in separation (s) bins projected from µ bins (only linear µ binning supported between 0 and 1). Procedure matches ``pycorr``. Works with jackknives, may be less efficient in periodic geometry.
+            - ``"legendre_accumulated"``: compute covariance of the correlation function Legendre multipoles in separation (s) bins accumulated directly, without first doing µ-binned counts. Incompatible with jackknives.
     
     max_l : integer
-        Max Legendre multipole index (required in both "legendre" ``mode``\s).
+        Max Legendre multipole index (required in both Legendre ``mode``\s).
         Has to be even.
     
     boxsize : None or float
@@ -67,30 +67,30 @@ def run_cov(mode: str,
     position_type : string, default="pos"
         Type of input positions, one of:
 
-            - "rdd": RA, Dec in degrees, distance
+            - "rdd": RA, Dec (both in degrees), distance; shape (3, N)
             - "xyz": Cartesian positions, shape (3, N)
             - "pos": Cartesian positions, shape (N, 3).
     
     randoms_positions1 : array of floats, shaped according to `position_type`
-        Cartesian coordinates of random points for the first tracer.
+        Coordinates of random points for the first tracer.
     
     randoms_weights1 : array of floats of length N_randoms
         Weights of random points for the first tracer.
     
-    randoms_samples1 : None or array of floats of length N_randoms
-        (Optional) jackknife region numbers for random points for the first tracer.
-        If given and not None, enables the jackknife functionality (tuning of shot-noise rescaling on jackknife correlation function estimates).
-        The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_11`` (and ``pycorr_allcounts_12`` in multi-tracer mode).
+    randoms_samples1 : None or array of integers of length N_randoms
+        Jackknife region numbers for random points for the first tracer.
+        If given (and not None), enables the jackknife functionality (tuning of shot-noise rescaling on jackknife correlation function estimates).
+        The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_11`` (and ``pycorr_allcounts_12`` with multi-tracer functionality enabled).
 
     randoms_positions2 : None or array of floats, shaped according to `position_type`
-        (Optional) cartesian coordinates of random points for the second tracer.
+        (Optional) coordinates of random points for the second tracer.
         If given and not None, enables the multi-tracer functionality (full two-tracer covariance estimation).
     
     randoms_weights2 : None or array of floats of length N_randoms2
-        Weights of random points for the second tracer (required for multi-tracer functionality).
+        (Optional) weights of random points for the second tracer (required for multi-tracer functionality).
     
-    randoms_samples2 : None or array of floats of length N_randoms2
-        Jackknife region numbers for the second tracer (required for multi-tracer + jackknife functionality, although this combination has not been used yet).
+    randoms_samples2 : None or array of integers of length N_randoms2
+        (Optional) jackknife region numbers for the second tracer (required for multi-tracer + jackknife functionality, although this combination has not been used yet).
         The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_12`` and ``pycorr_allcounts_22``.
 
     pycorr_allcounts_11 : ``pycorr.TwoPointEstimator``
@@ -156,7 +156,7 @@ def run_cov(mode: str,
         (Optional) separation value beyond which the correlation function is assumed to be zero for the covariance matrix integrals. Default: 250.
         Between the maximum separation from ``xi_table``s and ``xi_cut_s``, the correlation function is extrapolated as :math:`\propto s^{-4}`.
     
-    xi_refinement_iterations : int
+    xi_refinement_iterations : integer
         (Optional) number of iterations in the correlation function refinement procedure for interpolation inside the code, ensuring that the bin-averaged interpolated values match the binned correlation function estimates. Default: 10.
         Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table``\s are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
 
@@ -200,10 +200,10 @@ def run_cov(mode: str,
         More disk space required - needs to store all the input arrays in the current implementation.
         Avoid ".." in this path because it makes os.makedirs() "confused".
 
-    skip_s_bins : int
+    skip_s_bins : integer
         (Optional) number of lowest separations bins to skip at the post-processing stage. Those tend to converge worse and probably will not be precise due to the limitations of the formalism. Default 0 (no skipping).
 
-    skip_l : int
+    skip_l : integer
         (Only for the Legendre modes; optional) number of highest (even) multipoles to skip at the post-processing stage. Those tend to converge worse. Default 0 (no skipping).
 
     shot_noise_rescaling1 : float
@@ -214,13 +214,13 @@ def run_cov(mode: str,
         (Optional) shot-noise rescaling value for the second tracer if known beforehand. Default 1 (no rescaling).
         Will be ignored in jackknife mode - then shot-noise rescaling is optimized on the auto-covariance.
 
-    sampling_grid_size : int
+    sampling_grid_size : integer
         (Optional) first guess for the sampling grid size.
         The code should be able to find a suitable number automatically.
 
     coordinate_scaling : float
         (Optional) scaling factor for all the Cartesian coordinates. Default 1 (no rescaling).
-        This option is supported by the C++ code, but its use cases are unclear.
+        This option is supported by the C++ code, but its use cases are not very clear.
 
     seed : integer or None
         (Optional) If given as an integer, allows to reproduce the results with the same settings, except the number of threads.
@@ -234,9 +234,9 @@ def run_cov(mode: str,
     Returns
     -------
     post_processing_results : dict[str, np.ndarray[float]]
-        Post-processing results as a dictionary with string keys and Numpy array values. All this information is also saved in a Rescaled_Covariance_Matrices*.npz file in the output directory.
-        Selected common keys are: "full_theory_covariance" for the final covariance matrix and "shot_noise_rescaling" for the shot-noise rescaling value(s).
-        There will also be a Raw_Covariance_Matices*.npz file in the output directory (as long as the C++ code has run without errors), which can be post-processed separately in a different way.
+        Post-processing results as a dictionary with string keys and Numpy array values. All this information is also saved in a ``Rescaled_Covariance_Matrices*.npz`` file in the output directory.
+        Selected common keys are: ``"full_theory_covariance"`` for the final covariance matrix and ``"shot_noise_rescaling"`` for the shot-noise rescaling value(s).
+        There will also be a ``Raw_Covariance_Matices*.npz`` file in the output directory (as long as the C++ code has run without errors), which can be post-processed separately in a different way.
     """
 
     if mode not in ("s_mu", "legendre_accumulated", "legendre_projected"): raise ValueError("Given mode not supported")
