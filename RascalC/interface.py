@@ -56,7 +56,7 @@ def run_cov(mode: str,
             - "legendre_accumulated": compute covariance of the correlation function Legendre multipoles in separation (s) bins accumulated directly, without first doing µ-binned counts. Incompatible with jackknives.
     
     max_l : integer
-        Max Legendre multipole index (required in both "legendre" ``mode``s).
+        Max Legendre multipole index (required in both "legendre" ``mode``\s).
         Has to be even.
     
     boxsize : None or float
@@ -158,7 +158,7 @@ def run_cov(mode: str,
     
     xi_refinement_iterations : int
         (Optional) number of iterations in the correlation function refinement procedure for interpolation inside the code, ensuring that the bin-averaged interpolated values match the binned correlation function estimates. Default: 10.
-        Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table``s are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
+        Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table``\s are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
 
     nthread : integer
         Number of hyperthreads to use.

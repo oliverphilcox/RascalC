@@ -14,13 +14,13 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../RascalC/'))
+sys.path.insert(0, os.path.abspath('../'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'RascalC'
-copyright = '2019-2023, Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
+copyright = '2019-2024, Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
 author = 'Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
 
 # The short X.Y version
@@ -45,6 +45,7 @@ extensions = [
     'recommonmark',
     'sphinx.ext.todo',
     'sphinx.ext.graphviz',
+    'sphinx.ext.autodoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
