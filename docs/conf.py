@@ -46,6 +46,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.graphviz',
     'sphinx.ext.autodoc',
+    'sphinx.ext.extlinks',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -77,6 +78,10 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
+
+git_root = 'https://github.com/misharash/RascalC/blob/master/'
+
+extlinks = {'root': (git_root + '%s', '%s')}
 
 
 # -- Options for HTML output -------------------------------------------------

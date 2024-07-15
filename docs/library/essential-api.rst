@@ -1,5 +1,5 @@
-API
-=================
+Essential API
+=============
 
 The main wrapper function
 -------------------------

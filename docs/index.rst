@@ -15,7 +15,8 @@ The source code is publicly available on `Github <https://github.com/oliverphilc
    :caption: Python library
 
    library/installation
-   library/api
+   library/essential-api
+   library/tutorials-examples
 
 .. toctree::
    :maxdepth: 2
