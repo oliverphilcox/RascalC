@@ -13,7 +13,7 @@ def get_subsampler_xirunpc(ref_positions: np.ndarray[float], njack: int, positio
     omp_backup = {key: os.environ.pop(key) for key in omp_keys}
     os.environ["OMP_NUM_THREADS"] = "1"
     # Create the subsampler. The above steps disable multi-threading, which is known to interfere with RascalC C++ code. Later usage of the subsampler should remain single-threaded as we want it. The jackknife assignment takes very little time compared to the pair counting and especially RascalC importance sampling.
-    subsampler = pycorr.KMeansSubsampler('angular', positions = ref_positions, position_type = position_type, nsamples = njack, nside = 512, random_state = 42)
+    subsampler = pycorr.KMeansSubsampler('angular', positions = ref_positions, position_type = position_type, nsamples = njack, nside = 512, random_state = 42, dtype = np.float64)
     # Restore the OMP_ environment variables modified above
     os.environ.pop("OMP_NUM_THREADS")
     for key in omp_keys: os.environ[key] = omp_backup[key]
