@@ -193,12 +193,10 @@ def run_cov(mode: str,
     out_dir : string
         Directory for important outputs.
         Moderate disk space required (up to a few hundred megabytes), but increases with covariance matrix size and number of samples (see above).
-        Avoid ".." in this path because it makes os.makedirs() "confused".
 
     tmp_dir : string
-        Directory for temporary files. Contents can be deleted after the code has run, but this will not be done automatically.
+        Directory for temporary files. Can be deleted after running the code, and is cleaned up after the normal execution.
         More disk space required - needs to store all the input arrays in the current implementation.
-        Avoid ".." in this path because it makes os.makedirs() "confused".
 
     skip_s_bins : integer
         (Optional) number of lowest separations bins to skip at the post-processing stage. Those tend to converge worse and probably will not be precise due to the limitations of the formalism. Default 0 (no skipping).
@@ -299,11 +297,14 @@ def run_cov(mode: str,
         phi_names = [os.path.join(out_dir, f"BinCorrectionFactor_n{n_r_bins}_" + ("periodic" if periodic else f'm{n_mu_bins}') + f"_{index}.txt") for index in indices_corr]
     
     # make sure the dirs exist
-    os.makedirs(out_dir, exist_ok = True)
-    os.makedirs(tmp_dir, exist_ok = True)
-    os.makedirs(os.path.join(out_dir, "xi"), exist_ok = True)
-    os.makedirs(os.path.join(out_dir, "weights"), exist_ok = True)
-    if jackknife: os.makedirs(os.path.join(out_dir, "xi_jack"), exist_ok = True)
+    # os.makedirs() will become confused if the path elements to create include pardir (eg. “..” on UNIX systems).
+    # os.path.abspath should prevent this
+    out_dir_safe = os.path.abspath(out_dir)
+    os.makedirs(out_dir_safe, exist_ok = True)
+    os.makedirs(os.path.abspath(tmp_dir), exist_ok = True)
+    os.makedirs(os.path.join(out_dir_safe, "xi"), exist_ok = True)
+    os.makedirs(os.path.join(out_dir_safe, "weights"), exist_ok = True)
+    if jackknife: os.makedirs(os.path.join(out_dir_safe, "xi_jack"), exist_ok = True)
     
     # Create a log file in output directory
     logfilename = "log.txt"
