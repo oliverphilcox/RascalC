@@ -549,7 +549,7 @@
         printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid1->np);
 
         printf("\nTrial speed: %.2e quads per core per second\n",double(tot_quads)/(runtime*double(par->nthread)));
-        printf("Acceptance speed: %.2e quads per core per second\n",double(cnt4)/(runtime*double(par->nthread)));
+        printf("Acceptance speed: %.2e quads per core per second\n", real_cnt4/(runtime*double(par->nthread)));
 
         const char out_string[5] = "full";
         sumint.save_integrals(out_string, 1); // save integrals to file
