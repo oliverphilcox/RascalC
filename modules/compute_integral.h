@@ -551,6 +551,10 @@
         printf("\nTrial speed: %.2e quads per core per second\n",double(tot_quads)/(runtime*double(par->nthread)));
         printf("Acceptance speed: %.2e quads per core per second\n", real_cnt4/(runtime*double(par->nthread)));
 
+#if (!defined POWER && !defined THREE_PCF)
+        if (sumint.small_separation_count > 0) printf("\nWARNING: encountered %llu pairs with unusually small separation (from %.2e to %.2e Mpc/h) between random particle files %d and %d. This should not cause errors inside RascalC, but still may be worth checking the random files as this may affect pair counts or input correlation function.\n\n", (unsigned long long) sumint.small_separation_count, sumint.small_separation_min, sumint.small_separation_max, I1, I3);
+#endif
+
         const char out_string[5] = "full";
         sumint.save_integrals(out_string, 1); // save integrals to file
         sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file

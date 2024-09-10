@@ -24,6 +24,9 @@ private:
     SurveyCorrection *sc12,*sc23,*sc34; // survey correction function
 
 public:
+    uint64 small_separation_count = 0;
+    Float small_separation_min, small_separation_max;
+
     Integrals(){};
 
     Integrals(Parameters *par, CorrelationFunction *_cf12, CorrelationFunction *_cf13, CorrelationFunction *_cf24, int _I1, int _I2, int _I3, int _I4, SurveyCorrection *_sc12, SurveyCorrection *_sc23, SurveyCorrection *_sc34){
@@ -90,6 +93,7 @@ public:
             binct3[j] = 0;
             binct4[j] = 0;
         }
+        small_separation_count = 0;
     }
 
     inline int get_radial_bin(Float r){
@@ -184,7 +188,17 @@ public:
             cleanup_l(pi.pos,pk.pos,rik_mag,rik_mu); // define angles/length
             xi_ik_tmp = cf13->xi(rik_mag, rik_mu);
 
-            if (rik_mag < 1e-4) fprintf(stderr, "Particle separation of %.2e Mpc/h found between random particle files %d and %d. This is unusually small but should not cause errors. Still, may be worth checking the random files.\n", rik_mag, I1, I3);
+            if (rik_mag < 1e-4) {
+                if (small_separation_count > 0) {
+                    small_separation_min = fmin(small_separation_min, rik_mag);
+                    small_separation_max = fmax(small_separation_max, rik_mag);
+                }
+                else {
+                    fprintf(stderr, "Particle separation of %.2e Mpc/h found between random particle files %d and %d. This is unusually small but should not cause errors. Still, may be worth checking the random files.\n", rik_mag, I1, I3); // only report once per loop
+                    small_separation_min = small_separation_max = rik_mag;
+                }
+                small_separation_count++;
+            }
 
             tmp_weight = wij[i]*pk.w; // product of weights, w_iw_jw_k
 
@@ -283,6 +297,12 @@ public:
             binct3[i]+=ints->binct3[i];
             binct4[i]+=ints->binct4[i];
         }
+        // Accumulate the diagnostic variables
+        if (ints->small_separation_count > 0) {
+            if ((small_separation_count == 0) || (ints->small_separation_min < small_separation_min)) small_separation_min = ints->small_separation_min; // when small_separation_count == 0, small_separation_min is uninitialized
+            if ((small_separation_count == 0) || (ints->small_separation_max > small_separation_max)) small_separation_max = ints->small_separation_max; // when small_separation_count == 0, small_separation_max is uninitialized
+            small_separation_count += ints->small_separation_count;
+        } // should not update if ints->small_separation_count == 0
     }
 
     void frobenius_difference_sum(Integrals* ints, int n_loop, Float &frobC2, Float &frobC3, Float &frobC4){

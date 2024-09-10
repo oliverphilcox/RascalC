@@ -44,6 +44,9 @@ private:
     uint64 *binct, *binct3, *binct4; // Arrays to accumulate bin counts
 
 public:
+    uint64 small_separation_count = 0;
+    Float small_separation_min, small_separation_max;
+
     Integrals(){};
 #ifdef JACKKNIFE
     Integrals(Parameters *par, CorrelationFunction *_cf12, CorrelationFunction *_cf13, CorrelationFunction *_cf24, JK_weights *_JK12, JK_weights *_JK23, JK_weights *_JK34, int _I1, int _I2, int _I3, int _I4, Float* _product_weights12_12, Float* _product_weights12_23, Float* _product_weights12_34){
@@ -176,6 +179,7 @@ public:
             RRaA2[j] = 0;
         }
 #endif
+        small_separation_count = 0;
     }
 
     inline int getbin(Float r, Float mu){
@@ -315,7 +319,17 @@ public:
 
             tmp_weight = wij[i]*pk.w; // product of weights, w_iw_jw_k
 
-            if (rik_mag < 1e-4) fprintf(stderr, "Particle separation of %.2e Mpc/h found between random particle files %d and %d. This is unusually small but should not cause errors. Still, may be worth checking the random files.\n", rik_mag, I1, I3);
+            if (rik_mag < 1e-4) {
+                if (small_separation_count > 0) {
+                    small_separation_min = fmin(small_separation_min, rik_mag);
+                    small_separation_max = fmax(small_separation_max, rik_mag);
+                }
+                else {
+                    fprintf(stderr, "Particle separation of %.2e Mpc/h found between random particle files %d and %d. This is unusually small but should not cause errors. Still, may be worth checking the random files.\n", rik_mag, I1, I3); // only report once per loop
+                    small_separation_min = small_separation_max = rik_mag;
+                }
+                small_separation_count++;
+            }
 
             // save arrays for later
             xi_ik[i]=xi_ik_tmp;
@@ -521,6 +535,12 @@ public:
             }
         }
 #endif
+        // Accumulate the diagnostic variables
+        if (ints->small_separation_count > 0) {
+            if ((small_separation_count == 0) || (ints->small_separation_min < small_separation_min)) small_separation_min = ints->small_separation_min; // when small_separation_count == 0, small_separation_min is uninitialized
+            if ((small_separation_count == 0) || (ints->small_separation_max > small_separation_max)) small_separation_max = ints->small_separation_max; // when small_separation_count == 0, small_separation_max is uninitialized
+            small_separation_count += ints->small_separation_count;
+        } // should not update if ints->small_separation_count == 0
     }
 #ifdef JACKKNIFE
     void frobenius_difference_sum(Integrals* ints, int n_loop, Float &frobC2, Float &frobC3, Float &frobC4, Float &frobC2j, Float &frobC3j, Float &frobC4j){
