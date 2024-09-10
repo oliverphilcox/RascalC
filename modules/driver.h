@@ -132,10 +132,9 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 
 bool compute_bounding_box(Particle **p, int* np, int no_fields, Float3 &rect_boxsize, Float &cellsize, Float rmax, Float3& pmin, int nside) {
     // Compute the boxsize of the bounding cuboid box and determine whether we are periodic
-    Float3 pmax;
     bool box = false;
-    pmin.x = pmin.y = pmin.z = INFINITY;
-    pmax.x = pmax.y = pmax.z = -INFINITY;
+    Float3 pmax = p[0][0].pos; // initialize with the first particle's coordinates
+    pmin = pmax;
     for (int index = 0; index < no_fields; index++)
         for (int j = 0; j < np[index]; j++) {
             pmin.x = fmin(pmin.x, p[index][j].pos.x);
