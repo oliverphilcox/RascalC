@@ -46,7 +46,7 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
         this_c4s = c4s[t, t, t, t]
 
         # Check matrix convergence
-        check_eigval_convergence(this_c2, this_c4, f"Tracer {t+1}")
+        eigval_ok = check_eigval_convergence(this_c2, this_c4, f"Tracer {t+1}")
 
         # Now optimize for shot-noise rescaling parameter alpha
         print_function("Optimizing for the shot-noise rescaling parameter alpha_%d" % (t+1))
@@ -54,6 +54,9 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
         print_function("Optimization complete for field %d - optimal rescaling parameter is alpha_%d = %.6f" % (t+1, t+1, optimal_alpha))
 
         alpha_best[t] = optimal_alpha
+
+        # Check matrix convergence for the optimal alpha: if it is <1, the eigenvalue criterion should be strengthened
+        if eigval_ok and optimal_alpha < 1: check_eigval_convergence(this_c2, this_c4, optimal_alpha, kind = f"Tracer {t+1}")
 
     # Compute full matrices
     c_tot, c_comb = add_cov_terms_multi(c2, c3, c4, alpha_best)

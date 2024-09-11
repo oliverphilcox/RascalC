@@ -176,7 +176,7 @@ def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str,
         this_c4s = c4s[t, t, t, t]
 
         # Check matrix convergence
-        check_eigval_convergence(this_c2j, this_c4j, f"Tracer {t+1} jackknife")
+        eigval_ok = check_eigval_convergence(this_c2j, this_c4j, kind = f"Tracer {t+1} jackknife")
 
         # Now optimize for shot-noise rescaling parameter alpha
         print_function("Optimizing for the shot-noise rescaling parameter alpha_%d" % (t+1))
@@ -184,6 +184,9 @@ def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str,
         print_function("Optimization complete for field %d - optimal rescaling parameter is alpha_%d = %.6f" % (t+1, t+1,optimal_alpha))
 
         alpha_best[t] = optimal_alpha
+
+        # Check matrix convergence for the optimal alpha: if it is <1, the eigenvalue criterion should be strengthened
+        if eigval_ok and optimal_alpha < 1: check_eigval_convergence(this_c2j, this_c4j, optimal_alpha, kind = f"Tracer {t+1} jackknife")
 
     # Load full matrices
     c2f, c3f, c4f = load_matrices_multi(input_file, cov_filter, full = True, jack = False)

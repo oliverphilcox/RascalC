@@ -38,12 +38,14 @@ def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tra
     return tuple(c234)
 
 
-def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], kind: str = "") -> None:
+def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], alpha: float = 1, kind: str = "") -> bool:
     eig_c4 = np.linalg.eigvalsh(c4)
     eig_c2 = np.linalg.eigvalsh(c2)
-    if min(eig_c4) < -min(eig_c2):
+    if min(eig_c4) <= -min(eig_c2) * alpha**2:
         if kind and not kind.endswith(" "): kind += " "
-        warn(f"{kind}4-point covariance matrix has not converged properly via the eigenvalue test. Min eigenvalue of C4 = {min(eig_c4):.2e}, min eigenvalue of C2 = {min(eig_c2):.2e}")
+        warn(f"{kind}4-point covariance matrix has not converged properly via the eigenvalue test for shot-noise rescaling >= {alpha}. Min eigenvalue of C4 = {min(eig_c4):.2e}, min eigenvalue of C2 = {min(eig_c2):.2e}")
+        return False
+    return True
 
 
 def check_positive_definiteness(full_cov: np.ndarray[float]) -> None:
