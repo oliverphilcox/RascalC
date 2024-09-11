@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
                 Float aimed_density = cbrt(max_density * max_density * min_density); // aim for density between the limits but closer to max
                 Float nside_approx = cbrt(grid_density/aimed_density) * par.nside; // approximate value of nside to reach this density
                 par.nside = 2 * (int)round((nside_approx + 1)/2) - 1; // round to closest odd integer
-                fprintf(stderr,"# WARNING: Average particle density exceeds maximum advised particle density (%.0f particles per cell). Setting nside=%d.\n", max_density, par.nside);
+                printf("# INFO: Average particle density exceeds maximum advised particle density (%.0f particles per cell). Setting nside=%d.\n", max_density, par.nside);
                 break; // terminate the inner, tracer loop
             }
             if (grid_density < min_density) {
@@ -198,7 +198,7 @@ int main(int argc, char *argv[]) {
                 Float aimed_density = cbrt(max_density * min_density * min_density); // aim for density between the limits but closer to min
                 Float nside_approx = cbrt(grid_density/aimed_density) * par.nside; // approximate value of nside to reach this density
                 par.nside = 2 * (int)round((nside_approx + 1)/2) - 1; // round to closest odd integer
-                fprintf(stderr, "# WARNING: grid appears inefficiently fine (average density less than %.0f particles per cell). Setting nside=%d.\n", min_density, par.nside);
+                printf("# INFO: grid appears inefficiently fine (average density less than %.0f particles per cell). Setting nside=%d.\n", min_density, par.nside);
                 break; // terminate the inner, tracer loop
             }
             printf("Average number of particles per max_radius ball = %6.2f\n",
