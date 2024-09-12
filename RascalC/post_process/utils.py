@@ -5,11 +5,13 @@ from scipy.optimize import fmin
 
 
 def cov_filter_smu(n: int, m: int, skip_r_bins: int = 0):
+    """Produce a 2D indexing array for s,mu covariance matrices."""
     indices_1d = np.arange(m * skip_r_bins, m * n)
     return np.ix_(indices_1d, indices_1d)
 
 
 def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 0):
+    """Produce a 2D indexing array for Legendre covariance matrices."""
     if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
     n_l = max_l // 2 + 1
     l_indices = np.arange(n_l - skip_l)
@@ -21,6 +23,7 @@ def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 
 
 
 def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tracer: int = 1, full: bool = True, jack: bool = False) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
+    """Load the single-tracer covariance matrix terms. Allows to choose the tracer index (1-based) to load."""
     joint = "j" * jack + "_"
     suffix = str(tracer) * 2 + "_full" * full
     c2 = input_data["c2" + joint + suffix]
@@ -39,6 +42,9 @@ def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tra
 
 
 def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], alpha: float = 1, kind: str = "") -> bool:
+    """Perform the eigenvalue convergence test on the covariance matrix terms.
+    The default assumption is `alpha >= 1`.
+    The condition is stronger for `alpha < 1`."""
     eig_c4 = np.linalg.eigvalsh(c4)
     eig_c2 = np.linalg.eigvalsh(c2)
     if min(eig_c4) <= -min(eig_c2) * alpha**2:
@@ -49,14 +55,17 @@ def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], alpha
 
 
 def check_positive_definiteness(full_cov: np.ndarray[float]) -> None:
+    """Ensure that the final covariance matrix is positive definite; raise an error if it is not."""
     if np.any(np.linalg.eigvalsh(full_cov) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
 
 
 def add_cov_terms_single(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alpha: float = 1) -> np.ndarray[float]:
+    """Add the single-tracer covariance matrix terms with a given shot-noise rescaling value."""
     return c4 + c3 * alpha + c2 * alpha**2
 
 
 def compute_D_precision_matrix(partial_cov: np.ndarray[float], full_cov: np.ndarray[float]) -> tuple[np.ndarray[float], np.ndarray[float]]:
+    """Compute the quadratic order bias correction D and the precision bias with this correction."""
     n_samples = len(partial_cov)
     n_bins = len(full_cov)
     sum_partial_cov = np.sum(partial_cov, axis = 0)
@@ -70,6 +79,7 @@ def compute_D_precision_matrix(partial_cov: np.ndarray[float], full_cov: np.ndar
 
 
 def compute_N_eff_D(full_D_est: np.ndarray[float], print_function = blank_function) -> float:
+    """Compute the effective number of mocks (giving an equivalent covariance matrix precision) from the quadratic order bias correction factor D."""
     n_bins = len(full_D_est)
     slogdetD = np.linalg.slogdet(full_D_est)
     D_value = slogdetD[0] * np.exp(slogdetD[1] / n_bins)
@@ -91,8 +101,11 @@ def Psi(alpha: float, c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarr
 
 
 def neg_log_L1(alpha: float, target_cov: np.ndarray[float], c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.ndarray[float]):
-    """Return negative log L1 likelihood between data and theory covariance matrices"""
-    if alpha <= 0: return np.inf # negative shot-noise rescaling causes problems and does not make sense
+    """Return negative log L1 likelihood between theory and target (data jackknife or mock sample) covariance matrices.
+    log L1 is the Kullback-Leibler divergence with constant terms (including log(det(target_cov))) removed.
+    As a result, the `target_cov` can be a singular matrix.
+    This function does not allow negative shot-noise rescaling `alpha` by returning infinity."""
+    if alpha < 0: return np.inf # negative shot-noise rescaling causes problems and does not make sense
     Psi_alpha = Psi(alpha, c2, c3, c4, c2s, c3s, c4s)
     logdet = np.linalg.slogdet(Psi_alpha)
     if logdet[0] < 0:
@@ -102,11 +115,14 @@ def neg_log_L1(alpha: float, target_cov: np.ndarray[float], c2: np.ndarray[float
 
 
 def fit_shot_noise_rescaling(target_cov: np.ndarray[float], c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.ndarray[float]):
+    """Fit the covariance matrix model to `target_cov` to find the optimal shot-noise rescaling.
+    `target_cov` can be a singular matrix."""
     alpha_best = fmin(neg_log_L1, 1., args = (target_cov, c2, c3, c4, c2s, c3s, c4s))
     return alpha_best
 
 
 def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full: bool = True, jack: bool = False, ntracers: int = 2) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
+    """Load the multi-tracer covariance matrix terms."""
     suffix_jack = "j" * jack
     suffix_full = "_full" * full
     single_array_shape = np.array(input_data["c4_11,11" + suffix_full].shape) # take reference shape from c4_11,11, with _full suffix if loading full
@@ -187,13 +203,15 @@ def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full
 
 
 def gen_corr_tracers(ntracers: int = 2) -> list[tuple[int, int]]:
+    """Generate the pairs of tracer indices (zero-based) for all the correlation functions.
+    Assumes that the X-Y cross-correlation is identical to Y-X.
+    For ntracers = 1, gives `[(0, 0)]`.
+    For ntracers = 2, gives `[(0, 0), (0, 1), (1, 1)]`, consistent with the old convention.
+    When a tracer is added, the list begins in the same way."""
     corr_tracers = []
     for t2 in range(ntracers):
         for t1 in range(t2+1):
             corr_tracers.append((t1, t2))
-    # for ntracers = 1, gives [(0, 0)]
-    # for ntracers = 2, gives [(0, 0), (0, 1), (1, 1)], consistent with the old convention
-    # when a tracer is added, the list begins in the same way
 
     n_corr = ntracers * (ntracers + 1) // 2
     assert len(corr_tracers) == n_corr, "Mismatch in correlation functions counting or indices generation"
@@ -201,6 +219,8 @@ def gen_corr_tracers(ntracers: int = 2) -> list[tuple[int, int]]:
 
 
 def add_cov_terms_multi(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alphas: list[float] | np.ndarray[float], ntracers: int = 2) -> tuple[np.ndarray[float], np.ndarray[float]]:
+    """Add the multi-tracer covariance matrix terms with given shot-noise rescaling values."""
+
     def construct_fields(t1: int, t2: int, t3: int, t4: int, alpha1: float, alpha2: float):
         # Reconstruct the full field for given input fields and rescaling parameters
 
