@@ -50,7 +50,7 @@ def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], alpha
     eig = np.linalg.eigvalsh(inv_sqrt_c2.dot(c4).dot(inv_sqrt_c2))
     if min(eig) <= -alpha**2:
         if kind and not kind.endswith(" "): kind += " "
-        warn(f"{kind}4-point covariance matrix has not converged properly via the eigenvalue test for shot-noise rescaling >= {alpha}. Min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min(eig):.2e}, should be >= {-alpha**2}")
+        warn(f"{kind}4-point covariance matrix has not converged properly via the eigenvalue test for shot-noise rescaling >= {alpha}. Min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min(eig):.2f}, should be > {-alpha**2:.2f}")
         return False
     return True
 
