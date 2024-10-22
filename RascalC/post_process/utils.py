@@ -2,6 +2,7 @@ import numpy as np
 from warnings import warn
 from ..utils import blank_function, symmetrized, transposed
 from scipy.optimize import fmin
+from scipy.linalg import sqrtm
 
 
 def cov_filter_smu(n: int, m: int, skip_r_bins: int = 0):
@@ -45,11 +46,11 @@ def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], alpha
     """Perform the eigenvalue convergence test on the covariance matrix terms.
     The default assumption is `alpha >= 1`.
     The condition is stronger for `alpha < 1`."""
-    eig_c4 = np.linalg.eigvalsh(c4)
-    eig_c2 = np.linalg.eigvalsh(c2)
-    if min(eig_c4) <= -min(eig_c2) * alpha**2:
+    inv_sqrt_c2 = np.linalg.inv(sqrtm(c2))
+    eig = np.linalg.eigvalsh(inv_sqrt_c2.dot(c4).dot(inv_sqrt_c2))
+    if min(eig) <= -alpha**2:
         if kind and not kind.endswith(" "): kind += " "
-        warn(f"{kind}4-point covariance matrix has not converged properly via the eigenvalue test for shot-noise rescaling >= {alpha}. Min eigenvalue of C4 = {min(eig_c4):.2e}, min eigenvalue of C2 = {min(eig_c2):.2e}")
+        warn(f"{kind}4-point covariance matrix has not converged properly via the eigenvalue test for shot-noise rescaling >= {alpha}. Min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min(eig):.2e}, should be >= {-alpha**2}")
         return False
     return True
 
