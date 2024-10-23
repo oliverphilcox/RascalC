@@ -3,6 +3,7 @@ from warnings import warn
 from ..utils import blank_function, symmetrized, transposed
 from scipy.optimize import fmin
 from scipy.linalg import sqrtm
+from typing import Callable
 
 
 def cov_filter_smu(n: int, m: int, skip_r_bins: int = 0):
@@ -42,17 +43,30 @@ def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tra
     return tuple(c234)
 
 
-def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], alpha: float = 1, kind: str = "") -> bool:
-    """Perform the eigenvalue convergence test on the covariance matrix terms.
+def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], alpha: float = 1, kind: str = "", warn_function: Callable = warn, print_function: Callable = blank_function) -> bool:
+    """
+    Perform the eigenvalue convergence test on the covariance matrix terms.
+    Warn about violated condition(s) using the `warn_function` (default: `warnings.warn`).
+    Optionally, print the obtained minimal eigenvalues by calling `print_function` (default: `blank_function` - does nothing).
     The default assumption is `alpha >= 1`.
-    The condition is stronger for `alpha < 1`."""
+    The condition is stronger for `alpha < 1`.
+    `kind` is just a string to append to the printouts and warnings.
+    """
+    result = True
+    if kind and not kind.endswith(" "): kind += " "
+    min_eig_c2 = min(np.linalg.eigvalsh(c2))
+    min_eig_c4 = min(np.linalg.eigvalsh(c4))
+    print_function(f"{kind}4-point covariance matrix convergence check: min eigenvalue of C2 = {min_eig_c2:.2e}, min eigenvalue of C4 = {min_eig_c4:.2e}")
     inv_sqrt_c2 = np.linalg.inv(sqrtm(c2))
-    eig = np.linalg.eigvalsh(inv_sqrt_c2.dot(c4).dot(inv_sqrt_c2))
-    if min(eig) <= -alpha**2:
-        if kind and not kind.endswith(" "): kind += " "
-        warn(f"{kind}4-point covariance matrix has not converged properly via the eigenvalue test for shot-noise rescaling >= {alpha}. Min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min(eig):.2f}, should be > {-alpha**2:.2f}")
-        return False
-    return True
+    min_eig_comb = min(np.linalg.eigvalsh(inv_sqrt_c2.dot(c4).dot(inv_sqrt_c2)))
+    print_function(f"{kind}4-point covariance matrix convergence check: min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min_eig_comb:.2f}")
+    if min_eig_comb <= -alpha**2:
+        warn_function(f"{kind}4-point covariance matrix has not converged properly via the weaker eigenvalue test for shot-noise rescaling >= {alpha}. Min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min_eig_comb:.2f}, should be > {-alpha**2:.2f}")
+        result = False
+    if min_eig_c4 < - min_eig_c2 * alpha**2:
+        warn_function(f"{kind}4-point covariance matrix has not converged properly via the stronger eigenvalue test for shot-noise rescaling >= {alpha}. Min eigenvalue of C2 = {min_eig_c2:.2e}, min eigenvalue of C4 = {min_eig_c4:.2e}")
+        result = False
+    return result
 
 
 def check_positive_definiteness(full_cov: np.ndarray[float]) -> None:

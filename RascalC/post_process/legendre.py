@@ -21,7 +21,7 @@ def post_process_legendre(file_root: str, n: int, max_l: int, outdir: str, alpha
     c2, c3, c4 = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = False)
 
     # Check matrix convergence
-    check_eigval_convergence(c2, c4, alpha)
+    check_eigval_convergence(c2, c4, alpha, print_function = print_function)
 
     # Compute full covariance matrices and precision
     full_cov = add_cov_terms_single(c2, c3, c4, alpha)

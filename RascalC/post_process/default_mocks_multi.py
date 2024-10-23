@@ -46,7 +46,7 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
         this_c4s = c4s[t, t, t, t]
 
         # Check matrix convergence
-        eigval_ok = check_eigval_convergence(this_c2, this_c4, f"Tracer {t+1}")
+        eigval_ok = check_eigval_convergence(this_c2, this_c4, f"Tracer {t+1}", print_function = print_function)
 
         # Now optimize for shot-noise rescaling parameter alpha
         print_function("Optimizing for the shot-noise rescaling parameter alpha_%d" % (t+1))

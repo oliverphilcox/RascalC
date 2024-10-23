@@ -85,7 +85,7 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     c4j += load_disconnected_term_single(input_file, cov_filter, RR, weights, tracer, full = True)
 
     # Check matrix convergence
-    eigval_ok = check_eigval_convergence(c2j, c4j, kind = "Jackknife")
+    eigval_ok = check_eigval_convergence(c2j, c4j, kind = "Jackknife", print_function = print_function)
 
     # Load in partial jackknife theoretical matrices
     c2s, c3s, c4s = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = True)
@@ -110,7 +110,7 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     full_cov = add_cov_terms_single(c2f, c3f, c4f, alpha_best)
 
     # Check convergence
-    check_eigval_convergence(c2f, c4f, alpha_best, kind = "Full")
+    check_eigval_convergence(c2f, c4f, alpha_best, kind = "Full", print_function = print_function)
 
     # Check positive definiteness
     check_positive_definiteness(full_cov)

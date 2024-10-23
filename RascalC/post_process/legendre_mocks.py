@@ -34,7 +34,7 @@ def post_process_legendre_mocks(mock_cov_file: str, file_root: str, n: int, max_
     c2f, c3f, c4f = load_matrices_single(input_file, cov_filter, tracer, full = True, jack = False)
 
     # Check matrix convergence
-    eigval_ok = check_eigval_convergence(c2f, c4f)
+    eigval_ok = check_eigval_convergence(c2f, c4f, print_function = print_function)
 
     # Load in partial theoretical matrices
     c2s, c3s, c4s = load_matrices_single(input_file, cov_filter, tracer, full = False, jack = False)

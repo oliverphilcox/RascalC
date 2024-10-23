@@ -176,7 +176,7 @@ def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str,
         this_c4s = c4s[t, t, t, t]
 
         # Check matrix convergence
-        eigval_ok = check_eigval_convergence(this_c2j, this_c4j, kind = f"Tracer {t+1} jackknife")
+        eigval_ok = check_eigval_convergence(this_c2j, this_c4j, kind = f"Tracer {t+1} jackknife", print_function = print_function)
 
         # Now optimize for shot-noise rescaling parameter alpha
         print_function("Optimizing for the shot-noise rescaling parameter alpha_%d" % (t+1))
