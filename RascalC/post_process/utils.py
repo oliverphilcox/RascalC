@@ -61,10 +61,10 @@ def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], alpha
     min_eig_comb = min(np.linalg.eigvalsh(inv_sqrt_c2.dot(c4).dot(inv_sqrt_c2)))
     print_function(f"{kind}4-point covariance matrix convergence check: min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min_eig_comb:.2f}")
     if min_eig_comb <= -alpha**2:
-        warn_function(f"{kind}4-point covariance matrix has not converged properly via the weaker eigenvalue test for shot-noise rescaling >= {alpha}. Min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min_eig_comb:.2f}, should be > {-alpha**2:.2f}")
+        warn_function(f"{kind}4-point covariance matrix has not converged properly via the weaker eigenvalue test for shot-noise rescaling >= {alpha:.2f}. Min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min_eig_comb:.2f}, should be > {-alpha**2:.2f}")
         result = False
     if min_eig_c4 < - min_eig_c2 * alpha**2:
-        warn_function(f"{kind}4-point covariance matrix has not converged properly via the stronger eigenvalue test for shot-noise rescaling >= {alpha}. Min eigenvalue of C2 = {min_eig_c2:.2e}, min eigenvalue of C4 = {min_eig_c4:.2e}")
+        warn_function(f"{kind}4-point covariance matrix has not converged properly via the stronger eigenvalue test for shot-noise rescaling >= {alpha:.2f}. Min eigenvalue of C2 = {min_eig_c2:.2e}, min eigenvalue of C4 = {min_eig_c4:.2e}")
         result = False
     return result
 
@@ -133,7 +133,7 @@ def fit_shot_noise_rescaling(target_cov: np.ndarray[float], c2: np.ndarray[float
     """Fit the covariance matrix model to `target_cov` to find the optimal shot-noise rescaling.
     `target_cov` can be a singular matrix."""
     alpha_best = fmin(neg_log_L1, 1., args = (target_cov, c2, c3, c4, c2s, c3s, c4s))
-    return alpha_best
+    return alpha_best[0]
 
 
 def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full: bool = True, jack: bool = False, ntracers: int = 2) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
