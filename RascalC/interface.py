@@ -158,7 +158,7 @@ def run_cov(mode: str,
     
     xi_refinement_iterations : integer
         (Optional) number of iterations in the correlation function refinement procedure for interpolation inside the code, ensuring that the bin-averaged interpolated values match the binned correlation function estimates. Default: 10.
-        Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table``\s are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
+        Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table``s are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
 
     nthread : integer
         Number of hyperthreads to use.
@@ -363,7 +363,7 @@ def run_cov(mode: str,
     for c, xi in enumerate(all_xi[:ncorr]):
         if c > 0:
             if type(xi) != type(all_xi[0]): raise TypeError(f"xi_table_{indices_corr[c]} must have the same type as xi_table_11")
-            if len(xi) != len(all_xi[0]): raise ValueError(f"xi_table_{indices_corr[c]} must have the same structure as xi_table_11")
+            if xi.shape != all_xi[0].shape: raise ValueError(f"xi_table_{indices_corr[c]} must have the same shape as xi_table_11")
         if isinstance(xi, pycorr.twopoint_estimator.BaseTwoPointEstimator):
             refine_xi = True
             if xi.edges[1][0] < 0:
