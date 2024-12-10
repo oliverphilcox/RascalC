@@ -1,6 +1,7 @@
 import pycorr
 import numpy as np
 from warnings import warn
+from ..utils import format_skip_r_bins
 from ..xi.utils import write_xi_file # for convenience of use in other scripts
 
 
@@ -19,7 +20,7 @@ def fix_bad_bins_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEsti
     return cls(**kw)
 
 
-def reshape_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator, n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf, skip_r_bins: int = 0) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
+def reshape_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator, n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf, skip_r_bins: int | tuple[int, int] = 0) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
     # determine the radius step in pycorr
     if not r_step: r_factor = 1
     else:
@@ -30,8 +31,11 @@ def reshape_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator
         r_factor = int(np.rint(r_factor_exact))
         if not np.allclose(r_factor, r_factor_exact, rtol=5e-3): raise ValueError(f"Radial rebinning seems impossible: exact ratio of steps is {r_factor_exact}, closest integer is {r_factor} and that is too far")
 
+    skip_r_bins_start, skip_r_bins_end = format_skip_r_bins(skip_r_bins)
     # Skip the first bins as requested
-    xi_estimator = xi_estimator[skip_r_bins * r_factor:]
+    xi_estimator = xi_estimator[skip_r_bins_start * r_factor:]
+    # Skip the last bins if requested
+    xi_estimator = xi_estimator[:-skip_r_bins_end * r_factor]
 
     # Apply r_max cut
     r_values = xi_estimator.sepavg(axis = 0)

@@ -17,7 +17,7 @@ def cov_filter_legendre_mocks(n: int, max_l: int, skip_r_bins: int = 0, skip_l: 
     return np.ix_(indices_1d, indices_1d)
 
 
-def post_process_legendre_mocks(mock_cov_file: str, file_root: str, n: int, max_l: int, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+def post_process_legendre_mocks(mock_cov_file: str, file_root: str, n: int, max_l: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
     cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
     cov_filter_mocks = cov_filter_legendre_mocks(n, max_l, skip_r_bins, skip_l)
 

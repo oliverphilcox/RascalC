@@ -1,23 +1,25 @@
 import numpy as np
 from warnings import warn
-from ..utils import blank_function, symmetrized, transposed
+from ..utils import blank_function, symmetrized, transposed, format_skip_r_bins
 from scipy.optimize import fmin
 from scipy.linalg import sqrtm
 from typing import Callable
 
 
-def cov_filter_smu(n: int, m: int, skip_r_bins: int = 0):
+def cov_filter_smu(n: int, m: int, skip_r_bins: int | tuple[int, int] = 0):
     """Produce a 2D indexing array for s,mu covariance matrices."""
-    indices_1d = np.arange(m * skip_r_bins, m * n)
+    skip_r_bins_start, skip_r_bins_end = format_skip_r_bins(skip_r_bins)
+    indices_1d = np.arange(m * skip_r_bins_start, m * (n - skip_r_bins_end))
     return np.ix_(indices_1d, indices_1d)
 
 
-def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 0):
+def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0):
     """Produce a 2D indexing array for Legendre covariance matrices."""
+    skip_r_bins_start, skip_r_bins_end = format_skip_r_bins(skip_r_bins)
     if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
     n_l = max_l // 2 + 1
     l_indices = np.arange(n_l - skip_l)
-    r_indices = np.arange(skip_r_bins, n)
+    r_indices = np.arange(skip_r_bins_start, n - skip_r_bins_end)
     indices_l_r = (n_l * r_indices)[:, None] + l_indices[None, :]
     # indices_l_r = (n_l * r_indices)[None, :] + l_indices[:, None] # could switch the ordering right here easily but then saved binary RascalC results will become incompatible
     indices_1d = indices_l_r.ravel()

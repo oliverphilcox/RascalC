@@ -31,3 +31,14 @@ def rmdir_if_exists_and_empty(dirname: str) -> None:
     "remove directory if it exists and is empty, otherwise do nothing"
     if os.path.isdir(dirname) and len(os.listdir(dirname)) <= 0:
         os.rmdir(dirname)
+
+
+def format_skip_r_bins(skip_r_bins: int | tuple[int, int]) -> tuple[int, int]:
+    if type(skip_r_bins) == tuple or type(skip_r_bins) == list:
+        if any(type(_) for _ in skip_r_bins) != int: raise TypeError("`skip_r_bins` must be either an integer or a tuple of two integers")
+        if len(skip_r_bins) == 2: return tuple(skip_r_bins)
+        if len(skip_r_bins) == 1: return skip_r_bins[0], 0
+        if len(skip_r_bins) == 0: return 0, 0
+        raise ValueError("`skip_r_bins` must be either an integer or a tuple of two integers")
+    if type(skip_r_bins) == int: return skip_r_bins, 0
+    raise TypeError("`skip_r_bins` must be either an integer or a tuple of two integers")

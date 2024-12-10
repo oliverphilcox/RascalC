@@ -6,7 +6,7 @@ from ..pycorr_utils.utils import reshape_pycorr
 from ..cov_utils import get_cov_header, load_cov
 from ..pycorr_utils.counts import get_counts_from_pycorr
 
-def combine_covs_multi(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, n_mu_bins: int | None = None, r_step: float = 1, skip_r_bins: int = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function = print):
+def combine_covs_multi(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, n_mu_bins: int | None = None, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function = print):
     if len(pycorr_files1) != len(pycorr_files2): raise ValueError("Need the same number of pycorr files for both results")
     # Read RascalC results
     header1 = get_cov_header(rascalc_results1)

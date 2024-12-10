@@ -7,7 +7,7 @@ from .utils import cov_filter_legendre, load_matrices_single, check_eigval_conve
 from ..raw_covariance_matrices import load_raw_covariances_legendre, Iterable
 
 
-def post_process_legendre(file_root: str, n: int, max_l: int, outdir: str, alpha: float = 1, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+def post_process_legendre(file_root: str, n: int, max_l: int, outdir: str, alpha: float = 1, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
     cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
     
     input_file = load_raw_covariances_legendre(file_root, n, max_l, n_samples, print_function)

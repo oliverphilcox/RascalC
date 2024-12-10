@@ -8,7 +8,7 @@ from ..pycorr_utils.counts import get_counts_from_pycorr
 from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 
 
-def combine_covs_legendre(rascalc_results1: str, rascalc_results2: str, pycorr_file1: str, pycorr_file2: str, output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function = print):
+def combine_covs_legendre(rascalc_results1: str, rascalc_results2: str, pycorr_file1: str, pycorr_file2: str, output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function = print):
     # Read RascalC results
     header1 = get_cov_header(rascalc_results1)
     cov1 = load_cov_legendre(rascalc_results1, max_l, print_function)

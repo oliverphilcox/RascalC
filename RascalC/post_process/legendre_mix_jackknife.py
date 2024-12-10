@@ -4,18 +4,19 @@
 import numpy as np
 import os
 from warnings import warn
-from .utils import cov_filter_legendre, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
+from .utils import format_skip_r_bins, cov_filter_legendre, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
 from ..raw_covariance_matrices import load_raw_covariances_legendre, Iterable
 
 
-def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, max_l: int, outdir: str, skip_r_bins: int = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, max_l: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
     # Load jackknife xi estimates from data
     print_function("Loading correlation function jackknife estimates from %s" % jackknife_file)
     xi_jack = np.loadtxt(jackknife_file, skiprows = 2)
     n_jack = xi_jack.shape[0] # total jackknives
     n = xi_jack.shape[1] // m # radial bins
     n_l = max_l // 2 + 1 # number of even multipoles
-    n_bins = (n_l - skip_l) * (n - skip_r_bins) # total Legendre bins to work with
+    skip_r_bins_start, skip_r_bins_end = format_skip_r_bins(skip_r_bins)
+    n_bins = (n_l - skip_l) * (n - skip_r_bins_start - skip_r_bins_end) # total Legendre bins to work with
 
     weight_file = os.path.join(weight_dir, 'jackknife_weights_n%d_m%d_j%d_11.dat' % (n, m, n_jack))
     mu_bin_legendre_file = os.path.join(weight_dir, 'mu_bin_legendre_factors_m%d_l%d.txt' % (m, max_l))
@@ -45,7 +46,8 @@ def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, fi
 
     # Project the data jackknife covariance from mu bins to Legendre multipoles
     data_cov = data_cov.reshape(n, m, n, m) # make the array 4D with [r_bin, mu_bin] indices for rows and columns
-    data_cov = data_cov[skip_r_bins:, :, skip_r_bins:, :] # discard the extra radial bins now since it is convenient
+    data_cov = data_cov[skip_r_bins_start:, :, skip_r_bins_start:, :] # discard the extra radial bins now since it is convenient
+    if skip_r_bins_end != 0: data_cov = data_cov[:-skip_r_bins_end, :, :-skip_r_bins_end, :] # discard radial bins at the end if any
     data_cov = np.einsum("imjn,mp,nq->ipjq", data_cov, mu_bin_legendre_factors, mu_bin_legendre_factors) # use mu bin Legendre factors to project mu bins into Legendre multipoles, staying within the same radial bins. The indices are now [r_bin, ell] for rows and columns
     data_cov = data_cov.reshape(n_bins, n_bins)
 

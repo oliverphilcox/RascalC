@@ -7,7 +7,7 @@ from .utils import cov_filter_smu, load_matrices_single, check_eigval_convergenc
 from ..raw_covariance_matrices import load_raw_covariances_smu, Iterable
 
 
-def post_process_default(file_root: str, n: int, m: int, outdir: str, alpha: float = 1, skip_r_bins: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+def post_process_default(file_root: str, n: int, m: int, outdir: str, alpha: float = 1, skip_r_bins: int | tuple[int, int] = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
     cov_filter = cov_filter_smu(n, m, skip_r_bins)
 
     input_file = load_raw_covariances_smu(file_root, n, m, n_samples, print_function)
