@@ -59,6 +59,8 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
         weights = weights[good_jk]
     weights /= np.sum(weights, axis=0) # renormalize weights after possibly discarding some jackknives
 
+    cov_filter = cov_filter_smu(n, m, skip_r_bins)
+
     # Compute data covariance matrix
     print_function("Computing data covariance matrix")
     mean_xi = np.sum(xi_jack * weights, axis=0)
@@ -70,8 +72,6 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
 
     print_function(f"Loading weights file from {RR_file}")
     RR = np.loadtxt(RR_file)
-
-    cov_filter = cov_filter_smu(n, m, skip_r_bins)
     
     input_file = load_raw_covariances_smu(file_root, n, m, n_samples, print_function)
 
