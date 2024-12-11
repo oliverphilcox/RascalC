@@ -2,6 +2,7 @@
 # Not intended for execution from command line
 import numpy as np
 import os
+from typing import Iterable
 
 
 def blank_function(*args, **kwargs) -> None:
@@ -34,11 +35,16 @@ def rmdir_if_exists_and_empty(dirname: str) -> None:
 
 
 def format_skip_r_bins(skip_r_bins: int | tuple[int, int]) -> tuple[int, int]:
-    if type(skip_r_bins) == tuple or type(skip_r_bins) == list:
-        if any(type(_) != int for _ in skip_r_bins): raise TypeError("`skip_r_bins` must be either an integer or a tuple of two integers")
+    """
+    Format skip_r_bins into a tuple of two integers: number of bins to skip from the start and from the end.
+    Single number results in skipping only from the start.
+    """
+    message = "`skip_r_bins` must be either an integer or a tuple of two integers"
+    if isinstance(skip_r_bins, Iterable):
+        if any(type(_) != int for _ in skip_r_bins): raise TypeError(message)
         if len(skip_r_bins) == 2: return tuple(skip_r_bins)
         if len(skip_r_bins) == 1: return skip_r_bins[0], 0
         if len(skip_r_bins) == 0: return 0, 0
-        raise ValueError("`skip_r_bins` must be either an integer or a tuple of two integers")
+        raise ValueError(message)
     if type(skip_r_bins) == int: return skip_r_bins, 0
-    raise TypeError("`skip_r_bins` must be either an integer or a tuple of two integers")
+    raise TypeError(message)
