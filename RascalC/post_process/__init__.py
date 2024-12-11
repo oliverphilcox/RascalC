@@ -1,3 +1,5 @@
+from .auto import post_process_auto
+
 from .default import post_process_default
 from .default_multi import post_process_default_multi
 from .jackknife import post_process_jackknife
