@@ -4,6 +4,7 @@ import pycorr
 import numpy as np
 import os
 from datetime import datetime
+from typing import Iterable
 from .pycorr_utils.utils import fix_bad_bins_pycorr, write_xi_file
 from .write_binning_file import write_binning_file
 from .pycorr_utils.jack import get_jack_xi_weights_counts_from_pycorr
@@ -376,7 +377,7 @@ def run_cov(mode: str,
             elif not np.allclose(xi_s_edges, xi.edges[0]): raise ValueError("Different binning for different correlation functions not supported")
             if not np.allclose(xi.edges[1], np.linspace(0, 1, xi_n_mu_bins + 1)): raise ValueError(f"xi_table_{indices_corr[c]} µ binning is not consistent with linear between 0 and 1 (after wrapping)")
             write_xi_file(cornames[c], xi.sepavg(axis = 0), xi.sepavg(axis = 1), get_input_xi_from_pycorr(xi))
-        elif isinstance(xi, tuple) or isinstance(xi, list):
+        elif isinstance(xi, Iterable):
             if len(xi) == 4: # the last element is the edges
                 refine_xi = True
                 if c == 0: xi_s_edges = xi[-1]
