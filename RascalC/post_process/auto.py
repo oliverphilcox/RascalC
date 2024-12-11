@@ -88,7 +88,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
     indices_corr = indices_corr_all[:ncorr]
 
     legendre_orig = len(glob(os.path.join(file_root, f"BinCorrectionFactor*"))) > 0
-    legendre_mix = len(glob(os.path.join(file_root, "mu_bin_legendre_factors_*.txt"))) > 0
+    legendre_mix = len(glob(os.path.join(file_root, "weights/mu_bin_legendre_factors_*.txt"))) > 0
     if legendre is None: legendre = legendre_orig or legendre_mix
 
     print_function(f"Legendre: {legendre}")
@@ -124,7 +124,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
             max_l = int(matched_labels[0])
 
     if jackknife:
-        xi_jack_names = [os.path.join(out_dir, f"xi_jack/xi_jack_n{n_r_bins}_m{n_mu_bins}_j{n_jack}_{index}.dat") for index in indices_corr]
+        xi_jack_names = [os.path.join(file_root, f"xi_jack/xi_jack_n{n_r_bins}_m{n_mu_bins}_j{n_jack}_{index}.dat") for index in indices_corr]
 
     if two_tracers:
         if legendre:
@@ -136,7 +136,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
     else:
         if legendre:
             if jackknife:
-                results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), out_dir, n_mu_bins, max_l, out_dir, skip_r_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
+                results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, max_l, out_dir, skip_r_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
             else:
                 results = post_process_legendre(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, skip_r_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
         elif jackknife:
