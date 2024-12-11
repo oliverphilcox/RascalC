@@ -35,7 +35,7 @@ def rmdir_if_exists_and_empty(dirname: str) -> None:
 
 def format_skip_r_bins(skip_r_bins: int | tuple[int, int]) -> tuple[int, int]:
     if type(skip_r_bins) == tuple or type(skip_r_bins) == list:
-        if any(type(_) for _ in skip_r_bins) != int: raise TypeError("`skip_r_bins` must be either an integer or a tuple of two integers")
+        if any(type(_) != int for _ in skip_r_bins): raise TypeError("`skip_r_bins` must be either an integer or a tuple of two integers")
         if len(skip_r_bins) == 2: return tuple(skip_r_bins)
         if len(skip_r_bins) == 1: return skip_r_bins[0], 0
         if len(skip_r_bins) == 0: return 0, 0
