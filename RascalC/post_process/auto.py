@@ -5,6 +5,7 @@ from re import fullmatch
 from warnings import warn
 from ..interface import indices_corr_all
 from ..raw_covariance_matrices import collect_raw_covariance_matrices
+from ..convergence_check_extra import convergence_check_extra
 from .default import post_process_default
 from .default_multi import post_process_default_multi
 from .jackknife import post_process_jackknife
@@ -14,7 +15,7 @@ from .legendre_multi import post_process_legendre_multi
 from .legendre_mix_jackknife import post_process_legendre_mix_jackknife
 
 
-def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, print_function = print, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
+def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, print_function = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
     """
     Automatic but highly customizable post-processing interface. Designed to work with the ``RascalC.run_cov`` outputs.
 
@@ -53,6 +54,9 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
     
     print_function: Callable
         (Optional) custom function to use for printing. Default is ``print``.
+
+    extra_convergence_check: bool
+        (Optional) whether to perform the extra convergence check. It is done by default.
 
     jackknife: boolean or None
         (Optional) boolean value sets jackknife mode manually. If None (default), this mode is determined automatically.
@@ -139,6 +143,10 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
             results = post_process_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_r_bins, tracer = tracer, n_samples = n_samples, print_function = print_function)
         else: # default
             results = post_process_default(file_root, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, skip_r_bins, tracer = tracer, n_samples = n_samples, print_function = print_function)
+
+    if extra_convergence_check:
+        print_function("Performing an extra convergence check")
+        convergence_check_extra(results, print_function = print_function)
 
     return results
     
