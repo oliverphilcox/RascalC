@@ -35,7 +35,7 @@ def reshape_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator
     # Skip the first bins as requested
     xi_estimator = xi_estimator[skip_r_bins_start * r_factor:]
     # Skip the last bins if requested
-    xi_estimator = xi_estimator[:-skip_r_bins_end * r_factor]
+    if skip_r_bins_end != 0: xi_estimator = xi_estimator[:-skip_r_bins_end * r_factor] # the slice works unless skip_r_bins_end=0
 
     # Apply r_max cut
     r_values = xi_estimator.sepavg(axis = 0)
