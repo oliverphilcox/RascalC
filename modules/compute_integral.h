@@ -222,6 +222,7 @@
                 std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
                 seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
             }
+            printf("# INFO: the base RNG seed is %lu, incremented by %lu in each integration loop (matching these should guarantee the same results in a completed computation with the same input catalogs and correlation functions).\n", seed_shift, seed_step);
 
             gsl_rng_env_setup(); // initialize gsl rng
             int completed_loops = 0; // counter of completed loops, since may not finish in index order
