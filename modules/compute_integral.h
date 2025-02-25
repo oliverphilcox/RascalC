@@ -465,16 +465,18 @@
                     fprintf(stderr, "\nFinished %d integral loops of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n", completed_loops, par->max_loops, current_runtime, remaining_time/3600, remaining_time/60%60, remaining_time%60, remaining_time);
 
                     TotalTime.Start(); // Restart the timer
+                }
+                int accumulated_loops = subsample_index * par->loops_per_sample; // number of (completed) integral loops accumulated in sumint (as can be seen later, it is updated every loops_per_sample completed loops)
+                if ((subsample_index > 0) && (completed_loops == accumulated_loops + 1)) { // the condition when the Frobenius difference after adding one loop is most straightforward to compute sensibly, because sumint is updated only every loops_per_sample completed loops. Also works for loops_per_sample=1 unlike the possible alternative condition, completed_loops % loops_per_sample == 1
                     Float frob_C2, frob_C3, frob_C4;
 #ifndef JACKKNIFE
-                    sumint.frobenius_difference_sum(&locint, subsample_index * par->loops_per_sample, frob_C2, frob_C3, frob_C4); // since sumint is only incremented every loops_per_sample iterations, subsample_index * loops_per_sample is exactly how many loops are stored in the sumint at the moment. Thus if loops_per_sample>1 the Frobenius percent difference may be an overestimate.
-                    fprintf(stderr, "Frobenius percent difference after %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", completed_loops, frob_C2, frob_C3, frob_C4);
+                    sumint.frobenius_difference_sum(&locint, accumulated_loops, frob_C2, frob_C3, frob_C4); // computes the Frobenius relative differences (in percents) after adding one integral loop result (locint) to the accumulation of accumulated_loops loops in sumint; the method signature is different with and without jackknives
 #else
                     Float frob_C2j, frob_C3j, frob_C4j;
-                    sumint.frobenius_difference_sum(&locint, subsample_index * par->loops_per_sample, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j); // since sumint is only incremented every loops_per_sample iterations, subsample_index * loops_per_sample is exactly how many loops are stored in the sumint at the moment. Thus if loops_per_sample>1 the Frobenius percent difference may be an overestimate.
-                    fprintf(stderr, "Frobenius percent difference after %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", completed_loops, frob_C2, frob_C3, frob_C4);
-                    fprintf(stderr, "Frobenius jackknife percent difference after %d loops is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n", completed_loops, frob_C2j, frob_C3j, frob_C4j);
+                    sumint.frobenius_difference_sum(&locint, accumulated_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j); // computes the Frobenius relative differences (in percents) after adding one integral loop result (locint) to the accumulation of accumulated_loops loops in sumint; the method signature is different with and without jackknives
+                    fprintf(stderr, "Frobenius jackknife percent difference between %d and %d loops is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n", accumulated_loops, completed_loops, frob_C2j, frob_C3j, frob_C4j);
 #endif
+                    fprintf(stderr, "Frobenius percent difference between %d and %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", accumulated_loops, completed_loops, frob_C2, frob_C3, frob_C4);
                 }
 
                 // Sum up integrals
