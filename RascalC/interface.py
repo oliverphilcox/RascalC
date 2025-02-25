@@ -5,6 +5,7 @@ import numpy as np
 import os
 from datetime import datetime
 from typing import Iterable
+from warnings import warn
 from .pycorr_utils.utils import fix_bad_bins_pycorr, write_xi_file
 from .write_binning_file import write_binning_file
 from .pycorr_utils.jack import get_jack_xi_weights_counts_from_pycorr
@@ -302,10 +303,22 @@ def run_cov(mode: str,
     # os.path.abspath should prevent this
     out_dir_safe = os.path.abspath(out_dir)
     os.makedirs(out_dir_safe, exist_ok = True)
-    os.makedirs(os.path.abspath(tmp_dir), exist_ok = True)
     os.makedirs(os.path.join(out_dir_safe, "xi"), exist_ok = True)
     os.makedirs(os.path.join(out_dir_safe, "weights"), exist_ok = True)
     if jackknife: os.makedirs(os.path.join(out_dir_safe, "xi_jack"), exist_ok = True)
+
+    # before creating the temporary directory, find which of its parent directories do not exist (yet), to remove them once they are not needed, but only if they are empty
+    tmp_max_iterations = 100
+    tmp_dirs_to_clean_up = []
+    tmp_path = os.path.abspath(tmp_dir) # start walking up the path from the temporary directory; this should also remove the slash at the end of tmp_dir if it was there
+    for _ in range(tmp_max_iterations): # this could be a "while not" loop, but I wanted to prevent a possibility of an endless/unreasonably long loop
+        if os.path.exists(tmp_path): break # terminate the loop when we found a pre-existing directory
+        tmp_dirs_to_clean_up.append(tmp_path) # if we reach this, this directory does not exist, add it to the cleanup list
+        tmp_path = os.path.dirname(tmp_path) # should always jump to the parent directory
+    else: # this is when the loop executes all tmp_max_iterations iterations without encountering the break statement, i.e. potentially becomes infinite even though it shouldn't
+        tmp_dirs_to_clean_up = [os.path.abspath(tmp_dir)] # reset the cleanup list to the temporary directory only (the old default behavior)
+        warn(f"The check of the newly created temporary directory path components failed to finish in {tmp_max_iterations} steps. This is not critical, but should not happen. Please inform the RascalC maintainer of this occurrence.")
+    os.makedirs(os.path.abspath(tmp_dir), exist_ok = True) # finally, create the temporary dir and all its missing parents
     
     # Create a log file in output directory
     logfilename = "log.txt"
@@ -472,7 +485,7 @@ def run_cov(mode: str,
 
     # clean up
     for input_filename in input_filenames: os.remove(input_filename) # delete the larger (temporary) input files
-    rmdir_if_exists_and_empty(tmp_dir) # safely remove the temporary directory
+    for tmp_path in tmp_dirs_to_clean_up: rmdir_if_exists_and_empty(tmp_path) # safely remove the temporary directory and all its parents that did not exist before, but only if they are empty
 
     # check the run status
     exit_code = os.waitstatus_to_exitcode(status) # assumes we are in Unix-based OS; on Windows status is the exit code
