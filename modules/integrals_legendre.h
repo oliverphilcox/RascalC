@@ -24,6 +24,9 @@ private:
     SurveyCorrection *sc12,*sc23,*sc34; // survey correction function
 
 public:
+    uint64 small_separation_count = 0;
+    Float small_separation_min, small_separation_max;
+
     Integrals(){};
 
     Integrals(Parameters *par, CorrelationFunction *_cf12, CorrelationFunction *_cf13, CorrelationFunction *_cf24, int _I1, int _I2, int _I3, int _I4, SurveyCorrection *_sc12, SurveyCorrection *_sc23, SurveyCorrection *_sc34){
@@ -90,6 +93,7 @@ public:
             binct3[j] = 0;
             binct4[j] = 0;
         }
+        small_separation_count = 0;
     }
 
     inline int get_radial_bin(Float r){
@@ -184,10 +188,16 @@ public:
             cleanup_l(pi.pos,pk.pos,rik_mag,rik_mu); // define angles/length
             xi_ik_tmp = cf13->xi(rik_mag, rik_mu);
 
-            if(rik_mag<1e-4){
-              printf("Particle separation of %.2e Mpc/h found between random particle files %d and %d. This is unusually small and will cause errors.\n",rik_mag,I2,I3);
-              printf("Are the random particle files independent? The code will now exit.");
-              exit(1);
+            if (rik_mag < 1e-4) {
+                if (small_separation_count > 0) {
+                    small_separation_min = fmin(small_separation_min, rik_mag);
+                    small_separation_max = fmax(small_separation_max, rik_mag);
+                }
+                else {
+                    fprintf(stderr, "Particle separation of %.2e Mpc/h found between random particle files %d and %d. This is unusually small but should not cause errors. Still, may be worth checking the random files.\n", rik_mag, I1, I3); // only report once per loop
+                    small_separation_min = small_separation_max = rik_mag;
+                }
+                small_separation_count++;
             }
 
             tmp_weight = wij[i]*pk.w; // product of weights, w_iw_jw_k
@@ -287,6 +297,12 @@ public:
             binct3[i]+=ints->binct3[i];
             binct4[i]+=ints->binct4[i];
         }
+        // Accumulate the diagnostic variables
+        if (ints->small_separation_count > 0) {
+            if ((small_separation_count == 0) || (ints->small_separation_min < small_separation_min)) small_separation_min = ints->small_separation_min; // when small_separation_count == 0, small_separation_min is uninitialized
+            if ((small_separation_count == 0) || (ints->small_separation_max > small_separation_max)) small_separation_max = ints->small_separation_max; // when small_separation_count == 0, small_separation_max is uninitialized
+            small_separation_count += ints->small_separation_count;
+        } // should not update if ints->small_separation_count == 0
     }
 
     void frobenius_difference_sum(Integrals* ints, int n_loop, Float &frobC2, Float &frobC3, Float &frobC4){
@@ -367,9 +383,8 @@ public:
     void save_counts(uint64 pair_counts,uint64 triple_counts,uint64 quad_counts){
         // Print the counts for each integral (used for combining the estimates outside of C++)
         // This is the number of counts used in each loop [always the same]
-        char counts_file[1000];
-        snprintf(counts_file, sizeof counts_file, "%sCovMatricesAll/total_counts_n%d_l%d_%d%d,%d%d.txt",out_file,nbin,max_l,I1,I2,I3,I4);
-        FILE * CountsFile = fopen(counts_file,"w");
+        std::string counts_file = string_format("%sCovMatricesAll/total_counts_n%d_l%d_%d%d,%d%d.txt",out_file,nbin,max_l,I1,I2,I3,I4);
+        FILE * CountsFile = fopen(counts_file.c_str(), "w");
         fprintf(CountsFile,"%llu\n",pair_counts);
         fprintf(CountsFile,"%llu\n",triple_counts);
         fprintf(CountsFile,"%llu\n",quad_counts);
@@ -379,21 +394,18 @@ public:
     }
 
 
-    void save_integrals(char* suffix, bool save_all) {
+    void save_integrals(const char* suffix, bool save_all) {
     /* Print integral outputs to file.
         * In txt files {c2,c3,c4}_leg_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
         */
         // Create output files
 
-        char c2name[1000];
-        snprintf(c2name, sizeof c2name, "%sCovMatricesAll/c2_n%d_l%d_%d%d_%s.txt", out_file,nbin, max_l,I1,I2,suffix);
-        char c3name[1000];
-        snprintf(c3name, sizeof c3name, "%sCovMatricesAll/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l,I2,I1,I3,suffix);
-        char c4name[1000];
-        snprintf(c4name, sizeof c4name, "%sCovMatricesAll/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1,I2,I3,I4,suffix);
-        FILE * C2File = fopen(c2name,"w"); // for c2 part of integral
-        FILE * C3File = fopen(c3name,"w"); // for c3 part of integral
-        FILE * C4File = fopen(c4name,"w"); // for c4 part of integral
+        std::string c2name = string_format("%sCovMatricesAll/c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
+        std::string c3name = string_format("%sCovMatricesAll/c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
+        std::string c4name = string_format("%sCovMatricesAll/c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
+        FILE * C2File = fopen(c2name.c_str(), "w"); // for c2 part of integral
+        FILE * C3File = fopen(c3name.c_str(), "w"); // for c3 part of integral
+        FILE * C4File = fopen(c4name.c_str(), "w"); // for c4 part of integral
         for(int i=0;i<nbin*mbin;i++){
             for(int j=0;j<nbin*mbin;j++){
                 fprintf(C2File,"%le\t",c2[i*nbin*mbin+j]);
@@ -411,17 +423,14 @@ public:
         fclose(C4File);
 
         if(save_all==1){
-            char binname4[1000];
-            snprintf(binname4,sizeof binname4, "%sCovMatricesAll/binct_c4_n%d_l%d_%d%d,%d%d_%s.txt",out_file, nbin,max_l,I1,I2,I3,I4,suffix);
-            FILE * BinFile4 = fopen(binname4,"w");
+            std::string binname4 = string_format("%sCovMatricesAll/binct_c4_n%d_l%d_%d%d,%d%d_%s.txt", out_file, nbin, max_l, I1, I2, I3, I4, suffix);
+            FILE * BinFile4 = fopen(binname4.c_str(),"w");
 
-            char binname3[1000];
-            snprintf(binname3,sizeof binname3, "%sCovMatricesAll/binct_c3_n%d_l%d_%d,%d%d_%s.txt",out_file, nbin,max_l,I2,I1,I3,suffix);
-            FILE * BinFile3 = fopen(binname3,"w");
+            std::string binname3 = string_format("%sCovMatricesAll/binct_c3_n%d_l%d_%d,%d%d_%s.txt", out_file, nbin, max_l, I2, I1, I3, suffix);
+            FILE * BinFile3 = fopen(binname3.c_str(),"w");
 
-            char binname2[1000];
-            snprintf(binname2,sizeof binname2, "%sCovMatricesAll/binct_c2_n%d_l%d_%d%d_%s.txt",out_file, nbin,max_l,I1,I2,suffix);
-            FILE * BinFile2 = fopen(binname2,"w");
+            std::string binname2 = string_format("%sCovMatricesAll/binct_c2_n%d_l%d_%d%d_%s.txt", out_file, nbin, max_l, I1, I2, suffix);
+            FILE * BinFile2 = fopen(binname2.c_str(),"w");
 
             for(int i=0;i<nbin*mbin;i++){
                 for(int j=0;j<nbin*mbin;j++){

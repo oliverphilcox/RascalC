@@ -29,6 +29,7 @@
 
 # Executables
 cov
+bin
 triple
 *.exe
 *.out
@@ -46,6 +47,11 @@ triple
 _build
 _static
 _templates
+
+# Python package build files
+build
+dist
+*.egg-info
 
 # IPython/Jupyter notebook checkpoints
 .ipynb_checkpoints

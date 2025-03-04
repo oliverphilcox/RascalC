@@ -4,6 +4,7 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
+#include "string_format.h"
 #ifdef LEGENDRE_MIX
 #include "legendre_mix_utilities.h"
 #endif
@@ -68,7 +69,7 @@ public:
 
     //-------- LEGENDRE PARAMETERS -------------------------------------------
 
-#if (defined LEGENDRE || defined LEGENDRE_MIX)
+#if (defined LEGENDRE || defined LEGENDRE_MIX || defined THREE_PCF)
     int max_l = 2; // max Legendre moment (must be even unless computing 3PCF)
 #endif
 
@@ -79,7 +80,7 @@ public:
     MuBinLegendreFactors mu_bin_legendre_factors;
 #endif
 
-#ifdef LEGENDRE
+#if (defined LEGENDRE || defined THREE_PCF)
     char *phi_file = NULL; // Survey correction function coefficient file
     const char default_phi_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/BinCorrectionFactor_n25_periodic_11.txt";
 #endif
@@ -151,7 +152,7 @@ public:
 
     //-------- LEGENDRE MULTI-FIELD PARAMETERS -------------------------------
 
-#ifdef LEGENDRE
+#if (defined LEGENDRE || defined THREE_PCF)
     const char default_phi_file12[500] = "";
     char *phi_file12 = NULL; // (Normalized) survey correction function survey_12
 
@@ -235,6 +236,10 @@ public:
 
     // Variable to decide if we are using multiple tracers:
     bool multi_tracers;
+
+    // Options for a deterministic/reproducible run
+    bool random_seed = true;
+    unsigned long seed = 0;
 
     // Constructor
 	Parameters(int argc, char *argv[]){
@@ -322,6 +327,7 @@ public:
 			np = tmp;
 			make_random=1;
 		    }
+		else if (!strcmp(argv[i],"-seed")) { random_seed = false; sscanf(argv[++i], "%lu", &seed); }
 		else if (!strcmp(argv[i],"-def")) { fname = NULL; }
 		else {
 		    fprintf(stderr, "Don't recognize %s\n", argv[i]);
@@ -415,19 +421,19 @@ public:
 
 	    // Decide if we are using multiple tracers:
 	    if (strlen(fname2)!=0){
-#if (defined LEGENDRE || defined POWER)
-#ifdef LEGENDRE
-            if ((strlen(phi_file12)==0)||(strlen(phi_file2)==0)){
-                printf("Two random particle sets input but not enough survey correction function files! Exiting.");
-                exit(1);
-            }
-#else
+#if (defined LEGENDRE || defined POWER || defined THREE_PCF)
+#ifdef POWER
             if ((strlen(inv_phi_file12)==0)||(strlen(inv_phi_file2)==0)){
                 printf("Two random particle sets input but not enough survey correction function files! Exiting.");
                 exit(1);
             }
             else if ((power_norm12==0)||(power_norm2==0)){
                 printf("Two random particle sets input but not enough power normalizations provided; exiting.");
+                exit(1);
+            }
+#else
+            if ((strlen(phi_file12)==0)||(strlen(phi_file2)==0)){
+                printf("Two random particle sets input but not enough survey correction function files! Exiting.");
                 exit(1);
             }
 #endif
@@ -449,14 +455,14 @@ public:
             printf("\nUsing a single set of tracer particles\n");
             multi_tracers=false;
             // set variables for later use
-#ifdef LEGENDRE
-            phi_file12=phi_file;
-            phi_file2=phi_file;
-#else
+#ifdef POWER
             inv_phi_file12=inv_phi_file;
             inv_phi_file2=inv_phi_file;
             power_norm2 = power_norm;
             power_norm12 = power_norm;
+#else
+            phi_file12=phi_file;
+            phi_file2=phi_file;
 #endif
             nofznorm2=nofznorm;
             corname12=corname;
@@ -635,6 +641,9 @@ private:
 	    fprintf(stderr, "   -balance: Rescale the negative weights so that the total weight is zero.\n");
         fprintf(stderr, "   -np <np>: Ignore any file and use np random perioidic points instead.\n");
         fprintf(stderr, "   -rs <rstart>:  If inverting particle weights, this sets the index from which to start weight inversion. Default 0\n");
+        fprintf(stderr, "   -seed <seed>:  If given, allows to reproduce the results with the same settings, except the number of threads.\n");
+        fprintf(stderr, "      Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.\n");
+        fprintf(stderr, "      Needs to be a non-negative integer fitting into 32 bits (max 4294967295). If not given (default), the seed will be created randomly.\n");
 	    fprintf(stderr, "\n");
 	    fprintf(stderr, "\n");
 
@@ -643,35 +652,39 @@ private:
 
 	void create_directory(){
         // Initialize output directory:
+        size_t out_file_len = strlen(out_file);
+        if (out_file[out_file_len - 1] != '/') { // append the slash if absent
+            out_file_len += 2; // add one for the slash, and another for the terminating zero which was not included
+            char * tmp_out_file = (char *) malloc(sizeof(char) * out_file_len); // one more character for the slash and another for zero terminator
+            snprintf(tmp_out_file, out_file_len, "%s/", out_file);
+            out_file = tmp_out_file;
+            // one might think the old out_file should be freed, but actually not, because out_file is either pointing to default_out_file (a constant member of this Parameters class) or an element of argv[], neither can and should be freed. There is still some additional memory usage, but should be small in realistic cases.
+        }
 	    // First create whole directory if it doesn't exist:
 	    if (mkdir(out_file,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)==0){
             printf("\nCreating output directory\n");
         }
-	    char cname[1000];
 #ifdef THREE_PCF
-        snprintf(cname, sizeof cname, "%s3PCFCovMatricesAll/",out_file);
+        std::string cname = string_format("%s3PCFCovMatricesAll/", out_file);
 #elif defined POWER
-        snprintf(cname, sizeof cname, "%sPowerCovMatrices/",out_file);
+        std::string cname = string_format("%sPowerCovMatrices/", out_file);
 #else
-	    snprintf(cname, sizeof cname, "%sCovMatricesAll/",out_file);
+	    std::string cname = string_format("%sCovMatricesAll/", out_file);
 #endif
-        if (mkdir(cname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0){
-            }
+        mkdir(cname.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         // Check if this was successful:
         struct stat info;
 
-        if( stat( cname, &info ) != 0 ){
-            printf( "\nCreation of directory %s failed\n", cname);
+        if( stat( cname.c_str(), &info ) != 0 ){
+            printf( "\nCreation of directory %s failed\n", cname.c_str());
             exit(1);
         }
 #ifdef JACKKNIFE
-        char cjname[1000];
-        snprintf(cjname, sizeof cjname, "%sCovMatricesJack/",out_file);
-        if (mkdir(cjname,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)!=0){
-        }
+        std::string cjname = string_format("%sCovMatricesJack/",out_file);
+        mkdir(cjname.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-        if(stat(cjname,&info)!=0){
-            printf("\nCreation of directory %s fiailed\n",cjname);
+        if(stat(cjname.c_str(), &info) != 0) {
+            printf("\nCreation of directory %s failed\n", cjname.c_str());
             exit(1);
         }
 #endif

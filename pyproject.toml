@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling", "hatch-build-scripts"]
+build-backend = "hatchling.build"
+
+[project]
+name = "RascalC"
+dynamic = ["version"]
+description = 'A Fast Code for Galaxy Covariance Matrix Estimation'
+readme = "README.md"
+requires-python = ">=3.9"
+# license = "MIT"
+keywords = ['correlation functions', 'simulations', 'surveys', 'galaxies']
+authors = [
+    { name = "Oliver Philcox" },
+    { name = "Daniel Eisenstein" },
+    { name = "Ross O'Connell" },
+    { name = "Alexander Wiegand" },
+    { name = "Michael Rashkovetskyi", email = "misharash@gmail.com" },
+]
+maintainers = [
+    { name = "Michael Rashkovetskyi", email = "misharash@gmail.com" },
+]
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'Natural Language :: English',
+    'Operating System :: POSIX',
+    'Programming Language :: C++',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+]
+dependencies = ['setuptools', 'numpy>=1.23', 'scipy', 'astropy', 'pycorr']
+
+[project.urls]
+Documentation = "https://github.com/misharash/RascalC#readme"
+Issues = "https://github.com/misharash/RascalC/issues"
+Source = "https://github.com/misharash/RascalC"
+
+[project.optional-dependencies]
+jackknife = ['scikit-learn']
+
+# load the version
+[tool.hatch.version]
+path = "RascalC/__init__.py"
+
+# this builds the binaries invoked by the Python library
+[[tool.hatch.build.hooks.build-scripts.scripts]]
+out_dir = "./RascalC/bin"
+work_dir = "./RascalC"
+commands = ["make"]
+artifacts = ["RascalC/bin/cov.*"]

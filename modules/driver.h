@@ -1,9 +1,7 @@
 // driver.h - this contains various c++ functions to create particles in random positions / read them in from file. Based on code by Alex Wiegand.
 #include "cell_utilities.h"
-#ifndef LEGENDRE
-#ifndef POWER
+#if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)
     #include "jackknife_weights.h"
-#endif
 #endif
 
 #ifndef DRIVER_H
@@ -96,7 +94,8 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 		   if(rstart>0&&j>=rstart)
 			   p[j].w = -tmp[stat-2]; //read in weights
 		   else
-			   p[j].w = tmp[stat-2]; 
+			   p[j].w = tmp[stat-2];
+        }
         int tmp_JK = tmp[stat-1]; // read in JK region
 		
 		// Collapse jacknife indices to only include filled JKs:
@@ -117,8 +116,8 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
                     p[j].w = -tmp[3]; // read in weights
                 else
                     p[j].w = tmp[3];
-#endif                
             }
+#endif
       	
 		j++;
     }
@@ -133,10 +132,9 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 
 bool compute_bounding_box(Particle **p, int* np, int no_fields, Float3 &rect_boxsize, Float &cellsize, Float rmax, Float3& pmin, int nside) {
     // Compute the boxsize of the bounding cuboid box and determine whether we are periodic
-    Float3 pmax;
     bool box = false;
-    pmin.x = pmin.y = pmin.z = INFINITY;
-    pmax.x = pmax.y = pmax.z = -INFINITY;
+    Float3 pmax = p[0][0].pos; // initialize with the first particle's coordinates
+    pmin = pmax;
     for (int index = 0; index < no_fields; index++)
         for (int j = 0; j < np[index]; j++) {
             pmin.x = fmin(pmin.x, p[index][j].pos.x);

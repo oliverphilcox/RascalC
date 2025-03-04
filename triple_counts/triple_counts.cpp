@@ -257,7 +257,7 @@ public:
 class compute_triples{
     
     private:
-        uint64 cnt2=0,cnt3=0;
+        // uint64 cnt2=0,cnt3=0; // unused
         int nbin, mbin; 
      public:
         int particle_list(int id_1D, Particle* &part_list, int* &id_list, Grid *grid){
@@ -304,9 +304,14 @@ class compute_triples{
             initial.Start(); 
             
             //-----------INITIALIZE OPENMP + CLASSES----------
-            std::random_device urandom("/dev/urandom");
-            std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
-            unsigned long int steps = dist(urandom);        
+            unsigned long seed_step = (unsigned long)(std::numeric_limits<uint32_t>::max()) / (unsigned long)(par->max_loops); // restrict the seeds to 32 bits to avoid possible collisions, as most GSL random generators only accept 32-bit seeds and truncate the higher bits. unsigned long is at least 32 bits but can be more.
+            unsigned long seed_shift = par->seed % seed_step; // for each loop, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+            if (par->random_seed) {
+                std::random_device urandom("/dev/urandom");
+                std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
+                seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+            }
+            
             gsl_rng_env_setup(); // initialize gsl rng
 
             uint64 tot_pairs=0, tot_triples=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
@@ -325,7 +330,7 @@ class compute_triples{
             TotalTime.Start(); // Start timer
             
 #ifdef OPENMP      
-    #pragma omp parallel firstprivate(steps,par,grid) shared(global_counts,TotalTime,gsl_rng_default,rd) reduction(+:cell_attempt2,cell_attempt3,used_cell2,used_cell3,tot_pairs,tot_triples)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid) shared(global_counts,TotalTime,gsl_rng_default,rd) reduction(+:cell_attempt2,cell_attempt3,used_cell2,used_cell3,tot_pairs,tot_triples)
             { // start parallel loop
             // Decide which thread we are in
             int thread = omp_get_thread_num();
@@ -353,8 +358,7 @@ class compute_triples{
             
             TripleCounts local_counts(par); // holds triple counts for each thread
             
-            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-            gsl_rng_set(locrng, steps*(thread+1));
+            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread, seed will be set later inside the loop
             
             // Assign memory for intermediate steps
             int ec=0;
@@ -370,7 +374,11 @@ class compute_triples{
     #endif
            for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
                 percent_counter=0.;
-                loc_used_pairs=0; loc_used_triples=0;  
+                loc_used_pairs=0; loc_used_triples=0;
+
+                // Set/reset the RNG seed based on loop number instead of thread number to reproduce results with different number of threads but other parameters kept the same. Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
+                gsl_rng_set(locrng, seed_step * (unsigned long)n_loops + seed_shift); // the second number, seed, will not overflow and will be unique for each loop in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively.
+                // Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
                 
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid->nf;n1++){
@@ -473,8 +481,7 @@ class compute_triples{
         
         printf("\nTrial speed: %.2e triples per core per second\n",double(tot_triples)/(runtime*double(par->nthread)));
         
-        char out_string[5];
-        sprintf(out_string,"full");
+        char out_string[5] = "full";
         global_counts.save_triples(out_string);
         printf("Printed triple counts to file\n");
         fflush(NULL);
@@ -493,64 +500,112 @@ int main(int argc, char *argv[]) {
         max_no_functions=3;
         no_fields=2;
     }
-    
-    // Now read in particles to grid:
-    Grid all_grid[no_fields]; // create empty grids
-    
-    for(int index=0;index<no_fields;index++){
+
+    // Now read in particles
+    Particle* all_particles[no_fields];
+    int all_np[no_fields];
+
+    for (int index = 0; index < no_fields; index++) {
         Float3 shift;
-        Particle *orig_p;
-        if (!par.make_random){
+        if (!par.make_random) {
             char *filename;
-            if(index==0) filename=par.fname;
-            else filename=par.fname2;
-            orig_p = read_particles(par.rescale, &par.np, filename, par.rstart, par.nmax);
-            assert(par.np>0);
-            par.perbox = compute_bounding_box(orig_p, par.np, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
-        } else {
-        // If you want to just make random particles instead:
-        assert(par.np>0);
-        orig_p = make_particles(par.rect_boxsize, par.np, index);
-        // set as periodic if we make the random particles
-        par.perbox = true;
+            if (index == 0) filename = par.fname;
+            else filename = par.fname2;
+#ifdef JACKKNIFE
+            all_particles[index] = read_particles(par.rescale, &all_np[index], filename, par.rstart, par.nmax, &all_weights[index]);
+#else
+            all_particles[index] = read_particles(par.rescale, &all_np[index], filename, par.rstart, par.nmax);
+#endif
+            assert(all_np[index] > 0);
         }
-        
-        if (par.qinvert) invert_weights(orig_p, par.np);
-        if (par.qbalance) balance_weights(orig_p, par.np);
-
-        // Now ready to compute!
-        // Sort the particles into the grid.
-        Float nofznorm=par.nofznorm;
-        if(index==1) nofznorm=par.nofznorm2;
-        Grid tmp_grid(orig_p, par.np, par.rect_boxsize, par.cellsize, par.nside, shift, nofznorm);
-
-        Float grid_density = (double)par.np/tmp_grid.nf;
-        printf("\n RANDOM CATALOG %d DIAGNOSTICS:\n",index+1);
-        printf("Average number of particles per grid cell = %6.2f\n", grid_density);
-        Float max_density = 16.0;
-        if (grid_density>max_density){
-            fprintf(stderr,"Average particle density exceeds maximum advised particle density (%.0f particles per cell) - exiting.\n",max_density);
-            exit(1);
+        else {
+            // If you want to just make random particles instead:
+            assert(par.np > 0);
+            all_particles[index] = make_particles(par.rect_boxsize, all_np[index], index);
+            all_np[index] = par.np;
         }
-        printf("Average number of particles per max_radius ball = %6.2f\n",
-                par.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
-        if (grid_density<2){
-            printf("#\n# WARNING: grid appears inefficiently fine; exiting.\n#\n");
-            exit(1);
-        }
-
-        printf("# Done gridding the particles\n");
-        printf("# %d particles in use, %d with positive weight\n", tmp_grid.np, tmp_grid.np_pos);
-        printf("# Weights: Positive particles sum to %f\n", tmp_grid.sumw_pos);
-        printf("#          Negative particles sum to %f\n", tmp_grid.sumw_neg);
-
-        // Now save grid to global memory:
-        all_grid[index].copy(&tmp_grid);
-        
-        free(orig_p); // Particles are now only stored in grid
-        
-        fflush(NULL);
+        if (par.qinvert) invert_weights(all_particles[index], all_np[index]);
+        if (par.qbalance) balance_weights(all_particles[index], all_np[index]);
     }
+
+    // Now put particles to grid(s)
+    Grid all_grid[no_fields]; // create empty grids
+    Float max_density = 16., min_density = 2.;
+    int nside_attempts = 3; // number of attempts to meet the constraints by changing nside
+    bool nside_global_failure = true; // assume failure until success
+
+    for (int no_attempt = 0; no_attempt <= nside_attempts; no_attempt++) {
+        // Compute bounding box using all particles. Do it inside the attempt loop because nside could change.
+        Float3 shift; // default value is zero
+        if (!par.make_random) {
+            par.perbox = compute_bounding_box(all_particles, all_np, no_fields, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
+#ifdef PERIODIC
+            par.rect_boxsize = {par.boxsize, par.boxsize, par.boxsize}; // restore the given boxsize if periodic
+            par.cellsize = par.boxsize / (Float)par.nside; // set cell size manually
+            // keep the shift from compute_bounding_box, allowing for coordinate ranges other than [0, par.boxsize) but still of length par.boxsize - this is quite generic and precise at the same time.
+#endif
+        }
+        else {
+            // If randoms particles were made we keep the boxsize
+            par.cellsize = par.boxsize / (Float)par.nside;
+            // set as periodic if we make the random particles
+            par.perbox = true;
+        }
+
+        // Create grid(s) and see if the particle density is acceptable
+        bool nside_local_success = true; // assume this attempt succeeded be default, can be unset
+        int index;
+        for (index = 0; index < no_fields; index++) {
+            // Now ready to compute!
+            // Sort particles into grid(s)
+            Float nofznorm = par.nofznorm;
+            if (index == 1) nofznorm = par.nofznorm2;
+            Grid tmp_grid(all_particles[index], all_np[index], par.rect_boxsize, par.cellsize, par.nside, shift, nofznorm);
+
+            Float grid_density = (Float)tmp_grid.np/tmp_grid.nf;
+            printf("\n RANDOM CATALOG %d DIAGNOSTICS:\n", index+1);
+            printf("Average number of particles per grid cell = %6.2f\n", grid_density);
+            if (grid_density > max_density) {
+                nside_local_success = false; // unset this attempt's success flag
+                Float aimed_density = cbrt(max_density * max_density * min_density); // aim for density between the limits but closer to max
+                Float nside_approx = cbrt(grid_density/aimed_density) * par.nside; // approximate value of nside to reach this density
+                par.nside = 2 * (int)round((nside_approx + 1)/2) - 1; // round to closest odd integer
+                fprintf(stderr,"# WARNING: Average particle density exceeds maximum advised particle density (%.0f particles per cell). Setting nside=%d.\n", max_density, par.nside);
+                break; // terminate the inner, tracer loop
+            }
+            if (grid_density < min_density) {
+                nside_local_success = false; // unset this attempt's success flag
+                Float aimed_density = cbrt(max_density * min_density * min_density); // aim for density between the limits but closer to min
+                Float nside_approx = cbrt(grid_density/aimed_density) * par.nside; // approximate value of nside to reach this density
+                par.nside = 2 * (int)round((nside_approx + 1)/2) - 1; // round to closest odd integer
+                fprintf(stderr, "# WARNING: grid appears inefficiently fine (average density less than %.0f particles per cell). Setting nside=%d.\n", min_density, par.nside);
+                break; // terminate the inner, tracer loop
+            }
+            printf("Average number of particles per max_radius ball = %6.2f\n",
+                    tmp_grid.np*4.0*M_PI/3.0*pow(par.rmax,3.0)/(par.rect_boxsize.x*par.rect_boxsize.y*par.rect_boxsize.z));
+
+            printf("# Done gridding the particles\n");
+            printf("# %d particles in use, %d with positive weight\n", tmp_grid.np, tmp_grid.np_pos);
+            printf("# Weights: Positive particles sum to %f\n", tmp_grid.sumw_pos);
+            printf("#          Negative particles sum to %f\n", tmp_grid.sumw_neg);
+
+            // Now save grid to global memory:
+            all_grid[index].copy(&tmp_grid);
+
+            fflush(NULL);
+        }
+        if (nside_local_success) {
+            nside_global_failure = false; // unset global failure
+            break; // terminate attempt loop
+        }
+        // finally, if this attempt has failed, destroy the grids that have been copied - the memory allocated inside them is not freed otherwise
+        for (int i = 0; i < index; i++) all_grid[i].~Grid(); // should only be relevant for multi-tracer, when the first tracer succeeds but the second fails
+    }
+    if (nside_global_failure) { // report and terminate
+        fprintf(stderr, "# ERROR: could not meet mean grid density constraints after %d additional attempts.\n", nside_attempts);
+        exit(1);
+    }
+    for (int index = 0; index < no_fields; index++) free(all_particles[index]); // Particles are now only stored in grid; can't free earlier because of potentially repeated attempts, especially multi-tracer
     
     // Now define all possible correlation functions and random draws:
     CorrelationFunction all_cf[max_no_functions];

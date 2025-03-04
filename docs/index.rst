@@ -8,22 +8,31 @@ RascalC is a code to quickly estimate covariance matrices from two- or three-poi
 
 The main estimators are described in `O'Connell et al. 2016 <https://arxiv.org/abs/1510.01740>`_, `O'Connell & Eisenstein 2018 <https://arxiv.org/abs/1808.05978>`_ , `Philcox et al. 2019 <https://arxiv.org/abs/1904.11070>`_ and `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_ with the third and fourth papers discussing the new algorithms and C++ implementation. `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_ is dedicated to applications to `DESI <https://desi.lbl.gov>`_ and updated validation techniques. RascalC was also used in Philcox & Eisenstein (2019, accepted by MNRAS, `arXiv <https://arxiv.org/abs/1912.01010>`_) to compute the covariance of configuration-space power spectrum estimators.
 
-The source code is publicly available on `Github <https://github.com/oliverphilcox/RascalC>`_ and builds upon the Python package `Rascal <https://github.com/rcoconnell/Rascal>`_. For general usage, comprehensive tutorials (:doc:`usage/tutorial` and :doc:`usage/tutorial_periodic`) are provided.
+The source code is publicly available on `Github <https://github.com/oliverphilcox/RascalC>`_ and builds upon the Python package `Rascal <https://github.com/rcoconnell/Rascal>`_. For general usage, comprehensive tutorials (:doc:`legacy/tutorial` and :doc:`legacy/tutorial_periodic`) are provided.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Python library
 
-   usage/installation
-   usage/getting-started
-   usage/tutorial
-   usage/tutorial_periodic
-   usage/pre-processing
-   usage/jackknife-weights
-   usage/geometry-correction
-   usage/correlation-functions
-   usage/main-code
-   usage/post-processing
+   library/installation
+   library/essential-functions
+   library/tutorials-examples
+   library/advanced-functions
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Legacy (command line) usage
+
+   legacy/installation
+   legacy/getting-started
+   legacy/tutorial
+   legacy/tutorial_periodic
+   legacy/pre-processing
+   legacy/jackknife-weights
+   legacy/geometry-correction
+   legacy/correlation-functions
+   legacy/main-code
+   legacy/post-processing
 
 For any queries regarding the code please contact `Michael 'Misha' Rashkovetskyi  <mailto:mrashkovetskyi@cfa.harvard.edu>`_.
 

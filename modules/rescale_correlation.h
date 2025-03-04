@@ -4,11 +4,13 @@
 #define RESCALE_CORRELATION_H
 
 #include <algorithm>
+#include <inttypes.h>
 
 class correlation_integral{
 public:
     Float *cf_estimate; // estimated correlation function in each bin
     Float *rr_estimate; // RR bin count estimate
+    uint64 *binct; // array to accumulate bin counts
     CorrelationFunction *old_cf; // input correlation function
     Integrals *integral; // integrals class
 private:
@@ -40,6 +42,7 @@ public:
         int ec=0;
         ec+=posix_memalign((void **) &cf_estimate, PAGE, sizeof(double)*nbin*mbin);
         ec+=posix_memalign((void **) &rr_estimate, PAGE, sizeof(double)*nbin*mbin);
+        ec+=posix_memalign((void **) &binct, PAGE, sizeof(uint64)*nbin*mbin);
         assert(ec==0);
 
         // Reset functions
@@ -50,6 +53,7 @@ public:
     ~correlation_integral(){
         free(cf_estimate);
         free(rr_estimate);
+        free(binct);
     }
 private:
     inline int getbin(Float r, Float mu){
@@ -94,17 +98,38 @@ public:
             // Add to local integral counts:
             cf_estimate[tmp_bin]+=xi_contrib;
             rr_estimate[tmp_bin]+=rr_contrib;
+            binct[tmp_bin]++;
         }
     }
 
     void normalize(Float norm1, Float norm2, Float n_pairs){
         // Normalize the accumulated integrals and reweight by N_gal/N_rand
         double corrf2 = norm1*norm2; // correction factor
+        bool fail_flag = false;
+        uint64 min_binct = binct[0];
+        int min_binct_bin = 0;
 
         for(int i = 0; i<nbin*mbin;i++){
+            if (binct[i] < min_binct) {
+                min_binct = binct[i];
+                min_binct_bin = i;
+            }
+            if (binct[i] == 0) {
+                fprintf(stderr, "No pairs sampled in correlation function bin %d (radial %d, angular %d)!\n", i, i / mbin, i % mbin);
+                fail_flag = true;
+            }
+            else if (rr_estimate[i] == 0) {
+                fprintf(stderr, "RR estimate in correlation function bin %d (radial %d, angular %d) is zero!\n", i, i / mbin, i % mbin);
+                fail_flag = true;
+            }
             rr_estimate[i]/=(n_pairs*corrf2);
             cf_estimate[i]/=(n_pairs*corrf2*rr_estimate[i]);
         }
+        if (fail_flag) {
+            fprintf(stderr, "Failed to obtain a correlation function estimate for rescaling.\nTry increasing N2 and/or number of integration loops, or using coarser correlation function binning, or providing denser randoms.\n");
+            exit(1);
+        }
+        printf("Smallest number of pairs sampled is %llu in correlation function bin %d (radial %d, angular %d). If the number is not large, consider increasing N2 and/or number of integration loops, or using coarser correlation function binning, or providing denser randoms.\n", (unsigned long long) min_binct, min_binct_bin, min_binct_bin / mbin, min_binct_bin % mbin);
     }
 
     void sum(correlation_integral* corr){
@@ -112,6 +137,7 @@ public:
         for(int i=0;i<nbin*mbin;i++){
             cf_estimate[i]+=corr->cf_estimate[i];
             rr_estimate[i]+=corr->rr_estimate[i];
+            binct[i] += corr->binct[i];
         }
     }
 
@@ -119,6 +145,7 @@ public:
         for(int i=0;i<nbin*mbin;i++){
             cf_estimate[i]=0;
             rr_estimate[i]=0;
+            binct[i]=0;
         }
     }
 
@@ -190,15 +217,19 @@ public:
         // Rescale the xi function by computing the binned xi from some estimate and comparing it to the known value. Return a correlation function object with an updated estimate of the xi at the bin-centers.
 
         // gsl and random class setup
-        std::random_device urandom("/dev/urandom");
-        std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
-        unsigned long int steps = dist(urandom);
+        unsigned long seed_step = (unsigned long)(std::numeric_limits<uint32_t>::max()) / (unsigned long)(par->max_loops); // restrict the seeds to 32 bits to avoid possible collisions, as most GSL random generators only accept 32-bit seeds and truncate the higher bits. unsigned long is at least 32 bits but can be more.
+        unsigned long seed_shift = par->seed % seed_step; // for each loop, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+        if (par->random_seed) {
+            std::random_device urandom("/dev/urandom");
+            std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
+            seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+        }
         gsl_rng_env_setup(); // initialize gsl rng
         correlation_integral full_xi_function(par,old_cf); // full correlation function class
         uint64 used_pairs=0;
 
 #ifdef OPENMP
-#pragma omp parallel firstprivate(steps,par,grid1, grid2, old_cf) shared(gsl_rng_default,rd) reduction(+:used_pairs)
+#pragma omp parallel firstprivate(seed_step,seed_shift,par,grid1,grid2,old_cf) shared(gsl_rng_default,rd) reduction(+:used_pairs)
         { // start parallel loop
         // Decide thread
         int thread = omp_get_thread_num();
@@ -216,8 +247,7 @@ public:
         integer3 delta2,prim_id,sec_id;
         double p2;
         Float3 cell_sep2;
-        gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-        gsl_rng_set(locrng, steps*(thread+1));
+        gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread, seed will be set later inside the loop
 
         correlation_integral thread_xi_function(par, old_cf);
 
@@ -232,6 +262,9 @@ public:
 #pragma omp for schedule(dynamic)
 #endif
         for(int n_loops = 0; n_loops<par->max_loops; n_loops++){
+            // Set/reset the RNG seed based on loop number instead of thread number to reproduce results with different number of threads but other parameters kept the same. Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
+            gsl_rng_set(locrng, seed_step * (unsigned long)n_loops + seed_shift); // the second number, seed, will not overflow and will be unique for each loop in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively.
+            // Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
             for(int n1=0;n1<grid1->nf;n1++){
                 // Pick first particle
                 prim_id_1D = grid1-> filled[n1]; // 1d ID for cell i

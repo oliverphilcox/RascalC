@@ -9,6 +9,61 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 
 ***New for version 2***: Legendre moment covariances and the 3PCF
 
+## Python interface and [Jupyter notebook tutorial](https://github.com/misharash/RascalC/blob/master/tutorial.ipynb) (alpha-testing before version 3.0)
+
+### Installation for DESI members at NERSC
+
+Recommended to use with `cosmodesi` environment.
+In particular, load it before installing:
+```
+source /global/common/software/desi/users/adematti/cosmodesi_environment.sh main
+pip install -e /global/common/software/desi/users/mrash/RascalC
+```
+This installs the library from my software folder in the development mode, so that after I update it e.g. with some fix, you will have the new version without the need to re-install or any other action.
+
+### Generic installation (if the above is unavailable)
+
+```
+git clone https://github.com/misharash/RascalC
+cd RascalC
+python3 -m pip install .
+```
+Make sure to reinstall after pulling updates.
+At this early stage, the fixes might be needed quite often.
+
+Or you can install with just one command:
+```
+python3 -m pip install https://github.com/misharash/RascalC.git
+```
+
+The code requires [`pycorr`](https://github.com/cosmodesi/pycorr) to deal with pair counts and data correlation function estimators.
+To compute pair counts of catalogs, you need a [custom version of `Corrfunc`](https://github.com/adematti/Corrfunc) (see also [`pycorr` installation instructions](https://py2pcf.readthedocs.io/en/latest/user/building.html)).
+Both can be installed quickly via
+```
+python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'
+```
+
+### Usage guide
+
+```
+import RascalC
+result = RascalC.run_cov(...)
+```
+
+`run_cov` is the main function for the covariance matrix computation.
+Use `help(RascalC.run_cov)` to learn more about the inputs and outputs; many of them are similar to [pycorr](https://github.com/cosmodesi/pycorr) `TwoPointCorrelationFunction` and some others are `pycorr.TwoPointEstimator`s.
+
+An example pipeline is showcased in a [tutorial notebook](https://github.com/misharash/RascalC/blob/master/tutorial.ipynb) (will be smoothed out soon).
+
+It is strongly recommended NOT to use multi-threaded operations in the `python` process before launching `RascalC.run_cov` – this may cause the code to run effectively single-threaded.
+E.g. at NERSC this would mean not setting `OMP_*` and other `*_THREADS` environment variables; the code will set them by itself according to the number of threads you passed.
+This caveat does not seem to be unique for RascalC – different multi-threading backends can interfere.
+
+Some specific examples are also available in the new separate script gallery: <https://github.com/misharash/RascalC-scripts>.
+
+More documentation is coming, in the meantime please contact Michael 'Misha' Rashkovetskyi <mrashkovetskyi@cfa.harvard.edu> with any questions.
+Please also feel free to open [GitHub issues](https://github.com/misharash/RascalC/issues) both for problems and clarification requests.
+
 ## Authors
 
 - Oliver Philcox (Columbia / Simons Foundation)
@@ -17,4 +72,5 @@ Any usage of this code should cite [Philcox et al. 2019](https://arxiv.org/abs/1
 - Alexander Wiegand (Garching)
 - Misha Rashkovetskyi (Harvard)
 
-We thank Yuting Wang and Ryuichiro Hada for pointing out and fixing a number of issues with the code and its documentation. We are particularly grateful to Uendert Andrade for finding a wide variety of improvements and bugs!
+We thank Yuting Wang and Ryuichiro Hada for pointing out and fixing a number of issues with the code and its documentation.
+We are particularly grateful to Uendert Andrade for finding a wide variety of improvements and bugs, and to Jiaxi Yu for feedback on the Python interface and Jupyter notebook tutorial!

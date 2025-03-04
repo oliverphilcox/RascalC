@@ -215,10 +215,14 @@
 #endif
 
     //-----------INITIALIZE OPENMP + CLASSES----------
-            std::random_device urandom("/dev/urandom");
-            unsigned long seed_step = std::numeric_limits<unsigned long>::max() / (unsigned long)(par->nthread);
-            std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
-            unsigned long seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * thread + seed_shift, where thread goes from 0 to nthread-1 => no overflow and guaranteed unique for each thread
+            unsigned long seed_step = (unsigned long)(std::numeric_limits<uint32_t>::max()) / (unsigned long)(par->max_loops); // restrict the seeds to 32 bits to avoid possible collisions, as most GSL random generators only accept 32-bit seeds and truncate the higher bits. unsigned long is at least 32 bits but can be more.
+            unsigned long seed_shift = par->seed % seed_step; // for each loop, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+            if (par->random_seed) {
+                std::random_device urandom("/dev/urandom");
+                std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
+                seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+            }
+            printf("# INFO: the base RNG seed is %lu, incremented by %lu in each integration loop (matching these should guarantee the same results in a completed computation with the same input catalogs and correlation functions).\n", seed_shift, seed_step);
 
             gsl_rng_env_setup(); // initialize gsl rng
             int completed_loops = 0; // counter of completed loops, since may not finish in index order
@@ -307,8 +311,7 @@
 #else
             Integrals locint(par, cf12, cf13, cf24, JK12, JK23, JK34, I1, I2, I3, I4); // Accumulates the integral contribution of each thread
 #endif
-            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-            gsl_rng_set(locrng, seed_step * (unsigned long)thread + seed_shift); // the second number, seed, will not overflow and will be unique for each thread in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively. Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
+            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread, seed will be set later inside the loop
 
             // Assign memory for intermediate steps
             int ec=0;
@@ -331,6 +334,10 @@
 #endif
                 loc_used_pairs=0; loc_used_triples=0; loc_used_quads=0;
                 LoopTimes[n_loops].Start();
+
+                // Set/reset the RNG seed based on loop number instead of thread number to reproduce results with different number of threads but other parameters kept the same. Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
+                gsl_rng_set(locrng, seed_step * (unsigned long)n_loops + seed_shift); // the second number, seed, will not overflow and will be unique for each loop in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively.
+                // Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
 
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid1->nf;n1++){
@@ -458,16 +465,18 @@
                     fprintf(stderr, "\nFinished %d integral loops of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n", completed_loops, par->max_loops, current_runtime, remaining_time/3600, remaining_time/60%60, remaining_time%60, remaining_time);
 
                     TotalTime.Start(); // Restart the timer
+                }
+                int accumulated_loops = subsample_index * par->loops_per_sample; // number of (completed) integral loops accumulated in sumint (as can be seen later, it is updated every loops_per_sample completed loops)
+                if ((subsample_index > 0) && (completed_loops == accumulated_loops + 1)) { // the condition when the Frobenius difference after adding one loop is most straightforward to compute sensibly, because sumint is updated only every loops_per_sample completed loops. Also works for loops_per_sample=1 unlike the possible alternative condition, completed_loops % loops_per_sample == 1
                     Float frob_C2, frob_C3, frob_C4;
 #ifndef JACKKNIFE
-                    sumint.frobenius_difference_sum(&locint, subsample_index * par->loops_per_sample, frob_C2, frob_C3, frob_C4); // since sumint is only incremented every loops_per_sample iterations, subsample_index * loops_per_sample is exactly how many loops are stored in the sumint at the moment. Thus if loops_per_sample>1 the Frobenius percent difference may be an overestimate.
-                    fprintf(stderr, "Frobenius percent difference after %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", completed_loops, frob_C2, frob_C3, frob_C4);
+                    sumint.frobenius_difference_sum(&locint, accumulated_loops, frob_C2, frob_C3, frob_C4); // computes the Frobenius relative differences (in percents) after adding one integral loop result (locint) to the accumulation of accumulated_loops loops in sumint; the method signature is different with and without jackknives
 #else
                     Float frob_C2j, frob_C3j, frob_C4j;
-                    sumint.frobenius_difference_sum(&locint, subsample_index * par->loops_per_sample, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j); // since sumint is only incremented every loops_per_sample iterations, subsample_index * loops_per_sample is exactly how many loops are stored in the sumint at the moment. Thus if loops_per_sample>1 the Frobenius percent difference may be an overestimate.
-                    fprintf(stderr, "Frobenius percent difference after %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", completed_loops, frob_C2, frob_C3, frob_C4);
-                    fprintf(stderr, "Frobenius jackknife percent difference after %d loops is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n", completed_loops, frob_C2j, frob_C3j, frob_C4j);
+                    sumint.frobenius_difference_sum(&locint, accumulated_loops, frob_C2, frob_C3, frob_C4, frob_C2j, frob_C3j, frob_C4j); // computes the Frobenius relative differences (in percents) after adding one integral loop result (locint) to the accumulation of accumulated_loops loops in sumint; the method signature is different with and without jackknives
+                    fprintf(stderr, "Frobenius jackknife percent difference between %d and %d loops is %.3f (C2j), %.3f (C3j), %.3f (C4j)\n", accumulated_loops, completed_loops, frob_C2j, frob_C3j, frob_C4j);
 #endif
+                    fprintf(stderr, "Frobenius percent difference between %d and %d loops is %.3f (C2), %.3f (C3), %.3f (C4)\n", accumulated_loops, completed_loops, frob_C2, frob_C3, frob_C4);
                 }
 
                 // Sum up integrals
@@ -481,16 +490,15 @@
                 // Save output if the group is done
                 if (completed_loops % par->loops_per_sample == 0) {
                     sumint.sum_ints(&outint); // add to grand total
-                    char output_string[50];
-                    snprintf(output_string, 50, "%d", subsample_index);
+                    std::string output_string = string_format("%d", subsample_index);
 #ifndef POWER
                     outint.normalize(grid1->norm, grid2->norm, grid3->norm, grid4->norm, (Float)used_pairs_per_sample, (Float)used_triples_per_sample, (Float)used_quads_per_sample);
 #else
                     outint.normalize(grid1->norm, grid2->norm, grid3->norm, grid4->norm, (Float)used_pairs_per_sample, (Float)used_triples_per_sample, (Float)used_quads_per_sample, par->power_norm);
 #endif
-                    outint.save_integrals(output_string, 0);
+                    outint.save_integrals(output_string.c_str(), 0);
 #ifdef JACKKNIFE
-                    outint.save_jackknife_integrals(output_string);
+                    outint.save_jackknife_integrals(output_string.c_str());
 #endif
                     // Reset the current output sample variables
                     outint.reset();
@@ -532,22 +540,26 @@
         printf("We tried %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(cell_attempt2),double(cell_attempt3),double(cell_attempt4));
         printf("Of these, we accepted %.2e pairs, %.2e triples and %.2e quads of cells.\n",double(used_cell2),double(used_cell3),double(used_cell4));
         printf("We sampled %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(tot_pairs),double(tot_triples),double(tot_quads));
-        printf("Of these, we have integral contributions from %.2e pairs, %.2e triples and %.2e quads of particles.\n",double(cnt2),double(cnt3),double(cnt4));
-        printf("Cell acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)used_cell2/cell_attempt2,(double)used_cell3/cell_attempt3,(double)used_cell4/cell_attempt4);
+        double real_cnt2 = cnt2, real_cnt3 = cnt3, real_cnt4 = cnt4;
 #if (defined LEGENDRE || LEGENDRE_MIX || POWER)
-        int n_l = par->max_l / 2 + 1; // more general expression. This is equal to mbin for LEGENDRE and POWER but not LEGENDRE_MIX
-        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n", (double)cnt2/tot_pairs/pow(n_l, 2), (double)cnt3/tot_triples/pow(n_l, 2), (double)cnt4/tot_quads/pow(n_l, 2));
-#else
-        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n",(double)cnt2/tot_pairs,(double)cnt3/tot_triples,(double)cnt4/tot_quads);
+        int n_l = par->max_l / 2 + 1; // general expression for the number of multipoles. This is equal to mbin for LEGENDRE and POWER but not LEGENDRE_MIX
+        double cnt_norm = pow(n_l, 2); // in these modes, one pair contributes to all multipole "bins" so the real counts are n_l^2 times smaller
+        real_cnt2 /= cnt_norm; real_cnt3 /= cnt_norm; real_cnt4 /= cnt_norm;
 #endif
+        printf("Of these, we have integral contributions from %.2e pairs, %.2e triples and %.2e quads of particles.\n", real_cnt2, real_cnt3, real_cnt4);
+        printf("Cell acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n", (double)used_cell2/cell_attempt2, (double)used_cell3/cell_attempt3, (double)used_cell4/cell_attempt4);
+        printf("Acceptance ratios are %.3f for pairs, %.3f for triples and %.3f for quads.\n", real_cnt2/tot_pairs, real_cnt3/tot_triples, real_cnt4/tot_quads);
         printf("Average of %.2f pairs accepted per primary particle.\n\n",(Float)cnt2/grid1->np);
 
         printf("\nTrial speed: %.2e quads per core per second\n",double(tot_quads)/(runtime*double(par->nthread)));
-        printf("Acceptance speed: %.2e quads per core per second\n",double(cnt4)/(runtime*double(par->nthread)));
+        printf("Acceptance speed: %.2e quads per core per second\n", real_cnt4/(runtime*double(par->nthread)));
 
-        char out_string[5];
-        snprintf(out_string, 5, "full");
-        sumint.save_integrals(out_string,1); // save integrals to file
+#if (!defined POWER && !defined THREE_PCF)
+        if (sumint.small_separation_count > 0) printf("\nWARNING: encountered %llu pairs with unusually small separation (from %.2e to %.2e Mpc/h) between random particle files %d and %d. This should not cause errors inside RascalC, but still may be worth checking the random files as this may affect pair counts or input correlation function.\n\n", (unsigned long long) sumint.small_separation_count, sumint.small_separation_min, sumint.small_separation_max, I1, I3);
+#endif
+
+        const char out_string[5] = "full";
+        sumint.save_integrals(out_string, 1); // save integrals to file
         sumint.save_counts(tot_pairs,tot_triples,tot_quads); // save total pair/triple/quads attempted to file
 #ifdef POWER
         printf("Printed integrals to file in the %sPowerCovMatrices/ directory\n",par->out_file);

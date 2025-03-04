@@ -62,9 +62,14 @@ class compute_integral{
             int convergence_counter=0, printtime=0;// counter to stop loop early if convergence is reached.
               
     //-----------INITIALIZE OPENMP + CLASSES----------
-            std::random_device urandom("/dev/urandom");
-            std::uniform_int_distribution<unsigned int> dist(1, std::numeric_limits<unsigned int>::max());
-            unsigned long int steps = dist(urandom);        
+            unsigned long seed_step = (unsigned long)(std::numeric_limits<uint32_t>::max()) / (unsigned long)(par->max_loops); // restrict the seeds to 32 bits to avoid possible collisions, as most GSL random generators only accept 32-bit seeds and truncate the higher bits. unsigned long is at least 32 bits but can be more.
+            unsigned long seed_shift = par->seed % seed_step; // for each loop, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+            if (par->random_seed) {
+                std::random_device urandom("/dev/urandom");
+                std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
+                seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+            }
+
             gsl_rng_env_setup(); // initialize gsl rng
             Integrals sumint(par, cf, survey_corr); // total integral
 
@@ -82,7 +87,7 @@ class compute_integral{
             TotalTime.Start(); // Start timer
             
 #ifdef OPENMP       
-    #pragma omp parallel firstprivate(steps,par,printtime,grid,cf) shared(sumint,TotalTime,gsl_rng_default,rd) reduction(+:convergence_counter,cell_attempt3,cell_attempt4,cell_attempt5,cell_attempt6,used_cell3,used_cell4,used_cell5,used_cell6,tot_triples,tot_quads,tot_quints,tot_hexes)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,printtime,grid,cf) shared(sumint,TotalTime,gsl_rng_default,rd) reduction(+:convergence_counter,cell_attempt3,cell_attempt4,cell_attempt5,cell_attempt6,used_cell3,used_cell4,used_cell5,used_cell6,tot_triples,tot_quads,tot_quints,tot_hexes)
             { // start parallel loop
             // Decide which thread we are in
             int thread = omp_get_thread_num();
@@ -112,8 +117,7 @@ class compute_integral{
             
             Integrals locint(par, cf, survey_corr); // Accumulates the integral contribution of each thread
             
-            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread
-            gsl_rng_set(locrng, steps*(thread+1));
+            gsl_rng* locrng = gsl_rng_alloc(gsl_rng_default); // one rng per thread, seed will be set later inside the loop
             
             // Assign memory for intermediate steps
             int ec=0;
@@ -145,6 +149,10 @@ class compute_integral{
                     printtime++;
                     continue;
                     }
+                
+                // Set/reset the RNG seed based on loop number instead of thread number to reproduce results with different number of threads but other parameters kept the same. Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
+                gsl_rng_set(locrng, seed_step * (unsigned long)n_loops + seed_shift); // the second number, seed, will not overflow and will be unique for each loop in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively.
+                // Seed clashes between different runs seem less likely than for the old formula, seed = steps * (nthread+1), with steps being a random number between 1 and UINT_MAX (or ULONG_MAX / nthread) inclusively - there, steps of one run could be a multiple of steps of the other resulting in the same seeds for some threads, which is somewhat more likely than getting the same random number.
                     
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid->nf;n1++){
@@ -318,11 +326,10 @@ class compute_integral{
                 sumint.sum_ints(&locint); 
                 
                 // Save output after each loop
-                char output_string[50];
-                sprintf(output_string,"%d", n_loops);
+                std::string output_string = string_format("%d", n_loops);
                 
                 locint.normalize(grid->norm,(Float)loc_used_triples, (Float)loc_used_quads, (Float)loc_used_quints, (Float)loc_used_hexes);
-                locint.save_integrals(output_string,0,iter_no);
+                locint.save_integrals(output_string.c_str(), 0, iter_no);
                 locint.sum_total_counts(cnt3, cnt4, cnt5, cnt6); 
                 locint.reset();
                 
@@ -371,8 +378,7 @@ class compute_integral{
         printf("\nTrial speed: %.2e hexes per core per second\n",double(tot_hexes)/(runtime*double(par->nthread)));
         printf("Acceptance speed: %.2e hexes per core per second\n",double(cnt6)/(runtime*double(par->nthread)));
         
-        char out_string[5];
-        sprintf(out_string,"full");
+        const char out_string[5] = "full";
         sumint.save_integrals(out_string,1,iter_no); // save integrals to file
         sumint.save_counts(tot_triples,tot_quads,tot_quints,tot_hexes,iter_no); // save total pair/triple/quads attempted to file
         printf("Printed integrals to file in the %s3PCFCovMatricesAll/ directory\n",par->out_file);

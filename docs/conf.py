@@ -14,13 +14,13 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../python/'))
+sys.path.insert(0, os.path.abspath('../'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'RascalC'
-copyright = '2019-2023, Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
+copyright = '2019-2025, Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
 author = 'Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
 
 # The short X.Y version
@@ -45,6 +45,8 @@ extensions = [
     'recommonmark',
     'sphinx.ext.todo',
     'sphinx.ext.graphviz',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.extlinks',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -76,6 +78,10 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
+
+git_root = 'https://github.com/misharash/RascalC/blob/master/'
+
+extlinks = {'root': (git_root + '%s', '%s')}
 
 
 # -- Options for HTML output -------------------------------------------------
