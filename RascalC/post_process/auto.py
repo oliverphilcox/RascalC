@@ -29,7 +29,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
 
     skip_r_bins: integer or tuple of two integers
         (Optional) removal of some radial bins.
-        First number sets the number of radial/separation bins to skip from the beginning.
+        First (or the only) number sets the number of radial/separation bins to skip from the beginning.
         Second number (if provided) sets the number of radial/separation bins to skip from the end.
         By default, no bins are skipped.
 
@@ -37,7 +37,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
         (Optional) number of higher multipoles to skip (from the end).
 
     tracer: 1 or 2
-        (Optional) if the RascalC output directory contains two-tracer results, this allows to select the second tracer for single-tracer post-processing.
+        (Optional) if the RascalC output directory contains two-tracer results, ``tracer = 2`` together with ``two_tracers = False`` allows to select the second tracer for single-tracer post-processing.
 
     n_samples: None, integer, array/list/tuple/etc of integers or boolean values
         (Optional) selection of RascalC subsamples (independent realizations of Monte-Carlo integrals).
@@ -47,10 +47,12 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
         If an array/list/tuple/etc of boolean, it will be used as a NumPy boolean array mask.
 
     shot_noise_rescaling1: float
-        (Optional) shot-noise rescaling value for the first tracer (default 1). Auto-determined with jackknife.
+        (Optional) shot-noise rescaling value for the first tracer (default 1).
+        In jackknife mode, the shot-noise rescaling value is auto-determined, so this parameter has no effect.
 
     shot_noise_rescaling2: float
-        (Optional) shot-noise rescaling value for the second tracer only in multi-tracer mode (default 1). Auto-determined with jackknife.
+        (Optional) shot-noise rescaling value for the second tracer only in multi-tracer mode (default 1).
+        In jackknife mode, the shot-noise rescaling value is auto-determined, so this parameter has no effect.
     
     print_function: Callable
         (Optional) custom function to use for printing. Default is ``print``.
@@ -62,7 +64,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
         (Optional) boolean value sets jackknife mode manually. If None (default), this mode is determined automatically.
 
     legendre: boolean or None
-        (Optional) boolean value sets Legendre mode manually. If None (default), this mode is determined automatically.
+        (Optional) boolean value sets Legendre (vs s,mu) mode manually. If None (default), this mode is determined automatically.
 
     two_tracers: boolean or None
         (Optional) boolean value sets 1- vs 2-tracer mode manually. If None (default), this mode is determined automatically.
