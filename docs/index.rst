@@ -17,6 +17,7 @@ The source code is publicly available on `Github <https://github.com/oliverphilc
    library/installation
    library/essential-functions
    library/tutorials-examples
+   library/advanced-functions
 
 .. toctree::
    :maxdepth: 2
