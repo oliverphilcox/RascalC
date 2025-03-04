@@ -79,7 +79,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-git_root = 'https://github.com/misharash/RascalC/blob/master/'
+git_root = 'https://github.com/oliverphilcox/RascalC/blob/master/'
 
 extlinks = {'root': (git_root + '%s', '%s')}
 
