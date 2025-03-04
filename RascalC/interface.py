@@ -101,10 +101,12 @@ def run_cov(mode: str,
         Note that more bins result in slower convergence. A typical configuration has been 4 Mpc/h wide bins between 20 and 200 Mpc/h.
         The counts will be wrapped to positive µ, so if the µ range in them is from -1 to 1, the number of µ bins must be even.
         Providing unwrapped counts (µ from -1 to 1) is preferrable, because some issues can be fixed by assuming symmetry.
-        In "s_mu" ``mode``, the covariance will be done for the given number of µ bins (after wrapping).
-        In "legendre_projected" ``mode``, it will be assumed that Legendre multipoles are projected from the same number of µ bins as present in these counts. One might consider rebinning more coarsely for faster performance but less guaranteed accuracy (neither effect has been tested yet).
-        In "legendre_accumulated" ``mode``, all the present µ bins (after wrapping) will be used to fit the survey correction functions.
-        For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1``.
+
+            - In "s_mu" ``mode``, the covariance will be done for the given number of µ bins (after wrapping).
+            - In "legendre_projected" ``mode``, it will be assumed that Legendre multipoles are projected from the same number of µ bins as present in these counts. One might consider rebinning more coarsely for faster performance but less guaranteed accuracy (neither effect has been tested yet).
+            - In "legendre_accumulated" ``mode``, all the present µ bins (after wrapping) will be used to fit the survey correction functions.
+        
+        For jackknife functionality, ``pycorr_allcounts_11`` must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1``.
 
     pycorr_allcounts_12 : ``pycorr.TwoPointEstimator``
         (Optional) ``pycorr.TwoPointEstimator`` with cross-counts between the two tracers (order does not matter, because they will be wrapped).
@@ -114,7 +116,7 @@ def run_cov(mode: str,
     pycorr_allcounts_22 : ``pycorr.TwoPointEstimator``
         (Optional) ``pycorr.TwoPointEstimator`` with auto-counts for the second tracer.
         Must have the same bin configuration as ``pycorr_allcounts_11``.
-        For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples2``
+        For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples2``.
 
     normalize_wcounts : boolean
         (Optional) whether to normalize the weights and weighted counts.
@@ -160,7 +162,7 @@ def run_cov(mode: str,
     
     xi_refinement_iterations : integer
         (Optional) number of iterations in the correlation function refinement procedure for interpolation inside the code, ensuring that the bin-averaged interpolated values match the binned correlation function estimates. Default: 10.
-        Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table``s are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
+        Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table*`` are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
 
     nthread : integer
         Number of hyperthreads to use.
