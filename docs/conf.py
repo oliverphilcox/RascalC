@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'RascalC'
-copyright = '2019-2024, Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
+copyright = '2019-2025, Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
 author = 'Oliver Philcox, Ross O\'Connell, Daniel Eisenstein, Alex Wiegand, Misha Rashkovetskyi'
 
 # The short X.Y version
