@@ -16,60 +16,62 @@ from .legendre_mix_jackknife import post_process_legendre_mix_jackknife
 
 
 def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, print_function = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
-    """
+    r"""
     Automatic but highly customizable post-processing interface. Designed to work with the ``RascalC.run_cov`` outputs.
+    Do not run this (or any other post-processing function/script) while the main RascalC computation is running — this may delete the output directory and cause the code to crash.
 
     Parameters
     ----------
-    file_root: string
+    file_root : string
         Path to the RascalC output directory.
 
-    out_dir: string | None
+    out_dir : string | None
         (Optional) path to the directory in which the post-processing results should be saved. If None (default), is set to ``file_root``. Empty string means the current working directory.
 
-    skip_r_bins: integer or tuple of two integers
+    skip_r_bins : integer or tuple of two integers
         (Optional) removal of some radial bins.
         First (or the only) number sets the number of radial/separation bins to skip from the beginning.
         Second number (if provided) sets the number of radial/separation bins to skip from the end.
         By default, no bins are skipped.
 
-    skip_l: integer
+    skip_l : integer
         (Optional) number of higher multipoles to skip (from the end).
 
-    tracer: 1 or 2
+    tracer : 1 or 2
         (Optional) if the RascalC output directory contains two-tracer results, ``tracer = 2`` together with ``two_tracers = False`` allows to select the second tracer for single-tracer post-processing.
 
-    n_samples: None, integer, array/list/tuple/etc of integers or boolean values
+    n_samples : None, integer, array/list/tuple/etc of integers or boolean values
         (Optional) selection of RascalC subsamples (independent realizations of Monte-Carlo integrals).
-        If None, use all (default).
-        If an integer, use the given number of samples from the beginning.
-        If an array/list/tuple/etc of integers, it will be used as a NumPy index array.
-        If an array/list/tuple/etc of boolean, it will be used as a NumPy boolean array mask.
+        
+            - If None, use all (default).
+            - If an integer, use the given number of samples from the beginning.
+            - If an array/list/tuple/etc of integers, it will be used as a NumPy index array.
+            - If an array/list/tuple/etc of boolean, it will be used as a NumPy boolean array mask.
 
-    shot_noise_rescaling1: float
+    shot_noise_rescaling1 : float
         (Optional) shot-noise rescaling value for the first tracer (default 1).
         In jackknife mode, the shot-noise rescaling value is auto-determined, so this parameter has no effect.
 
-    shot_noise_rescaling2: float
+    shot_noise_rescaling2 : float
         (Optional) shot-noise rescaling value for the second tracer only in multi-tracer mode (default 1).
         In jackknife mode, the shot-noise rescaling value is auto-determined, so this parameter has no effect.
     
-    print_function: Callable
+    print_function : Callable
         (Optional) custom function to use for printing. Default is ``print``.
 
-    extra_convergence_check: bool
+    extra_convergence_check : bool
         (Optional) whether to perform the extra convergence check. It is done by default.
 
-    jackknife: boolean or None
+    jackknife : boolean or None
         (Optional) boolean value sets jackknife mode manually. If None (default), this mode is determined automatically.
 
-    legendre: boolean or None
+    legendre : boolean or None
         (Optional) boolean value sets Legendre (vs s,mu) mode manually. If None (default), this mode is determined automatically.
 
-    two_tracers: boolean or None
+    two_tracers : boolean or None
         (Optional) boolean value sets 1- vs 2-tracer mode manually. If None (default), this mode is determined automatically.
     
-    n_r_bins, n_mu_bins, n_jack, max_l: integer or None
+    n_r_bins, n_mu_bins, n_jack, max_l : integer or None
         (Optional) integer value is used to set manually the number of radial bins, angular bins (not needed in some Legendre modes), jackknife regions (jackknife mode only) and maximum (even) ell (Legendre mode only) respectively. Each parameter which is None (default) is determined automatically.
 
     Returns
