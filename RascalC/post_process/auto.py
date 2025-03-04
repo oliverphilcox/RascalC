@@ -25,7 +25,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
         Path to the RascalC output directory.
 
     out_dir: string | None
-        (Optional) path to the directory in which the post-processing results should be saved. If empty or None, defaults to ``file_root``.
+        (Optional) path to the directory in which the post-processing results should be saved. If None (default), is set to ``file_root``. Empty string means the current working directory.
 
     skip_r_bins: integer or tuple of two integers
         (Optional) removal of some radial bins.
@@ -77,7 +77,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
         Selected common keys are: ``"full_theory_covariance"`` for the final covariance matrix and ``"shot_noise_rescaling"`` for the shot-noise rescaling value(s).
     """
     # Set default output directory if not set
-    if not out_dir: out_dir = file_root
+    if out_dir is None: out_dir = file_root
 
     # Simple auto-determination of modes
     if jackknife is None: jackknife = os.path.isdir(os.path.join(file_root, "xi_jack"))
