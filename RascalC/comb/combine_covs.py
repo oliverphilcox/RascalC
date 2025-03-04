@@ -1,5 +1,3 @@
-"This reads two sets of RascalC results and two cosmodesi/pycorr .npy files to combine two covs following NS/GCcomb procedure. Covariance of N and S 2PCF is neglected."
-
 from pycorr import TwoPointCorrelationFunction
 import numpy as np
 from ..pycorr_utils.utils import reshape_pycorr
@@ -7,7 +5,47 @@ from ..cov_utils import get_cov_header, load_cov
 from ..pycorr_utils.counts import get_counts_from_pycorr
 
 
-def combine_covs(rascalc_results1: str, rascalc_results2: str, pycorr_file1: str, pycorr_file2: str, output_cov_file: str, n_mu_bins: int | None = None, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function = print):
+def combine_covs(rascalc_results1: str, rascalc_results2: str, pycorr_file1: str, pycorr_file2: str, output_cov_file: str, n_mu_bins: int | None = None, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function = print) -> np.ndarray[float]:
+    """
+    Produce s,mu mode single-tracer covariance matrix for the region/footprint that is a combination of two regions/footprints neglecting the correlations between the clustering statistics in the different regions.
+    For additional details, see Appendix B.1 of `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_.
+
+    Parameters
+    ----------
+    rascalc_results1, rascalc_results2 : string
+        Filenames for the RascalC (post-processing) results for the two regions in NumPy format.
+    
+    pycorr_file1, pycorr_file2 : string
+        Filenames for the ``pycorr`` (https://github.com/cosmodesi/pycorr) ``.npy`` files with the correlation functions and pair counts for the two regions.
+        The order of regions must be the same as in RascalC results.
+    
+    output_cov_file : string
+        Filename for the output text file, in which the covariance matrix will be saved.
+
+    n_mu_bins : integer
+        The number of angular (mu) bins, must match the RascalC results.
+
+    r_step : float
+        The width of the radial (separation) bins, must match the RascalC results.
+    
+    skip_r_bins : integer or tuple of two integers
+        (Optional) removal of some radial bins from the loaded ``pycorr`` counts before adjusting the radial (separation) bin width to match the covariance settings.
+        First (or the only) number sets the number of radial/separation bins to skip from the beginning.
+        Second number (if provided) sets the number of radial/separation bins to skip from the end.
+        By default, no bins are skipped.
+        E.g. if the ``pycorr`` counts are in 1 Mpc/h bins from 0 to 200 Mpc/h and the RascalC covariances are computed only between 20 and 200 Mpc/h, ``skip_r_bins`` should be ``20``.
+    
+    output_cov_file1, output_cov_file2 : string or None
+        (Optional) if provided, the text covariance matrices for the corresponding region will be saved in this file.
+    
+    print_function : Callable
+        (Optional) custom function to use for printing. Default is ``print``.
+
+    Returns
+    -------
+    combined_cov : np.ndarray[float]
+        The resulting covariance matrix for the combined region.
+    """
     # Read RascalC results
     header1 = get_cov_header(rascalc_results1)
     cov1 = load_cov(rascalc_results1, print_function)
@@ -26,3 +64,4 @@ def combine_covs(rascalc_results1: str, rascalc_results2: str, pycorr_file1: str
     # following xi = (xi1 * weight1 + xi2 * weight2) / (weight1 + weight2)
     cov = (cov1 * weight1[None, :] * weight1[:, None] + cov2 * weight2[None, :] * weight2[:, None]) / (weight1 + weight2)[None, :] / (weight1 + weight2)[:, None]
     np.savetxt(output_cov_file, cov, header = header) # includes source parts and their shot-noise rescaling values in the header
+    return cov
