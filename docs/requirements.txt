@@ -1,4 +1,4 @@
 recommonmark
 sphinx-rtd-theme
 graphviz
-pycorr
+git+https://github.com/cosmodesi/pycorr
