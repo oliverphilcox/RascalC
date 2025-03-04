@@ -1,4 +1,4 @@
-Package Installation
+Package installation
 ====================
 
 .. highlight:: bash
