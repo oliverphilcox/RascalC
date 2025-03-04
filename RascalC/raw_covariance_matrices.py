@@ -228,22 +228,41 @@ def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, n_samples:
 
 def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_samples: list[None | int | Iterable[int] | Iterable[bool]], output_root: str, collapse_factor: int = 1, print_function = print) -> dict[str]:
     """
-    Catenate the raw covariance matrices from one or more input directories, assuming they are from similar runs: the same number of random points, N2, N3, N4 and loops per sample.
+    Catenate the raw covariance matrices from one or more input directories, assuming they are from similar runs: the same number of input random points, ``N2``, ``N3``, ``N4`` and ``loops_per_sample``.
 
-    n is the number of radial bins.
-    mstr is m{number of angular bins} in s_mu mode and l{max_multipole} in Legendre modes.
+    Parameters
+    ----------
+    n : integer
+        The number of radial bins.
 
-    input_roots are input directories.
+    mstr : string
+        The next part of the output configuration label: ``m{number of angular bins}`` in s_mu mode and ``l{max_multipole}`` in Legendre modes.
 
-    Each element of ns_samples allows to select subsamples flexibly from the corresponding directory (according to `load_raw_covariances`):
-    - if None (default) returns all samples;
-    - if a positive integer, returns as many samples from the beginning;
-    - if a sequence of integers, returns subsamples with indices from this sequence;
-    - sequence of boolean values is interpreted as a boolean mask for subsamples.
+    input_roots : list of strings
+        Input directories to catenate from.
 
-    output_root is the output directory.
+    ns_samples : list of the same length as ``input_roots``
+        Each element allows to select subsamples flexibly from the corresponding input directory:
 
-    collapse_factor allows to reduce the number of subsamples by averaging over a given number of adjacent subsamples.
+            - if None, returns all samples;
+            - if a positive integer, returns as many samples from the beginning;
+            - if a sequence of integers, returns subsamples with indices from this sequence;
+            - sequence of boolean values is interpreted as a boolean mask for subsamples.
+
+    output_root : string
+        The output directory, in which the NumPy file with the resulting raw covariance matrix arrays is created.
+
+    collapse_factor : positive integer
+        (Optional) allows to reduce the number of subsamples by averaging over a given number of adjacent subsamples.
+        Default value is 1, meaning no reduction.
+    
+    print_function : Callable
+        (Optional) custom function to use for printing. Default is ``print``.
+
+    Returns
+    -------
+    catenation_results : dict[str, np.ndarray[float]]
+        Catenated raw covariance matrices as a dictionary with string keys and Numpy array values. All this information is also saved in a ``Raw_Covariance_Matrices*.npz`` file in the ``output_root``.
     """
     if collapse_factor <= 0: raise ValueError("Collapsing factor must be positive")
     if len(input_roots) < 1: raise ValueError("Need at least one input directory")
