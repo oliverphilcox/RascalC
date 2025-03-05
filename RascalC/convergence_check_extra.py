@@ -11,8 +11,8 @@ from .cov_comparison import rms_eig_inv_test_covs, KL_div_covs, chi2_red_covs
 
 def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_function = blank_function) -> dict[str, float]:
     """
-    Compute the selected comparison measures between two covariance matrices and save to a dictionary.
-    Optionally, use print_function to report the results.
+    Compute the selected comparison measures between two covariance matrices and return as a dictionary.
+    Optionally, use ``print_function`` to report the results.
     """
     result = dict()
 
@@ -30,9 +30,9 @@ def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_f
 
 def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, float]]:
     """
-    Perform two different splittings in halves using the covariance matrix samples c_samples and compute the comparison measures between the two average covariance matrices.
-    Optionally, use only `n_samples` first samples.
-    Further optionally, use `print_function` to report the results.
+    Perform two different splittings in halves using the covariance matrix samples ``c_samples``, compute the comparison measures between the two average covariance matrices and return as a dictionary.
+    Optionally, use only ``n_samples`` first samples.
+    Further optionally, use ``print_function`` to report the results.
     """
     if n_samples is None: n_samples = len(c_samples)
     n_samples_2 = n_samples // 2
@@ -54,10 +54,10 @@ def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: 
 
 def convergence_check_extra(rascalc_results: dict[str], n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, dict[str, float]]]:
     """
-    Perform two different splittings in halves using the RascalC results file/dictionary and compute the comparison measures between the two average covariance matrices.
+    Perform two different splittings in halves using the RascalC results file/dictionary, compute the comparison measures between the two average covariance matrices and return as a dictionary.
     Do this for full and jackknife covariance matrices (if the latter are present).
-    Optionally, use only `n_samples` first samples.
-    Further optionally, use `print_function` to report the results.
+    Optionally, use only ``n_samples`` first samples.
+    Further optionally, use ``print_function`` to report the results.
     """
     print_function("Full covariance")
     result = {"full": convergence_check_extra_splittings(rascalc_results["individual_theory_covariances"], n_samples, print_function)}
@@ -71,10 +71,10 @@ def convergence_check_extra(rascalc_results: dict[str], n_samples: int | None = 
 
 def convergence_check_extra_file(rascalc_results_filename: str, n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, dict[str, float]]]:
     """
-    Perform two different splittings in halves using the RascalC results filename and compute the comparison measures between the two average covariance matrices.
+    Perform two different splittings in halves using the RascalC results filename, compute the comparison measures between the two average covariance matrices and return as a dictionary.
     Do this for full and jackknife covariance matrices (if the latter are present).
-    Optionally, use only `n_samples` first samples.
-    Further optionally, use `print_function` to report the results.
+    Optionally, use only ``n_samples`` first samples.
+    Further optionally, use ``print_function`` to report the results.
     """
     with np.load(rascalc_results_filename) as f:
         return convergence_check_extra(f, n_samples, print_function)
