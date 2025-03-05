@@ -7,7 +7,7 @@ name = "RascalC"
 dynamic = ["version"]
 description = 'A Fast Code for Galaxy Covariance Matrix Estimation'
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 # license = "MIT"
 keywords = ['correlation functions', 'simulations', 'surveys', 'galaxies']
 authors = [
@@ -28,9 +28,9 @@ classifiers = [
     'Operating System :: POSIX',
     'Programming Language :: C++',
     'Programming Language :: Python',
-    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
 ]
 dependencies = ['setuptools', 'numpy>=1.23', 'scipy', 'astropy', 'pycorr']
 
