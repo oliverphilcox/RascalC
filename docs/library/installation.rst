@@ -45,7 +45,7 @@ RascalC Python package
 
 Clone the Github repository and install the package from the source directory::
 
-    git clone https://github.com/misharash/RascalC
+    git clone https://github.com/oliverphilcox/RascalC
     cd RascalC
     python3 -m pip install .
 
@@ -53,6 +53,6 @@ Make sure to reinstall after pulling updates.
 
 Or you can install with a single command::
 
-    python3 -m pip install https://github.com/misharash/RascalC.git
+    python3 -m pip install https://github.com/oliverphilcox/RascalC.git
 
 Repeat this command to update the package.

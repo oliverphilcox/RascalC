@@ -35,9 +35,9 @@ classifiers = [
 dependencies = ['setuptools', 'numpy>=1.23', 'scipy', 'astropy', 'pycorr']
 
 [project.urls]
-Documentation = "https://github.com/misharash/RascalC#readme"
-Issues = "https://github.com/misharash/RascalC/issues"
-Source = "https://github.com/misharash/RascalC"
+Documentation = "https://github.com/oliverphilcox/RascalC#readme"
+Issues = "https://github.com/oliverphilcox/RascalC/issues"
+Source = "https://github.com/oliverphilcox/RascalC"
 
 [project.optional-dependencies]
 jackknife = ['scikit-learn']
