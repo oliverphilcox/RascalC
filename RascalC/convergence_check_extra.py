@@ -1,37 +1,17 @@
-## Script to perform an extra convergence check on full integrals
-## More specifically, divide integral subsamples into halves and check similarity of their average results
-## Should work in any case - default, jackknife, Legendre, multi-tracer - as it utilizes universal data from RascalC file
+"""
+Functions to perform extra convergence check on full (and jackknife) RascalC integrals.
+More specifically, divide integral subsamples into halves and check similarity of their average results.
+These methods work in any mode — e.g. jackknife, Legendre, multi-tracer — as it utilizes universal data from RascalC file
+"""
 
 import numpy as np
 from .utils import blank_function
-
-
-# methods to assess similarity
-def rms_eig_inv_test_covs(C1: np.ndarray[float], C2: np.ndarray[float]) -> float:
-    "Compute the R_inv comparison measure between two covariance matrices; the first is inverted."
-    Psi1 = np.linalg.inv(C1)
-    N = len(C2)
-    tmp = Psi1.dot(C2) - np.eye(N)
-    return np.sqrt(np.sum(np.diag(tmp.dot(tmp))) / N)
-
-
-def KL_div_covs(C1: np.ndarray[float], C2: np.ndarray[float]) -> float:
-    "Compute the Kullback-Leibler divergence between two covariance matrices; the first is inverted."
-    Psi1 = np.linalg.inv(C1)
-    Psi1C2 = Psi1.dot(C2)
-    return (np.trace(Psi1C2) - len(C2) - np.log(np.linalg.det(Psi1C2)))/2
-
-
-def chi2_red_covs(C1: np.ndarray[float], C2: np.ndarray[float]) -> float:
-    "Compute the reduced chi-squared comparison measure between two covariance matrices; the first is inverted."
-    Psi1 = np.linalg.inv(C1)
-    Psi1C2 = Psi1.dot(C2)
-    return np.trace(Psi1C2)/len(C2)
+from .cov_comparison import rms_eig_inv_test_covs, KL_div_covs, chi2_red_covs
 
 
 def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_function = blank_function) -> dict[str, float]:
     """
-    Compute the selected comparison measures between two covariance matrices and save to dictionary.
+    Compute the selected comparison measures between two covariance matrices and save to a dictionary.
     Optionally, use print_function to report the results.
     """
     result = dict()
