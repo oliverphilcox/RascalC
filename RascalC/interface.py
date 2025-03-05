@@ -158,16 +158,17 @@ def run_cov(mode: str,
     
     xi_cut_s : float
         (Optional) separation value beyond which the correlation function is assumed to be zero for the covariance matrix integrals. Default: 250.
-        Between the maximum separation from ``xi_table``s and ``xi_cut_s``, the correlation function is extrapolated as :math:`\propto s^{-4}`.
+        Between the maximum separation from ``xi_table``\s and ``xi_cut_s``, the correlation function is extrapolated as :math:`\propto s^{-4}`.
     
     xi_refinement_iterations : integer
         (Optional) number of iterations in the correlation function refinement procedure for interpolation inside the code, ensuring that the bin-averaged interpolated values match the binned correlation function estimates. Default: 10.
-        Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table*`` are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
+        Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table``\s are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
 
     nthread : integer
         Number of (OpenMP) threads to use.
         Can not utilize more threads than ``n_loops``.
-        IMPORTANT: AVOID multi-threading in the Python process calling this function (e.g. at NERSC this would mean not setting `OMP_*` and other `*_THREADS` environment variables; the code should be able to set them by itself). Otherwise the code may run effectively single-threaded. If you need other multi-threaded calculations, run them separately or spawn sub-processes.
+
+            - IMPORTANT: AVOID multi-threading in the Python process calling this function (e.g. at NERSC this would mean not setting ``OMP_*`` and other ``*_THREADS`` environment variables; the code should be able to set them by itself). Otherwise the code may run effectively single-threaded. If you need other multi-threaded calculations, run them separately or spawn sub-processes.
     
     N2 : integer
         Number of secondary points to sample per each primary random point.
@@ -184,8 +185,8 @@ def run_cov(mode: str,
     n_loops : integer
         Number of integration loops.
         For optimal balancing and minimal idle time, should be a few times (at least twice) ``nthread`` and exactly divisible by it.
-        The runtime roughly scales as the number of quads per the number of threads, :math:`\mathcal{O}`(``N_randoms * N2 * N3 * N4 * n_loops / nthread``).
-        For reference, on NERSC Perlmutter CPU node the code processed about 5 millions (5e6) quads per second per (hyper)thread (a node has 256 of them) as of October 2023. (In Legendre projected mode, which is probably the slowest, with N2=5, N3=10, N4=20.)
+        The runtime roughly scales as the number of quads per the number of threads, :math:`\mathcal{O}`\(``N_randoms * N2 * N3 * N4 * n_loops / nthread``).
+        For reference, on NERSC Perlmutter CPU half-node the code processed about 27 millions (2.7e7) quads per second per thread (using 64 threads on half a node) as of December 2024. (In Legendre projected mode, which is probably the slowest, with ``N2 = 5``, ``N3 = 10``, ``N4 = 20``.)
         In single-tracer mode, the number of quads is ``N_randoms * N2 * N3 * N4 * n_loops``.
         In two-tracer mode, the number of quads is ``(5 * N_randoms1 + 2 * N_randoms2) * N2 * N3 * N4 * n_loops``.
 
