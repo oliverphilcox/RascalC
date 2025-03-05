@@ -1,6 +1,9 @@
 Essential functions
 ===================
 
+For a higher-level overview of the RascalC methodology, we suggest reading Sections 2.1 and 3 of `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_.
+Many of the more technical (algorithm implementation) details omitted there are described in Sections 3 and 4 of `Philcox et al. 2020 <https://arxiv.org/abs/1904.11070>`_.
+
 The main computation wrapper
 ----------------------------
 
