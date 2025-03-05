@@ -4,6 +4,24 @@ Advanced functions
 This list is not complete, but aims to provide references for the more used/useful extended features.
 
 
+Covariance comparison functions
+-------------------------------
+
+.. automodule:: RascalC.cov_comparison
+    :members:
+    :member-order: bysource
+
+
+Extra convergence check functions
+---------------------------------
+
+Extra convergence check is performed in the main wrapper function (``RascalC.run_cov``) and also performed by default in the automatic post-processing function (``RascalC.post_process_auto``), but the following functions may be useful to run additionally.
+
+.. automodule:: RascalC.convergence_check_extra
+    :members:
+    :member-order: bysource
+
+
 Sample catenation function
 --------------------------
 
