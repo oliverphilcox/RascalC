@@ -1,6 +1,9 @@
 Advanced functions
 ==================
 
+This list is not complete, but aims to provide references for the more used/useful extended features.
+
+
 Sample catenation function
 --------------------------
 
