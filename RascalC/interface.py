@@ -62,7 +62,7 @@ def run_cov(mode: str,
         Has to be even.
     
     boxsize : None or float
-        Periodic box side (one number only cubic supported so far).
+        Periodic box side (one number — so far, only cubic boxes are supported).
         All the coordinates need to be between 0 and ``boxsize``.
         If None (default), assumed aperiodic.
 
@@ -126,11 +126,11 @@ def run_cov(mode: str,
     
     no_data_galaxies1 : None or float
         (Optional) number of first tracer data (not random!) points for the covariance rescaling.
-        If not given or None, the code will attempt to obtain it from ``pycorr_allcounts_11``.
+        If None (default), the code will attempt to obtain it from ``pycorr_allcounts_11``.
     
     no_data_galaxies2 : None or float
         (Optional) number of second tracer data (not random!) points for the covariance rescaling.
-        If not given or None, the code will attempt to obtain it from ``pycorr_allcounts_22``.
+        If None (default), the code will attempt to obtain it from ``pycorr_allcounts_22``.
     
     xi_table_11 : ``pycorr.TwoPointEstimator``, or sequence (tuple or list) of 3 elements: (s_values, mu_values, xi_values), or sequence (tuple or list) of 4 elements: (s_values, mu_values, xi_values, s_edges)
         Table of first tracer auto-correlation function in separation (s) and µ bins.
@@ -165,7 +165,7 @@ def run_cov(mode: str,
         Important: the refinement procedure is disabled completely regardless of this setting if the ``xi_table*`` are sequences of 3 elements, since they are presumed to be a theoretical model evaluated at a grid of s, mu values and not bin averages.
 
     nthread : integer
-        Number of hyperthreads to use.
+        Number of (OpenMP) threads to use.
         Can not utilize more threads than ``n_loops``.
         IMPORTANT: AVOID multi-threading in the Python process calling this function (e.g. at NERSC this would mean not setting `OMP_*` and other `*_THREADS` environment variables; the code should be able to set them by itself). Otherwise the code may run effectively single-threaded. If you need other multi-threaded calculations, run them separately or spawn sub-processes.
     
@@ -184,7 +184,7 @@ def run_cov(mode: str,
     n_loops : integer
         Number of integration loops.
         For optimal balancing and minimal idle time, should be a few times (at least twice) ``nthread`` and exactly divisible by it.
-        The runtime roughly scales as the number of quads per the number of threads, O(N_randoms * N2 * N3 * N4 * n_loops / nthread).
+        The runtime roughly scales as the number of quads per the number of threads, :math:`\mathcal{O}`(``N_randoms * N2 * N3 * N4 * n_loops / nthread``).
         For reference, on NERSC Perlmutter CPU node the code processed about 5 millions (5e6) quads per second per (hyper)thread (a node has 256 of them) as of October 2023. (In Legendre projected mode, which is probably the slowest, with N2=5, N3=10, N4=20.)
         In single-tracer mode, the number of quads is ``N_randoms * N2 * N3 * N4 * n_loops``.
         In two-tracer mode, the number of quads is ``(5 * N_randoms1 + 2 * N_randoms2) * N2 * N3 * N4 * n_loops``.
@@ -202,11 +202,14 @@ def run_cov(mode: str,
         Directory for temporary files. Can be deleted after running the code, and is cleaned up after the normal execution.
         More disk space required - needs to store all the input arrays in the current implementation.
 
-    skip_s_bins : integer
-        (Optional) number of lowest separations bins to skip at the post-processing stage. Those tend to converge worse and probably will not be precise due to the limitations of the formalism. Default 0 (no skipping).
+    skip_s_bins : integer or tuple of two integers
+        (Optional) removal of separations bins at the post-processing stage.
+        First (or the only) number sets the number of radial/separation bins to skip from the beginning (lowest-separation bins tend to converge worse and probably will not be precise due to the limitations of the formalism).
+        Second number (if provided) sets the number of radial/separation bins to skip from the end.
+        By default, no bins are skipped at the post-processing stage.
 
     skip_l : integer
-        (Only for the Legendre modes; optional) number of highest (even) multipoles to skip at the post-processing stage. Those tend to converge worse. Default 0 (no skipping).
+        (Only for the Legendre modes; optional) number of highest (even) multipoles to skip at the post-processing stage. (Higher multipole moments of the correlation function tend to converge worse.) Default 0 (no skipping).
 
     shot_noise_rescaling1 : float
         (Optional) shot-noise rescaling value for the first tracer if known beforehand. Default 1 (no rescaling).
@@ -216,22 +219,22 @@ def run_cov(mode: str,
         (Optional) shot-noise rescaling value for the second tracer if known beforehand. Default 1 (no rescaling).
         Will be ignored in jackknife mode - then shot-noise rescaling is optimized on the auto-covariance.
 
-    sampling_grid_size : integer
-        (Optional) first guess for the sampling grid size.
-        The code should be able to find a suitable number automatically.
-
-    coordinate_scaling : float
-        (Optional) scaling factor for all the Cartesian coordinates. Default 1 (no rescaling).
-        This option is supported by the C++ code, but its use cases are not very clear.
-
     seed : integer or None
         (Optional) If given as an integer, allows to reproduce the results with the same settings, except the number of threads.
         Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
         If None (default), the initialization will be random.
 
+    sampling_grid_size : integer
+        (Optional) first guess for the sampling grid size.
+        The code should be able to find a suitable number automatically.
+
     verbose : bool
         (Optional) report each 5% of each loop's progress by printing. Default False (off).
         This can be a lot of output, only use when the number of loops is small.
+
+    coordinate_scaling : float
+        (Optional) scaling factor for all the Cartesian coordinates. Default 1 (no rescaling).
+        This option is supported by the C++ code, but its use cases are not very clear.
 
     Returns
     -------
