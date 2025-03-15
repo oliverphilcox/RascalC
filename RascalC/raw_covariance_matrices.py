@@ -5,7 +5,7 @@ import os
 from glob import glob
 from shutil import copy2, copytree
 from warnings import warn
-from collections.abc import Iterable
+from typing import Callable, Iterable
 from .utils import rmdir_if_exists_and_empty
 
 
@@ -57,7 +57,7 @@ def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[s
     np.savez_compressed(output_filename, **output_dictionary)
 
 
-def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_function = print) -> dict[str, dict[str, np.ndarray[float]]]:
+def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_function: Callable[[str], None] = print) -> dict[str, dict[str, np.ndarray[float]]]:
     """
     Collect the covariance matrices from text files written by the C++ code and organize them into a Numpy .npz file.
     With cleanup enabled (default), deletes the text files after collection.
@@ -153,7 +153,7 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_fu
     return return_dictionary
 
 
-def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print) -> dict[str]:
     """
     Load the raw covariance matrices as a dictionary. Uses the Numpy file if it exists, otherwise tried to run the collection function.
 
@@ -192,7 +192,7 @@ def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Ite
     return raw_cov
 
 
-def load_raw_covariances_smu(file_root: str, n: int, m: int, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+def load_raw_covariances_smu(file_root: str, n: int, m: int, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print) -> dict[str]:
     """
     Load the raw covariance matrices from the s_mu mode as a dictionary. Uses the Numpy file if it exists, otherwise tried to run the collection function.
 
@@ -226,7 +226,7 @@ def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, n_samples:
     return load_raw_covariances(file_root, label, n_samples, print_function)
 
 
-def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_samples: list[None | int | Iterable[int] | Iterable[bool]], output_root: str, collapse_factor: int = 1, print_function = print) -> dict[str]:
+def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_samples: list[None | int | Iterable[int] | Iterable[bool]], output_root: str, collapse_factor: int = 1, print_function: Callable[[str], None] = print) -> dict[str]:
     """
     Catenate the raw covariance matrices from one or more input directories, assuming they are from similar runs: the same number of input random points, ``N2``, ``N3``, ``N4`` and ``loops_per_sample``.
 

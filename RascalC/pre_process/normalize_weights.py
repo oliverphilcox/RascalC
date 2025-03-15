@@ -7,9 +7,10 @@
 """
 
 import numpy as np
+from typing import Callable
 
 
-def normalize_weights_files(input_file: str, output_file: str, print_function = print) -> None:
+def normalize_weights_files(input_file: str, output_file: str, print_function: Callable[[str], None] = print) -> None:
     print_function("Reading from file %s" % input_file)
     contents = np.loadtxt(input_file)
     print_function("Read %d particles" % contents.shape[0])

@@ -4,10 +4,11 @@
 import numpy as np
 import os
 from .utils import cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
-from ..raw_covariance_matrices import load_raw_covariances_smu, Iterable
+from ..raw_covariance_matrices import load_raw_covariances_smu
+from typing import Literal, Callable, Iterable
 
 
-def post_process_default(file_root: str, n: int, m: int, outdir: str, alpha: float = 1, skip_r_bins: int | tuple[int, int] = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+def post_process_default(file_root: str, n: int, m: int, outdir: str, alpha: float = 1, skip_r_bins: int | tuple[int, int] = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print) -> dict[str]:
     cov_filter = cov_filter_smu(n, m, skip_r_bins)
 
     input_file = load_raw_covariances_smu(file_root, n, m, n_samples, print_function)

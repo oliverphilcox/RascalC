@@ -20,6 +20,7 @@ from astropy.constants import c as c_light
 import astropy.units as u
 from .utils import read_particles_fits_file
 from .wcdm.wcdm import coorddist
+from typing import Callable
 
 
 H0_h = 100 * u.km / u.s / u.Mpc # h = 1
@@ -50,7 +51,7 @@ def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega
     all_y = comoving_radius_Mpch * np.sin(all_theta_rad) * np.sin(all_phi_rad)
     return np.array((all_x, all_y, all_z)).T
 
-def convert_to_xyz_files(input_file: str, output_file: str, Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1, FKP_weights: bool | tuple[float, str] = False, mask: int = 0, use_weights: bool = True, print_function = print):
+def convert_to_xyz_files(input_file: str, output_file: str, Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1, FKP_weights: bool | tuple[float, str] = False, mask: int = 0, use_weights: bool = True, print_function: Callable[[str], None] = print):
     # default cosmology from the BOSS DR12 2016 clustering paper assuming LCDM
     print_function(f"Using cosmological parameters as Omega_m = {Omega_m}, Omega_k = {Omega_k}, w = {w_dark_energy}")
     # Load in data:

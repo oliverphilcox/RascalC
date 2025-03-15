@@ -3,6 +3,7 @@
 import pycorr
 import numpy as np
 from .utils import reshape_pycorr, write_xi_file
+from typing import Callable
 
 
 def get_input_xi_from_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator):
@@ -10,7 +11,7 @@ def get_input_xi_from_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPoin
     return xi_estimator.corr * xi_estimator.R1R2.normalized_wcounts() / xi_estimator.S1S2.normalized_wcounts()
 
 
-def convert_xi_from_pycorr_to_file(xi_estimators: list[pycorr.twopoint_estimator.BaseTwoPointEstimator], outfile_name: str, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, print_function = print) -> tuple[float, float]:
+def convert_xi_from_pycorr_to_file(xi_estimators: list[pycorr.twopoint_estimator.BaseTwoPointEstimator], outfile_name: str, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, print_function: Callable[[str], None] = print) -> tuple[float, float]:
     # Compute mean data sizes
     mean_data_size1 = np.mean([xi_estimator.D1D2.size1 for xi_estimator in xi_estimators])
     mean_data_size2 = np.mean([xi_estimator.D1D2.size2 for xi_estimator in xi_estimators])

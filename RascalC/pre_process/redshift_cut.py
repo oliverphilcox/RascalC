@@ -15,9 +15,10 @@ Output file format has (Ra,Dec,z,w) coordinates
 
 import numpy as np
 from .utils import read_particles_fits_file
+from typing import Callable
 
 
-def redshift_cut_files(input_file: str, output_file: str, z_min: float, z_max: float, FKP_weights: bool | tuple[float, str] = False, mask: int = 0, use_weights: bool = True, print_function = print):
+def redshift_cut_files(input_file: str, output_file: str, z_min: float, z_max: float, FKP_weights: bool | tuple[float, str] = False, mask: int = 0, use_weights: bool = True, print_function: Callable[[str], None] = print):
     # Load in data:
     print_function("Reading input file %s in Ra,Dec,z coordinates\n"%input_file)
     if input_file.endswith(".fits"):

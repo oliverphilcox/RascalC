@@ -62,7 +62,7 @@ def convert_cov_legendre_multi_to_cross(cov: np.ndarray[float], max_l: int) -> n
     return cov
 
 
-def load_cov(rascalc_results_file: str, print_function: Callable = print) -> np.ndarray[float]:
+def load_cov(rascalc_results_file: str, print_function: Callable[[str], None] = print) -> np.ndarray[float]:
     "Load the theoretical covariance matrix from RascalC results file as-is, intended for the s_mu mode."
     with np.load(rascalc_results_file) as f:
         print_function(f"Max abs eigenvalue of bias correction matrix is {np.max(np.abs(np.linalg.eigvals(f['full_theory_D_matrix']))):.2e}")
@@ -70,47 +70,47 @@ def load_cov(rascalc_results_file: str, print_function: Callable = print) -> np.
         return f['full_theory_covariance']
 
 
-def load_cov_legendre(rascalc_results_file: str, max_l: int, print_function: Callable = print) -> np.ndarray[float]:
+def load_cov_legendre(rascalc_results_file: str, max_l: int, print_function: Callable[[str], None] = print) -> np.ndarray[float]:
     "Load and transpose the theoretical covariance matrix from RascalC results file in Legendre single-tracer mode."
     return convert_cov_legendre(load_cov(rascalc_results_file, print_function), max_l)
 
 
-def load_cov_legendre_multi(rascalc_results_file: str, max_l: int, print_function: Callable = print) -> np.ndarray[float]:
+def load_cov_legendre_multi(rascalc_results_file: str, max_l: int, print_function: Callable[[str], None] = print) -> np.ndarray[float]:
     "Load and transpose the theoretical covariance matrix from RascalC results file in Legendre two-tracer mode."
     return convert_cov_legendre_multi(load_cov(rascalc_results_file, print_function), max_l)
 
 
-def load_cov_cross_from_multi(rascalc_results_file: str, print_function: Callable = print) -> np.ndarray[float]:
+def load_cov_cross_from_multi(rascalc_results_file: str, print_function: Callable[[str], None] = print) -> np.ndarray[float]:
     "Load the theoretical covariance matrix for cross-correlation only from RascalC results file in Legendre two-tracer mode."
     return convert_cov_legendre_multi_to_cross(load_cov(rascalc_results_file, print_function))
 
 
-def load_cov_legendre_cross_from_multi(rascalc_results_file: str, max_l: int, print_function: Callable = print) -> np.ndarray[float]:
+def load_cov_legendre_cross_from_multi(rascalc_results_file: str, max_l: int, print_function: Callable[[str], None] = print) -> np.ndarray[float]:
     "Load and transpose the theoretical covariance matrix for cross-correlation only from RascalC results file in Legendre two-tracer mode."
     return convert_cov_legendre_multi_to_cross(load_cov(rascalc_results_file, print_function), max_l)
 
 
-def export_cov(rascalc_results_file: str, output_cov_file: str, print_function: Callable = print) -> None:
+def export_cov(rascalc_results_file: str, output_cov_file: str, print_function: Callable[[str], None] = print) -> None:
     "Export the theoretical covariance matrix from RascalC results file to a text file as-is, intended for the s_mu mode."
     np.savetxt(output_cov_file, load_cov(rascalc_results_file, print_function = print_function), header = get_cov_header(rascalc_results_file))
 
 
-def export_cov_legendre(rascalc_results_file: str, max_l: int, output_cov_file: str, print_function: Callable = print) -> None:
+def export_cov_legendre(rascalc_results_file: str, max_l: int, output_cov_file: str, print_function: Callable[[str], None] = print) -> None:
     "Export the theoretical covariance matrix from RascalC results file to a text file with transposition appropriate for single-tracer Legendre modes."
     np.savetxt(output_cov_file, load_cov_legendre(rascalc_results_file, max_l, print_function = print_function), header = get_cov_header(rascalc_results_file))
 
 
-def export_cov_legendre_multi(rascalc_results_file: str, max_l: int, output_cov_file: str, print_function: Callable = print) -> None:
+def export_cov_legendre_multi(rascalc_results_file: str, max_l: int, output_cov_file: str, print_function: Callable[[str], None] = print) -> None:
     "Export the theoretical covariance matrix from RascalC results file to a text file with transposition appropriate for two-tracer Legendre modes."
     np.savetxt(output_cov_file, load_cov_legendre_multi(rascalc_results_file, max_l, print_function = print_function), header = get_cov_header(rascalc_results_file))
 
 
-def export_cov_cross(rascalc_results_file: str, output_cov_file: str, print_function: Callable = print) -> None:
+def export_cov_cross(rascalc_results_file: str, output_cov_file: str, print_function: Callable[[str], None] = print) -> None:
     "Export the theoretical covariance matrix for cross-correlation only from RascalC results file to a text file without transposition, intended for the s_mu mode."
     np.savetxt(output_cov_file, load_cov_cross_from_multi(rascalc_results_file, print_function = print_function), header = get_cov_header(rascalc_results_file))
 
 
-def export_cov_legendre_cross(rascalc_results_file: str, max_l: int, output_cov_file: str, print_function: Callable = print) -> None:
+def export_cov_legendre_cross(rascalc_results_file: str, max_l: int, output_cov_file: str, print_function: Callable[[str], None] = print) -> None:
     "Export the theoretical covariance matrix for cross-correlation only from RascalC results file to a text file with transposition appropriate for two-tracer Legendre modes."
     np.savetxt(output_cov_file, load_cov_legendre_cross_from_multi(rascalc_results_file, max_l, print_function = print_function), header = get_cov_header(rascalc_results_file))
 

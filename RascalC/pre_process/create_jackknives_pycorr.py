@@ -3,6 +3,7 @@
 import numpy as np
 import os
 import pycorr
+from typing import Callable
 
 
 def get_subsampler_xirunpc(ref_positions: np.ndarray[float], njack: int, position_type: str = 'rdd') -> pycorr.KMeansSubsampler:
@@ -26,7 +27,7 @@ def add_subsample_labels(subsampler: pycorr.twopoint_jackknife.BaseSubsampler, p
     return np.column_stack((pos_etc, labels))
 
 
-def create_jackknives_pycorr_files(reffile_name: str, infile_name: str, outfile_name: str, njack: int, print_function = print):
+def create_jackknives_pycorr_files(reffile_name: str, infile_name: str, outfile_name: str, njack: int, print_function: Callable[[str], None] = print):
     import time
     init = time.time()
 

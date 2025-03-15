@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Callable, Literal
 import os
 from glob import glob
 from re import fullmatch
@@ -15,7 +15,7 @@ from .legendre_multi import post_process_legendre_multi
 from .legendre_mix_jackknife import post_process_legendre_mix_jackknife
 
 
-def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: int = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, print_function = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
+def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, print_function: Callable[[str], None] = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
     r"""
     Automatic but highly customizable post-processing interface. Designed to work with the ``RascalC.run_cov`` outputs.
     Do not run this (or any other post-processing function/script) while the main RascalC computation is running — this may delete the output directory and cause the code to crash.

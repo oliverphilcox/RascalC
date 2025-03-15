@@ -3,9 +3,10 @@
 import numpy as np
 import time
 from tqdm import tqdm
+from typing import Callable
 
 
-def take_subset_of_particles(infile_name: str, outfile_name: str, N: int, print_function = print) -> None:
+def take_subset_of_particles(infile_name: str, outfile_name: str, N: int, print_function: Callable[[str], None] = print) -> None:
     init_time=time.time()
 
     # First count number of lines

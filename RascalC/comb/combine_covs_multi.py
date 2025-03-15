@@ -3,8 +3,9 @@ import numpy as np
 from ..pycorr_utils.utils import reshape_pycorr
 from ..cov_utils import get_cov_header, load_cov
 from ..pycorr_utils.counts import get_counts_from_pycorr
+from typing import Callable
 
-def combine_covs_multi(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, n_mu_bins: int | None = None, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function = print) -> np.ndarray[float]:
+def combine_covs_multi(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, n_mu_bins: int | None = None, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function: Callable[[str], None] = print) -> np.ndarray[float]:
     """
     Produce s,mu mode two-tracer covariance matrix for the region/footprint that is a combination of two regions/footprints neglecting the correlations between the clustering statistics in the different regions.
     For additional details, see Appendix B.1 of `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_.
@@ -38,8 +39,8 @@ def combine_covs_multi(rascalc_results1: str, rascalc_results2: str, pycorr_file
     output_cov_file1, output_cov_file2 : string or None
         (Optional) if provided, the text covariance matrices for the corresponding region will be saved in this file.
     
-    print_function : Callable
-        (Optional) custom function to use for printing. Default is ``print``.
+    print_function : Callable[[str], None]
+        (Optional) custom function to use for printing. Needs to take string arguments and not return anything. Default is ``print``.
 
     Returns
     -------

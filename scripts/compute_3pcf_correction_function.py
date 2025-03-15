@@ -8,9 +8,10 @@ import sys
 import os
 import numpy as np
 import scipy.spatial as ss
+from typing import Callable
 
 
-def compute_3pcf_correction_function(gal_file: str, binfile: str, outdir: str, periodic: bool, RRR_file: str | None = None, print_function = print) -> None:
+def compute_3pcf_correction_function(gal_file: str, binfile: str, outdir: str, periodic: bool, RRR_file: str | None = None, print_function: Callable[[str], None] = print) -> None:
     if periodic:
         print_function("\nAssuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
     elif RRR_file is None:

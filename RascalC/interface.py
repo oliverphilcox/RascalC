@@ -4,7 +4,7 @@ import pycorr
 import numpy as np
 import os
 from datetime import datetime
-from typing import Iterable
+from typing import Iterable, Literal
 from warnings import warn
 from .pycorr_utils.utils import fix_bad_bins_pycorr, write_xi_file
 from .write_binning_file import write_binning_file
@@ -24,13 +24,13 @@ tracer1_corr = (0, 0, 1)
 tracer2_corr = (0, 1, 1)
 
 
-def run_cov(mode: str,
+def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             nthread: int, N2: int, N3: int, N4: int, n_loops: int, loops_per_sample: int,
             out_dir: str, tmp_dir: str,
             randoms_positions1: np.ndarray[float], randoms_weights1: np.ndarray[float],
             pycorr_allcounts_11: pycorr.twopoint_estimator.BaseTwoPointEstimator,
             xi_table_11: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | list[np.ndarray[float]],
-            position_type: str = "pos",
+            position_type: Literal["rdd", "xyz", "pos"] = "pos",
             xi_table_12: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | list[np.ndarray[float]] = None,
             xi_table_22: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | list[np.ndarray[float]] = None,
             xi_cut_s: float = 250, xi_refinement_iterations: int = 10,

@@ -6,7 +6,8 @@ import numpy as np
 import os
 from warnings import warn
 from .utils import gen_corr_tracers, cov_filter_smu, load_matrices_multi, check_eigval_convergence, fit_shot_noise_rescaling, add_cov_terms_multi, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
-from ..raw_covariance_matrices import load_raw_covariances_smu, Iterable
+from ..raw_covariance_matrices import load_raw_covariances_smu
+from typing import Iterable, Callable
 
 
 def load_disconnected_term_multi(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float] | list[np.ndarray[float]], weights: np.ndarray[float] | list[np.ndarray[float]], full: bool = True, ntracers: int = 2) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
@@ -86,7 +87,7 @@ def load_disconnected_term_multi(input_data: dict[str], cov_filter: np.ndarray[i
     return cx
 
 
-def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str, jackknife_file_22: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print):
+def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str, jackknife_file_22: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print):
     ## First load jackknife xi estimates from data:
     print_function("Loading correlation function jackknife estimates")
     xi_jack_11 = np.loadtxt(jackknife_file_11, skiprows=2)

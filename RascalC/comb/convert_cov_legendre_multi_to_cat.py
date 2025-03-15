@@ -6,6 +6,7 @@ from ..pycorr_utils.utils import reshape_pycorr
 from ..cov_utils import get_cov_header, load_cov_legendre_multi
 from ..pycorr_utils.counts import get_counts_from_pycorr
 from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
+from typing import Callable
 
 
 def load_cov_text(filename: str) -> tuple[np.ndarray[float], str]:
@@ -18,7 +19,7 @@ def load_cov_text(filename: str) -> tuple[np.ndarray[float], str]:
             header = l[1:].strip() # take the rest of it as header, removing the leading/trailing spaces and the newline
     return cov, header
 
-def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, print_function = print):
+def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, print_function: Callable[[str], None] = print):
     # Read RascalC results
     if any(rascalc_results.endswith(ext) for ext in (".npy", ".npz")):
         # read numpy file

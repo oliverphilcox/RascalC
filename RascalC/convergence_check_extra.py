@@ -7,9 +7,10 @@ These methods work in any mode — e.g. jackknife, Legendre, multi-tracer — as
 import numpy as np
 from .utils import blank_function
 from .cov_comparison import rms_eig_inv_test_covs, KL_div_covs, chi2_red_covs
+from typing import Callable
 
 
-def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_function = blank_function) -> dict[str, float]:
+def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_function: Callable[[str], None] = blank_function) -> dict[str, float]:
     """
     Compute the selected comparison measures between two covariance matrices and return as a dictionary.
     Optionally, use ``print_function`` to report the results.
@@ -28,7 +29,7 @@ def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_f
     return result
 
 
-def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, float]]:
+def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: int | None = None, print_function: Callable[[str], None] = blank_function) -> dict[str, dict[str, float]]:
     """
     Perform two different splittings in halves using the covariance matrix samples ``c_samples``, compute the comparison measures between the two average covariance matrices and return as a dictionary.
     Optionally, use only ``n_samples`` first samples.
@@ -52,7 +53,7 @@ def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: 
     return result
 
 
-def convergence_check_extra(rascalc_results: dict[str], n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, dict[str, float]]]:
+def convergence_check_extra(rascalc_results: dict[str], n_samples: int | None = None, print_function: Callable[[str], None] = blank_function) -> dict[str, dict[str, dict[str, float]]]:
     """
     Perform two different splittings in halves using the RascalC results file/dictionary, compute the comparison measures between the two average covariance matrices and return as a dictionary.
     Do this for full and jackknife covariance matrices (if the latter are present).
@@ -69,7 +70,7 @@ def convergence_check_extra(rascalc_results: dict[str], n_samples: int | None = 
     return result
 
 
-def convergence_check_extra_file(rascalc_results_filename: str, n_samples: int | None = None, print_function = blank_function) -> dict[str, dict[str, dict[str, float]]]:
+def convergence_check_extra_file(rascalc_results_filename: str, n_samples: int | None = None, print_function: Callable[[str], None] = blank_function) -> dict[str, dict[str, dict[str, float]]]:
     """
     Perform two different splittings in halves using the RascalC results filename, compute the comparison measures between the two average covariance matrices and return as a dictionary.
     Do this for full and jackknife covariance matrices (if the latter are present).

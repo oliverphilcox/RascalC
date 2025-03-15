@@ -3,7 +3,7 @@ from warnings import warn
 from ..utils import blank_function, symmetrized, transposed, format_skip_r_bins
 from scipy.optimize import fmin
 from scipy.linalg import sqrtm
-from typing import Callable
+from typing import Callable, Literal
 
 
 def cov_filter_smu(n: int, m: int, skip_r_bins: int | tuple[int, int] = 0):
@@ -26,7 +26,7 @@ def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int | tuple[int, int] =
     return np.ix_(indices_1d, indices_1d)
 
 
-def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tracer: int = 1, full: bool = True, jack: bool = False) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
+def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tracer: Literal[1, 2] = 1, full: bool = True, jack: bool = False) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
     """Load the single-tracer covariance matrix terms. Allows to choose the tracer index (1-based) to load."""
     joint = "j" * jack + "_"
     suffix = str(tracer) * 2 + "_full" * full
