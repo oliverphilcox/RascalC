@@ -38,7 +38,7 @@ jobs:
     - name: Install GSL
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y --no-install-recommends gsl
+        sudo apt-get install -y --no-install-recommends libgsl-dev
     - name: Install the package
       run: |
         python -m pip install .
