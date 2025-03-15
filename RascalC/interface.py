@@ -258,8 +258,6 @@ def run_cov(mode: str,
     if legendre:
         if max_l is None: raise TypeError("Max ell must be provided in Legendre mode")
         if max_l % 2 != 0: raise ValueError("Only even Legendre multipoles supported")
-    else:
-        if n_mu_bins is None: raise TypeError("Number of µ bins for the covariance matrix must be provided in s_mu mode")
 
     # Set some other flags
     periodic = bool(boxsize) # False for None (default) and 0
