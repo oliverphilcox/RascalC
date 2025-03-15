@@ -248,7 +248,7 @@ def rad_test(xmin):
     #print(scipy.integrate.romberg(integrand, xmin, 0.7, tol=1e-5, divmax=13)
     integrand = lambda y: -6.0*(1-y**-6.0)**(5.0/3.0-1.0)
     print(scipy.integrate.romberg(integrand, xmin**(-1.0/6.0), 0.7**(-1.0/6.0), tol=1e-5, divmax=13))
-    print(incomplete_beta_nrcf(-1.0/6.0,5.0/3.0,xmin,0.7))
+    print(incomplete_beta(-1.0/6.0, 5.0/3.0, xmin, 0.7))
 
 ########################  The test driver ################################
 # To run the tests, execute test()
