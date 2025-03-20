@@ -13,6 +13,7 @@ from typing import Callable
 def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_function: Callable[[str], None] = blank_function) -> dict[str, float]:
     """
     Compute the selected comparison measures between two covariance matrices and return as a dictionary.
+    This method is decribed in Section 3.2 of `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_.
     Optionally, use ``print_function`` to report the results.
     """
     result = dict()
@@ -32,6 +33,7 @@ def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_f
 def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: int | None = None, print_function: Callable[[str], None] = blank_function) -> dict[str, dict[str, float]]:
     """
     Perform two different splittings in halves using the covariance matrix samples ``c_samples``, compute the comparison measures between the two average covariance matrices and return as a dictionary.
+    This method is decribed in Section 3.2 of `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_.
     Optionally, use only ``n_samples`` first samples.
     Further optionally, use ``print_function`` to report the results.
     """
@@ -57,6 +59,7 @@ def convergence_check_extra(rascalc_results: dict[str], n_samples: int | None = 
     """
     Perform two different splittings in halves using the RascalC results file/dictionary, compute the comparison measures between the two average covariance matrices and return as a dictionary.
     Do this for full and jackknife covariance matrices (if the latter are present).
+    This method is decribed in Section 3.2 of `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_.
     Optionally, use only ``n_samples`` first samples.
     Further optionally, use ``print_function`` to report the results.
     """
@@ -74,6 +77,7 @@ def convergence_check_extra_file(rascalc_results_filename: str, n_samples: int |
     """
     Perform two different splittings in halves using the RascalC results filename, compute the comparison measures between the two average covariance matrices and return as a dictionary.
     Do this for full and jackknife covariance matrices (if the latter are present).
+    This method is decribed in Section 3.2 of `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_.
     Optionally, use only ``n_samples`` first samples.
     Further optionally, use ``print_function`` to report the results.
     """
