@@ -38,6 +38,9 @@ Both can be installed with a single command::
 
     python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'
 
+If you get the GPU support problem with Corrfunc (``Error: To compile with GPU support define "CUDA_HOME" Else set "USE_GPU=0"``), it is probably easiest to prepend either definition to the command: ``CUDA_HOME=... python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'`` or ``USE_GPU=0 python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'``.
+Alternatively, you can ``export CUDA_HOME=...`` or ``export USE_GPU=0`` in your shell before running ``python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'``.
+
 One of the reasons we recommend Linux is that building Corrfunc with multi-threading support on macOS has been a very hard experience.
 
 RascalC Python package
