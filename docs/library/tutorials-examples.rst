@@ -14,6 +14,6 @@ Example script gallery
 
 There is a dedicated repository: `cosmodesi/RascalC-scripts <https://github.com/cosmodesi/RascalC-scripts>`_. `A typical directory's contents are described in the README <https://github.com/cosmodesi/RascalC-scripts?tab=readme-ov-file#common-files>`_. Some highlights:
 
-    - `DESI DR2 (Y3) data scripts <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y3>`_ (single tracers `before <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y3/pre>`_ and `after standard BAO reconstruction <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y3/post>`_)
-    - `DESI 2024 (DR1, Y1) data scripts <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y1>`_ (single tracers `before <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y1/pre>`_ and `after standard BAO reconstruction <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y1/post>`_)
+    - `DESI DR2 (Y3) data scripts <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y3>`_ (single tracers `before <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y3/pre>`__ and `after standard BAO reconstruction <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y3/post>`__)
+    - `DESI 2024 (DR1, Y1) data scripts <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y1>`_ (single tracers `before <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y1/pre>`__ and `after standard BAO reconstruction <https://github.com/cosmodesi/RascalC-scripts/tree/main/DESI/Y1/post>`__)
     - `BOSS data examples <https://github.com/cosmodesi/RascalC-scripts/tree/main/BOSS>`_ may be more useful for people outside of DESI
