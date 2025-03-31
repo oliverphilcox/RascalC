@@ -90,7 +90,7 @@ The required input files and formats are described below. Note that several of t
     - For multiple input fields, we will have three output bin correction factors of the same format.
     - These should be created using the survey-correction functions described in :doc:`geometry-correction`, and require the RR or RRR counts to be computed (also described in :doc:`geometry-correction`).
     - They are saved as ASCII files with the names ``BinCorrectionFactor_n{N}_m{M}.txt`` or ``BinCorrectionFactor3PCF_n{N}_m{M}.txt`` and specify polynomial fitting parameters (2PCF) or the first seven multipoles of :math:`\Phi^{-1}` (3PCF), which are found to well describe the fit. These have one row per radial bin (or pair of bins for the 3PCF), and must be constructed using the same radial binning as for the output covariance matrix.
-- *(Required in LEGENDRE_MIX mode and usually created internally)* **Projection factors from :math:`\mu` bins to Legendre multipoles**:
+- *(Required in LEGENDRE_MIX mode and usually created internally)* **Projection factors from** :math:`\mu` **bins to Legendre multipoles**:
     - These together with the full-survey random particle counts give the correct normalization for the projected Legendre multipole covariance.
     - One file of them is enough, it can be created with the :ref:`mu_bin_legendre_factors` script.
     - The file must have rows corresponding to the :math:`\mu` bins and columns corresponding to the (even) Legendre multipoles. The factors are the same for all radial bins, unlike the random counts which also influence the projection.
