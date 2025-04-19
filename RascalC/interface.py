@@ -345,7 +345,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     print_and_log(datetime.now())
 
     counts_factor = None if normalize_wcounts else 1
-    ndata = (no_data_galaxies1, no_data_galaxies2)[:ntracers]
+    ndata = [no_data_galaxies1, no_data_galaxies2][:ntracers]
 
     # convert counts and jackknife xi if needed; loading ndata too whenever not given
     pycorr_allcounts_all = (pycorr_allcounts_11, pycorr_allcounts_12, pycorr_allcounts_22)
@@ -367,8 +367,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             np.savetxt(jackknife_weights_names[c], np.column_stack((jack_numbers, jack_weights)))
             np.savetxt(jackknife_pairs_names[c], np.column_stack((jack_numbers, jack_RR_counts))) # not really needed for the C++ code or processing but let it be
         # fill ndata if not given
-        tracer1 = tracer1_corr[c]
-        if not ndata[tracer1]:
+        if not ndata[tracer1 := tracer1_corr[c]]:
             ndata[tracer1] = pycorr_allcounts.D1D2.size1
 
     if any(not tracer_ndata for tracer_ndata in ndata): raise ValueError("Not given and not recovered all the necessary normalization factors (no_data_galaxies1/2)")
