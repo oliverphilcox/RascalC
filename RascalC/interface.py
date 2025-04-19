@@ -39,6 +39,8 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             no_data_galaxies1: float | None = None, no_data_galaxies2: float | None = None,
             randoms_samples1: np.ndarray[int] | None = None,
             randoms_positions2: np.ndarray[float] | None = None, randoms_weights2: np.ndarray[float] | None = None, randoms_samples2: np.ndarray[int] | None = None,
+            xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
+            xi_sample_cov: np.ndarray[float] | None = None,
             max_l: int | None = None,
             boxsize: float | None = None,
             skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0,
@@ -117,6 +119,18 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         (Optional) ``pycorr.TwoPointEstimator`` with auto-counts for the second tracer.
         Must have the same bin configuration as ``pycorr_allcounts_11``.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples2``.
+    
+    xi_11_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
+        (Optional) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) to compute the sample covariance to use as reference in shot-noise rescaling optimization.
+        Each must have the same shape as ``pycorr_allcounts_11``.
+    
+    xi_sample_cov: None, or a symmetric positive definite matrix
+        (Optional) The pre-computed sample covariance to use as reference in shot-noise rescaling optimization.
+        Overrides the ``xi_11_samples`` if both are provided.
+        Please ensure the right bin ordering if you use this option (because of this, it may be easier to use ``xi_11_samples`` instead).
+        In "s_mu" ``mode``, the top-level ordering/grouping is by separation/radial bins and then by angular/µ bins, i.e. the neighboring angular/µ bins (after wrapping!) in one separation/radial bin are next to each other.
+        In any of the Legendre ``mode``\s, the top-level ordering/grouping is by multipoles and then by separation/radial bins, i.e. the same multipole moments in neighboring radial bins are next to each other.
+        (For multi-tracer, the topmost-level ordering must be by the correlation function: 11, 12, 22, but the corresponding post-processing has not been implemented yet.)
 
     normalize_wcounts : boolean
         (Optional) whether to normalize the weights and weighted counts.
@@ -263,11 +277,18 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     periodic = bool(boxsize) # False for None (default) and 0
     two_tracers = randoms_positions2 is not None
 
+    # Determine mock post-processing
+    mocks_precomputed = xi_sample_cov is not None
+    mocks_from_samples = xi_11_samples is not None
+    mocks = mocks_precomputed or mocks_from_samples
+    if mocks_precomputed and mocks_from_samples: warn("Provided xi sample covariance overrides the provided xi samples")
+
     if two_tracers: # check that everything is set accordingly
         if randoms_weights2 is None: raise TypeError("Second tracer weights must be provided in two-tracer mode")
         if jackknife: # although this case has not been used so far
             if randoms_samples2 is None: raise TypeError("Second tracer jackknife region numbers must be provided in two-tracer jackknife mode")
             if legendre_mix: warn("Projected Legendre post-processing for jackknife not implemented for multi-tracer. Please contact the developer for a workaround")
+        if mocks and legendre: warn("Legendre post-processing for mocks not implemented for multi-tracer. Please contact the developer for a workaround")
         if pycorr_allcounts_12 is None: raise TypeError("Cross-counts must be provided in two-tracer mode")
         if pycorr_allcounts_22 is None: raise TypeError("Second tracer auto-counts must be provided in two-tracer mode")
         if xi_table_12 is None: raise TypeError("Cross-correlation function must be provided in two-tracer mode")
@@ -302,6 +323,8 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         jackknife_pairs_names = [os.path.join(out_dir, f"weights/jackknife_pair_counts_n{n_r_bins}_m{n_mu_bins}_j{njack}_{index}.dat") for index in indices_corr]
     if legendre_orig:
         phi_names = [os.path.join(out_dir, f"BinCorrectionFactor_n{n_r_bins}_" + ("periodic" if periodic else f'm{n_mu_bins}') + f"_{index}.txt") for index in indices_corr]
+    if mocks:
+        mock_cov_name = os.path.join(out_dir, f"cov_sample_n{n_r_bins}_m{n_mu_bins}.txt")
     
     # make sure the dirs exist
     # os.makedirs() will become confused if the path elements to create include pardir (eg. “..” on UNIX systems).
@@ -340,6 +363,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     print_and_log(f"Periodic box: {periodic}")
     if periodic: print_and_log(f"Box side: {boxsize}")
     print_and_log(f"Jackknife: {jackknife}")
+    print_and_log(f"Tuning to (mock) sample covariance: {mocks}")
     print_and_log(f"Number of tracers: {1 + two_tracers}")
     print_and_log(f"Normalizing weights and weighted counts: {normalize_wcounts}")
     print_and_log(datetime.now())
@@ -414,6 +438,20 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             write_xi_file(cornames[c], r_vals, mu_vals, xi_vals)
         else: raise TypeError(f"Xi table {indices_corr[c]} must be either a pycorr.TwoPointEstimator or a tuple/list")
     xi_refinement_iterations *= refine_xi # True is 1; False is 0 => 0 iterations => no refinement
+
+    # deal with the mock covariance
+    if mocks_precomputed:
+        np.savetxt(mock_cov_name, xi_sample_cov)
+    elif mocks_from_samples:
+        if len(xi_11_samples) <= 1: raise ValueError("Need more than 1 sample in xi_11_samples to compute the sample covariance")
+        if any(not np.allclose(xi_11_sample.edges[0], pycorr_allcounts_11.edges[0]) for xi_11_sample in xi_11_samples): raise ValueError(f"Found separation/radial binning in xi_11_samples inconsistent with pycorr_allcounts_11")
+        if any(not np.allclose(xi_11_sample.edges[1], np.linspace(0, 1, n_mu_bins + 1)) for xi_11_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with pycorr_allcounts_11")
+        if legendre:
+            from .pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pycorr_to_file
+            sample_cov_multipoles_from_pycorr_to_file([xi_11_samples], mock_cov_name, max_l=max_l)
+        else:
+            from .pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
+            sample_cov_from_pycorr_to_file([xi_11_samples], mock_cov_name)
     
     # write the randoms file(s)
     randoms_positions = [randoms_positions1, randoms_positions2]
@@ -506,6 +544,10 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             from .post_process import post_process_legendre_multi
             results = post_process_legendre_multi(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, print_function = print_and_log)
             # multi-tracer Legendre with jackknife missing because it has not been used
+            # multi-tracer Legendre with mocks missing because it has not been used
+        elif mocks:
+            from .post_process import post_process_default_mocks_multi
+            results = post_process_default_mocks_multi(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
         elif jackknife:
             from .post_process import post_process_jackknife_multi
             results = post_process_jackknife_multi(*xi_jack_names, os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
@@ -514,12 +556,18 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             results = post_process_default_multi(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, print_function = print_and_log)
     else:
         if legendre:
-            if jackknife:
+            if mocks:
+                from .post_process import post_process_legendre_mocks
+                results = post_process_legendre_mocks(mock_cov_name, out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
+            elif jackknife:
                 from .post_process import post_process_legendre_mix_jackknife
                 results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
             else:
                 from .post_process import post_process_legendre
                 results = post_process_legendre(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, skip_s_bins, skip_l, print_function = print_and_log)
+        elif mocks:
+            from .post_process import post_process_default_mocks
+            results = post_process_default_mocks(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
         elif jackknife:
             from .post_process import post_process_jackknife
             results = post_process_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
