@@ -350,11 +350,13 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     # convert counts and jackknife xi if needed; loading ndata too whenever not given
     pycorr_allcounts_all = (pycorr_allcounts_11, pycorr_allcounts_12, pycorr_allcounts_22)
     for c, pycorr_allcounts in enumerate(pycorr_allcounts_all[:ncorr]):
+        if c and not np.allclose(pycorr_allcounts.edges[0], pycorr_allcounts_11.edges[0]): raise ValueError(f"pycorr_allcounts_{indices_corr[c]} separation/radial binning is not consistent with pycorr_allcounts_11")
         if pycorr_allcounts.edges[1][0] < 0: # try to fix and wrap
             pycorr_allcounts = fix_bad_bins_pycorr(pycorr_allcounts)
             print_and_log(f"Wrapping pycorr_allcounts_{indices_corr[c]} to µ>=0")
             pycorr_allcounts = pycorr_allcounts.wrap()
-        if not np.allclose(pycorr_allcounts.edges[1], np.linspace(0, 1, n_mu_bins + 1)): raise ValueError(f"pycorr_allcounts_{indices_corr[c]} µ binning is not consistent with linear between 0 and 1 (after wrapping)")
+        if len(pycorr_allcounts.edges[1]) != n_mu_bins + 1: raise ValueError(f"The number of angular/µ bins in pycorr_allcounts_{indices_corr[c]} is not consistent with the number determined from pycorr_allcounts_11")
+        if not np.allclose(pycorr_allcounts.edges[1], np.linspace(0, 1, n_mu_bins + 1)): raise ValueError(f"pycorr_allcounts_{indices_corr[c]} mu/µ binning is not consistent with linear between 0 and 1 (after wrapping)")
         RR_counts = get_counts_from_pycorr(pycorr_allcounts, counts_factor)
         np.savetxt(binned_pair_names[c], RR_counts.reshape(-1, 1)) # the file needs to have 1 column
         if jackknife:
