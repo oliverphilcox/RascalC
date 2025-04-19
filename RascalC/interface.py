@@ -41,7 +41,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             randoms_positions2: np.ndarray[float] | None = None, randoms_weights2: np.ndarray[float] | None = None, randoms_samples2: np.ndarray[int] | None = None,
             max_l: int | None = None,
             boxsize: float | None = None,
-            skip_s_bins: int = 0, skip_l: int = 0,
+            skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0,
             shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1,
             sampling_grid_size: int = 301, coordinate_scaling: float = 1, seed: int | None = None,
             verbose: bool = False) -> dict[str, np.ndarray[float]]:
