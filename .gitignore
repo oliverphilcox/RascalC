@@ -59,8 +59,5 @@ dist
 # Python cache
 __pycache__
 
-# Built docs
-_build
-
 # Hidden files
 .*
