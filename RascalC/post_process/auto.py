@@ -24,7 +24,7 @@ from ..pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pyco
 from ..pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
 
 
-def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None, xi_sample_cov: np.ndarray[float] | None = None, print_function: Callable[[str], None] = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
+def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None, xi_sample_cov: np.ndarray[float] | None = None, print_function: Callable[[str], None] = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
     r"""
     Automatic but highly customizable post-processing interface. Designed to work with the ``RascalC.run_cov`` outputs.
     Do not run this (or any other post-processing function/script) while the main RascalC computation is running — this may delete the output directory and cause the code to crash.
@@ -37,7 +37,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
     out_dir : string | None
         (Optional) path to the directory in which the post-processing results should be saved. If None (default), is set to ``file_root``. Empty string means the current working directory.
 
-    skip_r_bins : integer or tuple of two integers
+    skip_s_bins : integer or tuple of two integers
         (Optional) removal of some radial bins.
         First (or the only) number sets the number of radial/separation bins to skip from the beginning.
         Second number (if provided) sets the number of radial/separation bins to skip from the end.
@@ -179,29 +179,29 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
 
     if two_tracers:
         if legendre:
-            results = post_process_legendre_multi(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_r_bins, skip_l, n_samples = n_samples, print_function = print_function)
+            results = post_process_legendre_multi(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function)
             # multi-tracer Legendre with jackknife missing because it has not been used
             # multi-tracer Legendre with mocks missing because it has not been used
         elif mocks:
-            results = post_process_default_mocks_multi(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_r_bins, n_samples = n_samples, print_function = print_function)
+            results = post_process_default_mocks_multi(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_s_bins, n_samples = n_samples, print_function = print_function)
         elif jackknife:
-            results = post_process_jackknife_multi(*xi_jack_names, os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_r_bins, n_samples = n_samples, print_function = print_function)
+            results = post_process_jackknife_multi(*xi_jack_names, os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_s_bins, n_samples = n_samples, print_function = print_function)
         else: # default
-            results = post_process_default_multi(file_root, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_r_bins, n_samples = n_samples, print_function = print_function)
+            results = post_process_default_multi(file_root, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, n_samples = n_samples, print_function = print_function)
     else:
         if legendre:
             if mocks:
-                results = post_process_legendre_mocks(mock_cov_name, out_dir, n_mu_bins, max_l, out_dir, skip_r_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
+                results = post_process_legendre_mocks(mock_cov_name, out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
             elif jackknife:
-                results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, max_l, out_dir, skip_r_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
+                results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
             else:
-                results = post_process_legendre(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, skip_r_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
+                results = post_process_legendre(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, skip_s_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
         elif mocks:
-            results = post_process_default_mocks(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_r_bins, tracer = tracer, n_samples = n_samples, print_function = print_function)
+            results = post_process_default_mocks(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_s_bins, tracer = tracer, n_samples = n_samples, print_function = print_function)
         elif jackknife:
-            results = post_process_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_r_bins, tracer = tracer, n_samples = n_samples, print_function = print_function)
+            results = post_process_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_s_bins, tracer = tracer, n_samples = n_samples, print_function = print_function)
         else: # default
-            results = post_process_default(file_root, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, skip_r_bins, tracer = tracer, n_samples = n_samples, print_function = print_function)
+            results = post_process_default(file_root, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, skip_s_bins, tracer = tracer, n_samples = n_samples, print_function = print_function)
 
     if extra_convergence_check:
         print_function("Performing an extra convergence check")
