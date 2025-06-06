@@ -11,10 +11,13 @@ from .write_binning_file import write_binning_file
 from .pycorr_utils.jack import get_jack_xi_weights_counts_from_pycorr
 from .pycorr_utils.counts import get_counts_from_pycorr
 from .pycorr_utils.input_xi import get_input_xi_from_pycorr
+from .pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
+from .pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pycorr_to_file
 from .mu_bin_legendre_factors import write_mu_bin_legendre_factors
 from .correction_function import compute_correction_function, compute_correction_function_multi
 from .convergence_check_extra import convergence_check_extra
 from .utils import rmdir_if_exists_and_empty
+from .post_process import post_process_legendre_multi, post_process_default_mocks_multi, post_process_jackknife_multi, post_process_default_multi, post_process_legendre_mocks, post_process_legendre_mix_jackknife, post_process_legendre, post_process_default_mocks, post_process_jackknife, post_process_default
 
 
 suffixes_tracer_all = ("", "2") # all supported tracer suffixes
@@ -447,10 +450,8 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         if any(not np.allclose(xi_11_sample.edges[0], pycorr_allcounts_11.edges[0]) for xi_11_sample in xi_11_samples): raise ValueError(f"Found separation/radial binning in xi_11_samples inconsistent with pycorr_allcounts_11")
         if any(not np.allclose(xi_11_sample.edges[1], np.linspace(0, 1, n_mu_bins + 1)) for xi_11_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with pycorr_allcounts_11")
         if legendre:
-            from .pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pycorr_to_file
             sample_cov_multipoles_from_pycorr_to_file([xi_11_samples], mock_cov_name, max_l=max_l)
         else:
-            from .pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
             sample_cov_from_pycorr_to_file([xi_11_samples], mock_cov_name)
     
     # write the randoms file(s)
@@ -541,38 +542,28 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     print_and_log("Starting post-processing")
     if two_tracers:
         if legendre:
-            from .post_process import post_process_legendre_multi
             results = post_process_legendre_multi(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, print_function = print_and_log)
             # multi-tracer Legendre with jackknife missing because it has not been used
             # multi-tracer Legendre with mocks missing because it has not been used
         elif mocks:
-            from .post_process import post_process_default_mocks_multi
             results = post_process_default_mocks_multi(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
         elif jackknife:
-            from .post_process import post_process_jackknife_multi
             results = post_process_jackknife_multi(*xi_jack_names, os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
         else: # default
-            from .post_process import post_process_default_multi
             results = post_process_default_multi(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, print_function = print_and_log)
     else:
         if legendre:
             if mocks:
-                from .post_process import post_process_legendre_mocks
                 results = post_process_legendre_mocks(mock_cov_name, out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
             elif jackknife:
-                from .post_process import post_process_legendre_mix_jackknife
                 results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
             else:
-                from .post_process import post_process_legendre
                 results = post_process_legendre(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, skip_s_bins, skip_l, print_function = print_and_log)
         elif mocks:
-            from .post_process import post_process_default_mocks
             results = post_process_default_mocks(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
         elif jackknife:
-            from .post_process import post_process_jackknife
             results = post_process_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
         else: # default
-            from .post_process import post_process_default
             results = post_process_default(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, skip_s_bins, print_function = print_and_log)
 
     print_and_log("Finished post-processing")
