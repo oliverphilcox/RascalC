@@ -1,4 +1,5 @@
 from typing import Iterable, Callable, Literal
+import numpy as np
 import os
 from glob import glob
 from re import fullmatch
@@ -14,8 +15,16 @@ from .legendre import post_process_legendre
 from .legendre_multi import post_process_legendre_multi
 from .legendre_mix_jackknife import post_process_legendre_mix_jackknife
 
+# dependencies for mock post-processing if we want to separate them at some point
+import pycorr
+from .default_mocks import post_process_default_mocks
+from .default_mocks_multi import post_process_default_mocks_multi
+from .legendre_mocks import post_process_legendre_mocks
+from ..pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pycorr_to_file
+from ..pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
 
-def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, print_function: Callable[[str], None] = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
+
+def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None, xi_sample_cov: np.ndarray[float] | None = None, print_function: Callable[[str], None] = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
     r"""
     Automatic but highly customizable post-processing interface. Designed to work with the ``RascalC.run_cov`` outputs.
     Do not run this (or any other post-processing function/script) while the main RascalC computation is running — this may delete the output directory and cause the code to crash.
@@ -56,6 +65,17 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
         (Optional) shot-noise rescaling value for the second tracer only in multi-tracer mode (default 1).
         In jackknife mode, the shot-noise rescaling value is auto-determined, so this parameter has no effect.
     
+    xi_11_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
+        (Optional) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) to compute the sample covariance to use as reference in shot-noise rescaling optimization. Must have the same binning as the covariance (except possibly the angular/mu bins in Legendre mode).
+    
+    xi_sample_cov: None, or a symmetric positive definite matrix
+        (Optional) The pre-computed sample covariance to use as reference in shot-noise rescaling optimization.
+        Overrides the ``xi_11_samples`` if both are provided.
+        Please ensure the right bin ordering if you use this option (because of this, it may be easier to use ``xi_11_samples`` instead).
+        In "s_mu" ``mode``, the top-level ordering/grouping is by separation/radial bins and then by angular/µ bins, i.e. the neighboring angular/µ bins (after wrapping!) in one separation/radial bin are next to each other.
+        In any of the Legendre ``mode``\s, the top-level ordering/grouping is by multipoles and then by separation/radial bins, i.e. the same multipole moments in neighboring radial bins are next to each other.
+        (For multi-tracer, the topmost-level ordering must be by the correlation function: 11, 12, 22, but the corresponding post-processing has not been implemented yet.)
+    
     print_function : Callable
         (Optional) custom function to use for printing. Default is ``print``.
 
@@ -95,11 +115,23 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
     legendre_mix = len(glob(os.path.join(file_root, "weights/mu_bin_legendre_factors_*.txt"))) > 0
     if legendre is None: legendre = legendre_orig or legendre_mix
 
+    # Determine mock post-processing
+    mocks_precomputed = xi_sample_cov is not None
+    mocks_from_samples = xi_11_samples is not None
+    mocks = mocks_precomputed or mocks_from_samples
+
     print_function(f"Legendre: {legendre}")
     print_function(f"Jackknife: {jackknife}")
+    print_function(f"Tuning to (mock) sample covariance: {mocks}")
     print_function(f"Number of tracers: {1 + two_tracers}")
 
     if legendre_orig and jackknife: warn("Direct accumulation Legendre mode is not compatible with jackknives")
+
+    if mocks_precomputed and mocks_from_samples: warn("Provided xi sample covariance overrides the provided xi samples")
+
+    if two_tracers:
+        if jackknife and legendre_mix: warn("Projected Legendre post-processing for jackknife not implemented for multi-tracer. Please contact the developer for a workaround")
+        if mocks and legendre: warn("Legendre post-processing for mocks not implemented for multi-tracer. Please contact the developer for a workaround")
 
     # Determine number of radial, mu bins and/or jackknives automatically as needed
     binned_pair_names = glob("binned_pair_counts_n*_m*_j*_??.dat" if jackknife else "RR_counts_n*_m*_??.dat", root_dir = os.path.join(file_root, "weights"))
@@ -129,20 +161,43 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_r_bins: i
 
     if jackknife:
         xi_jack_names = [os.path.join(file_root, f"xi_jack/xi_jack_n{n_r_bins}_m{n_mu_bins}_j{n_jack}_{index}.dat") for index in indices_corr]
+    
+    if mocks:
+        mock_cov_name = os.path.join(out_dir, f"cov_sample_n{n_r_bins}_m{n_mu_bins}.txt")
+
+    # write the mock covariance to file
+    if mocks_precomputed:
+        np.savetxt(mock_cov_name, xi_sample_cov)
+    elif mocks_from_samples:
+        if len(xi_11_samples) <= 1: raise ValueError("Need more than 1 sample in xi_11_samples to compute the sample covariance")
+        # if any(not np.allclose(xi_11_sample.edges[0], pycorr_allcounts_11.edges[0]) for xi_11_sample in xi_11_samples): raise ValueError(f"Found separation/radial binning in xi_11_samples inconsistent with pycorr_allcounts_11")
+        if any(not np.allclose(xi_11_sample.edges[1], np.linspace(0, 1, n_mu_bins + 1)) for xi_11_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with pycorr_allcounts_11")
+        if legendre:
+            sample_cov_multipoles_from_pycorr_to_file([xi_11_samples], mock_cov_name, max_l=max_l)
+        else:
+            sample_cov_from_pycorr_to_file([xi_11_samples], mock_cov_name)
 
     if two_tracers:
         if legendre:
             results = post_process_legendre_multi(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_r_bins, skip_l, n_samples = n_samples, print_function = print_function)
+            # multi-tracer Legendre with jackknife missing because it has not been used
+            # multi-tracer Legendre with mocks missing because it has not been used
+        elif mocks:
+            results = post_process_default_mocks_multi(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_r_bins, n_samples = n_samples, print_function = print_function)
         elif jackknife:
             results = post_process_jackknife_multi(*xi_jack_names, os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_r_bins, n_samples = n_samples, print_function = print_function)
         else: # default
             results = post_process_default_multi(file_root, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_r_bins, n_samples = n_samples, print_function = print_function)
     else:
         if legendre:
-            if jackknife:
+            if mocks:
+                results = post_process_legendre_mocks(mock_cov_name, out_dir, n_mu_bins, max_l, out_dir, skip_r_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
+            elif jackknife:
                 results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, max_l, out_dir, skip_r_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
             else:
                 results = post_process_legendre(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, skip_r_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function)
+        elif mocks:
+            results = post_process_default_mocks(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_r_bins, tracer = tracer, n_samples = n_samples, print_function = print_function)
         elif jackknife:
             results = post_process_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_r_bins, tracer = tracer, n_samples = n_samples, print_function = print_function)
         else: # default
