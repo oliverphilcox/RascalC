@@ -77,6 +77,14 @@ General practical usage remarks for the Python wrapper function, :func:`RascalC.
     - The number of randoms for ``RascalC`` does not have to be the same as for pair counting and 2PCF estimation. It should be high enough to provide a good representation of survey geometry, but not too high to keep the run time reasonable.
     - For 2PCF covariance after standard BAO reconstruction, provide the **shifted** randoms (`Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_, `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_; the input 2PCF conversion in that case will be applied automatically to a ``pycorr`` estimator).
     - For a periodic cubic box (without reconstruction), you will need to generate uniform random positions yourself.
+- You must also pass the weights for the randoms through the ``randoms_weights1`` argument. These must match what you used for pair counting and 2PCF estimation with ``pycorr``.
+
+    - If you did not use weights in ``pycorr``, you should pass an array containing 1 for each random point as ``randoms_weights1``.
+- To compute a full two-tracer covariance, you need to also provide all of the following:
+
+    - cross-counts as ``pycorr_allcounts_12`` and second tracer auto-counts as ``pycorr_allcounts_22`` (rebinned in the same way as ``pycorr_allcounts_11``);
+    - cross-correlation function as ``xi_table_12`` and the second tracer auto-correlation function as ``xi_table_22`` (in the same format as ``xi_table_11``);
+    - second tracer random points positions (``randoms_positions2``) and weights (``randoms_weights2``).
 - ``RascalC`` in the flowcharts refers to the most computationally intensive steps (implemented in C++), at which the coefficients for the covariance matrix models are evaluated. These coefficients are saved in a ``Raw_Covariance_Matrices*.npz`` file in the chosen output directory.
 - Basic/minimal **post-processing** involves substituting a fixed shot-noise rescaling value (or two values in case of two tracers) into the full covariance model to obtain the final covariance. These operations normally are invoked at the end of :func:`RascalC.run_cov`, but they can also be performed separately using :func:`RascalC.post_process_auto`. The results are saved in a ``Rescaled_Covariance_Matrices*.npz`` file in the chosen output directory.
 
@@ -117,6 +125,7 @@ Practical remarks particular to the jackknife pipeline with :func:`RascalC.run_c
 - Assign the jackknife regions to the random points (``randoms_positions1``) in the same way as for 2PCF and pair counts, and pass the assignment results (jackknife region number for each random point) through the ``randoms_samples1`` argument.
 
     - Technically, passing the non-``None`` ``randoms_samples1`` argument switches on the jackknife functionality in :func:`RascalC.run_cov`.
+- The code produces a separate model for the jackknife covariance, which takes into account correlations between the jackknife regions.
 - Jackknife **post-processing** involves fitting the jackknife covariance model to the data jackknife covariance to find the optimal shot-noise rescaling and substituting that value into the full covariance model to obtain the final covariance. These operations normally are invoked at the end of :func:`RascalC.run_cov`, but they can also be performed separately using :func:`RascalC.post_process_auto`. The results are saved in a ``Rescaled_Covariance_Matrices*Jackknife*.npz`` file in the chosen output directory.
 
 Take a look at :ref:`quality_control` after the run.
@@ -187,7 +196,8 @@ The convergence checks mostly follow Section 6.1 of `Rashkovetskyi et al 2025 <h
     - After Section 3.2 of `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_, we recommend focusing on ``R_inv`` (:math:`R_{\rm inv}`) values. There is no universal threshold, but some decent reference values are:
 
         - <0.6% (``6e-3``) for Early DESI data BGS/LRG with 45 bins (45 radial times 1 angular);
-        - <2% (``2e-2``) for DESI DR1 LRG (:math:`0.8<z<1.1`), <3% (``3e-2``) for DESI DR1 ELG (:math:`1.1<z<1.6`) and <12% (``1.2e-1``) for DESI DR1 BGS (``BGS_BRIGHT-21.5`` :math:`0.1<z<0.4`) with 135 bins (45 radial times 3 multipoles).
+        - <5% (``5e-2``) for DESI DR1/DR2 LRG/ELG, <12% (``1.2e-1``) for ``BGS_BRIGHT-21.5`` (:math:`0.1<z<0.4`) and <20% (`2e-1`) for ``BGS_BRIGHT-21.35`` with 135 bins (45 radial times 3 multipoles). QSO have almost always converged much better, like 0.1-0.2% (`2e-3`) due to higher shot-noise, making the easy 2-point term the dominant one.
+        - Values exceeding 1 are high.
     - These figures of intrinsic scatter in covariance sums/integrals estimated with importance sampling tend to increase
 
         - as the number of bins increases (the trend is the same for mocks — see e.g. Equation (3.12) in `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_)
@@ -255,6 +265,8 @@ However, this automated but customizable post-processing routine is useful for t
 
 Loading and exporting the final covariance matrices
 ---------------------------------------------------
+
+Perform the :ref:`quality_control` first.
 
 .. automodule:: RascalC.cov_utils
     :members:
