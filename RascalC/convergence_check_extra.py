@@ -19,7 +19,7 @@ def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_f
     result = dict()
 
     result["R_inv"] = (rms_eig_inv_test_covs(cov_first, cov_second), rms_eig_inv_test_covs(cov_second, cov_first))
-    print_function("RMS eigenvalues of inverse tests for cov half-estimates are %.2e and %.2e" % result["R_inv"])
+    print_function("R_inv (RMS eigenvalues of inverse tests) for cov half-estimates are %.2e and %.2e" % result["R_inv"])
 
     result["D_KL"] = (KL_div_covs(cov_first, cov_second), KL_div_covs(cov_second, cov_first))
     print_function("KL divergences between cov half-estimates are %.2e and %.2e" % result["D_KL"])
