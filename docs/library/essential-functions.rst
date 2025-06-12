@@ -193,6 +193,45 @@ The convergence checks mostly follow Section 6.1 of `Rashkovetskyi et al 2025 <h
         - as the number of bins increases (the trend is the same for mocks — see e.g. Equation (3.12) in `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_)
         - as the sample density increases and shot-noise decreases (parallel with mocks is less clear, but dense samples are also harder to simulate).
 
+Addressing convergence issues
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use these instructions when
+
+- you get the error message ``The full covariance is not positive definite - insufficient convergence``;
+- the ``R_inv`` values from the extra convergence check are worryingly high (see above for reference, or reach out if in doubt);
+- you get the ``4-point covariance matrix has not converged properly via the weaker eigenvalue test`` warnings, although they seldom appear without one of the previous two issues.
+
+First, try to re-run post-processing with alternative options using :func:`RascalC.post_process_auto`:
+
+- skip a few bins with smallest separations by passing a single positive integer (their number) via ``skip_s_bins``;
+
+    - also skip a few bins with highest separations by passing a tuple of two positive numbers via ``skip_s_bins``; among them, the first number sets how many bins to skip at the low end, the second — at the high end;
+- in Legendre mode, you can also try skipping highest multipoles by passing a single positive integer (their number) via ``skip_l``.
+- you can also try to discard "unlucky" samples using the ``n_samples`` argument, but this seldom helps and can become confusing.
+
+The above are the fastest options because they only require re-running the post-processing script while re-using the products of pre-processing and main code run.
+
+Then, consider running the main computation again with :func:`RascalC.run_cov` to generate a smaller covariance matrix by
+
+- using coarser radial (separation) bins;
+- in ``s_mu`` mode, using coarser angular (:math:`\mu`) bins;
+- in Legendre mode, using fewer multipoles (this alone can be done faster and easier in post-processing, as was just mentioned above, but not in combination with different radial/separation bins).
+
+If changing the covariance binning is undesirable or does not help, you should run longer.
+Use a different output directory to prevent confusion and overrides; renaming the old output directory also works.
+This can be done in different ways:
+
+- Increase the number of loops (``n_loops``).
+
+    - Occasionally bad convergence is just bad luck, so running again with the same settings, including ``n_loops`` might not be needed. In that case, just do not use the same fixed ``seed``, as that should reproduce the results exactly.
+    - If you keep other settings fixed (except ``n_loops``, ``nthread`` and naturally ``seed`` — you can change those more freely), you can also concatenate (combine) samples from different runs into a new, different directory using :func:`RascalC.cat_raw_covariance_matrices` to reach even better convegence (check it by post-processing the new directory with :func:`RascalC:post_process_auto`). However, combining samples does not always improve convergence, and keeping track of different sample combination can be hard.
+- Increase ``N2`` — probably not recommended, because the effect is similar to increasing ``n_loops``, but sample combination is no longer an optionl.
+- Increase ``N4`` and/or ``N3``. It is probably more sensible than the previous options because we expect the higher-point terms to converge slower. ``N4`` will only affect the 4-point term :math:`C_4`; ``N3`` also affects the 3-point term :math:`C_3`.
+
+The convergence issues can be persistent.
+Please do not hesitate to reach out.
+
 The main computation wrapper
 ----------------------------
 
