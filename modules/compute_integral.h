@@ -220,7 +220,9 @@
             if (par->random_seed) {
                 std::random_device urandom("/dev/urandom");
                 std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
-                seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+                seed_shift = dist(urandom); // for each iteration, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+                par->seed = seed_shift; // save the random seed
+                par->random_seed = false; // avoid random seed resetting in the future — different seeds for xi rescaling and the main computation are much harder to reproduce
             }
             printf("# INFO: the base RNG seed is %lu, incremented by %lu in each integration loop (matching these should guarantee the same results in a completed computation with the same input catalogs and correlation functions).\n", seed_shift, seed_step);
 
