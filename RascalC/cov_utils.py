@@ -1,7 +1,7 @@
 """
-Simple convenience functions that
+This module contains convenience functions that
 
-- read RascalC results (checking eigenvalues of bias matrix)
+- read RascalC results (checking eigenvalues of the inversion bias matrix. If they are much smaller than 1, it is safe to simply invert the covariance matrix. Otherwise, a correction factor is necessary.)
 - convert (reorder) covariance matrices (as is often needed for Legendre moments)
 - and/or export (save) the full covariance matrix to a text file.
 """
@@ -22,7 +22,7 @@ def get_cov_header(rascalc_results_file: str) -> str:
 def convert_cov_legendre(cov: np.ndarray[float], max_l: int) -> np.ndarray[float]:
     """
     Change the bin ordering of the covariance matrix in Legendre mode for a single tracer.
-    The original bin ordering (in RascalC .npy files) is by radial bins (top-level) and then by multipoles.
+    The original bin ordering (in ``RascalC`` ``.npy`` files) is by radial bins (top-level) and then by multipoles.
     The resulting bin ordering (for text files) is by multipoles (top-level) and then by radial bins.
     """
     if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
@@ -39,7 +39,7 @@ def convert_cov_legendre(cov: np.ndarray[float], max_l: int) -> np.ndarray[float
 def convert_cov_legendre_multi(cov: np.ndarray[float], max_l: int) -> np.ndarray[float]:
     """
     Change the bin ordering of the covariance matrix in Legendre mode for two tracers.
-    The original bin ordering (in RascalC .npy files) is by the correlation function (top-level; first auto-correlation, then cross-correlation and last the second auto-correlation), then by radial bins and then by multipoles (bottom-level).
+    The original bin ordering (in ``RascalC`` ``.npy`` files) is by the correlation function (top-level; first auto-correlation, then cross-correlation and last the second auto-correlation), then by radial bins and then by multipoles (bottom-level).
     The resulting bin ordering (for text files) is by the correlation function (top-level), then by multipoles and then by radial bins (bottom-level).
     """
     if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
@@ -88,7 +88,7 @@ def convert_cov_legendre_multi_to_cross(cov: np.ndarray[float], max_l: int) -> n
 def load_cov(rascalc_results_file: str, print_function: Callable[[str], None] = print) -> np.ndarray[float]:
     "Load the theoretical covariance matrix from RascalC results file as-is, intended for the s_mu mode."
     with np.load(rascalc_results_file) as f:
-        print_function(f"Max abs eigenvalue of bias correction matrix is {np.max(np.abs(np.linalg.eigvals(f['full_theory_D_matrix']))):.2e}")
+        print_function(f"Max abs eigenvalue of inversion bias correction matrix is {np.max(np.abs(np.linalg.eigvals(f['full_theory_D_matrix']))):.2e}")
         # if the printed value is small the cov matrix should be safe to invert as is
         return f['full_theory_covariance']
 
