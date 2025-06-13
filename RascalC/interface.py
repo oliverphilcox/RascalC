@@ -327,7 +327,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     if legendre_orig:
         phi_names = [os.path.join(out_dir, f"BinCorrectionFactor_n{n_r_bins}_" + ("periodic" if periodic else f'm{n_mu_bins}') + f"_{index}.txt") for index in indices_corr]
     if mocks:
-        mock_cov_name = os.path.join(out_dir, f"cov_sample_n{n_r_bins}_m{n_mu_bins}.txt")
+        mock_cov_name = os.path.join(out_dir, f"cov_sample_n{n_r_bins}_" + (f"l{max_l}" if legendre else f"m{n_mu_bins}") + ".txt")
     
     # make sure the dirs exist
     # os.makedirs() will become confused if the path elements to create include pardir (eg. “..” on UNIX systems).

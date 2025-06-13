@@ -24,7 +24,7 @@ from ..pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pyco
 from ..pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
 
 
-def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None, xi_sample_cov: np.ndarray[float] | None = None, print_function: Callable[[str], None] = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
+def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None, xi_sample_cov: np.ndarray[float] | None = None, print_function: Callable[[str], None] = print, extra_convergence_check: bool = True, jackknife: bool | None = None, load_sample_cov: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
     r"""
     Automatic but highly customizable post-processing interface. Designed to work with the ``RascalC.run_cov`` outputs.
     Do not run this (or any other post-processing function/script) while the main RascalC computation is running — this may delete the output directory and cause the code to crash.
@@ -66,11 +66,11 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
         In jackknife mode, the shot-noise rescaling value is auto-determined, so this parameter has no effect.
     
     xi_11_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
-        (Optional) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) to compute the sample covariance to use as reference in shot-noise rescaling optimization. Must have the same binning as the covariance (except possibly the angular/mu bins in Legendre mode).
+        (Optional) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) to compute the sample covariance to use as reference in shot-noise rescaling optimization. Must have the same binning as the covariance (except possibly the angular/mu bins in Legendre mode). Providing this option is not compatible with jackknife (enabled explicitly).
     
     xi_sample_cov: None, or a symmetric positive definite matrix
         (Optional) The pre-computed sample covariance to use as reference in shot-noise rescaling optimization.
-        Overrides the ``xi_11_samples`` if both are provided.
+        Providing this option is not compatible with ``xi_11_samples`` and jackknife (enabled explicitly).
         Please ensure the right bin ordering if you use this option (because of this, it may be easier to use ``xi_11_samples`` instead).
         In "s_mu" ``mode``, the top-level ordering/grouping is by separation/radial bins and then by angular/µ bins, i.e. the neighboring angular/µ bins (after wrapping!) in one separation/radial bin are next to each other.
         In any of the Legendre ``mode``\s, the top-level ordering/grouping is by multipoles and then by separation/radial bins, i.e. the same multipole moments in neighboring radial bins are next to each other.
@@ -84,6 +84,9 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
 
     jackknife : boolean or None
         (Optional) boolean value sets jackknife mode manually. If None (default), this mode is determined automatically.
+
+    load_sample_cov : boolean or None
+        (Optional) boolean value sets whether to load the (mock) sample covariance saved in a default file under ``file_root``. If None (default), this is determined automatically by the existence of the file. Enabling this option contradicts with ``xi_11_samples``, ``xi_sample_cov`` and ``jackknife``.
 
     legendre : boolean or None
         (Optional) boolean value sets Legendre (vs s,mu) mode manually. If None (default), this mode is determined automatically.
@@ -103,35 +106,43 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
     # Set default output directory if not set
     if out_dir is None: out_dir = file_root
 
-    # Simple auto-determination of modes
-    if jackknife is None: jackknife = os.path.isdir(os.path.join(file_root, "xi_jack"))
+    # Determine mock post-processing
+    mocks_precomputed = xi_sample_cov is not None
+    mocks_from_samples = xi_11_samples is not None
+    if mocks_precomputed and mocks_from_samples: raise ValueError("Provide either xi sample covariance or the xi samples, not both")
+    if mocks_precomputed and load_sample_cov: raise ValueError("Either provide xi sample covariance or enable loading the sample covariance, not both")
+    if mocks_from_samples and load_sample_cov: raise ValueError("Either provide xi samples or enable loading the sample covariance, not both")
+    mocks_new = mocks_precomputed or mocks_from_samples
+
+    if jackknife: # check for explicit incompatibilities
+        if mocks_precomputed: raise ValueError("Provided xi sample covariance is not compatible with enabled jackknife")
+        if mocks_from_samples: raise ValueError("Provided xi samples are not compatible with enabled jackknife")
+        if load_sample_cov: raise ValueError("Loading xi sample covariance is not compatible with enabled jackknife")
+    elif jackknife is None: # auto-determine jackknife
+        if mocks_new or load_sample_cov: jackknife = False # jackknife must be disabled if (mock) sample covariance is set explicitly
+        else: jackknife = os.path.isdir(os.path.join(file_root, "xi_jack"))
+
+    # Auto-determine multi-tracer
     if two_tracers is None: two_tracers = os.path.isfile(os.path.join(file_root, f"xi/xi_22.dat"))
 
     ntracers = 2 if two_tracers else 1
     ncorr = ntracers * (ntracers + 1) // 2
     indices_corr = indices_corr_all[:ncorr]
 
+    # Determine Legendre
     legendre_orig = len(glob(os.path.join(file_root, f"BinCorrectionFactor*"))) > 0
     legendre_mix = len(glob(os.path.join(file_root, "weights/mu_bin_legendre_factors_*.txt"))) > 0
-    if legendre is None: legendre = legendre_orig or legendre_mix
-
-    # Determine mock post-processing
-    mocks_precomputed = xi_sample_cov is not None
-    mocks_from_samples = xi_11_samples is not None
-    mocks = mocks_precomputed or mocks_from_samples
+    if legendre and not legendre_orig and not legendre_mix: warn("Legendre mode enabled explicitly, but characteristic Legendre files are not found")
+    elif legendre is None: legendre = legendre_orig or legendre_mix
 
     print_function(f"Legendre: {legendre}")
     print_function(f"Jackknife: {jackknife}")
-    print_function(f"Tuning to (mock) sample covariance: {mocks}")
-    print_function(f"Number of tracers: {1 + two_tracers}")
+    print_function(f"Tuning to the provided (mock) sample covariance: {mocks_new}")
+    print_function(f"Number of tracers: {ntracers}")
 
     if legendre_orig and jackknife: warn("Direct accumulation Legendre mode is not compatible with jackknives")
 
-    if mocks_precomputed and mocks_from_samples: warn("Provided xi sample covariance overrides the provided xi samples")
-
-    if two_tracers:
-        if jackknife and legendre_mix: warn("Projected Legendre post-processing for jackknife not implemented for multi-tracer. Please contact the developer for a workaround")
-        if mocks and legendre: warn("Legendre post-processing for mocks not implemented for multi-tracer. Please contact the developer for a workaround")
+    if two_tracers and jackknife and legendre_mix: warn("Projected Legendre post-processing for jackknife not implemented for multi-tracer. Please contact the developer for a workaround")
 
     # Determine number of radial, mu bins and/or jackknives automatically as needed
     binned_pair_names = glob("binned_pair_counts_n*_m*_j*_??.dat" if jackknife else "RR_counts_n*_m*_??.dat", root_dir = os.path.join(file_root, "weights"))
@@ -162,8 +173,22 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
     if jackknife:
         xi_jack_names = [os.path.join(file_root, f"xi_jack/xi_jack_n{n_r_bins}_m{n_mu_bins}_j{n_jack}_{index}.dat") for index in indices_corr]
     
-    if mocks:
-        mock_cov_name = os.path.join(out_dir, f"cov_sample_n{n_r_bins}_m{n_mu_bins}.txt")
+    # Determine load_sample_cov automatically if needed
+    mock_cov_basename = f"cov_sample_n{n_r_bins}_" + (f"l{max_l}" if legendre else f"m{n_mu_bins}") + ".txt"
+    mock_cov_name = os.path.join(file_root, mock_cov_basename)
+    if load_sample_cov:
+        if not os.path.isfile(mock_cov_name): raise ValueError("Enabled loading the default (mock) sample covariance file, but it is not found")
+    elif load_sample_cov is None:
+        if jackknife or mocks_new: load_sample_cov = False
+        else: load_sample_cov = os.path.isfile(mock_cov_name)
+
+    if not load_sample_cov: mock_cov_name = os.path.join(out_dir, mock_cov_basename) # in this case, the sample covariance may be written, and that should be into the output directory and not file_root; they can be the same if desired
+    
+    print_function(f"Tuning to the (mock) sample covariance loaded from the default file: {load_sample_cov}")
+
+    mocks = mocks_new or load_sample_cov
+
+    if two_tracers and mocks and legendre: warn("Legendre post-processing for mocks not implemented for multi-tracer. Please contact the developer for a workaround")
 
     # write the mock covariance to file
     if mocks_precomputed:
