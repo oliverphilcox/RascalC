@@ -52,6 +52,11 @@ However, we can suggest at least two situations in which this variant is advisab
     {"Full covariance model" "Shot-noise rescaling"} -> "Full (final) covariance";
     "Full (final) covariance" [style=filled, fillcolor=green];
 
+.. _general_usage_remarks:
+
+General guidance
+^^^^^^^^^^^^^^^^
+
 General practical usage remarks for the Python wrapper function, :func:`RascalC.run_cov`:
 
 - RR counts and 2PCF can and should all be estimated at the same time using the ``pycorr`` `library for 2-point correlation function estimation <https://github.com/cosmodesi/pycorr>`_; this is an external step to :func:`RascalC.run_cov`.
@@ -74,12 +79,23 @@ General practical usage remarks for the Python wrapper function, :func:`RascalC.
 - You also need to provide input clustering in a form of 2PCF table via the ``xi_table_11`` argument. You can use the pre-computed and loaded ``pycorr`` 2PCF estimator again, but you might want to rebin it differently from the previous case. It is usually advisable to have ``xi_table_11`` in finer radial bins than ``pycorr_allcounts_11``, but the angular (:math:`\mu`) should not be too fine to avoid noisiness.
 - Random positions are another necessary input as the ``randoms_positions1`` argument.
 
-    - The number of randoms for ``RascalC`` does not have to be the same as for pair counting and 2PCF estimation. It should be high enough to provide a good representation of survey geometry, but not too high to keep the run time reasonable.
+    - The number of randoms for ``RascalC`` does not have to be the same as for pair counting and 2PCF estimation (except when you disable ``normalize_wcounts``). It should be high enough to provide a good representation of survey geometry, but not too high to keep the run time reasonable.
     - For 2PCF covariance after standard BAO reconstruction, provide the **shifted** randoms (`Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_, `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_; the input 2PCF conversion in that case will be applied automatically to a ``pycorr`` estimator).
     - For a periodic cubic box (without reconstruction), you will need to generate uniform random positions yourself.
 - You must also pass the weights for the randoms through the ``randoms_weights1`` argument. These must match what you used for pair counting and 2PCF estimation with ``pycorr``.
 
     - If you did not use weights in ``pycorr``, you should pass an array containing 1 for each random point as ``randoms_weights1``.
+- Set the output directory, ``out_dir``. We highly recommended a different output directory for each run. This directory will contain all information necessary for post-processing, and a complimentary log file (``log.txt``).
+- Set the temporary directory, ``tmp_dir``. Bear in mind that it will need to temporarily contain the random catalog(s) (positions, weights, and jackknife regions if applicable) in text format. This directory can be deleted after the run, and the code normally strives to leave it in its original state. We highly recommended a different temporary directory for each run.
+- Set the number of threads via ``nthread``.
+
+    - We recommend trying different options before massive computations.
+    - At NERSC Perlmutter, the best option seems to be ``nthread=64`` on half the CPU node (``shared`` queue, requesting 1 node and 128 SLURM cores, which are hyperthreads, and correspond to 64 physical cores).
+- Set ``N2``, ``N3`` and ``N4``. These are importance sampling settings: ``RascalC`` will try to take ``N2`` secondary points per each random point provided, ``N3`` tertiary points per each secondary point and ``N4`` quaternary points per each tertiary point. Common values have been ``N2=5, N3=10, N4=20``, but you may need to adjust them (see :ref:`improving_convergence`).
+- Set the number of integration loops ``n_loops`` for covariance matrix terms evaluation. It should be divisible by ``nthread``. 1024 might be a nice starting value, but you may need to adjust it (see :ref:`improving_convergence`).
+
+    - The runtime roughly (not exactly) scales as the number of quads per the number of threads, ``N_randoms * N2 * N3 * N4 * n_loops / nthread`` in single-tracer mode. For reference, on NERSC Perlmutter CPU the code processed about 27 millions (``2.7e7``) quads per second per thread (in December 2024).
+- Set the number of loops per sample, ``loops_per_sample``. This sets the amount of auxiliary output used almost exclusively for :ref:`quality_control`. ``loops_per_sample`` needs to be a divider of ``n_loops``, and we recommend keeping ``n_loops / loops_per_sample`` (the number of output subsamples) roughly between 10 and 30. Smaller values may require you to wait too long before there is any usable output, or give insufficient information for :ref:`quality_control`. Larger values can lead to too much output.
 - To compute a full two-tracer covariance, you need to also provide all of the following:
 
     - cross-counts as ``pycorr_allcounts_12`` and second tracer auto-counts as ``pycorr_allcounts_22`` (rebinned in the same way as ``pycorr_allcounts_11``);
@@ -88,9 +104,17 @@ General practical usage remarks for the Python wrapper function, :func:`RascalC.
 - ``RascalC`` in the flowcharts refers to the most computationally intensive steps (implemented in C++), at which the coefficients for the covariance matrix models are evaluated. These coefficients are saved in a ``Raw_Covariance_Matrices*.npz`` file in the chosen output directory.
 - Basic/minimal **post-processing** involves substituting a fixed shot-noise rescaling value (or two values in case of two tracers) into the full covariance model to obtain the final covariance. These operations normally are invoked at the end of :func:`RascalC.run_cov`, but they can also be performed separately using :func:`RascalC.post_process_auto`. The results are saved in a ``Rescaled_Covariance_Matrices*.npz`` file in the chosen output directory.
 
-Refer to :ref:`pipeline_jack` or :ref:`pipeline_mock` to see which fits your needs better.
-Take a look at :ref:`quality_control` after the run.
+After the run (execution of :func:`RascalC.run_cov`):
+
+- If it finished normally with no errors, congratulations!
+- If it terminated early and/or the job timed out, it is often worth invoking the post-processing with :func:`RascalC.post_process_auto` to see whether sufficiently results were saved.
+- If there was a convergence-related error or warning, please refer to :ref:`improving_convergence`.
+- If anything is unclear, please contact the developer.
+
+In any case, take a look at :ref:`quality_control` after the run.
 To work with the final results more conveniently, we recommend seeing :ref:`load_export_final_cov`.
+
+After reading to this point, please refer to :ref:`pipeline_jack` or :ref:`pipeline_mock` to see which fits your needs better.
 
 .. _pipeline_jack:
 
@@ -116,7 +140,7 @@ It has been tested most thoroughly (see e.g. `Rashkovetskyi et al 2025 <https://
     {"Full covariance model" "Best-fit shot-noise rescaling"} -> "Full (final) covariance";
     "Full (final) covariance" [style=filled, fillcolor=green];
 
-Practical remarks particular to the jackknife pipeline with :func:`RascalC.run_cov` in addition to the :ref:`pipeline_basic_fig` and the following reference:
+Practical remarks particular to the jackknife pipeline with :func:`RascalC.run_cov` in addition to the :ref:`general_usage_remarks`:
 
 - Jackknife and full RR counts and 2PCF can and should all be estimated at the same time using the ``pycorr`` `library for 2-point correlation function estimation <https://github.com/cosmodesi/pycorr>`_.
 
@@ -185,12 +209,12 @@ General quality control
 The convergence checks mostly follow Section 6.1 of `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_.
 
 1. The strictest criterion is that the final covariance matrix should be positive definite. If this condition is violated, the Python code raises an exception, which should be easy to notice.
-2. Next, there is the eigenvalue test, failure to pass which produces warnings:
+2. Next, there is the eigenvalue test, which produces warnings if failed:
 
-    - In the original (stonger) version (Equation (4.5) in `Philcox et al 2020 <https://arxiv.org/abs/1904.11070>`_), the minimal eigenvalue of the 4-point covariance term :math:`C_4` should be larger than minus the minimal eigenvalue of the 2-point term :math:`C_2`, both in :eq:`cov_model`.
+    - In the original (stronger) version (Equation (4.5) in `Philcox et al 2020 <https://arxiv.org/abs/1904.11070>`_), the minimal eigenvalue of the 4-point covariance term :math:`C_4` should be larger than minus the minimal eigenvalue of the 2-point term :math:`C_2`, both in :eq:`cov_model`.
 
         - Shot-noise rescaling values smaller than 1 (which are quite common, e.g. in `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_) make this criterion stricter, because they scale the 2-point term down by :math:`\alpha_{\rm SN}^2`. So the code now repeats the test is the optimal shot-noise rescaling value becomes less than 1.
-    - However, the compared eigenvalues of :math:`C_4` and :math:`C_2` can correspond to quite different separation scales, making the original criterion unnecessarily strict in some cases. This led us to introduce the weaker version, where we compare the eigenvalues of :math:`C_2^{-1/2} C_4 C_2^{-1/2}` with :math:`-1` or :math:`-\alpha_{\rm SN}^2`. Here :math:`C_2^{-1/2}` is the inverse of the matrix square root of the 2-point term, which scales the different parts of the 4-point term matrix more appropriately. (The 2-point term is either diagonal or block-diagonal with small blocks, so taking its matrix square root should be numerically stable.)
+    - On the other hand, the compared eigenvalues of :math:`C_4` and :math:`C_2` can correspond to quite different separation scales, making the original criterion unnecessarily strict in some cases. This consideration led us to introduce the weaker version, where we compare the eigenvalues of :math:`C_2^{-1/2} C_4 C_2^{-1/2}` with :math:`-1` or :math:`-\alpha_{\rm SN}^2`. Here :math:`C_2^{-1/2}` is the inverse of `the matrix square root <https://en.wikipedia.org/wiki/Square_root_of_a_matrix>`_ (`scipy.linalg.sqrtm <https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.sqrtm.html>`_) of the 2-point term, which scales the different parts of the 4-point term matrix more appropriately. (The 2-point term is either diagonal or block-diagonal with small blocks, so taking its matrix square root should be numerically stable.)
 3. Finally, there is the extra convergence check (:mod:`RascalC.convergence_check_extra`) performed at the end of :func:`RascalC.run_cov` or :func:`RascalC.post_process_auto` by default.
 
     - After Section 3.2 of `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_, we recommend focusing on ``R_inv`` (:math:`R_{\rm inv}`) values. There is no universal threshold, but some decent reference values are:
@@ -203,6 +227,8 @@ The convergence checks mostly follow Section 6.1 of `Rashkovetskyi et al 2025 <h
         - as the number of bins increases (the trend is the same for mocks — see e.g. Equation (3.12) in `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_)
         - as the sample density increases and shot-noise decreases (parallel with mocks is less clear, but dense samples are also harder to simulate).
 
+.. _improving_convergence:
+
 Addressing convergence issues
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -210,9 +236,11 @@ Use these instructions when
 
 - you get the error message ``The full covariance is not positive definite - insufficient convergence``;
 - the ``R_inv`` values from the extra convergence check are worryingly high (see above for reference, or reach out if in doubt);
-- you get the ``4-point covariance matrix has not converged properly via the weaker eigenvalue test`` warnings, although they seldom appear without one of the previous two issues.
+- you get the ``4-point covariance matrix has not converged properly via the weaker eigenvalue test`` warnings, although they seldom appear without one of the previous two issues;
 
-First, try to re-run post-processing with alternative options using :func:`RascalC.post_process_auto`:
+    - you can probably ignore the warning(s) about ``stronger eigenvalue test`` if they appear alone.
+
+First, you can re-run post-processing with alternative options using :func:`RascalC.post_process_auto`:
 
 - skip a few bins with smallest separations by passing a single positive integer (their number) via ``skip_s_bins``;
 
@@ -220,7 +248,7 @@ First, try to re-run post-processing with alternative options using :func:`Rasca
 - in Legendre mode, you can also try skipping highest multipoles by passing a single positive integer (their number) via ``skip_l``.
 - you can also try to discard "unlucky" samples using the ``n_samples`` argument, but this seldom helps and can become confusing.
 
-The above are the fastest options because they only require re-running the post-processing script while re-using the products of pre-processing and main code run.
+The above are the fastest options because they only require re-running the post-processing script while re-using the products of the main computation.
 
 Then, consider running the main computation again with :func:`RascalC.run_cov` to generate a smaller covariance matrix by
 
