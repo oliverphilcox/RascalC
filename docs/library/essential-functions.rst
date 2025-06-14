@@ -5,7 +5,7 @@ Introduction
 ------------
 
 Here we strive to provide a practical summary.
-We also recommend reading a theoretical overview of the RascalC methodology in Sections 2.1 and 3 of `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_.
+We also recommend reading a theoretical overview of the RascalC methodology in Sections 2.1 and 3 of `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_, or Section 2.2 of `Rashkovetskyi 2025 dissertation <https://rashkovetsky.im/files/Dissertation_Rashkovetskyi_2025.pdf>`_.
 Many of the more technical (algorithm implementation) details omitted there are described in Sections 3 and 4 of `Philcox et al 2020 <https://arxiv.org/abs/1904.11070>`_.
 
 RascalC constructs a one-parametric covariance matrix model (in the single-tracer case) from an arbitrary (e.g., empirical or theoretical) 2-point correlation function (2PCF):
