@@ -89,6 +89,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
 
     load_sample_cov : boolean or None
         (Optional) boolean value sets whether to load the (mock) sample covariance saved in a default file under ``file_root``. If None (default), this is determined automatically by the existence of the file. Enabling this option contradicts with ``xi_11_samples``, ``xi_sample_cov`` and ``jackknife``.
+        Note that auto-determined jackknife disables the automatic mock post-processing (because jackknife pipeline has higher priority). In practice, if your ``file_root`` has both jackknife files and the (mock) sample covariance, you need ``load_sample_cov=True`` to load the latter.
 
     legendre : boolean or None
         (Optional) boolean value sets Legendre (vs s,mu) mode manually. If None (default), this mode is determined automatically.
@@ -179,7 +180,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
     mock_cov_basename = f"cov_sample_n{n_r_bins}_" + (f"l{max_l}" if legendre else f"m{n_mu_bins}") + ".txt"
     mock_cov_name = os.path.join(file_root, mock_cov_basename)
     if load_sample_cov:
-        if not os.path.isfile(mock_cov_name): raise ValueError("Enabled loading the default (mock) sample covariance file, but it is not found")
+        if not os.path.isfile(mock_cov_name): raise ValueError(f"The default (mock) sample covariance file, '{mock_cov_name}' does not exist and can not be loaded. Thus `load_sample_cov` can not be `True`.")
     elif load_sample_cov is None:
         if jackknife or mocks_new: load_sample_cov = False
         else: load_sample_cov = os.path.isfile(mock_cov_name)
@@ -196,8 +197,9 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
 
     if mocks_new:
         mock_cov_name = os.path.join(out_dir, mock_cov_basename) # in this case, the sample covariance will be written, and that should be into the output directory and not file_root; they can be the same if desired
-        # Then need to make sure that the output directory exists. This is also checked in each post-processing functions, but only after writing the sample covariance file
-        os.makedirs(os.path.abspath(out_dir), exist_ok = True) # abspath is to exclude "../" for makedirs not to become "confused"
+        if os.path.isfile(mock_cov_name): warn(f"The default (mock) sample covariance file '{mock_cov_name}' exists and will be overwritten")
+        elif not os.path.isdir(out_dir): # Need to make sure that the output directory exists. This is also checked in each post-processing functions, but only after writing the sample covariance file
+            os.makedirs(os.path.abspath(out_dir)) # abspath is to exclude "../" for makedirs not to become "confused"
     # then write the sample covariance to file
     if mocks_precomputed:
         np.savetxt(mock_cov_name, xi_sample_cov)
