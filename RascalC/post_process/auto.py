@@ -182,8 +182,6 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
         if jackknife or mocks_new: load_sample_cov = False
         else: load_sample_cov = os.path.isfile(mock_cov_name)
 
-    if not load_sample_cov: mock_cov_name = os.path.join(out_dir, mock_cov_basename) # in this case, the sample covariance may be written, and that should be into the output directory and not file_root; they can be the same if desired
-    
     print_function(f"Tuning to the (mock) sample covariance loaded from the default file: {load_sample_cov}")
 
     mocks = mocks_new or load_sample_cov
@@ -194,7 +192,11 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
         # cases when the shot-noise rescaling is not tuned - as it should be, or due to the lack of implementation
         print_function(f"Using {shot_noise_rescaling1=}" + two_tracers * f" and {shot_noise_rescaling2=}")
 
-    # write the mock covariance to file
+    if mocks_new:
+        mock_cov_name = os.path.join(out_dir, mock_cov_basename) # in this case, the sample covariance will be written, and that should be into the output directory and not file_root; they can be the same if desired
+        # Then need to make sure that the output directory exists. This is also checked in each post-processing functions, but only after writing the sample covariance file
+        os.makedirs(os.path.abspath(out_dir), exist_ok = True) # abspath is to exclude "../" for makedirs not to become "confused"
+    # then write the sample covariance to file
     if mocks_precomputed:
         np.savetxt(mock_cov_name, xi_sample_cov)
     elif mocks_from_samples:
