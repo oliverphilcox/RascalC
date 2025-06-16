@@ -59,11 +59,11 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
 
     shot_noise_rescaling1 : float
         (Optional) shot-noise rescaling value for the first tracer (default 1).
-        In jackknife mode, the shot-noise rescaling value is auto-determined, so this parameter has no effect.
+        In jackknife or mock mode, the shot-noise rescaling value is auto-determined, so this parameter has no effect.
 
     shot_noise_rescaling2 : float
         (Optional) shot-noise rescaling value for the second tracer only in multi-tracer mode (default 1).
-        In jackknife mode, the shot-noise rescaling value is auto-determined, so this parameter has no effect.
+        In jackknife or mock mode, the shot-noise rescaling values are auto-determined, so this parameter has no effect.
     
     xi_11_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
         (Optional) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) to compute the sample covariance to use as reference in shot-noise rescaling optimization. Must have the same binning as the covariance (except possibly the angular/mu bins in Legendre mode). Providing this option is not compatible with jackknife (enabled explicitly).
@@ -189,6 +189,10 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
     mocks = mocks_new or load_sample_cov
 
     if two_tracers and mocks and legendre: warn("Legendre post-processing for mocks not implemented for multi-tracer. Please contact the developer for a workaround")
+
+    if not (jackknife or mocks) or (two_tracers and ((jackknife and legendre_mix) or (mocks and legendre))):
+        # cases when the shot-noise rescaling is not tuned - as it should be, or due to the lack of implementation
+        print_function(f"Using {shot_noise_rescaling1=}" + two_tracers * f" and {shot_noise_rescaling2=}")
 
     # write the mock covariance to file
     if mocks_precomputed:
