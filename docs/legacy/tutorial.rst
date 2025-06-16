@@ -9,17 +9,16 @@ Here, we compute the covariance matrix for a single `QPM <https://arxiv.org/pdf/
 
 For advanced users who would like to do things in parallel when possible, here is a graph showing how each step depends on the results of others:
 
-.. graphviz::
+.. digraph:: deps
+    :caption: Dependencies between the steps in this tutorial.
 
-   digraph deps {
-      "convert_to_xyz galaxies" -> "create_jackknives galaxies";
-      "convert_to_xyz randoms" -> "create_jackknives randoms" -> "take_subset_of_particles";
-      {"write_binning_file cov" "take_subset_of_particles"} -> "jackknife_weights";
-      {"write_binning_file corr" "create_jackknives galaxies" "create_jackknives randoms" "take_subset_of_particles"} -> "xi_estimator_aperiodic";
-      {"write_binning_file cov" "create_jackknives galaxies" "create_jackknives randoms" "take_subset_of_particles" "jackknife_weights"} -> "xi_estimator_jack";
-      {"write_binning_file corr" "write_binning_file cov" "take_subset_of_particles" "jackknife_weights" "xi_estimator_aperiodic"} -> "./cov";
-      {"jackknife_weights" "xi_estimator_jack" "./cov"} -> "post_process_jackknife";
-   }
+    "convert_to_xyz galaxies" -> "create_jackknives galaxies";
+    "convert_to_xyz randoms" -> "create_jackknives randoms" -> "take_subset_of_particles";
+    {"write_binning_file cov" "take_subset_of_particles"} -> "jackknife_weights";
+    {"write_binning_file corr" "create_jackknives galaxies" "create_jackknives randoms" "take_subset_of_particles"} -> "xi_estimator_aperiodic";
+    {"write_binning_file cov" "create_jackknives galaxies" "create_jackknives randoms" "take_subset_of_particles" "jackknife_weights"} -> "xi_estimator_jack";
+    {"write_binning_file corr" "write_binning_file cov" "take_subset_of_particles" "jackknife_weights" "xi_estimator_aperiodic"} -> "./cov";
+    {"jackknife_weights" "xi_estimator_jack" "./cov"} -> "post_process_jackknife";
 
 1) Pre-Processing
 ------------------

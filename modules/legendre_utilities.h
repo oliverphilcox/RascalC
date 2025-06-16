@@ -51,6 +51,7 @@ inline void legendre_polynomials_preload(Float mu, int max_l, Float *poly_out){
     }
 }
 #else
+const int max_no_multipoles = 6; // for array allocation on stack - no variable length arrays in C++ standards. needs to be consistent with (not less than) the number of multipoles written below
 inline void legendre_polynomials(Float mu,int max_l, Float *poly_out){
     // Declare Legendre polynomials here
     // now compute relevant Legendre polynomials

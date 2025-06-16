@@ -53,14 +53,8 @@ build
 dist
 *.egg-info
 
-# IPython/Jupyter notebook checkpoints
-.ipynb_checkpoints
-
 # Python cache
 __pycache__
-
-# Built docs
-_build
 
 # Hidden files
 .*

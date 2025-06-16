@@ -117,7 +117,7 @@ public:
         int tmp_bin;
         Float correction_factor;
         int max_bin=nbin;
-        Float polynomials[mbin];
+        Float polynomials[max_no_multipoles];
 
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
                 if((prim_ids[i]==pj_id)&&(I1==I2)){
@@ -174,7 +174,7 @@ public:
         cleanup_l(pj.pos,pk.pos,rjk_mag,rjk_mu);
         tmp_bin = get_radial_bin(rjk_mag); // radial bin
         int max_bin = nbin,out_bin;
-        Float correction_factors,polynomials_jk[mbin];
+        Float correction_factors,polynomials_jk[max_no_multipoles];
 
         // load all legendre polynomials
         legendre_polynomials(rjk_mu, max_l, polynomials_jk);
@@ -239,7 +239,7 @@ public:
         cleanup_l(pl.pos,pk.pos,rkl_mag,rkl_mu);
 
         int max_bin = nbin, out_bin;
-        Float correction_factors, polynomials_kl[mbin];
+        Float correction_factors, polynomials_kl[max_no_multipoles];
         tmp_bin = get_radial_bin(rkl_mag); // radial kl bin
 
         if ((tmp_bin<0)||(tmp_bin>=max_bin)) return; // if not in correct bin

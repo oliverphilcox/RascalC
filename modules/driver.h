@@ -50,7 +50,7 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 #ifdef JACKKNIFE
     // Store filled jackknives in local memory to avoid file corruption
     int tmp_n_JK = JK->n_JK_filled;
-    int tmp_filled_JK[tmp_n_JK];
+    std::vector<int> tmp_filled_JK(tmp_n_JK);
     for(int ii=0;ii<tmp_n_JK;ii++) tmp_filled_JK[ii]=JK->filled_JKs[ii];
 #endif
     
