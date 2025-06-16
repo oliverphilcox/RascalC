@@ -36,7 +36,7 @@ Refer to :ref:`pipeline_jack` or :ref:`pipeline_mock` **after looking at the min
 However, we can suggest at least two situations in which this variant is advisable:
 
     - Two-tracer covariance when the shot-noise rescaling values for each tracer are known (or will be known soon) from single-tracer jackknife computations. Currently, building a two-tracer jackknife model seems excessive.
-    - You can also use the basic pipeline to re-run the post-processing with a mock 2PCF sample later. However, substituting jackknife can not be deferred like this because the jackknife model crucially depends on the jackknife RR counts.
+    - You can also use the basic pipeline to re-run the post-processing with a mock 2PCF sample later (see :ref:`pipeline_mock`). However, substituting jackknife can not be deferred like this because the jackknife model crucially depends on the jackknife RR counts.
 
 .. digraph:: pipeline_basic
     :name: pipeline_basic_fig
@@ -181,25 +181,32 @@ Accordingly, there are few good usage examples, but we are working on this.
     {"Full covariance model" "Best-fit shot-noise rescaling"} -> "Full (final) covariance";
     "Full (final) covariance" [style=filled, fillcolor=green];
 
-Currently, the mock pipeline can only be used by
+Practical remarks particular to the mock pipeline with :func:`RascalC.run_cov` in addition to the :ref:`general_usage_remarks`:
 
-1. running the :ref:`pipeline_basic`;
-2. computing and writing the mock 2PCF sample covariance with e.g.
+- Mock **post-processing** involves fitting the full covariance model to the (mock) sample covariance to find the optimal shot-noise rescaling and substituting that value into the full covariance model to obtain the final covariance. In this case, the best-fit model covariance is the final answer (unlike for :ref:`pipeline_jack`). These operations normally are invoked at the end of :func:`RascalC.run_cov`, but they can also be performed separately using :func:`RascalC.post_process_auto`. The results are saved in a ``Rescaled_Covariance_Matrices*Mocks*.npz`` file in the chosen output directory.
+- Accordingly, the mock pipeline can be used in the following ways:
 
-    - :func:`RascalC.pycorr_utils.sample_cov.sample_cov_from_pycorr_to_file` in ``s_mu`` mode;
-    - :func:`RascalC.pycorr_utils.sample_cov_multipoles.sample_cov_multipoles_from_pycorr_to_file` in Legendre multipole modes;
-3. invoking the manual and rather tedious post-processing by choosing an appropriate function:
+    - Providing a sample (list or tuple) of (mock) ``pycorr`` correlation function estimators to :func:`RascalC.run_cov` through the ``xi_11_samples`` argument. Each should be rebinned for the covariance, i.e. in the same way as ``pycorr_allcounts_11``.
 
-    - :func:`RascalC.post_process.post_process_default_mocks` in ``s_mu`` mode (for a single tracer);
+        - In this case, it makes even more sense to **run the mock counts/correlation functions in separate, independent processes from the one calling** :func:`RascalC.run_cov` (**both should be parallelized and they are known to interfere with each other's efficiency**).
+    - Providing the pre-computed reference covariance with the right covariance bins and bin ordering to :func:`RascalC.run_cov` via ``xi_sample_cov``.
 
-        - :func:`RascalC.post_process.post_process_default_mocks_multi` in ``s_mu`` mode for two tracers;
-    - :func:`RascalC.post_process.post_process_legendre_mocks` in Legendre modes (for a single tracer).
+        - We think using ``xi_11_samples`` is much easier, whereas this option can be tedious.
+        - The correct bin ordering is:
 
-The post-processing results will be saved in a ``Rescaled_Covariance_Matrices*Mocks*.npz`` file in the chosen output directory.
+            - In ``s_mu`` binning mode: first by radial/separation bins (top-level) and then by angular (:math:`\mu`) bins; keep in mind that ``RascalC`` wraps :math:`-1 \le \mu < 0` into :math:`0 \le \mu \le 1`. You can refer to :mod:`RascalC.pycorr_utils.sample_cov`.
+            - In Legendre multipole modes: first by multipoles (top-level, only even multipoles, e.g. 0, then 2, then 4) and then by radial/separation bins. You can refer to :mod:`RascalC.pycorr_utils.sample_cov_multipoles`.
+            - For two tracers, the topmost-level ordering is always by the type of the correlation function. Traditionally, the order is: first tracer auto-correlation, then cross-correlation, then second tracer auto-correlation. The lower-level blocks are then ordered as described above, depending on ``s_mu`` vs Legendre binning mode.
+            
+                - However, the cross-correlation functions are currently not used for shot-noise tuning. Thus, it is usually easier to tune the shot-noise rescaling separately for each of the two tracers and plug them into :func:`RascalC.run_cov` or :func:`RascalC.post_process_auto` via ``shot_noise_rescaling1`` and ``shot_noise_rescaling2`` respectively.
+    - Running the :ref:`pipeline_basic` (providing neither of the above nor ``random_samples1`` for jackknife to :func:`RascalC.run_cov`) and then providing either ``xi_11_samples`` or ``xi_sample_cov`` at additional post-processing with :func:`RascalC.post_process_auto`.
+- In any case, to run :func:`RascalC.run_cov`, you still need to provide
+
+    - RR counts via ``pycorr_allcounts_11``, this can be from one mock realization, or a sum of mock realizations (unless you disable ``normalize_wcounts``);
+    - representative correlation function via ``xi_table_11``, this can be a sum over all available mock realizations or from a single mock realization. Remember that it probably should be rebinned differently from ``pycorr_allcounts_11`` (see :ref:`general_usage_remarks`).
+
 Take a look at :ref:`quality_control` after the run.
 To work with the final results more conveniently, we recommend seeing :ref:`load_export_final_cov`.
-
-We are working on allowing to pass the mock correlation functions and/or the mock sample covariance to :func:`RascalC.run_cov` and :func:`RascalC.post_process_auto` to make this pipeline easier to use.
 
 .. _quality_control:
 
@@ -264,7 +271,7 @@ This can be done in different ways:
 
     - Occasionally bad convergence is just bad luck, so running again with the same settings, including ``n_loops`` might not be needed. In that case, just do not use the same fixed ``seed``, as that should reproduce the results exactly.
     - If you keep other settings fixed (except ``n_loops``, ``nthread`` and naturally ``seed`` — you can change those more freely), you can also concatenate (combine) samples from different runs into a new, different directory using :func:`RascalC.cat_raw_covariance_matrices` to reach even better convegence (check it by post-processing the new directory with :func:`RascalC:post_process_auto`). However, combining samples does not always improve convergence, and keeping track of different sample combination can be hard.
-- Increase ``N2`` — probably not recommended, because the effect is similar to increasing ``n_loops``, but sample combination is no longer an optionl.
+- Increase ``N2`` — probably not recommended, because the effect is similar to increasing ``n_loops``, but sample combination is no longer an option.
 - Increase ``N4`` and/or ``N3``. It is probably more sensible than the previous options because we expect the higher-point terms to converge slower. ``N4`` will only affect the 4-point term :math:`C_4`; ``N3`` also affects the 3-point term :math:`C_3`.
 
 The convergence issues can be persistent.
