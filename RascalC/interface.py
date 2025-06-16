@@ -16,15 +16,8 @@ from .pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pycor
 from .mu_bin_legendre_factors import write_mu_bin_legendre_factors
 from .correction_function import compute_correction_function, compute_correction_function_multi
 from .convergence_check_extra import convergence_check_extra
-from .utils import rmdir_if_exists_and_empty
+from .utils import rmdir_if_exists_and_empty, suffixes_tracer_all, indices_corr_all, suffixes_corr_all, tracer1_corr
 from .post_process import post_process_legendre_multi, post_process_default_mocks_multi, post_process_jackknife_multi, post_process_default_multi, post_process_legendre_mocks, post_process_legendre_mix_jackknife, post_process_legendre, post_process_default_mocks, post_process_jackknife, post_process_default
-
-
-suffixes_tracer_all = ("", "2") # all supported tracer suffixes
-indices_corr_all = ("11", "12", "22") # all supported 2PCF indices
-suffixes_corr_all = ("", "12", "2") # all supported 2PCF suffixes
-tracer1_corr = (0, 0, 1)
-tracer2_corr = (0, 1, 1)
 
 
 def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],

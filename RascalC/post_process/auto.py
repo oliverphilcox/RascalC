@@ -4,7 +4,7 @@ import os
 from glob import glob
 from re import fullmatch
 from warnings import warn
-from ..interface import indices_corr_all
+from ..utils import indices_corr_all
 from ..raw_covariance_matrices import collect_raw_covariance_matrices
 from ..convergence_check_extra import convergence_check_extra
 from .default import post_process_default

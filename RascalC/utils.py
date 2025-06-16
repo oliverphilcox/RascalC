@@ -5,6 +5,13 @@ import os
 from typing import Iterable
 
 
+suffixes_tracer_all = ("", "2") # all supported tracer suffixes
+indices_corr_all = ("11", "12", "22") # all supported 2PCF indices
+suffixes_corr_all = ("", "12", "2") # all supported 2PCF suffixes
+tracer1_corr = (0, 0, 1)
+tracer2_corr = (0, 1, 1)
+
+
 def blank_function(*args, **kwargs) -> None:
     """
     function that accepts anything and does nothing
