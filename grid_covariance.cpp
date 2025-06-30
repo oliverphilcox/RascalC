@@ -37,7 +37,7 @@ typedef unsigned long long int uint64;
 
 // Could swap between single and double precision here.
 typedef double Float;
-typedef double3 Float3;
+typedef ThreeVector<Float> Float3; // No need to edit this line.
 
 
 // Define module files
