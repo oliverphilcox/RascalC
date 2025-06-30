@@ -249,8 +249,8 @@ public:
 	    while (i<argc) {
             if (!strcmp(argv[i],"-boxsize")){
                  // set cubic boxsize by default
-                Float tmp_box=atof(argv[++i]);
-                rect_boxsize = {tmp_box,tmp_box,tmp_box};
+                boxsize = atof(argv[++i]);
+                rect_boxsize = {boxsize, boxsize, boxsize};
                 }
         else if (!strcmp(argv[i],"-maxloops")) max_loops = atoi(argv[++i]);
         else if (!strcmp(argv[i],"-loopspersample")) loops_per_sample = atoi(argv[++i]);
