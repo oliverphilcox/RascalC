@@ -130,9 +130,8 @@ Particle *read_particles(Float rescale, int *np, const char *filename, const int
 
 
 
-bool compute_bounding_box(Particle **p, int* np, int no_fields, Float3 &rect_boxsize, Float &cellsize, Float rmax, Float3& pmin, int nside) {
-    // Compute the boxsize of the bounding cuboid box and determine whether we are periodic
-    bool box = false;
+void compute_bounding_box(Particle **p, int* np, int no_fields, Float3 &rect_boxsize, Float &cellsize, Float rmax, Float3& pmin, int nside) {
+    // Compute the boxsize of the bounding cuboid box and check whether we are periodic
     Float3 pmax = p[0][0].pos; // initialize with the first particle's coordinates
     pmin = pmax;
     for (int index = 0; index < no_fields; index++)
@@ -148,44 +147,43 @@ bool compute_bounding_box(Particle **p, int* np, int no_fields, Float3 &rect_box
     printf("# Range of y positions are %6.2f to %6.2f\n", pmin.y, pmax.y);
     printf("# Range of z positions are %6.2f to %6.2f\n", pmin.z, pmax.z);
     Float3 prange = pmax-pmin;
-    Float biggest = prange.x;
-    biggest = fmax(biggest, prange.y); 
-    biggest = fmax(biggest, prange.z);
-    if (prange.x>0.99*biggest && prange.y>0.99*biggest && prange.z>0.99*biggest) {
-        // Probably using a cube of inputs, intended for a periodic box
-    	box=true;
+    Float biggest = prange.maxcomponent();
+
+    // Simple (and somewhat rough) check for cubic box vs realistic survey geometry. Should not overwrite user settings based on it, warning is probably fine.
+    if (prange.mincomponent() > 0.99*biggest) {
+        // Probably using a cube of inputs, intended for a periodic box. Not surely, because the condition above is too simple and weak.
+        // Known issue: the range condition is exactly true for an octant of a spherical shell bounded by xy, yz, zx planes, whereas this shape is obviously not a cube. May be worth developing an additional condition to exclude this case, but one might just bear with the warnings.
 #ifndef PERIODIC
-    	fprintf(stderr,"#\n# WARNING: cubic input detected but you have not compiled with PERIODIC flag!\n#\n");
-    	printf("#\n# WARNING: cubic input detected but you have not compiled with PERIODIC flag!\n#\n");
-        if(biggest+2*rmax>rect_boxsize.x){
-            printf("#\n# WARNING: Box periodicity is too small; particles will overlap on periodic wrapping!");
-            fprintf(stderr,"#\n# WARNING: Box periodicity is too small; particles will overlap on periodic wrapping!");
-        }
-        biggest = rect_boxsize.x; // just use the input boxsize
+    	fprintf(stderr, "#\n# WARNING: input particles might be from a cubic periodic box but the code is not in the PERIODIC mode.\n#\n");
+    	printf("#\n# WARNING: input particles might be from a cubic periodic box but the code is not in the PERIODIC mode.\n#\n");
 #endif
-        // Set boxsize to be the biggest dimension which allows for periodic overlap
-        rect_boxsize= {biggest,biggest,biggest};
-        cellsize = biggest/nside;
-        printf("# Setting periodic box-size to %6.2f\n", biggest);
     } else {
         // Probably a non-periodic input (e.g. a real dataset)
-        box=false;
 #ifdef PERIODIC
-    	fprintf(stderr,"#\n# WARNING: non-cubic input detected but you have compiled with PERIODIC flag!\n#\n");
-    	printf("#\n# WARNING: non-cubic input detected but you have compiled with PERIODIC flag!\n#\n");
+    	fprintf(stderr, "#\n# WARNING: input particles might not fill a cube, and the code is in PERIODIC mode which does not support generic cuboid boxes!\n#\n");
+    	printf("#\n# WARNING: input particles might not fill a cube, and the code is in PERIODIC mode which does not support generic cuboid boxes!\n#\n");
 #endif
-        // set max_boxsize to just enclose the biggest dimension plus r_max 
-        // NB: We natively wrap the grid (to allow for any position of the center of the grid)
-        // Must add rmax to biggest to ensure there is no periodic overlap in this case.
-        Float max_boxsize = 1.05*(biggest+2*rmax);
-        cellsize = max_boxsize/nside; // compute the width of each cell
-        // Now compute the size of the box in every dimension
-        rect_boxsize = ceil3(prange/cellsize)*cellsize; // to ensure we fit an integer number of cells in each direction
-        printf("# Setting non-periodic box-size to {%6.2f,%6.2f,%6.2f}\n", rect_boxsize.x,rect_boxsize.y,rect_boxsize.z);
     }
-	
-	
-    return box;
+
+    // Now set the parameters based on the periodic setting; otherwise the code operations may be inconsistent
+#ifdef PERIODIC
+    // Periodic input, cubic box only
+    if(biggest >= rect_boxsize.x) {
+        printf("#\n# WARNING: Box periodicity is smaller than the coordinate range; particles will overlap on periodic wrapping!");
+        fprintf(stderr, "#\n# WARNING: Box periodicity is smaller than the coordinate range; particles will overlap on periodic wrapping!");
+    }
+    biggest = rect_boxsize.x; // just use the input boxsize
+    // Set boxsize to be the biggest dimension which allows for periodic overlap
+    // rect_boxsize= {biggest,biggest,biggest}; // the box size should be set to that already
+    cellsize = biggest / nside;
+    printf("# Periodic box size is set to {%6.2f, %6.2f, %6.2f}\n", rect_boxsize.x, rect_boxsize.y, rect_boxsize.z);
+#else
+    // Non-periodic input, generic cuboid box allowed
+    cellsize = biggest / nside; // compute the width of each cell
+    // Now compute the size of the box in every dimension
+    rect_boxsize = ceil3(prange / cellsize) * cellsize; // to ensure we fit an integer number of cells in each direction
+    printf("# Setting non-periodic box size to {%6.2f, %6.2f, %6.2f}\n", rect_boxsize.x, rect_boxsize.y, rect_boxsize.z);
+#endif
 }
 
 
