@@ -192,7 +192,7 @@ public:
     int cf_loops = 10;
 
     // The periodicity of the position-space cube.
-	Float boxsize = 200.; // this is only used if the input particles are made randomly
+	Float boxsize = 2000.; // this is not used if the mode is not PERIODIC and random particles are not made in RascalC
 
 	// The particles will be read from the unit cube, but then scaled by boxsize.
 	Float rescale = 1.;   // If left zero or negative, set rescale=boxsize
