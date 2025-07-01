@@ -1,6 +1,8 @@
 Covariance Matrix Estimation
 =============================
 
+**NB**: This documentation page is about the legacy/command-line usage. We believe it is much easier to learn the Python library, please see its :doc:`../library/essential-functions` and :doc:`../library/installation`.
+
 Overview
 ----------
 

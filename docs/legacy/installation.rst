@@ -1,6 +1,8 @@
 Installation
 ============
 
+**NB**: This documentation page is about the legacy/command-line usage. We believe it is much easier to learn the Python library, please see its :doc:`../library/essential-functions` and :doc:`../library/installation`.
+
 To install RascalC, simply clone the Github repository and compile the C++ code (see :ref:`dependencies` below). This is done as follows::
 
     git clone https://github.com/oliverphilcox/RascalC.git
