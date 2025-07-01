@@ -1,5 +1,5 @@
-Essential functions
-===================
+Fundamentals
+============
 
 Introduction
 ------------
