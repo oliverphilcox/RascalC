@@ -32,7 +32,7 @@ Basic/minimal pipeline
 Use with caution!
 This pipeline does not include a reference to determine the shot-noise rescaling parameter.
 The default value for the shot-noise rescaling is 1, but we can not recommend using it in real applications.
-Refer to :ref:`pipeline_jack` or :ref:`pipeline_mock` **after looking at the minimal flowchart and reading the general practical usage remarks after it**.
+Refer to :ref:`pipeline_jack` or :ref:`pipeline_mock` **after looking at the** :ref:`pipeline_basic_fig` **and reading the** :ref:`general_usage` **after it**.
 However, we can suggest at least two situations in which this variant is advisable:
 
     - Two-tracer covariance when the shot-noise rescaling values for each tracer are known (or will be known soon) from single-tracer jackknife computations. Currently, building a two-tracer jackknife model seems excessive.
@@ -52,7 +52,7 @@ However, we can suggest at least two situations in which this variant is advisab
     {"Full covariance model" "Shot-noise rescaling"} -> "Full (final) covariance";
     "Full (final) covariance" [style=filled, fillcolor=green];
 
-.. _general_usage_remarks:
+.. _general_usage:
 
 General guidance
 ^^^^^^^^^^^^^^^^
@@ -62,7 +62,7 @@ General practical usage remarks for the Python wrapper function, :func:`RascalC.
 - RR counts and 2PCF can and should all be estimated at the same time using the ``pycorr`` `library for 2-point correlation function estimation <https://github.com/cosmodesi/pycorr>`_; this is an external step to :func:`RascalC.run_cov`.
 
     - Use ``s_mu`` mode in ``pycorr``, other counting modes are not supported by ``RascalC``.
-    - Use the Landy-Szalay 2PCF estimator, or a natural 2PCF estimator if the RR counts are analytical. Other estimators have higher variance and are not supported by ``RascalC``.
+    - Use the Landy-Szalay 2PCF estimator, or the natural 2PCF estimator with analytical RR counts in periodic boxes. Alternative estimators have a different (typically higher) variance and are not supported by ``RascalC``.
     - The necessary pair counts can be computed on GPU, whereas ``RascalC`` can only use CPU (currently).
     - Even if you need to use CPU, **you should run the counts in a separate, independent process from the one calling** :func:`RascalC.run_cov`, **because both should be parallelized and they are known to interfere with each other's efficiency**.
 - Choose a binning ``mode`` for the covariance:
@@ -140,7 +140,7 @@ It has been tested most thoroughly (see e.g. `Rashkovetskyi et al 2025 <https://
     {"Full covariance model" "Best-fit shot-noise rescaling"} -> "Full (final) covariance";
     "Full (final) covariance" [style=filled, fillcolor=green];
 
-Practical remarks particular to the jackknife pipeline with :func:`RascalC.run_cov` in addition to the :ref:`general_usage_remarks`:
+Practical remarks particular to the jackknife pipeline with :func:`RascalC.run_cov` in addition to the :ref:`general_usage`:
 
 - Jackknife and full RR counts and 2PCF can and should all be estimated at the same time using the ``pycorr`` `library for 2-point correlation function estimation <https://github.com/cosmodesi/pycorr>`_.
 
