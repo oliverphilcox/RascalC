@@ -179,9 +179,10 @@ void compute_bounding_box(Particle **p, int* np, int no_fields, Float3 &rect_box
     printf("# Periodic box size is set to {%6.2f, %6.2f, %6.2f}\n", rect_boxsize.x, rect_boxsize.y, rect_boxsize.z);
 #else
     // Non-periodic input, generic cuboid box allowed
-    cellsize = biggest / nside; // compute the width of each cell
+    Float const safety_factor = 1. + 1. / 4096.; // the box size and accordingly the cell size will be multiplied by this to avoid out-of-bounds problems due to rounding errors. This was chosen as a neat binary number, and 1/4096 increase is roughly 2.4x10^-4, which is small but much larger than even single-precision machine epsilon (which is roughly 1.2x10^-7 due to 23 bits for fraction; 1 + 1/4096 differs from 1 in the 12th bit; double-precision numbers have 53 bits)
+    cellsize = safety_factor * biggest / nside; // compute the side of each cell
     // Now compute the size of the box in every dimension
-    rect_boxsize = ceil3(prange / cellsize) * cellsize; // to ensure we fit an integer number of cells in each direction
+    rect_boxsize = ceil3(safety_factor / cellsize * prange) * cellsize; // to ensure we fit an integer number of cells in each direction
     printf("# Setting non-periodic box size to {%6.2f, %6.2f, %6.2f}\n", rect_boxsize.x, rect_boxsize.y, rect_boxsize.z);
 #endif
 }
