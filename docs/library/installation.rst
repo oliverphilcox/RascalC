@@ -56,6 +56,6 @@ Make sure to reinstall after pulling updates.
 
 Or you can install with a single command::
 
-    python3 -m pip install https://github.com/oliverphilcox/RascalC.git
+    python3 -m pip install git+https://github.com/oliverphilcox/RascalC
 
 Repeat this command to update the package.
