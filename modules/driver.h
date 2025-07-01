@@ -154,13 +154,11 @@ void compute_bounding_box(Particle **p, int* np, int no_fields, Float3 &rect_box
         // Probably using a cube of inputs, intended for a periodic box. Not surely, because the condition above is too simple and weak.
         // Known issue: the range condition is exactly true for an octant of a spherical shell bounded by xy, yz, zx planes, whereas this shape is obviously not a cube. May be worth developing an additional condition to exclude this case, but one might just bear with the warnings.
 #ifndef PERIODIC
-    	fprintf(stderr, "#\n# WARNING: input particles might be from a cubic periodic box but the code is not in the PERIODIC mode.\n#\n");
     	printf("#\n# WARNING: input particles might be from a cubic periodic box but the code is not in the PERIODIC mode.\n#\n");
 #endif
     } else {
         // Probably a non-periodic input (e.g. a real dataset)
 #ifdef PERIODIC
-    	fprintf(stderr, "#\n# WARNING: input particles might not fill a cube, and the code is in PERIODIC mode which does not support generic cuboid boxes!\n#\n");
     	printf("#\n# WARNING: input particles might not fill a cube, and the code is in PERIODIC mode which does not support generic cuboid boxes!\n#\n");
 #endif
     }
@@ -170,7 +168,6 @@ void compute_bounding_box(Particle **p, int* np, int no_fields, Float3 &rect_box
     // Periodic input, cubic box only
     if(biggest >= rect_boxsize.x) {
         printf("#\n# WARNING: Box periodicity is smaller than the coordinate range; particles will overlap on periodic wrapping!");
-        fprintf(stderr, "#\n# WARNING: Box periodicity is smaller than the coordinate range; particles will overlap on periodic wrapping!");
     }
     biggest = rect_boxsize.x; // just use the input boxsize
     // Set boxsize to be the biggest dimension which allows for periodic overlap
