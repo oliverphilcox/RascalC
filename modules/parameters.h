@@ -349,8 +349,8 @@ public:
         }
 #endif
 	    // compute smallest and largest boxsizes
-	    Float box_min = fmin(fmin(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
-	    Float box_max = fmax(fmax(rect_boxsize.x,rect_boxsize.y),rect_boxsize.z);
+	    Float box_min = rect_boxsize.mincomponent();
+	    Float box_max = rect_boxsize.maxcomponent();
 
 	    assert(i==argc);  // For example, we might have omitted the last argument, causing disaster.
 
