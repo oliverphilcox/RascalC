@@ -169,7 +169,11 @@ int main(int argc, char *argv[]) {
         assert(par.rect_boxsize == Float3(par.boxsize)); // assure consistent box size
         assert(par.cellsize == par.boxsize / par.nside); // assure consistent cell size
         // keep the shift from compute_bounding_box, allowing for coordinate ranges other than [0, par.boxsize) but still of length par.boxsize - this is quite generic and precise at the same time.
-        // there may be a problem if a certain combination of par.rmax (max "visible" separations) and par.xicutoff (max "invisible" separations) is larger than the box size
+        if (2 * (par.rmax + par.xicutoff) > par.boxsize) printf("# WARNING: some of the interparticle distances may not be correctly periodically wrapped because of the small box period, so some 4-point configurations may be missed in error. To avoid this, keep the sum of rmax (maximum separation in the covariance bins) and the xi cutoff scale smaller than half of the box size.");
+        // basically, xicutoff + rmax + xicutoff (particle separations 3-1, 1-2 and 2-4) is the max separation between particles 3 and 4 (in case of perfect alignment of the aforementioned ones) as the code sees it, and if it exceeds boxsize/2, this may not be the right wrapping for the true (minimal) distance
+        // but if the true distance between particles 3 and 4 is larger than rmax, they should not contribute to the covariance integral and it does not matter (unless rmax > boxsize/2, but the final condition will exclude this possibility)
+        // for the true distance to become smaller than rmax given the wrapping is wrong, the "naive" separation should exceed boxsize - rmax
+        // thus the final condition for the issue is 2*(xicutoff + rmax) > boxsize (which is necessarily true if rmax > boxsize/2 as xicutoff > 0)
 #endif
 
         // Create grid(s) and see if the particle density is acceptable
