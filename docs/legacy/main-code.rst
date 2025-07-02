@@ -130,7 +130,7 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-mumin`` (*mumin*): Minimum :math:`\mu` binning to use in the analysis. (Default: 0, or -1 in 3PCF mode)
 - ``-mumax`` (*mumax*): Maximum :math:`\mu` binning to use in the analysis. (Default: 1)
 - ``-cf_loops`` (*cf_loops*): Number of iterations over which to refine the correlation functions.
-- ``-rescale`` (*rescale*): Factor by which to dilate the input positions. Zero or negative values cause this to be set to the *boxsize*. (Default: 1)
+- ``-rescale`` (*rescale*): Factor by which to multiply all the input positions. Zero or negative values are reset to the *boxsize*. (Default: 1)
 - ``-xicut`` (*xicutoff*): The radius beyond which the correlation functions :math:`\xi(r,\mu)` are set to zero. (Default: 400)
 - ``-nmax`` (*nmax*): The maximum number of particles to read in from the random particle files. (Default: 1e12)
 - ``-save`` (*savename*): If *savename* is set, the cell selection probability grid is stored as *savename*. This must end in ``.bin``. (Default: NULL)

@@ -236,6 +236,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     coordinate_scaling : float
         (Optional) scaling factor for all the Cartesian coordinates. Default 1 (no rescaling).
         This option is supported by the C++ code, but its use cases are not very clear.
+        Zero or negative value is reset to ``boxsize``, rescaling an unit cube to full periodicity.
 
     Returns
     -------
