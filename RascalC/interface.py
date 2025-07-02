@@ -64,7 +64,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     boxsize : None or float
         Periodic box side (one number — so far, only cubic boxes are supported).
         All the coordinates need to be between 0 and ``boxsize``.
-        If None (default), assumed aperiodic.
+        If None (default) or 0, assumed aperiodic.
 
     position_type : string, default="pos"
         Type of input positions, one of:
@@ -262,6 +262,8 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     # Set some other flags
     periodic = bool(boxsize) # False for None (default) and 0
     two_tracers = randoms_positions2 is not None
+
+    if periodic and boxsize < 0: raise ValueError("Periodic box size must be positive")
 
     if two_tracers: # check that everything is set accordingly
         if randoms_weights2 is None: raise TypeError("Second tracer weights must be provided in two-tracer mode")
