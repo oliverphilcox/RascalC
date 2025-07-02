@@ -292,7 +292,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             if not np.array_equal(jack_region_numbers, np.unique(randoms_samples2)): # comparison is good because unique results are sorted
                 raise ValueError("The sets of jackkknife labels of the two tracers must be the same")
 
-    if (2 * (max(s_edges) + xi_cut_s) > boxsize):
+    if periodic and 2 * (max(s_edges) + xi_cut_s) > boxsize:
         warn("Some of the interparticle distances may not be correctly periodically wrapped because of the small box period, so some 4-point configurations may be missed in error. To avoid this, to keep the sum of s_max (maximum separation in the covariance bins) and the xi cutoff scale smaller than half of the box size.")
         # basically, xicutoff + rmax + xicutoff (particle separations 3-1, 1-2 and 2-4) is the max separation between particles 3 and 4 (in case of perfect alignment of the aforementioned ones) as the code sees it, and if it exceeds boxsize/2, this may not be the right wrapping for the true (minimal) distance
         # but if the true distance between particles 3 and 4 is larger than rmax, they should not contribute to the covariance integral and it does not matter (unless rmax > boxsize/2, but the final condition will exclude this possibility)
