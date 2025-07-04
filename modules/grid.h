@@ -8,15 +8,15 @@ class Grid {
   public:
     Float3 rect_boxsize; // 3D dimensions of the periodic volume
     int nside, ncells;       // Grid size (per linear and per volume)
-    Cell *c;		// The list of cells
+    Cell *c = nullptr;		// The list of cells
     Float cellsize;   // Size of one cell
     Float max_boxsize; // largest dimension of the cuboid box
-    Particle *p;	// Pointer to the list of particles
+    Particle *p = nullptr;	// Pointer to the list of particles
     int np,np1,np2;		// Number of particles (total and number in each partition
     integer3 nside_cuboid; // number of cells along each dimension of cuboidal box
     int np_pos;		// Number of particles
-    int *pid;		// The original ordering
-    int *filled; //List of filled cells
+    int *pid = nullptr;		// The original ordering
+    int *filled = nullptr; //List of filled cells
     int nf;      //Number of filled cells
     int maxnp;   //Max number of particles in a single cell
     Float norm; // sum_weights randoms / sum_weights galaxies for normalization

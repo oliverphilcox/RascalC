@@ -67,7 +67,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     boxsize : None or float
         Periodic box side (one number — so far, only cubic boxes are supported).
         All the coordinates need to be between 0 and ``boxsize``.
-        If None (default), assumed aperiodic.
+        If None (default) or 0, assumed aperiodic.
 
     position_type : string, default="pos"
         Type of input positions, one of:
@@ -251,6 +251,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     coordinate_scaling : float
         (Optional) scaling factor for all the Cartesian coordinates. Default 1 (no rescaling).
         This option is supported by the C++ code, but its use cases are not very clear.
+        Zero or negative value is reset to ``boxsize``, rescaling an unit cube to full periodicity.
 
     Returns
     -------
@@ -277,6 +278,8 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     # Set some other flags
     periodic = bool(boxsize) # False for None (default) and 0
     two_tracers = randoms_positions2 is not None
+    
+    if periodic and boxsize < 0: raise ValueError("Periodic box size must be positive")
 
     # Determine mock post-processing
     mocks_precomputed = xi_sample_cov is not None
@@ -313,6 +316,13 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         if two_tracers:
             if not np.array_equal(jack_region_numbers, np.unique(randoms_samples2)): # comparison is good because unique results are sorted
                 raise ValueError("The sets of jackkknife labels of the two tracers must be the same")
+
+    if periodic and 2 * (max(s_edges) + xi_cut_s) > boxsize:
+        warn("Some of the interparticle distances may not be correctly periodically wrapped because of the small box period, so some 4-point configurations may be missed in error. To avoid this, to keep the sum of s_max (maximum separation in the covariance bins) and the xi cutoff scale smaller than half of the box size.")
+        # basically, xicutoff + rmax + xicutoff (particle separations 3-1, 1-2 and 2-4) is the max separation between particles 3 and 4 (in case of perfect alignment of the aforementioned ones) as the code sees it, and if it exceeds boxsize/2, this may not be the right wrapping for the true (minimal) distance
+        # but if the true distance between particles 3 and 4 is larger than rmax, they should not contribute to the covariance integral and it does not matter (unless rmax > boxsize/2, but the final condition will exclude this possibility)
+        # for the true distance to become smaller than rmax given the wrapping is wrong, the "naive" separation should exceed boxsize - rmax
+        # thus the final condition for the issue is 2*(xicutoff + rmax) > boxsize (which is necessarily true if rmax > boxsize/2 as xicutoff > 0)
 
     # set the technical filenames
     input_filenames = [os.path.join(tmp_dir, str(t) + ".txt") for t in range(ntracers)]

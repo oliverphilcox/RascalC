@@ -111,6 +111,7 @@ int ransampl_draw( ransampl_ws *ws, double ran1, double ran2 )
 //! Free the random-number sampling workspace.
 void ransampl_free( ransampl_ws *ws )
 {
+    if (ws == NULL) return;
     free( ws->alias );
     free( ws->prob );
     free( ws );

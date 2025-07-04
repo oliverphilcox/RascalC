@@ -1,6 +1,8 @@
 Covariance Matrix Estimation
 =============================
 
+**NB**: This documentation page is about the legacy/command-line usage. We believe it is much easier to learn the Python library, please see its :doc:`../library/essential-functions` and :doc:`../library/installation`.
+
 Overview
 ----------
 
@@ -78,7 +80,6 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-mbin_cf`` (*mbin_cf*): Number of :math:`\mu` bins used for the correlation function.
 - ``-nside`` (*nside*): Number of cubic cells to use along the longest dimension of the grid encompassing the random particles, i.e. :math:`N_\mathrm{side}`. See :ref:`particle-grid` note for usage.
 - ``-nthread`` (*nthread*): Number of parallel processing threads used if code is compiled with OpenMPI.
-- ``-perbox`` (*perbox*): Whether or not we are using a periodic box.
 
 **DEFAULT and LEGENDRE_MIX mode Binning Parameters**:
 
@@ -123,19 +124,20 @@ Input parameters for the RascalC code may be specified by passing options on the
 
 **Optional Parameters**
 
+- ``-perbox``: This flag signifies a periodic box computation (which requires the code to be compiled with the ``-DPERIODIC`` flag in the Makefile) as opposed to the default aperiodic behavior (which requires the code to be compiled without the ``-DPERIODIC`` flag in the Makefile).
+- ``-boxsize`` (*boxsize*): Sets the size of the computational domain if the periodic box is enabled, or the random particles are created in RascalC. (Default: 2000)
+- ``-seed`` (*seed*): Random number generator seed. If given, allows to reproduce the results with the same settings, except the number of threads.
 - ``-mumin`` (*mumin*): Minimum :math:`\mu` binning to use in the analysis. (Default: 0, or -1 in 3PCF mode)
 - ``-mumax`` (*mumax*): Maximum :math:`\mu` binning to use in the analysis. (Default: 1)
 - ``-cf_loops`` (*cf_loops*): Number of iterations over which to refine the correlation functions.
-- (*perbox*): Boolean controlling whether we are using a periodic box. (Default: False)
-- ``-boxsize`` (*boxsize*): If creating particles randomly, this is the periodic size of the computational domain. If particles are read from file, this is set dynamically. (Default: 400)
-- ``-rescale`` (*rescale*): Factor by which to dilate the input positions. Zero or negative values cause this to be set to the boxsize. (Default: 1)
-- ``-xicut`` (*xicutoff*): The radius beyond which the correlation functions :math:`\xi(r,\mu)` are set to zero. (Default: 400)
+- ``-rescale`` (*rescale*): Factor by which to multiply all the input positions. Zero or negative values are reset to the *boxsize*. (Default: 1)
+- ``-xicut`` (*xicutoff*): The radius beyond which the correlation functions :math:`\xi(r,\mu)` are set to zero. (Default: 250)
 - ``-nmax`` (*nmax*): The maximum number of particles to read in from the random particle files. (Default: 1e12)
 - ``-save`` (*savename*): If *savename* is set, the cell selection probability grid is stored as *savename*. This must end in ``.bin``. (Default: NULL)
 - ``-load`` (*loadname*): If set, load a cell selection probability grid computed in a previous run of RascalC. (Default: NULL)
 - ``-invert`` (*qinvert*): If this flag is passed to RascalC, all input particle weights are multiplied by -1. (Default: 0)
 - ``-balance`` (*qbalance*): If this flag is passed to RascalC, all negative weights are rescaled such that the total particle weight is 0. (Default: 0)
-- ``-np`` (*np*, *make_random*): If *make_random* = 1, this overrides any input random particle file and creates *np* randomly drawn particles in the cubic box. **NB**: The command line argument automatically sets *make_random* = 1. Currently creating particles at random is only supported for a single set of tracer particles.
+- ``-np`` (*np*): If provided, this overrides any input random particle file and creates *np* randomly drawn particles in the cubic box with the side length *boxsize*. **NB**: Currently creating particles at random is only supported for a single set of tracer particles.
 - ``-rs`` (*rstart*): If inverting particle weights, this sets the index from which to start weight inversion. (Default: 0)
 
 .. _code-output:

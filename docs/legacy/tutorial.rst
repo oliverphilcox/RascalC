@@ -1,6 +1,8 @@
 Tutorial: Aperiodic Data and Jackknives
 =======================================
 
+**NB**: This tutorial has been adapted as a Jupyter notebook (:root:`tutorial.ipynb`) using the newer RascalC Python library and we believe it is more user-friendly this way.
+
 We present a basic example of the use of the RascalC code for a single field, computing the 2PCF in :math:`(r,\mu)` bins, and calibrating for the non-Gaussianity parameter using jackknives. Multiple field cases proceed similarly. Detailed documentation for all functions is given in associated pages, as overviewed in the :doc:`getting-started` pages. Note that we here run the main code in the JACKKNIFE mode for an *aperiodic* data-set.
 
 An associated tutorial (:doc:`tutorial_periodic`) shows how to run the code for Legendre multipoles in a *periodic* simulation.

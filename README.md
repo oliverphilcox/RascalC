@@ -10,7 +10,7 @@ We also encourage the code users to cite [Rashkovetskyi et al 2023](https://arxi
 
 ***New for version 2***: Legendre moment covariances and the 3PCF
 
-***New for version 3***: Python interface and library/package ([installation](https://rascalc.readthedocs.io/en/latest/library/installation.html), [basic usage](https://rascalc.readthedocs.io/en/latest/library/essential-functions.html), [practical examples](https://rascalc.readthedocs.io/en/latest/library/tutorials-examples.html))
+***New for version 3***: Python interface and library/package ([fundamentals](https://rascalc.readthedocs.io/en/latest/library/essential-functions.html), [installation](https://rascalc.readthedocs.io/en/latest/library/installation.html), [practical examples](https://rascalc.readthedocs.io/en/latest/library/tutorials-examples.html))
 
 ## Authors
 

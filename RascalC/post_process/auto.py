@@ -33,7 +33,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
     ----------
     file_root : string
         Path to the RascalC (:func:`RascalC.run_cov`) output directory.
-        This is the only necessary argument. If no others are provided, jackknife or mock pipeline and the covariance binning mode will be determined automatically. The result should match the :func:`RascalC.run_cov` setup (except non-zero ``skip_s_bins`` and ``skip_l``, which should be provided manually.
+        This is the only necessary argument. If no others are provided, jackknife or mock pipeline and the covariance binning mode will be determined automatically. The result should match the :func:`RascalC.run_cov` setup (except non-zero ``skip_s_bins`` and ``skip_l``, which should be provided manually).
 
     out_dir : string | None
         (Optional) path to the directory in which the post-processing results should be saved. If None (default), is set to ``file_root``. Empty string means the current working directory.

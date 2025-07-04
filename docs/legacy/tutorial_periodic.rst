@@ -148,6 +148,11 @@ There's two ways to run the code here; firstly we could edit parameters in the `
 
     ....
 
+    // The periodicity of the position-space cube.
+	Float boxsize = 1000.;
+
+    ....
+
 Here we're using 10 loops (to get 10 independent estimates of the covariance matrix), and setting N2-N4 such that we'll get good precision in a few hours of runtime. Now, we'll compile the code:
 
 .. code-block:: bash
@@ -160,11 +165,11 @@ This compiles ``grid_covariance.cpp`` using the Makefile (using the g++ compiler
 
     ./cov -def
 
-Alternatively, we could simply pass these arguments on the command line (after the code is compiled). (**NB**: We can get a summary of the inputs by simply running ``./cov`` with no parameters)
+Alternatively, we could simply pass these arguments on the command line (but only after the code is compiled with ``-DPERIODIC`` and ``-DLEGENDRE`` Makefile flags). (**NB**: We can get a summary of the inputs by simply running ``./cov`` with no parameters)
 
 .. code-block:: bash
 
-    ./cov -in nbody_randoms_10x.txt -binfile radial_binning_cov.csv -cor xi/xi_n200_m20_periodic_11.dat -binfile_cf radial_binning_corr.csv -norm 156800 -output ./ -mbin_cf 20 -nthread 10 -perbox -max_l 2 -phi_file BinCorrectionFactor_n25_periodic_11.txt -maxloops 10 -N2 10 -N3 20 -N4 40 -cf_loops 0
+    ./cov -in nbody_randoms_10x.txt -binfile radial_binning_cov.csv -cor xi/xi_n200_m20_periodic_11.dat -binfile_cf radial_binning_corr.csv -norm 156800 -output ./ -mbin_cf 20 -nthread 10 -perbox -boxsize 1000 -max_l 2 -phi_file BinCorrectionFactor_n25_periodic_11.txt -maxloops 10 -N2 10 -N3 20 -N4 40 -cf_loops 0
 
 It's often just easier to edit the ``modules/parameter.h`` file, but the latter approach allows us to change parameters without recompiling the code. *NB*: Sometimes, this will crash with the error `Average particle density exceeds maximum advised particle density'; this is due to the ``-nside`` parameter being too low. To fix this, increase ``-nside`` to a larger (odd) value (default; 71).
 
