@@ -18,26 +18,26 @@ public:
 
     // The name of the input random particle files (first set)
 	char *fname = NULL;
-	const char default_fname[500] = "/mnt/store1/oliverphilcox/Yuting/LRG_randoms_v2_10x.txt";
+	const char default_fname[500] = "LRG_randoms_v2_10x.txt";
 
     // Name of the radial binning .csv file
     char *radial_bin_file = NULL;
-    const char default_radial_bin_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/radial_binning_cov.csv";
+    const char default_radial_bin_file[500] = "radial_binning_cov.csv";
 
     // The name of the correlation function file for the first set of particles
 	char *corname = NULL;
-	const char default_corname[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v3_low/xi_n100_m10_periodic_11.dat";
+	const char default_corname[500] = "xi_n100_m10_11.dat";
 
     // Name of the correlation function radial binning .csv file
     char *radial_bin_file_cf = NULL;
-    const char default_radial_bin_file_cf[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v3_low/radial_binning_corr_low.csv";
+    const char default_radial_bin_file_cf[500] = "radial_binning_corr_low.csv";
 
     // Number of galaxies in first dataset
     Float nofznorm =156800;
 
     // Output directory
     char *out_file = NULL;
-    const char default_out_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/v7/";
+    const char default_out_file[500] = "out";
 
     // The number of mu bins in the correlation function
     int mbin_cf = 10;
@@ -82,7 +82,7 @@ public:
 
 #if (defined LEGENDRE || defined THREE_PCF)
     char *phi_file = NULL; // Survey correction function coefficient file
-    const char default_phi_file[500] = "/home/oliverphilcox/eBOSS_MockChallenge/BinCorrectionFactor_n25_periodic_11.txt";
+    const char default_phi_file[500] = "BinCorrectionFactor_n25_periodic_11.txt";
 #endif
 
     //-------- POWER PARAMETERS (not yet publicly released) ------------------
