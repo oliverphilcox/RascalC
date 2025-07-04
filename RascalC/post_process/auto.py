@@ -18,13 +18,17 @@ from .legendre_mix_jackknife import post_process_legendre_mix_jackknife
 def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, print_function: Callable[[str], None] = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
     r"""
     Automatic but highly customizable post-processing interface. Designed to work with the :func:`RascalC.run_cov` outputs.
+
+        - By default, this function guesses jackknife pipeline and the covariance binning mode by the output directory contents, but you can also specify some or all of these regimes via optional arguments.
+        - Note that ``skip_s_bins`` and ``skip_l`` are not auto-determined, so by default no bins are be skipped even if they were cut in :func:`RascalC.run_cov`.
+
     Do not run this (or any other post-processing function/script) while the main RascalC computation is running — this may delete the output directory and cause the code to crash.
 
     Parameters
     ----------
     file_root : string
         Path to the RascalC (:func:`RascalC.run_cov`) output directory.
-        This is the only necessary argument. If no others are provided, jackknife pipeline and the covariance binning mode will be determined automatically. The result should match the :func:`RascalC.run_cov` setup (except non-zero ``skip_s_bins`` and ``skip_l``, which should be provided manually).
+        This is the only necessary argument. If no others are provided, jackknife pipeline and the covariance binning mode will be determined automatically. The result should match the :func:`RascalC.run_cov` setup (except non-zero ``skip_s_bins`` and ``skip_l``, which are not auto-determined).
 
     out_dir : string | None
         (Optional) path to the directory in which the post-processing results should be saved. If None (default), is set to ``file_root``. Empty string means the current working directory.
