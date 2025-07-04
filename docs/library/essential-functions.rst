@@ -104,6 +104,11 @@ General practical usage remarks for the Python wrapper function, :func:`RascalC.
 - ``RascalC`` in the flowcharts refers to the most computationally intensive steps (implemented in C++), at which the coefficients for the covariance matrix models are evaluated. These coefficients are saved in a ``Raw_Covariance_Matrices*.npz`` file in the chosen output directory.
 - Basic/minimal **post-processing** involves substituting a fixed shot-noise rescaling value (or two values in case of two tracers) into the full covariance model to obtain the final covariance. These operations normally are invoked at the end of :func:`RascalC.run_cov`, but they can also be performed separately using :func:`RascalC.post_process_auto`. The results are saved in a ``Rescaled_Covariance_Matrices*.npz`` file in the chosen output directory.
 
+    - External shot-noise rescaling value(s) (e.g. from jackknife or mock calibration) can be supplied via the ``shot_noise_rescaling1`` parameter (for the first tracer; and ``shot_noise_rescaling2`` for the second tracer if applicable).
+    
+        - Usage of covariance matrices obtained with the default shot-noise rescaling value(s) of 1 is generally not recommended.
+        - These ``shot_noise_rescaling`` parameters set the fixed shot-noise rescaling values only for the :ref:`pipeline_basic`. They are ignored in :ref:`pipeline_jack` and :ref:`pipeline_mock`, where the shot-noise rescaling value is instead determined based on a reference covariance.
+
 After the run (execution of :func:`RascalC.run_cov`):
 
 - If it finished normally with no errors, congratulations!
