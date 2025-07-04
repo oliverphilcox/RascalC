@@ -6,13 +6,13 @@
 // This class stores the RR count weights for a given jackknife
 class JK_weights{
 public:
-    Float* RR_pair_counts; // houses the weighted pair counts summed over jackknife regions.
-    int nbins; // total number of bins
+    Float* RR_pair_counts = nullptr; // houses the weighted pair counts summed over jackknife regions.
+    int nbins = 0; // total number of bins
 #ifdef JACKKNIFE
-    Float* weights; // houses the weights for each bin for this jackknife
-    int* filled_JKs; // houses indices for the filled jackknife arrays
-    int n_JK_filled; // number of non-empty jackknife regions
-    Float* product_weights; // houses a matrix of SUM_A{w_aA*w_bA} terms for later use with indexing bin_a*nbins+bin_b
+    Float* weights = nullptr; // houses the weights for each bin for this jackknife
+    int* filled_JKs = nullptr; // houses indices for the filled jackknife arrays
+    int n_JK_filled = 0; // number of non-empty jackknife regions
+    Float* product_weights = nullptr; // houses a matrix of SUM_A{w_aA*w_bA} terms for later use with indexing bin_a*nbins+bin_b
 #endif
     
 public: 

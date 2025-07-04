@@ -89,7 +89,7 @@ class SurveyCorrection{
     // this class stores the correction functions for each bin, giving the difference between the true and estimated RR counts. It is created by reading in coefficients to recompute smooth Phi(mu) functions for each radial bin.
     
 public:        
-    Float* phi_coeffs; // houses polynomial coefficients for the correction function
+    Float* phi_coeffs = nullptr; // houses polynomial coefficients for the correction function
 #ifdef THREE_PCF
     int n_param = 7;
     int max_l;

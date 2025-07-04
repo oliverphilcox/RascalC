@@ -16,15 +16,15 @@ public:
 	int nside;     // Number of cells in each direction of large draw
 	int nsidecube; // Number of cells in each direction of maxsep cube
 	double boxside;
-    double *x; // Probability grid for 1/r^2 kernel
-	double *xcube; // Probability grid for xi(r) kernel
+    double *x = nullptr; // Probability grid for 1/r^2 kernel
+	double *xcube = nullptr; // Probability grid for xi(r) kernel
 
 	private:
 		// Sampling of long distance
-		ransampl_ws* ws;
+		ransampl_ws* ws = nullptr;
 
 		// Sampling of short distance
-		ransampl_ws* cube;
+		ransampl_ws* cube = nullptr;
 
     public:
         void copy(RandomDraws *rd){
