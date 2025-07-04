@@ -112,7 +112,7 @@ General practical usage remarks for the Python wrapper function, :func:`RascalC.
 After the run (execution of :func:`RascalC.run_cov`):
 
 - If it finished normally with no errors, congratulations!
-- If it terminated early and/or the job timed out, it is often worth invoking the post-processing with :func:`RascalC.post_process_auto` to see whether sufficiently results were saved.
+- If it terminated early and/or the job timed out, it is often worth invoking the post-processing with :func:`RascalC.post_process_auto` to see whether sufficiently good results were saved.
 - If there was a convergence-related error or warning, please refer to :ref:`improving_convergence`.
 - If anything is unclear, please contact the developer.
 
