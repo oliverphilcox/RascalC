@@ -41,7 +41,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
         By default, no bins are skipped.
 
     skip_l : integer
-        (Optional) number of higher multipoles to skip (from the end).
+        (Optional) number of higher multipoles to skip (from the end and counting only even multipoles).
 
     tracer : 1 or 2
         (Optional) if the RascalC output directory contains two-tracer results, ``tracer = 2`` together with ``two_tracers = False`` allows to select the second tracer for single-tracer post-processing.

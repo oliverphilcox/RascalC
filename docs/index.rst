@@ -21,7 +21,7 @@ For general usage, we provide :doc:`library/essential-functions` and :doc:`libra
 
 .. toctree::
    :maxdepth: 2
-   :caption: Python library
+   :caption: Python library (2PCF)
 
    library/installation
    library/essential-functions

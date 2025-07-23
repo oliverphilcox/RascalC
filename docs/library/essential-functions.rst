@@ -225,8 +225,8 @@ The convergence checks mostly follow Section 6.1 of `Rashkovetskyi et al 2025 <h
     - After Section 3.2 of `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_, we recommend focusing on ``R_inv`` (:math:`R_{\rm inv}`) values. There is no universal threshold, but some decent reference values are:
 
         - <0.6% (``6e-3``) for Early DESI data BGS/LRG with 45 bins (45 radial times 1 angular);
-        - <5% (``5e-2``) for DESI DR1/DR2 LRG/ELG, <12% (``1.2e-1``) for ``BGS_BRIGHT-21.5`` (:math:`0.1<z<0.4`) and <20% (`2e-1`) for ``BGS_BRIGHT-21.35`` with 135 bins (45 radial times 3 multipoles). QSO have almost always converged much better, like 0.1-0.2% (`2e-3`) due to higher shot-noise, making the easy 2-point term the dominant one.
-        - Values exceeding 1 are high.
+        - <5% (``5e-2``) for DESI DR1/DR2 LRG/ELG, <12% (``1.2e-1``) for ``BGS_BRIGHT-21.5`` (:math:`0.1<z<0.4`) and <20% (``2e-1``) for ``BGS_BRIGHT-21.35`` with 135 bins (45 radial times 3 multipoles). QSO have almost always converged much better, like 0.1-0.2% (``2e-3``) due to higher shot-noise, making the easy 2-point term the dominant one.
+        - Values exceeding 1 are quite certainly high.
     - These figures of intrinsic scatter in covariance sums/integrals estimated with importance sampling tend to increase
 
         - as the number of bins increases (the trend is the same for mocks — see e.g. Equation (3.12) in `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_)
@@ -243,14 +243,14 @@ Use these instructions when
 - the ``R_inv`` values from the extra convergence check are worryingly high (see above for reference, or reach out if in doubt);
 - you get the ``4-point covariance matrix has not converged properly via the weaker eigenvalue test`` warnings, although they seldom appear without one of the previous two issues;
 
-    - you can probably ignore the warning(s) about ``stronger eigenvalue test`` if they appear alone.
+    - you can probably ignore the warning(s) about ``the stronger eigenvalue test`` if they appear alone.
 
 First, you can re-run post-processing with alternative options using :func:`RascalC.post_process_auto`:
 
 - skip a few bins with smallest separations by passing a single positive integer (their number) via ``skip_s_bins``;
 
     - also skip a few bins with highest separations by passing a tuple of two positive numbers via ``skip_s_bins``; among them, the first number sets how many bins to skip at the low end, the second — at the high end;
-- in Legendre mode, you can also try skipping highest multipoles by passing a single positive integer (their number) via ``skip_l``.
+- in Legendre mode, you can also try skipping highest multipoles by passing their number (counting only even multipoles) via ``skip_l``.
 - you can also try to discard "unlucky" samples using the ``n_samples`` argument, but this seldom helps and can become confusing.
 
 The above are the fastest options because they only require re-running the post-processing script while re-using the products of the main computation.

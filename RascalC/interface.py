@@ -58,9 +58,9 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     mode : string
         Choice of binning setup, one of:
 
-            - ``"s_mu"``: compute covariance of the correlation function in s, µ bins. Only linear µ binning between 0 and 1 supported.
-            - ``"legendre_projected"``: compute covariance of the correlation function Legendre multipoles in separation (s) bins projected from µ bins (only linear µ binning supported between 0 and 1). Procedure matches ``pycorr``. Works with jackknives, may be less efficient in periodic geometry.
-            - ``"legendre_accumulated"``: compute covariance of the correlation function Legendre multipoles in separation (s) bins accumulated directly, without first doing µ-binned counts. Incompatible with jackknives.
+            - ``"s_mu"``: compute covariance of the correlation function in separation (s), and angular (:math:`\mu`) bins. Only linear :math:`\mu` binning between 0 and 1 supported.
+            - ``"legendre_projected"``: compute covariance of the correlation function Legendre multipoles in separation (s) bins projected from :math:`\mu` bins (only linear :math:`\mu` binning supported between 0 and 1). Procedure matches ``pycorr``. Works with jackknives, may be less efficient in periodic geometry.
+            - ``"legendre_accumulated"``: compute covariance of the correlation function Legendre multipoles in separation (s) bins accumulated directly, without first doing :math:`\mu`-binned counts. Incompatible with jackknives.
     
     max_l : integer
         Max Legendre multipole index (required in both Legendre ``mode``\s).
@@ -94,34 +94,41 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         If given and not None, enables the multi-tracer functionality (full two-tracer covariance estimation).
     
     randoms_weights2 : None or array of floats of length N_randoms2
-        (Optional) weights of random points for the second tracer (required for multi-tracer functionality).
+        (Only for for multi-tracer functionality) weights of random points for the second tracer.
     
     randoms_samples2 : None or array of integers of length N_randoms2
-        (Optional) jackknife region numbers for the second tracer (required for multi-tracer + jackknife functionality, although this combination has not been used yet).
+        (Only for multi-tracer + jackknife functionality, although this combination has not been used yet) jackknife region numbers for the second tracer.
         The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_12`` and ``pycorr_allcounts_22``.
 
-    pycorr_allcounts_11 : ``pycorr.TwoPointEstimator``
-        ``pycorr.TwoPointEstimator`` with auto-counts for the first tracer.
+    pycorr_allcounts_11 : :class:`pycorr.TwoPointEstimator`
+        :class:`pycorr.TwoPointEstimator` with auto-counts for the first tracer.
         Must be rebinned and/or cut to the separation (s) bins desired for the covariance.
         Note that more bins result in slower convergence. A typical configuration has been 4 Mpc/h wide bins between 20 and 200 Mpc/h.
-        The counts will be wrapped to positive µ, so if the µ range in them is from -1 to 1, the number of µ bins must be even.
-        Providing unwrapped counts (µ from -1 to 1) is preferrable, because some issues can be fixed by assuming symmetry.
+        The counts will be wrapped to positive :math:`\mu`, so if the :math:`\mu` range in them is from -1 to 1, the number of :math:`\mu` bins must be even.
+        Providing unwrapped counts (:math:`\mu` from -1 to 1) is preferrable, because some issues can be fixed by assuming symmetry.
 
-            - In "s_mu" ``mode``, the covariance will be done for the given number of µ bins (after wrapping).
-            - In "legendre_projected" ``mode``, it will be assumed that Legendre multipoles are projected from the same number of µ bins as present in these counts. One might consider rebinning more coarsely for faster performance but less guaranteed accuracy (neither effect has been tested yet).
-            - In "legendre_accumulated" ``mode``, all the present µ bins (after wrapping) will be used to fit the survey correction functions.
+            - In "s_mu" ``mode``, the covariance will be done for the given number of :math:`\mu` bins (after wrapping).
+            - In "legendre_projected" ``mode``, it will be assumed that Legendre multipoles are projected from the same number of :math:`\mu` bins as present in these counts. One might consider rebinning more coarsely for faster performance but less guaranteed accuracy (neither effect has been tested yet).
+            - In "legendre_accumulated" ``mode``, all the present :math:`\mu` bins (after wrapping) will be used to fit the survey correction functions.
         
         For jackknife functionality, ``pycorr_allcounts_11`` must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1``.
 
-    pycorr_allcounts_12 : ``pycorr.TwoPointEstimator``
-        (Optional) ``pycorr.TwoPointEstimator`` with cross-counts between the two tracers (order does not matter, because they will be wrapped).
+        **NB**: If ``pycorr_allcounts_11.D1D2.size1`` is zero, you need to provide ``no_data_galaxies1``.
+
+    pycorr_allcounts_12 : :class:`pycorr.TwoPointEstimator`
+        (Only for the multi-tracer functionality) :class:`pycorr.TwoPointEstimator` with cross-counts between the two tracers (order does not matter, because absolute value of :math:`\mu` will be taken).
         Must have the same bin configuration as ``pycorr_allcounts_11``.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1`` and ``randoms_samples2``.
+        
+        If both ``pycorr_allcounts_11.D1D2.size1`` and ``pycorr_allcounts_12.D1D2.size1`` are set to zeros, you need to provide ``no_data_galaxies1``.
 
-    pycorr_allcounts_22 : ``pycorr.TwoPointEstimator``
-        (Optional) ``pycorr.TwoPointEstimator`` with auto-counts for the second tracer.
+    pycorr_allcounts_22 : :class:`pycorr.TwoPointEstimator`
+        (Only for the multi-tracer functionality) :class:`pycorr.TwoPointEstimator` with auto-counts for the second tracer.
+        Required for the multi-tracer functionality (full two-tracer covariance estimation).
         Must have the same bin configuration as ``pycorr_allcounts_11``.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples2``.
+
+        If ``pycorr_allcounts_22.D1D2.size1`` is zero, you need to provide ``no_data_galaxies2``.
 
     normalize_wcounts : boolean
         (Optional) whether to normalize the weights and weighted counts.
@@ -137,27 +144,27 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         (Optional) number of second tracer data (not random!) points for the covariance rescaling.
         If None (default), the code will attempt to obtain it from ``pycorr_allcounts_22``.
     
-    xi_table_11 : ``pycorr.TwoPointEstimator``, or sequence (tuple or list) of 3 elements: (s_values, mu_values, xi_values), or sequence (tuple or list) of 4 elements: (s_values, mu_values, xi_values, s_edges)
-        Table of first tracer auto-correlation function in separation (s) and µ bins.
+    xi_table_11 : :class:`pycorr.TwoPointEstimator`, or sequence (tuple or list) of 3 elements: ``(s_values, mu_values, xi_values)``, or sequence (tuple or list) of 4 elements: ``(s_values, mu_values, xi_values, s_edges)``
+        Table of first tracer auto-correlation function in separation (s) and :math:`\mu` bins.
         The code will use it for interpolation in the covariance matrix integrals.
-        Important: if the given correlation function is an average in s, µ bins, the separation bin edges need to be provided (and the µ bins are assumed to be linear) for rescaling procedure which ensures that the interpolation results averaged over s, µ bins returns the given correlation function. In case of ``pycorr.TwoPointEstimator``, the edges will be recovered automatically. Unwrapped estimators (µ from -1 to 1) are preferred, because symmetry allows to fix some issues.
+        Important: if the given correlation function is an average in :math:`(s, \mu)` bins, the separation bin edges need to be provided (and the :math:`\mu` bins are assumed to be linear) for rescaling procedure which ensures that the interpolation results averaged over :math:`(s, \mu)` bins returns the given correlation function. In case of ``pycorr.TwoPointEstimator``, the edges will be recovered automatically. Unwrapped estimators (:math:`\mu` from -1 to 1) are preferred, because symmetry allows to fix some issues.
         In the sequence format:
 
-            - s_values must be a 1D array of reference separation (s) values for the table, of length N;
-            - mu_values must be a 1D array of reference µ values (covering the range from 0 to 1) for the table, of length M;
-            - xi_values must be an array of correlation function values at those s, µ values of shape (N, M);
-            - s_edges, if given, must be a 1D array of separation bin edges of length N+1. The bins must come close to zero separation (say start at ``s <= 0.01``).
+            - ``s_values`` must be a 1D array of reference separation (s) values for the table, of length N;
+            - ``mu_values`` must be a 1D array of reference :math:`\mu` values (covering the range from 0 to 1) for the table, of length M;
+            - ``xi_values`` must be an array of correlation function values at those :math:`(s, \mu)` values of shape (N, M);
+            - ``s_edges``, if given, must be a 1D array of separation bin edges of length N+1. The bins must come close to zero separation (say start at ``s <= 0.01``).
         
         The sequence containing 3 elements should be used for theoretical models evaluated at a grid of s, mu values.
-        The 4-element format should be used for bin-averaged estimates.
+        The 4-element format should be used for bin-averaged estimates (unless they are in a :class:`pycorr.TwoPointEstimator`).
 
     xi_table_12 : None or the same format as ``xi_table_11``
-        Table of the two tracer's cross-correlation function in separation (s) and µ bins.
+        Table of the two tracer's cross-correlation function in separation (s) and :math:`\mu` bins.
         The code will use it for interpolation in the covariance matrix integrals.
         Required for multi-tracer functionality.
 
     xi_table_22 : None or the same format as ``xi_table_11``
-        Table of second tracer auto-correlation function in separation (s) and µ bins.
+        Table of second tracer auto-correlation function in separation (s) and :math:`\mu` bins.
         The code will use it for interpolation in the covariance matrix integrals.
         Required for multi-tracer functionality.
     
@@ -191,7 +198,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         Number of integration loops.
         For optimal balancing and minimal idle time, should be a few times (at least twice) ``nthread`` and exactly divisible by it.
         The runtime roughly scales as the number of quads per the number of threads, :math:`\mathcal{O}`\(``N_randoms * N2 * N3 * N4 * n_loops / nthread``).
-        For reference, on NERSC Perlmutter CPU half-node the code processed about 27 millions (2.7e7) quads per second per thread (using 64 threads on half a node) as of December 2024. (In Legendre projected mode, which is probably the slowest, with ``N2 = 5``, ``N3 = 10``, ``N4 = 20``.)
+        For reference, on NERSC Perlmutter CPU half-node the code processed about 27 millions (``2.7e7``) quads per second per thread (using 64 threads on half a node) as of December 2024. (In Legendre projected mode, which is probably the slowest, with ``N2 = 5``, ``N3 = 10``, ``N4 = 20``.)
         In single-tracer mode, the number of quads is ``N_randoms * N2 * N3 * N4 * n_loops``.
         In two-tracer mode, the number of quads is ``(5 * N_randoms1 + 2 * N_randoms2) * N2 * N3 * N4 * n_loops``.
 
@@ -248,7 +255,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     post_processing_results : dict[str, np.ndarray[float]]
         Post-processing results as a dictionary with string keys and Numpy array values. All this information is also saved in a ``Rescaled_Covariance_Matrices*.npz`` file in the output directory.
         Selected common keys are: ``"full_theory_covariance"`` for the final covariance matrix and ``"shot_noise_rescaling"`` for the shot-noise rescaling value(s).
-        There will also be a ``Raw_Covariance_Matices*.npz`` file in the output directory (as long as the C++ code has run without errors), which can be post-processed separately in a different way.
+        There will also be a ``Raw_Covariance_Matices*.npz`` file in the output directory (as long as the C++ code has run without errors), which can be post-processed separately in a different way using e.g. :func:`RascalC.post_process_auto`.
     """
 
     if mode not in ("s_mu", "legendre_accumulated", "legendre_projected"): raise ValueError("Given mode not supported")
@@ -368,10 +375,10 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         if c and not np.allclose(pycorr_allcounts.edges[0], pycorr_allcounts_11.edges[0]): raise ValueError(f"pycorr_allcounts_{indices_corr[c]} separation/radial binning is not consistent with pycorr_allcounts_11")
         if pycorr_allcounts.edges[1][0] < 0: # try to fix and wrap
             pycorr_allcounts = fix_bad_bins_pycorr(pycorr_allcounts)
-            print_and_log(f"Wrapping pycorr_allcounts_{indices_corr[c]} to µ>=0")
+            print_and_log(f"Wrapping pycorr_allcounts_{indices_corr[c]} to mu>=0")
             pycorr_allcounts = pycorr_allcounts.wrap()
-        if len(pycorr_allcounts.edges[1]) != n_mu_bins + 1: raise ValueError(f"The number of angular/µ bins in pycorr_allcounts_{indices_corr[c]} is not consistent with the number determined from pycorr_allcounts_11")
-        if not np.allclose(pycorr_allcounts.edges[1], np.linspace(0, 1, n_mu_bins + 1)): raise ValueError(f"pycorr_allcounts_{indices_corr[c]} mu/µ binning is not consistent with linear between 0 and 1 (after wrapping)")
+        if len(pycorr_allcounts.edges[1]) != n_mu_bins + 1: raise ValueError(f"The number of angular/mu bins in pycorr_allcounts_{indices_corr[c]} is not consistent with the number determined from pycorr_allcounts_11")
+        if not np.allclose(pycorr_allcounts.edges[1], np.linspace(0, 1, n_mu_bins + 1)): raise ValueError(f"pycorr_allcounts_{indices_corr[c]} mu binning is not consistent with linear between 0 and 1 (after wrapping)")
         RR_counts = get_counts_from_pycorr(pycorr_allcounts, counts_factor)
         np.savetxt(binned_pair_names[c], RR_counts.reshape(-1, 1)) # the file needs to have 1 column
         if jackknife:
@@ -403,13 +410,13 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             refine_xi = True
             if xi.edges[1][0] < 0:
                 xi = fix_bad_bins_pycorr(xi)
-                print_and_log(f"Wrapping xi_table_{indices_corr[c]} to µ>=0")
+                print_and_log(f"Wrapping xi_table_{indices_corr[c]} to mu>=0")
                 xi = xi.wrap()
             if c == 0:
                 xi_n_mu_bins = xi.shape[1]
                 xi_s_edges = xi.edges[0]
             elif not np.allclose(xi_s_edges, xi.edges[0]): raise ValueError("Different binning for different correlation functions not supported")
-            if not np.allclose(xi.edges[1], np.linspace(0, 1, xi_n_mu_bins + 1)): raise ValueError(f"xi_table_{indices_corr[c]} µ binning is not consistent with linear between 0 and 1 (after wrapping)")
+            if not np.allclose(xi.edges[1], np.linspace(0, 1, xi_n_mu_bins + 1)): raise ValueError(f"xi_table_{indices_corr[c]} mu binning is not consistent with linear between 0 and 1 (after wrapping)")
             write_xi_file(cornames[c], xi.sepavg(axis = 0), xi.sepavg(axis = 1), get_input_xi_from_pycorr(xi))
         elif isinstance(xi, Iterable):
             if len(xi) == 4: # the last element is the edges
