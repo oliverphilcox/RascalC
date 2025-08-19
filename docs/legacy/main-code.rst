@@ -137,8 +137,8 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-nmax`` (*nmax*): The maximum number of particles to read in from the random particle files. (Default: 1e12)
 - ``-save`` (*savename*): If *savename* is set, the cell selection probability grid is stored as *savename*. This must end in ``.bin``. (Default: NULL)
 - ``-load`` (*loadname*): If set, load a cell selection probability grid computed in a previous run of RascalC. (Default: NULL)
-- ``-invert`` (*qinvert*): If this flag is passed to RascalC, all input particle weights are multiplied by -1. (Default: 0)
-- ``-balance`` (*qbalance*): If this flag is passed to RascalC, all negative weights are rescaled such that the total particle weight is 0. (Default: 0)
+- ``-invert``: If this flag is passed to RascalC, all input particle weights are multiplied by -1. (Default: disabled)
+- ``-balance``: If this flag is passed to RascalC, all negative weights are rescaled such that the total particle weight is 0. (Default: disabled)
 - ``-np`` (*np*): If provided, this overrides any input random particle file and creates *np* randomly drawn particles in the cubic box with the side length *boxsize*. **NB**: Currently creating particles at random is only supported for a single set of tracer particles.
 - ``-rs`` (*rstart*): If inverting particle weights, this sets the index from which to start weight inversion. (Default: 0)
 
