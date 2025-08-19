@@ -49,6 +49,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0,
             shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1,
             sampling_grid_size: int = 301, coordinate_scaling: float = 1, seed: int | None = None,
+            start_integral_index = None, last_integral_index = None,
             verbose: bool = False) -> dict[str, np.ndarray[float]]:
     r"""
     Run the 2-point correlation function covariance integration.
@@ -236,6 +237,16 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         (Optional) If given as an integer, allows to reproduce the results with the same settings, except the number of threads.
         Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
         If None (default), the initialization will be random. Note that False is equivalent to 0, which is a legitimate RNG seed, and will behave differently from None. (And True is equivalent to 1 as a seed.)
+    
+    start_integral_index : integer (1 through 7) or None
+        (Optional) If given as an integer, chooses from which of 7 integrals (numbered 1 through 7) to start when using multi-tracer functionality.
+        This parameter is intended to help complete the timed-out multi-tracer runs by skipping the integrals computed in an unfinished run.
+        Using this setting will disable post-processing for safety, because not all integrals may be present in the output directory. Carefully merge the output directories with all the integrals (if applicable) and invoke the post-processing with :func:`RascalC.post_process_auto`.
+    
+    last_integral_index : integer (1 through 7) or None
+        (Optional) If given as an integer, chooses at which of 7 integrals (numbered 1 through 7) to stop when using multi-tracer functionality.
+        This parameter can be used to fit a multi-tracer run into a time limit if the full 7 integrals are expected to take longer.
+        Using this setting will disable post-processing for safety, because not all integrals may be present in the output directory. Carefully merge the output directories with all the integrals (if applicable) and invoke the post-processing with :func:`RascalC.post_process_auto`.
 
     sampling_grid_size : integer
         (Optional) first guess for the sampling grid size.
@@ -279,6 +290,14 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     if periodic and boxsize < 0: raise ValueError("Periodic box size must be positive")
 
     if two_tracers: # check that everything is set accordingly
+        max_integrals = 7
+        if start_integral_index is not None:
+            if not isinstance(start_integral_index, int): raise TypeError("start_integral_index must be an integer")
+            if not (1 <= start_integral_index <= max_integrals): raise ValueError(f"start_integral_index must take a value between 1 and {max_integrals}")
+        if last_integral_index is not None:
+            if not isinstance(last_integral_index, int): raise TypeError("last_integral_index must be an integer")
+            if not (1 <= last_integral_index <= max_integrals): raise ValueError(f"last_integral_index must take a value between 1 and {max_integrals}")
+            if start_integral_index is not None and last_integral_index < start_integral_index: raise ValueError("last_integral_index must be greater or equal than start_integral_index")
         if randoms_weights2 is None: raise TypeError("Second tracer weights must be provided in two-tracer mode")
         if jackknife: # although this case has not been used so far
             if randoms_samples2 is None: raise TypeError("Second tracer jackknife region numbers must be provided in two-tracer jackknife mode")
@@ -487,6 +506,9 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         command += f" -perbox -boxsize {boxsize}"
     if jackknife: # provide jackknife weight files for all correlations
         command += "".join([f" -jackknife{suffixes_corr[c]} {jackknife_weights_names[c]}" for c in range(ncorr)])
+    if two_tracers: # provide start/last_integral_index if given
+        if start_integral_index: command += f" -start_integral_index {start_integral_index}"
+        if last_integral_index: command += f" -last_integral_index {last_integral_index}"
 
     # compute the correction function if original Legendre
     if legendre_orig: # need correction function
@@ -523,6 +545,10 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
 
     # post-processing
     print_and_log(datetime.now())
+    if two_tracers and ((start_integral_index is not None and start_integral_index > 1) or (last_integral_index is not None and last_integral_index < max_integrals)):
+        print_and_log("Skipping post-processing, because not all integrals may be present in the output directory.")
+        print_and_log("Carefully merge the output directories with all the integrals (if applicable) and invoke the post-processing with e.g. RascalC.post_process_auto()")
+        return
     print_and_log("Starting post-processing")
     if two_tracers:
         if legendre:

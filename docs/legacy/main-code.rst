@@ -127,6 +127,8 @@ Input parameters for the RascalC code may be specified by passing options on the
 - ``-perbox``: This flag signifies a periodic box computation (which requires the code to be compiled with the ``-DPERIODIC`` flag in the Makefile) as opposed to the default aperiodic behavior (which requires the code to be compiled without the ``-DPERIODIC`` flag in the Makefile).
 - ``-boxsize`` (*boxsize*): Sets the size of the computational domain if the periodic box is enabled, or the random particles are created in RascalC. (Default: 2000)
 - ``-seed`` (*seed*): Random number generator seed. If given, allows to reproduce the results with the same settings, except the number of threads.
+- ``-start_integral_index`` (*start_integral_index*): If given, chooses from which of 7 integrals (numbered 1 through 7) to start in the multi-tracer regime. Default 1 (to cover all integrals). Intended to help complete the timed-out multi-tracer runs by skipping the integrals computed in an unfinished run.
+- ``-last_integral_index`` (*last_integral_index*): If given, chooses at which of 7 integrals (numbered 1 through 7) to stop in the multi-tracer regime. Default 7 (to cover all integrals). Can be used to fit into the time limit if the full 7 integrals are expected to take longer.
 - ``-mumin`` (*mumin*): Minimum :math:`\mu` binning to use in the analysis. (Default: 0, or -1 in 3PCF mode)
 - ``-mumax`` (*mumax*): Maximum :math:`\mu` binning to use in the analysis. (Default: 1)
 - ``-cf_loops`` (*cf_loops*): Number of iterations over which to refine the correlation functions.
