@@ -235,7 +235,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     seed : integer or None
         (Optional) If given as an integer, allows to reproduce the results with the same settings, except the number of threads.
         Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
-        If None (default), the initialization will be random.
+        If None (default), the initialization will be random. Note that False is equivalent to 0, which is a legitimate RNG seed, and will behave differently from None. (And True is equivalent to 1 as a seed.)
 
     sampling_grid_size : integer
         (Optional) first guess for the sampling grid size.
@@ -289,6 +289,8 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         if xi_table_22 is None: raise TypeError("Second tracer auto-correlation function must be provided in two-tracer mode")
     
     if n_loops % loops_per_sample != 0: raise ValueError("The sample collapsing factor must divide the number of loops")
+
+    if not isinstance(seed, (int, type(None))): raise TypeError("Seed must be an integer or None")
 
     ntracers = 2 if two_tracers else 1
     ncorr = ntracers * (ntracers + 1) // 2
@@ -497,8 +499,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         command += "".join([f" -phi_file{suffixes_corr[c]} {phi_names[c]}" for c in range(ncorr)])
 
     # deal with the seed
-    if seed is not None: # need to pass to the C++ code and make sure it can be received properly
-        if not isinstance(seed, int): raise TypeError("Seed must be int or None")
+    if seed is not None: # need to pass to the C++ code and make sure it can be received properly. 0 (False) is not equivalent to None in this case
         seed &= 2**32 - 1 # this bitwise AND truncates the seed into a 32-bit unsigned (positive) integer (definitely a subset of unsigned long)
         command += f" -seed {seed}"
     
