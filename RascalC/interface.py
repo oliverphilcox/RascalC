@@ -234,9 +234,10 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         Will be ignored in jackknife mode - then shot-noise rescaling is optimized on the auto-covariance.
 
     seed : integer or None
-        (Optional) If given as an integer, allows to reproduce the results with the same settings, except the number of threads.
-        Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
-        If None (default), the initialization will be random. Note that False is equivalent to 0, which is a legitimate RNG seed, and will behave differently from None. (And True is equivalent to 1 as a seed.)
+        (Optional) If given as an integer, sets the base RNG (random number generator) seed, allowing to reproduce the results with the same input data and settings (except the number of threads, which can be varied).
+        Individual subsamples (and accordingly the intrinsic precision estimates and convergence test results) may differ (slightly) because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
+        If None (default), the initialization will be random. The randomly generated seed value can be found afterwards in the log file and/or output after ``the base RNG seed is``, but using the same seed might not reproduce the runs without a preset seed using the code before commit fd2d2c41 (12 June 2025).
+        Note that False in Python is equivalent to 0, which is a legitimate RNG seed, and therefore falls under the integer case, not like None. (True is equivalent to 1.)
     
     start_integral_index : integer (1 through 7) or None
         (Optional) If given as an integer, chooses from which of 7 integrals (numbered 1 through 7) to start when using multi-tracer functionality.
