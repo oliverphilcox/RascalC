@@ -105,7 +105,8 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
     print_function(f"Jackknife: {jackknife}")
     print_function(f"Number of tracers: {1 + two_tracers}")
 
-    if legendre_orig and jackknife: warn("Direct accumulation Legendre mode is not compatible with jackknives")
+    if legendre and legendre_orig and jackknife: raise ValueError("Direct accumulation Legendre mode is not compatible with jackknives")
+    if legendre and jackknife and two_tracers: warn("Projected Legendre post-processing for jackknife not implemented for multi-tracer. The code will proceed with Legendre multi-tracer processing without jackknife. Please contact the developer for a workaround")
 
     # Determine number of radial, mu bins and/or jackknives automatically as needed
     binned_pair_names = glob("binned_pair_counts_n*_m*_j*_??.dat" if jackknife else "RR_counts_n*_m*_??.dat", root_dir = os.path.join(file_root, "weights"))
@@ -138,6 +139,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
 
     if two_tracers:
         if legendre:
+            if jackknife: warn("Projected Legendre post-processing for jackknife not implemented for multi-tracer. The code will proceed with Legendre multi-tracer processing without jackknife. Please contact the developer for a workaround")
             results = post_process_legendre_multi(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function)
         elif jackknife:
             results = post_process_jackknife_multi(*xi_jack_names, os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_s_bins, n_samples = n_samples, print_function = print_function)
