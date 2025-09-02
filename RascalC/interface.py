@@ -302,7 +302,6 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         if randoms_weights2 is None: raise TypeError("Second tracer weights must be provided in two-tracer mode")
         if jackknife: # although this case has not been used so far
             if randoms_samples2 is None: raise TypeError("Second tracer jackknife region numbers must be provided in two-tracer jackknife mode")
-            if legendre_mix: warn("Projected Legendre post-processing for jackknife not implemented for multi-tracer. The code will proceed with Legendre multi-tracer processing without jackknife. Please contact the developer for a workaround")
         if pycorr_allcounts_12 is None: raise TypeError("Cross-counts must be provided in two-tracer mode")
         if pycorr_allcounts_22 is None: raise TypeError("Second tracer auto-counts must be provided in two-tracer mode")
         if xi_table_12 is None: raise TypeError("Cross-correlation function must be provided in two-tracer mode")
@@ -554,9 +553,11 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     if two_tracers:
         if legendre:
             if jackknife: # multi-tracer Legendre with jackknife missing because it has not been used
-                print_and_log("WARNING: Projected Legendre post-processing for jackknife not implemented for multi-tracer. The code will proceed with Legendre multi-tracer processing without jackknife. Please contact the developer for a workaround")
-            from .post_process import post_process_legendre_multi
-            results = post_process_legendre_multi(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, print_function = print_and_log)
+                from .post_process import post_process_legendre_mix_jackknife_multi
+                results = post_process_legendre_mix_jackknife_multi(*xi_jack_names, os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
+            else:
+                from .post_process import post_process_legendre_multi
+                results = post_process_legendre_multi(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, print_function = print_and_log)
         elif jackknife:
             from .post_process import post_process_jackknife_multi
             results = post_process_jackknife_multi(*xi_jack_names, os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
