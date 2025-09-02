@@ -64,7 +64,14 @@ def post_process_legendre_mix_jackknife_multi(jackknife_file_11: str, jackknife_
     mu_bin_legendre_factors = np.loadtxt(mu_bin_legendre_file) # rows correspond to mu bins, columns to multipoles
     if skip_l > 0: mu_bin_legendre_factors = mu_bin_legendre_factors[:, :-skip_l] # discard unneeded l; the expression works wrong for skip_l=0
 
-    cov_filter = cov_filter_legendre(n, max_l, skip_r_bins)
+    # Project the data jackknife covariance from mu bins to Legendre multipoles
+    data_cov = data_cov.reshape(3, n, m, 3, n, m) # make the array 6D with [tracer, r_bin, mu_bin] indices for rows and columns
+    data_cov = data_cov[:, skip_r_bins_start:, :, :, skip_r_bins_start:, :] # discard the extra radial bins now since it is convenient
+    if skip_r_bins_end != 0: data_cov = data_cov[:, :-skip_r_bins_end, :, :, :-skip_r_bins_end, :] # discard radial bins at the end if any
+    data_cov = np.einsum("timrjn,mp,nq->tiprjq", data_cov, mu_bin_legendre_factors, mu_bin_legendre_factors) # use mu bin Legendre factors to project mu bins into Legendre multipoles, staying within the same radial bins. The indices are now [tracer, r_bin, ell] for rows and columns
+    data_cov = data_cov.reshape(3*n_bins, 3*n_bins)
+
+    cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
 
     input_file = load_raw_covariances_legendre(file_root, n, max_l, n_samples, print_function)
 
@@ -86,13 +93,6 @@ def post_process_legendre_mix_jackknife_multi(jackknife_file_11: str, jackknife_
 
     ## Optimize for alpha_1 and alpha_2 separately.
     for t, this_data_cov in enumerate(auto_data_cov):
-
-        # Project the data jackknife covariance from mu bins to Legendre multipoles
-        this_data_cov = this_data_cov.reshape(n, m, n, m) # make the array 4D with [r_bin, mu_bin] indices for rows and columns
-        this_data_cov = this_data_cov[skip_r_bins_start:, :, skip_r_bins_start:, :] # discard the extra radial bins now since it is convenient
-        if skip_r_bins_end != 0: this_data_cov = this_data_cov[:-skip_r_bins_end, :, :-skip_r_bins_end, :] # discard radial bins at the end if any
-        this_data_cov = np.einsum("imjn,mp,nq->ipjq", this_data_cov, mu_bin_legendre_factors, mu_bin_legendre_factors) # use mu bin Legendre factors to project mu bins into Legendre multipoles, staying within the same radial bins. The indices are now [r_bin, ell] for rows and columns
-        this_data_cov = this_data_cov.reshape(n_bins, n_bins)
 
         # Load single-tracer parts
         this_c2j = c2j[t, t]
