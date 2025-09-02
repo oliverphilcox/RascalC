@@ -13,6 +13,7 @@ from .jackknife_multi import post_process_jackknife_multi
 from .legendre import post_process_legendre
 from .legendre_multi import post_process_legendre_multi
 from .legendre_mix_jackknife import post_process_legendre_mix_jackknife
+from .legendre_mix_jackknife_multi import post_process_legendre_mix_jackknife_multi
 
 
 def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, print_function: Callable[[str], None] = print, extra_convergence_check: bool = True, jackknife: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
@@ -139,8 +140,10 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
 
     if two_tracers:
         if legendre:
-            if jackknife: warn("Projected Legendre post-processing for jackknife not implemented for multi-tracer. The code will proceed with Legendre multi-tracer processing without jackknife. Please contact the developer for a workaround")
-            results = post_process_legendre_multi(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function)
+            if jackknife:
+                results = post_process_legendre_mix_jackknife_multi(*xi_jack_names, os.path.join(file_root, "weights"), file_root, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function)
+            else:
+                results = post_process_legendre_multi(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function)
         elif jackknife:
             results = post_process_jackknife_multi(*xi_jack_names, os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_s_bins, n_samples = n_samples, print_function = print_function)
         else: # default
