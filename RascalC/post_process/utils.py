@@ -6,15 +6,21 @@ from scipy.linalg import sqrtm
 from typing import Callable, Literal
 
 
-def cov_filter_smu(n: int, m: int, skip_r_bins: int | tuple[int, int] = 0):
-    """Produce a 2D indexing array for s,mu covariance matrices."""
+def cov_filter_smu_1d(n: int, m: int, skip_r_bins: int | tuple[int, int] = 0):
+    """Produce a 1D indexing array for s,mu covariance matrices."""
     skip_r_bins_start, skip_r_bins_end = format_skip_r_bins(skip_r_bins)
-    indices_1d = np.arange(m * skip_r_bins_start, m * (n - skip_r_bins_end))
+    return np.arange(m * skip_r_bins_start, m * (n - skip_r_bins_end))
+
+
+def cov_filter_smu(n: int, m: int, skip_r_bins: int | tuple[int, int] = 0, multi: bool = False):
+    """Produce a 2D indexing array for s,mu covariance matrices."""
+    indices_1d = cov_filter_smu_1d(n, m, skip_r_bins)
+    if multi: indices_1d = (indices_1d[None, :] + n * m * np.arange(3)[:, None]).ravel() # repeat and shift for each of 3 correlation functions
     return np.ix_(indices_1d, indices_1d)
 
 
-def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0):
-    """Produce a 2D indexing array for Legendre covariance matrices."""
+def cov_filter_legendre_1d(n: int, max_l: int, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0):
+    """Produce a 1D indexing array for Legendre covariance matrices in RascalC convention (not compatible with pycorr bin ordering)."""
     skip_r_bins_start, skip_r_bins_end = format_skip_r_bins(skip_r_bins)
     if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
     n_l = max_l // 2 + 1
@@ -22,7 +28,34 @@ def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int | tuple[int, int] =
     r_indices = np.arange(skip_r_bins_start, n - skip_r_bins_end)
     indices_l_r = (n_l * r_indices)[:, None] + l_indices[None, :]
     # indices_l_r = (n_l * r_indices)[None, :] + l_indices[:, None] # could switch the ordering right here easily but then saved binary RascalC results will become incompatible
-    indices_1d = indices_l_r.ravel()
+    return indices_l_r.ravel()
+
+
+def cov_filter_legendre(n: int, max_l: int, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, multi: bool = False):
+    """Produce a 2D indexing array for Legendre covariance matrices in RascalC convention (not compatible with pycorr bin ordering)."""
+    indices_1d = cov_filter_legendre_1d(n, max_l, skip_r_bins, skip_l)
+    if multi:
+        n_l = max_l // 2 + 1
+        indices_1d = (indices_1d[None, :] + n * n_l * np.arange(3)[:, None]).ravel() # repeat and shift for each of 3 correlation functions
+    return np.ix_(indices_1d, indices_1d)
+
+
+def cov_filter_legendre_pycorr_1d(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 0):
+    """Produce a 1D indexing array for Legendre covariance matrices, switching the bin order to RascalC convention."""
+    if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
+    n_l = max_l // 2 + 1
+    l_indices = np.arange(n_l - skip_l)
+    r_indices = np.arange(skip_r_bins, n)
+    indices_l_r = (n * l_indices)[None, :] + r_indices[:, None] # this will transpose from pycorr to RascalC convention
+    return indices_l_r.ravel()
+
+
+def cov_filter_legendre_pycorr(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 0, multi: bool = False):
+    """Produce a 2D indexing array for Legendre covariance matrices, switching the bin order from pycorr to RascalC convention."""
+    indices_1d = cov_filter_legendre_pycorr_1d(n, max_l, skip_r_bins, skip_l)
+    if multi:
+        n_l = max_l // 2 + 1
+        indices_1d = (indices_1d[None, :] + n * n_l * np.arange(3)[:, None]).ravel() # repeat and shift for each of 3 correlation functions
     return np.ix_(indices_1d, indices_1d)
 
 

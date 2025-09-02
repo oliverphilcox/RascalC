@@ -12,8 +12,7 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
     skip_bins = skip_r_bins * m
     n_bins = n * m - skip_bins
 
-    skip_mask = np.tile(np.arange(n * m) >= skip_bins, 3) # the mask gives False for first skip_bins, all this repeating 3 times; 3 is number of correlations for 2 tracers
-    mock_cov = np.loadtxt(mock_cov_file)[np.ix_(skip_mask, skip_mask)] # load external mock covariance matrix, select bins on both axes
+    mock_cov = np.loadtxt(mock_cov_file)[cov_filter_smu(n, m, skip_r_bins, multi=True)] # load external mock covariance matrix, select bins on both axes right away
 
     cov_filter = cov_filter_smu(n, m, skip_r_bins)
 
@@ -28,7 +27,7 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
     mock_cov_22 = mock_cov[2*n_bins:, 2*n_bins:]
     auto_mock_cov = [mock_cov_11, mock_cov_22]
 
-    alpha_best = np.zeros(2)
+    alpha_best = np.ones(2) # fill with ones by default, although this should not matter
 
     # Load full matrices
     c2, c3, c4 = load_matrices_multi(input_file, cov_filter, full = True, jack = False)
