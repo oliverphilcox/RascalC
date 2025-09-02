@@ -19,14 +19,8 @@ from .pycorr_utils.input_xi import get_input_xi_from_pycorr
 from .mu_bin_legendre_factors import write_mu_bin_legendre_factors
 from .correction_function import compute_correction_function, compute_correction_function_multi
 from .convergence_check_extra import convergence_check_extra
-from .utils import rmdir_if_exists_and_empty
-
-
-suffixes_tracer_all = ("", "2") # all supported tracer suffixes
-indices_corr_all = ("11", "12", "22") # all supported 2PCF indices
-suffixes_corr_all = ("", "12", "2") # all supported 2PCF suffixes
-tracer1_corr = (0, 0, 1)
-tracer2_corr = (0, 1, 1)
+from .utils import rmdir_if_exists_and_empty, suffixes_tracer_all, indices_corr_all, suffixes_corr_all, tracer1_corr
+from .post_process import post_process_legendre_mix_jackknife_multi, post_process_legendre_multi, post_process_jackknife_multi, post_process_default_multi, post_process_legendre_mix_jackknife, post_process_legendre, post_process_jackknife, post_process_default
 
 
 def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
@@ -553,30 +547,22 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     if two_tracers:
         if legendre:
             if jackknife: # multi-tracer Legendre with jackknife missing because it has not been used
-                from .post_process import post_process_legendre_mix_jackknife_multi
                 results = post_process_legendre_mix_jackknife_multi(*xi_jack_names, os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
             else:
-                from .post_process import post_process_legendre_multi
                 results = post_process_legendre_multi(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, print_function = print_and_log)
         elif jackknife:
-            from .post_process import post_process_jackknife_multi
             results = post_process_jackknife_multi(*xi_jack_names, os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
         else: # default
-            from .post_process import post_process_default_multi
             results = post_process_default_multi(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, print_function = print_and_log)
     else:
         if legendre:
             if jackknife:
-                from .post_process import post_process_legendre_mix_jackknife
                 results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
             else:
-                from .post_process import post_process_legendre
                 results = post_process_legendre(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, skip_s_bins, skip_l, print_function = print_and_log)
         elif jackknife:
-            from .post_process import post_process_jackknife
             results = post_process_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, out_dir, skip_s_bins, print_function = print_and_log)
         else: # default
-            from .post_process import post_process_default
             results = post_process_default(out_dir, n_r_bins, n_mu_bins, out_dir, shot_noise_rescaling1, skip_s_bins, print_function = print_and_log)
 
     print_and_log("Finished post-processing")
