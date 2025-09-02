@@ -3,26 +3,15 @@
 
 import numpy as np
 import os
-from .utils import cov_filter_legendre, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
+from .utils import cov_filter_legendre, cov_filter_legendre_pycorr, load_matrices_single, check_eigval_convergence, add_cov_terms_single, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D, fit_shot_noise_rescaling
 from ..raw_covariance_matrices import load_raw_covariances_legendre
 from typing import Literal, Callable, Iterable
 
 
-def cov_filter_legendre_mocks(n: int, max_l: int, skip_r_bins: int = 0, skip_l: int = 0):
-    if max_l % 2 != 0: raise ValueError("Only even multipoles supported")
-    n_l = max_l // 2 + 1
-    l_indices = np.arange(n_l - skip_l)
-    r_indices = np.arange(skip_r_bins, n)
-    indices_l_r = (n * l_indices)[None, :] + r_indices[:, None] # this will transpose from pycorr to RascalC convention
-    indices_1d = indices_l_r.ravel()
-    return np.ix_(indices_1d, indices_1d)
-
-
 def post_process_legendre_mocks(mock_cov_file: str, file_root: str, n: int, max_l: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print) -> dict[str]:
     cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
-    cov_filter_mocks = cov_filter_legendre_mocks(n, max_l, skip_r_bins, skip_l)
 
-    mock_cov = np.loadtxt(mock_cov_file)[cov_filter_mocks] # load external mock covariance matrix
+    mock_cov = np.loadtxt(mock_cov_file)[cov_filter_legendre_pycorr(n, max_l, skip_r_bins, skip_l)] # load external mock covariance matrix; select bins and switch their ordering right away
     
     input_file = load_raw_covariances_legendre(file_root, n, max_l, n_samples, print_function)
 

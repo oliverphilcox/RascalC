@@ -14,12 +14,14 @@ from .jackknife_multi import post_process_jackknife_multi
 from .legendre import post_process_legendre
 from .legendre_multi import post_process_legendre_multi
 from .legendre_mix_jackknife import post_process_legendre_mix_jackknife
+from .legendre_mix_jackknife_multi import post_process_legendre_mix_jackknife_multi
 
 # dependencies for mock post-processing if we want to separate them at some point
 import pycorr
 from .default_mocks import post_process_default_mocks
 from .default_mocks_multi import post_process_default_mocks_multi
 from .legendre_mocks import post_process_legendre_mocks
+from .legendre_mocks_multi import post_process_legendre_mocks_multi
 from ..pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pycorr_to_file
 from ..pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
 
@@ -50,7 +52,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
         By default, no bins are skipped.
 
     skip_l : integer
-        (Optional) number of higher multipoles to skip (from the end).
+        (Optional) number of higher multipoles to skip (from the end and counting only even multipoles).
 
     tracer : 1 or 2
         (Optional) if the RascalC output directory contains two-tracer results, ``tracer = 2`` together with ``two_tracers = False`` allows to select the second tracer for single-tracer post-processing.
@@ -147,7 +149,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
     print_function(f"Tuning to the provided (mock) sample covariance: {mocks_new}")
     print_function(f"Number of tracers: {ntracers}")
 
-    if legendre_orig and jackknife: warn("Direct accumulation Legendre mode is not compatible with jackknives")
+    if legendre and legendre_orig and jackknife: raise ValueError("Direct accumulation Legendre mode is not compatible with jackknives")
 
     if two_tracers and jackknife and legendre_mix: warn("Projected Legendre post-processing for jackknife not implemented for multi-tracer. Please contact the developer for a workaround")
 
@@ -218,9 +220,12 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
 
     if two_tracers:
         if legendre:
-            results = post_process_legendre_multi(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function)
-            # multi-tracer Legendre with jackknife missing because it has not been used
-            # multi-tracer Legendre with mocks missing because it has not been used
+            if mocks:
+                results = post_process_legendre_mocks_multi(mock_cov_name, out_dir, n_r_bins, max_l, out_dir, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function)
+            elif jackknife:
+                results = post_process_legendre_mix_jackknife_multi(*xi_jack_names, os.path.join(file_root, "weights"), file_root, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function)
+            else:
+                results = post_process_legendre_multi(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function)
         elif mocks:
             results = post_process_default_mocks_multi(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_s_bins, n_samples = n_samples, print_function = print_function)
         elif jackknife:

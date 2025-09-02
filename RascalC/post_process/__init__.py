@@ -7,7 +7,9 @@ from .jackknife_multi import post_process_jackknife_multi
 from .legendre import post_process_legendre
 from .legendre_multi import post_process_legendre_multi
 from .legendre_mix_jackknife import post_process_legendre_mix_jackknife
+from .legendre_mix_jackknife_multi import post_process_legendre_mix_jackknife_multi
 
 from .default_mocks import post_process_default_mocks
 from .default_mocks_multi import post_process_default_mocks_multi
 from .legendre_mocks import post_process_legendre_mocks
+from .legendre_mocks_multi import post_process_legendre_mocks_multi

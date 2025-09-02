@@ -61,6 +61,9 @@ $(foreach variant,$(VARIANTS_INT),$(eval $(call add_verbose_variant,$(variant)))
 OBJDIR	= obj
 EXECDIR	= bin
 
+$(OBJDIR) $(EXECDIR):
+	mkdir -p $@
+
 VAR_SRC_BASE	= grid_covariance
 VAR_SRC	= ../$(VAR_SRC_BASE).cpp
 VAR_OBJ_BASE	= $(OBJDIR)/$(VAR_SRC_BASE)
@@ -76,15 +79,14 @@ ALL_OBJS	+= $$(OBJ_$(1))
 EXEC_$(1)	= $$(EXEC_BASE).$(1)
 ALL_EXECS	+= $$(EXEC_$(1))
 
-$$(OBJ_$(1)): $$(VAR_SRC)
-	mkdir -p $$(OBJDIR)
+$$(OBJ_$(1)): $$(VAR_SRC) | $$(OBJDIR)
 	$$(CXX) $$(CXXFLAGS) $$(DEFINES_FOR_$(1)) -c $$(VAR_SRC) -o $$@
 
-$$(EXEC_$(1)): $$(OBJ_$(1)) $$(COMMON_OBJS)
-	mkdir -p $$(EXECDIR)
+$$(EXEC_$(1)): $$(OBJ_$(1)) $$(COMMON_OBJS) | $$(EXECDIR)
 	$$(LD) $$(OBJ_$(1)) $$(COMMON_OBJS) $$(LFLAGS) -o $$@
-
 endef
+# directories that need to exist are listed after "|" as order-only prerequisites, as suggested in https://stackoverflow.com/a/38525905/23322509
+# if directories are listed as normal prerequisites, they are modified when objects/executables are made/remade and this alone triggers another remake of objects/executables unnecessarily
 
 $(foreach variant,$(VARIANTS),$(eval $(call make_targets,$(variant))))
 

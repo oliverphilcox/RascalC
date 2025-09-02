@@ -117,6 +117,11 @@
             int tot_iter=1; // total number of iterations
             if(par->multi_tracers==true) tot_iter=7;
 
+            if ((iter_no < par->start_integral_index) || (iter_no > par->last_integral_index)) {
+                printf("# Skipping integral computation %d of %d; only running %d through %d (both inclusive).\n", iter_no, tot_iter, par->start_integral_index, par->last_integral_index);
+                return;
+            }
+
             // Define relevant grids
             Grid *grid1 = which_grid(all_grid,I1);
             Grid *grid2 = which_grid(all_grid,I2);

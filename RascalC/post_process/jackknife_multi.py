@@ -156,7 +156,7 @@ def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str,
     data_cov_22 = data_cov[2*n_bins:,2*n_bins:]
     auto_data_cov = [data_cov_11,data_cov_22]
 
-    alpha_best = np.zeros(2)
+    alpha_best = np.ones(2) # fill with ones by default, although this should not matter
 
     # Load full jack matrices
     c2j, c3j, c4j = load_matrices_multi(input_file, cov_filter, full = True, jack = True)

@@ -128,6 +128,11 @@ public:
     // Number of galaxies in second dataset
     Float nofznorm2=3398430; //
 
+    // parameters allowing to run only some of the 7 integrals
+    int start_integral_index = 1; // the first integral to be computed
+    int last_integral_index = 7; // the last integral to be computed
+    // defaults compute all integrals
+
     //---------- (r,mu) MULTI-FIELD PARAMETERS ------------------------------
 
 #if (!defined LEGENDRE && !defined POWER && !defined THREE_PCF)
@@ -328,6 +333,8 @@ public:
 			make_random=1;
 		    }
 		else if (!strcmp(argv[i],"-seed")) { random_seed = false; sscanf(argv[++i], "%lu", &seed); }
+        else if (!strcmp(argv[i],"-start_integral_index")) start_integral_index = atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-last_integral_index")) last_integral_index = atoi(argv[++i]);
 		else if (!strcmp(argv[i],"-def")) { fname = NULL; }
 		else {
 		    fprintf(stderr, "Don't recognize %s\n", argv[i]);
@@ -516,7 +523,14 @@ public:
         }
 #endif
 
-
+        // check integral selection parameters
+        assert(start_integral_index >= 1);
+        assert(last_integral_index >= 1);
+        if (!multi_tracers) last_integral_index = 1;
+        assert(start_integral_index <= last_integral_index);
+        int no_integrals = multi_tracers ? 7 : 1;
+        assert(start_integral_index <= no_integrals);
+        assert(last_integral_index <= no_integrals);
 
 	    create_directory();
 
@@ -644,6 +658,10 @@ private:
         fprintf(stderr, "   -seed <seed>:  If given, allows to reproduce the results with the same settings, except the number of threads.\n");
         fprintf(stderr, "      Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.\n");
         fprintf(stderr, "      Needs to be a non-negative integer fitting into 32 bits (max 4294967295). If not given (default), the seed will be created randomly.\n");
+        fprintf(stderr, "   -start_integral_index <start_integral_index>: If given, chooses from which of 7 integrals (numbered 1 through 7) to start in the multi-tracer regime. Default 1 (to cover all integrals).\n");
+        fprintf(stderr, "      Intended to help complete the timed-out multi-tracer runs by skipping the integrals computed in an unfinished run.\n");
+        fprintf(stderr, "   -last_integral_index <start_integral_index>: If given, chooses at which of 7 integrals (numbered 1 through 7) to stop in the multi-tracer regime. Default 7 (to cover all integrals).\n");
+        fprintf(stderr, "      Can be used to fit into the time limit if the full 7 integrals are expected to take longer.\n");
 	    fprintf(stderr, "\n");
 	    fprintf(stderr, "\n");
 

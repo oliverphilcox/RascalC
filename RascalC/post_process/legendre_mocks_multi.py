@@ -3,26 +3,24 @@
 
 import numpy as np
 import os
-from .utils import cov_filter_smu, load_matrices_multi, check_eigval_convergence, fit_shot_noise_rescaling, add_cov_terms_multi, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
-from ..raw_covariance_matrices import load_raw_covariances_smu
+from .utils import cov_filter_legendre, cov_filter_legendre_pycorr, load_matrices_multi, check_eigval_convergence, fit_shot_noise_rescaling, add_cov_terms_multi, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from ..raw_covariance_matrices import load_raw_covariances_legendre
 from typing import Iterable, Callable
 
 
-def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int, m: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print) -> dict[str]:
-    skip_bins = skip_r_bins * m
-    n_bins = n * m - skip_bins
+def post_process_legendre_mocks_multi(mock_cov_file: str, file_root: str, n: int, max_l: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print) -> dict[str]:
+    cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
 
-    mock_cov = np.loadtxt(mock_cov_file)[cov_filter_smu(n, m, skip_r_bins, multi=True)] # load external mock covariance matrix, select bins on both axes right away
+    mock_cov = np.loadtxt(mock_cov_file)[cov_filter_legendre_pycorr(n, max_l, skip_r_bins, skip_l, multi=True)] # load external mock covariance matrix; select bins and switch their ordering right away
 
-    cov_filter = cov_filter_smu(n, m, skip_r_bins)
-
-    input_file = load_raw_covariances_smu(file_root, n, m, n_samples, print_function)
+    input_file = load_raw_covariances_legendre(file_root, n, max_l, n_samples, print_function)
 
     # Create output directory
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
     # Load autocovariance from mock covariance
+    n_bins = len(mock_cov) // 3
     mock_cov_11 = mock_cov[:n_bins, :n_bins]
     mock_cov_22 = mock_cov[2*n_bins:, 2*n_bins:]
     auto_mock_cov = [mock_cov_11, mock_cov_22]
@@ -76,7 +74,7 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
 
     output_dict = {"full_theory_covariance": c_comb, "all_covariances": c_tot, "shot_noise_rescaling": alpha_best, "full_theory_precision": prec_comb, "N_eff": N_eff, "full_theory_D_matrix": D_est, "individual_theory_covariances": c_comb_subsamples, "mock_covariance": mock_cov}
 
-    output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Default_Mocks_n%d_m%d.npz' % (n, m))
+    output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Legendre_Mocks_n%d_m%d.npz' % (n, max_l))
     np.savez_compressed(output_name, **output_dict)
 
     print_function("Saved output covariance matrices as %s" % output_name)
