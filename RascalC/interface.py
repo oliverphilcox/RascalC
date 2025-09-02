@@ -546,7 +546,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     print_and_log("Starting post-processing")
     if two_tracers:
         if legendre:
-            if jackknife: # multi-tracer Legendre with jackknife missing because it has not been used
+            if jackknife:
                 results = post_process_legendre_mix_jackknife_multi(*xi_jack_names, os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
             else:
                 results = post_process_legendre_multi(out_dir, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, print_function = print_and_log)
