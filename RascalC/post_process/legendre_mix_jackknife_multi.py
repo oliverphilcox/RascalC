@@ -45,7 +45,7 @@ def post_process_legendre_mix_jackknife_multi(jackknife_file_11: str, jackknife_
     weights12 = np.loadtxt(weight_file12)[:, 1:]
     weights22 = np.loadtxt(weight_file22)[:, 1:]
     weights = np.array([these_weights[good_jk] for these_weights in (weights11, weights12, weights22)])
-    weights /= np.sum(weights, axis = 1) # renormalize after possibly discarding some jackknives
+    weights /= np.sum(weights, axis = 1)[:, None, :] # renormalize after possibly discarding some jackknives
     weights_all = weights.swapaxes(0, 1).reshape(len(good_jk), 3*n_bins_smu)
 
     # Compute full covariance matrix:
@@ -80,8 +80,8 @@ def post_process_legendre_mix_jackknife_multi(jackknife_file_11: str, jackknife_
         os.makedirs(outdir)
 
     # Load autocovariance from data-covariance
-    data_cov_11 = data_cov[:n_bins_smu,:n_bins_smu]
-    data_cov_22 = data_cov[2*n_bins_smu:,2*n_bins_smu:]
+    data_cov_11 = data_cov[:n_bins,:n_bins]
+    data_cov_22 = data_cov[2*n_bins:,2*n_bins:]
     auto_data_cov = [data_cov_11,data_cov_22]
 
     alpha_best = np.ones(2) # fill with ones by default, although this should not matter

@@ -120,7 +120,7 @@ def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str,
     weights12 = np.loadtxt(weight_file12)[:, 1:]
     weights22 = np.loadtxt(weight_file22)[:, 1:]
     weights = np.array([these_weights[good_jk] for these_weights in (weights11, weights12, weights22)])
-    weights /= np.sum(weights, axis = 1) # renormalize after possibly discarding some jackknives
+    weights /= np.sum(weights, axis = 1)[:, None, :] # renormalize after possibly discarding some jackknives
     weights_all = weights.swapaxes(0, 1).reshape(len(good_jk), 3*n_bins)
 
     # Compute full covariance matrix:
