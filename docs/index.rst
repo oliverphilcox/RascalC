@@ -17,14 +17,14 @@ RascalC was also used in `Philcox & Eisenstein 2020 <https://arxiv.org/abs/1912.
 
 The source code is publicly available on `Github <https://github.com/oliverphilcox/RascalC>`_ and builds upon the Python package `Rascal <https://github.com/rcoconnell/Rascal>`_.
 RascalC is now also available as a Python package (see :doc:`library/installation`).
-For general usage, we provide :doc:`library/essential-functions` and :doc:`library/tutorials-examples`; you can also refer to legacy-mode/command-line :doc:`legacy/tutorial` and :doc:`legacy/tutorial_periodic`.
+For general usage, we provide :doc:`library/fundamentals` and :doc:`library/tutorials-examples`; you can also refer to legacy-mode/command-line :doc:`legacy/tutorial` and :doc:`legacy/tutorial_periodic`.
 
 .. toctree::
    :maxdepth: 2
    :caption: Python library (2PCF)
 
    library/installation
-   library/essential-functions
+   library/fundamentals
    library/tutorials-examples
    library/advanced-functions
 

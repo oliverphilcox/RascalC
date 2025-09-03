@@ -47,6 +47,7 @@ extensions = [
     'sphinx.ext.graphviz',
     'sphinx.ext.autodoc',
     'sphinx.ext.extlinks',
+    "sphinxext.rediraffe",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -173,3 +174,5 @@ texinfo_documents = [
 
 # -- Extension configuration -------------------------------------------------
 todo_include_todos=True
+
+rediraffe_redirects = "redirects.txt"
