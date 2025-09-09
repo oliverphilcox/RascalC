@@ -26,7 +26,23 @@ from ..pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pyco
 from ..pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
 
 
-def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1, xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None, xi_sample_cov: np.ndarray[float] | None = None, print_function: Callable[[str], None] = print, extra_convergence_check: bool = True, jackknife: bool | None = None, load_sample_cov: bool | None = None, legendre: bool | None = None, two_tracers: bool | None = None, n_r_bins: int | None = None, n_mu_bins: int | None = None, n_jack: int | None = None, max_l: int | None = None) -> dict[str]:
+def post_process_auto(file_root: str,
+                      out_dir: str | None = None,
+                      skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0,
+                      tracer: Literal[1, 2] = 1,
+                      n_samples: None | int | Iterable[int] | Iterable[bool] = None,
+                      shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1,
+                      xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
+                      xi_12_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
+                      xi_22_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
+                      xi_sample_cov: np.ndarray[float] | None = None,
+                      print_function: Callable[[str], None] = print,
+                      extra_convergence_check: bool = True,
+                      jackknife: bool | None = None, load_sample_cov: bool | None = None,
+                      legendre: bool | None = None, two_tracers: bool | None = None,
+                      n_r_bins: int | None = None, n_mu_bins: int | None = None,
+                      n_jack: int | None = None,
+                      max_l: int | None = None) -> dict[str]:
     r"""
     Automatic but highly customizable post-processing interface. Designed to work with the :func:`RascalC.run_cov` outputs.
 
@@ -74,7 +90,19 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
         In jackknife or mock mode, the shot-noise rescaling values are auto-determined, so this parameter has no effect.
     
     xi_11_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
-        (Optional) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) to compute the sample covariance to use as reference in shot-noise rescaling optimization. Must have the same binning as the covariance (except possibly the angular/mu bins in Legendre mode). Providing this option is not compatible with jackknife (enabled explicitly).
+        (Optional) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) for the first tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
+        Must have the same binning as the covariance (except possibly the angular/mu bins in Legendre mode).
+        Providing this option is not compatible with jackknife (enabled explicitly).
+        For two-tracer post-processing, providing this requires also passing ``xi_22_samples`` with the same number of samples and binning.
+    
+    xi_22_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
+        (Optional, only for two-tracer post-processing) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) for the second tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
+        For two-tracer post-processing, this is necessary if ``xi_11_samples`` are provided, and the binning and the number of samples must be the same.
+    
+    xi_12_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
+        (Optional, only for two-tracer post-processing) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) for the cross-correlation function between the first and the second tracers to compute the sample covariance.
+        Must have the same binning and number of samples as ``xi_11_samples`` if provided.
+        Only auto-covariances of the auto-correlation functions are used in two-tracer mock-based post-processing, so cross-correlation computations may be omitted if not needed for other reasons.
     
     xi_sample_cov: None, or a symmetric positive definite matrix
         (Optional) The pre-computed sample covariance to use as reference in shot-noise rescaling optimization.
@@ -82,7 +110,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
         Please ensure the right bin ordering if you use this option (because of this, it may be easier to use ``xi_11_samples`` instead).
         In "s_mu" ``mode``, the top-level ordering/grouping is by separation/radial bins and then by angular/µ bins, i.e. the neighboring angular/µ bins (after wrapping!) in one separation/radial bin are next to each other.
         In any of the Legendre ``mode``\s, the top-level ordering/grouping is by multipoles and then by separation/radial bins, i.e. the same multipole moments in neighboring radial bins are next to each other.
-        (For multi-tracer, the topmost-level ordering must be by the correlation function: 11, 12, 22, but the corresponding post-processing has not been implemented yet.)
+        For multi-tracer, the topmost-level ordering must be by the correlation function: 11, 12, 22.
     
     print_function : Callable
         (Optional) custom function to use for printing. Default is ``print``.
@@ -193,9 +221,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
 
     mocks = mocks_new or load_sample_cov
 
-    if two_tracers and mocks and legendre: warn("Legendre post-processing for mocks not implemented for multi-tracer. Please contact the developer for a workaround")
-
-    if not (jackknife or mocks) or (two_tracers and mocks and legendre):
+    if not (jackknife or mocks):
         # cases when the shot-noise rescaling is not tuned - as it should be, or due to the lack of implementation
         print_function(f"Using {shot_noise_rescaling1=}" + two_tracers * f" and {shot_noise_rescaling2=}")
 
@@ -209,12 +235,29 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
         np.savetxt(mock_cov_name, xi_sample_cov)
     elif mocks_from_samples:
         if len(xi_11_samples) <= 1: raise ValueError("Need more than 1 sample in xi_11_samples to compute the sample covariance")
-        # if any(not np.allclose(xi_11_sample.edges[0], pycorr_allcounts_11.edges[0]) for xi_11_sample in xi_11_samples): raise ValueError(f"Found separation/radial binning in xi_11_samples inconsistent with pycorr_allcounts_11")
-        if any(not np.allclose(xi_11_sample.edges[1], np.linspace(0, 1, n_mu_bins + 1)) for xi_11_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with pycorr_allcounts_11")
+        if any(not np.allclose(xi_sample.edges[0], xi_11_samples[0].edges[0]) for xi_sample in xi_11_samples[1:]): raise ValueError(f"Found different separation/radial binning in xi_11_samples")
+        if any(not np.allclose(xi_sample.edges[1], np.linspace(0, 1, n_mu_bins + 1)) for xi_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with uniform and/or the inferred number of angular/µ bins")
+        xi_samples_all = [xi_11_samples]
+        if two_tracers:
+            # check the required 22 samples
+            if xi_22_samples is None: raise TypeError("xi_22_samples must be provided for multi-tracer")
+            if len(xi_22_samples) != len(xi_11_samples): raise ValueError("xi_22_samples must contain the same number of samples as xi_11_samples")
+            if any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_22_samples): raise ValueError(f"xi_22_samples must have the same binning as xi_11_samples")
+            # check 12 samples which are not critical. if anything is wrong, substitute 11 samples as a placeholder
+            if xi_12_samples is None:
+                warn("xi_12_samples not provided. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                xi_12_samples = xi_11_samples
+            elif len(xi_12_samples) != len(xi_11_samples):
+                warn("xi_12_samples must contain the same number of samples as xi_11_samples, will substitute them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                xi_12_samples = xi_11_samples
+            elif any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_12_samples):
+                warn(f"xi_12_samples must have the same binning as xi_11_samples, will substitute them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                xi_12_samples = xi_11_samples
+            xi_samples_all += [xi_12_samples, xi_22_samples]
         if legendre:
-            sample_cov_multipoles_from_pycorr_to_file([xi_11_samples], mock_cov_name, max_l=max_l)
+            sample_cov_multipoles_from_pycorr_to_file(xi_samples_all, mock_cov_name, max_l=max_l)
         else:
-            sample_cov_from_pycorr_to_file([xi_11_samples], mock_cov_name)
+            sample_cov_from_pycorr_to_file(xi_samples_all, mock_cov_name)
 
     if two_tracers:
         if legendre:
