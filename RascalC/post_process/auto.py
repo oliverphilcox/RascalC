@@ -151,8 +151,6 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
 
     if legendre and legendre_orig and jackknife: raise ValueError("Direct accumulation Legendre mode is not compatible with jackknives")
 
-    if two_tracers and jackknife and legendre_mix: warn("Projected Legendre post-processing for jackknife not implemented for multi-tracer. Please contact the developer for a workaround")
-
     # Determine number of radial, mu bins and/or jackknives automatically as needed
     binned_pair_names = glob("binned_pair_counts_n*_m*_j*_??.dat" if jackknife else "RR_counts_n*_m*_??.dat", root_dir = os.path.join(file_root, "weights"))
     if len(binned_pair_names) < ncorr: raise ValueError(f"Need {ncorr} pair counts, found {len(binned_pair_names)}")
@@ -197,7 +195,7 @@ def post_process_auto(file_root: str, out_dir: str | None = None, skip_s_bins: i
 
     if two_tracers and mocks and legendre: warn("Legendre post-processing for mocks not implemented for multi-tracer. Please contact the developer for a workaround")
 
-    if not (jackknife or mocks) or (two_tracers and ((jackknife and legendre_mix) or (mocks and legendre))):
+    if not (jackknife or mocks) or (two_tracers and mocks and legendre):
         # cases when the shot-noise rescaling is not tuned - as it should be, or due to the lack of implementation
         print_function(f"Using {shot_noise_rescaling1=}" + two_tracers * f" and {shot_noise_rescaling2=}")
 
