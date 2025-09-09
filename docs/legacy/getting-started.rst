@@ -1,7 +1,7 @@
 Getting Started
 ================
 
-**NB**: This documentation page is about the legacy/command-line usage. We believe it is much easier to learn the Python library, please see its :doc:`../library/essential-functions` and :doc:`../library/installation`.
+**NB**: This documentation page is about the legacy/command-line usage. We believe it is much easier to learn the Python library, please see its :doc:`../library/fundamentals` and :doc:`../library/installation`.
 
 RascalC computes covariance matrix estimates from a given correlation function and set of random particles. Here, we give a broad overview of the procedure and the relevant :ref:`file-inputs`. To demonstrate basic use of the code pipeline, we provide two tutorials: :doc:`tutorial` and :doc:`tutorial_periodic`.
 
