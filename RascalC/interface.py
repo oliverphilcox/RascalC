@@ -316,8 +316,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     mocks_precomputed = xi_sample_cov is not None
     mocks_from_samples = xi_11_samples is not None
     mocks = mocks_precomputed or mocks_from_samples
-    if mocks_precomputed and mocks_from_samples: print_and_log("WARNING: Provided xi sample covariance overrides the provided xi samples")
-    if jackknife and mocks: print_and_log("WARNING: Jackknife covariance terms will be computed, but the shot-noise calibration in post-processing will be based on the sample covariance. Use RascalC.post_process_auto() afterwards for alternative post-processing.")
+    if mocks_precomputed and mocks_from_samples: warn("Provided xi sample covariance overrides the provided xi samples")
 
     if two_tracers: # check that everything is set accordingly
         max_integrals = 7
@@ -418,6 +417,8 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     print_and_log(f"Number of tracers: {1 + two_tracers}")
     print_and_log(f"Normalizing weights and weighted counts: {normalize_wcounts}")
     print_and_log(datetime.now())
+    if mocks_precomputed and mocks_from_samples: print_and_log("WARNING: Provided xi sample covariance overrides the provided xi samples")
+    if jackknife and mocks: print_and_log("WARNING: Jackknife covariance terms will be computed, but the shot-noise calibration in post-processing will be based on the sample covariance. Use RascalC.post_process_auto() after the end of this computation for alternative post-processing.")
 
     counts_factor = None if normalize_wcounts else 1
     ndata = [no_data_galaxies1, no_data_galaxies2][:ntracers]
