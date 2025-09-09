@@ -1,1 +1,11 @@
+usage/installation legacy/installation
+usage/getting-started legacy/getting-started
+usage/tutorial legacy/tutorial
+usage/tutorial_periodic legacy/tutorial_periodic
+usage/pre-processing legacy/pre-processing
+usage/jackknife-weights legacy/jackknife-weights
+usage/geometry-correction legacy/geometry-correction
+usage/correlation-functions legacy/correlation-functions
+usage/main-code legacy/main-code
+usage/post-processing legacy/post-processing
 library/essential-functions.rst library/fundamentals.rst
