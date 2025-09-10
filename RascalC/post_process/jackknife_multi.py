@@ -89,10 +89,6 @@ def load_disconnected_term_multi(input_data: dict[str], cov_filter: np.ndarray[i
 
 
 def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str, jackknife_file_22: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print, dry_run: bool = False):
-    output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz' % (n, m, n_jack))
-    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
-    if dry_run: return name_dict
-
     ## First load jackknife xi estimates from data:
     print_function("Loading correlation function jackknife estimates")
     xi_jack_11 = np.loadtxt(jackknife_file_11, skiprows=2)
@@ -103,6 +99,10 @@ def post_process_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str,
     n_bins = xi_jack_11.shape[1] # total bins
     n_jack = xi_jack_11.shape[0] # total jackknives
     n = n_bins // m # radial bins
+
+    output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz' % (n, m, n_jack))
+    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
+    if dry_run: return name_dict
 
     # First exclude any dodgy jackknife regions
     good_jk = np.where(np.all(np.isfinite(xi_jack_11) & np.isfinite(xi_jack_12) & np.isfinite(xi_jack_22), axis=1))[0] # all xi in jackknife have to be normal numbers

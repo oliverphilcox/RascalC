@@ -12,15 +12,16 @@ from typing import Literal, Callable, Iterable
 
 
 def post_process_legendre_mix_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, max_l: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print, dry_run: bool = False) -> dict[str]:
-    output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Legendre_Jackknife_n%d_l%d_j%d.npz' % (n, max_l, n_jack))
-    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
-    if dry_run: return name_dict
-
     # Load jackknife xi estimates from data
     print_function("Loading correlation function jackknife estimates from %s" % jackknife_file)
     xi_jack = np.loadtxt(jackknife_file, skiprows = 2)
     n_jack = xi_jack.shape[0] # total jackknives
     n = xi_jack.shape[1] // m # radial bins
+    
+    output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Legendre_Jackknife_n%d_l%d_j%d.npz' % (n, max_l, n_jack))
+    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
+    if dry_run: return name_dict
+
     n_l = max_l // 2 + 1 # number of even multipoles
     skip_r_bins_start, skip_r_bins_end = format_skip_r_bins(skip_r_bins)
     n_bins = (n_l - skip_l) * (n - skip_r_bins_start - skip_r_bins_end) # total Legendre bins to work with

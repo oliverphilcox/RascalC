@@ -41,16 +41,16 @@ def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[
 
 
 def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print, dry_run: bool = False) -> dict[str]:
-    output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz' % (n, m, n_jack))
-    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
-    if dry_run: return name_dict
-
     # Load jackknife xi estimates from data
     print_function(f"Loading correlation function jackknife estimates from {jackknife_file}")
     xi_jack = np.loadtxt(jackknife_file, skiprows=2)
     n_bins = xi_jack.shape[1] # total bins
     n_jack = xi_jack.shape[0] # total jackknives
     n = n_bins // m # radial bins
+    
+    output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Jackknife_n%d_m%d_j%d.npz' % (n, m, n_jack))
+    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
+    if dry_run: return name_dict
 
     weight_file = os.path.join(weight_dir, f'jackknife_weights_n{n}_m{m}_j{n_jack}_{tracer}{tracer}.dat')
     RR_file = os.path.join(weight_dir, f'binned_pair_counts_n{n}_m{m}_j{n_jack}_{tracer}{tracer}.dat')

@@ -12,10 +12,6 @@ from typing import Iterable, Callable
 
 
 def post_process_legendre_mix_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str, jackknife_file_22: str, weight_dir: str, file_root: str, m: int, max_l: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print, dry_run: bool = False):
-    output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Legendre_Jackknife_n%d_m%d_j%d.npz' % (n, max_l, n_jack))
-    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
-    if dry_run: return name_dict
-
     ## First load jackknife xi estimates from data:
     print_function("Loading correlation function jackknife estimates")
     xi_jack_11 = np.loadtxt(jackknife_file_11, skiprows=2)
@@ -26,6 +22,11 @@ def post_process_legendre_mix_jackknife_multi(jackknife_file_11: str, jackknife_
     n_bins_smu = xi_jack_11.shape[1] # total bins
     n_jack = xi_jack_11.shape[0] # total jackknives
     n = n_bins_smu // m # radial bins
+
+    output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Legendre_Jackknife_n%d_m%d_j%d.npz' % (n, max_l, n_jack))
+    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
+    if dry_run: return name_dict
+    
     n_l = max_l // 2 + 1 # number of even multipoles
     skip_r_bins_start, skip_r_bins_end = format_skip_r_bins(skip_r_bins)
     n_bins = (n_l - skip_l) * (n - skip_r_bins_start - skip_r_bins_end) # total Legendre bins to work with
