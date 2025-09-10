@@ -512,7 +512,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
                 print_and_log("WARNING: xi_12_samples must contain the same number of samples as xi_11_samples, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
                 xi_12_samples = xi_11_samples
             elif any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_12_samples):
-                warn(f"xi_12_samples must have the same binning as xi_11_samples, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                print_and_log(f"WARNING: xi_12_samples must have the same binning as xi_11_samples, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
                 xi_12_samples = xi_11_samples
             xi_samples_all += [xi_12_samples, xi_22_samples]
         if legendre:
