@@ -194,6 +194,12 @@ Practical remarks particular to the mock pipeline with :func:`RascalC.run_cov` i
     - Providing a sample (list or tuple) of (mock) ``pycorr`` correlation function estimators to :func:`RascalC.run_cov` through the ``xi_11_samples`` argument. Each should be rebinned for the covariance, i.e. in the same way as ``pycorr_allcounts_11``.
 
         - In this case, it makes even more sense to **run the mock counts/correlation functions in separate, independent processes from the one calling** :func:`RascalC.run_cov` (**both should be parallelized and they are known to interfere with each other's efficiency**).
+        - For two tracers, it is also necessary to provide ``xi_22_samples`` for the second tracer's auto-correlation function. It must have the same binning and number of samples as ``xi_11_samples``.
+
+            - For two tracers, you should also provide ``xi_12_samples`` for the cross-correlation function between the two tracer (it must have the same binning and number of samples as ``xi_11_samples``). However, only the auto-covariances of the auto-correlation functions will be used for shot noise calibration, thus computation of cross-correlation functions can be omitted. On the other hand, if you provide ``xi_12_samples``, you receive a full sample covariance matrix (full meaning for all 3 correlaiton functions between the 2 tracers) as a byproduct, and it can be compared with the ``RascalC`` result, or used for other purposes.
+        - The sample covariance will be saved in a text file named ``cov_sample_*.txt`` in the chosen output directory.
+
+            - Note that with Legendre binning, the sample covariance matrix follows the ``pycorr`` bin order convention, which is different from ``RascalC``, but ``RascalC`` results can be translated to ``pycorr`` convention for convenience — see :mod:`RascalC.cov_utils`.
     - Providing the pre-computed reference covariance with the right covariance bins and bin ordering to :func:`RascalC.run_cov` via ``xi_sample_cov``.
 
         - We think using ``xi_11_samples`` is much easier, whereas this option can be tedious.
@@ -203,7 +209,7 @@ Practical remarks particular to the mock pipeline with :func:`RascalC.run_cov` i
             - In Legendre multipole modes: first by multipoles (top-level, only even multipoles, e.g. 0, then 2, then 4) and then by radial/separation bins. You can refer to :mod:`RascalC.pycorr_utils.sample_cov_multipoles`.
             - For two tracers, the topmost-level ordering is always by the type of the correlation function. Traditionally, the order is: first tracer auto-correlation, then cross-correlation, then second tracer auto-correlation. The lower-level blocks are then ordered as described above, depending on ``s_mu`` vs Legendre binning mode.
             
-                - However, the cross-correlation functions are currently not used for shot-noise tuning. Thus, it is usually easier to tune the shot-noise rescaling separately for each of the two tracers and plug them into :func:`RascalC.run_cov` or :func:`RascalC.post_process_auto` via ``shot_noise_rescaling1`` and ``shot_noise_rescaling2`` respectively.
+                - However, the cross-correlation functions are currently not used for shot-noise tuning. Thus, it may be easier to tune the shot-noise rescaling separately for each of the two tracers and plug them into :func:`RascalC.run_cov` or :func:`RascalC.post_process_auto` via ``shot_noise_rescaling1`` and ``shot_noise_rescaling2`` respectively.
     - Running the :ref:`pipeline_basic` (providing neither of the above nor ``random_samples1`` for jackknife to :func:`RascalC.run_cov`) and then providing either ``xi_11_samples`` or ``xi_sample_cov`` at additional post-processing with :func:`RascalC.post_process_auto`.
 - In any case, to run :func:`RascalC.run_cov`, you still need to provide
 
