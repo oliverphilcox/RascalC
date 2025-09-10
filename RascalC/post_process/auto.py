@@ -156,13 +156,15 @@ def post_process_auto(file_root: str,
     if mocks_from_samples and load_sample_cov: raise ValueError("Either provide xi samples or enable loading the sample covariance, not both")
     mocks_new = mocks_precomputed or mocks_from_samples
 
+    jackknife_present = os.path.isdir(os.path.join(file_root, "xi_jack")) # whether the directory contains jackknife results. we might not use them depending on jackknife value
+
     if jackknife: # check for explicit incompatibilities
         if mocks_precomputed: raise ValueError("Provided xi sample covariance is not compatible with enabled jackknife")
         if mocks_from_samples: raise ValueError("Provided xi samples are not compatible with enabled jackknife")
         if load_sample_cov: raise ValueError("Loading xi sample covariance is not compatible with enabled jackknife")
     elif jackknife is None: # auto-determine jackknife
         if mocks_new or load_sample_cov: jackknife = False # jackknife must be disabled if (mock) sample covariance is set explicitly
-        else: jackknife = os.path.isdir(os.path.join(file_root, "xi_jack"))
+        else: jackknife = jackknife_present
 
     # Auto-determine multi-tracer
     if two_tracers is None: two_tracers = os.path.isfile(os.path.join(file_root, f"xi/xi_22.dat"))
@@ -185,9 +187,9 @@ def post_process_auto(file_root: str,
     if legendre and legendre_orig and jackknife: raise ValueError("Direct accumulation Legendre mode is not compatible with jackknives")
 
     # Determine number of radial, mu bins and/or jackknives automatically as needed
-    binned_pair_names = glob("binned_pair_counts_n*_m*_j*_??.dat" if jackknife else "RR_counts_n*_m*_??.dat", root_dir = os.path.join(file_root, "weights"))
+    binned_pair_names = glob("binned_pair_counts_n*_m*_j*_??.dat" if jackknife_present else "RR_counts_n*_m*_??.dat", root_dir = os.path.join(file_root, "weights"))
     if len(binned_pair_names) < ncorr: raise ValueError(f"Need {ncorr} pair counts, found {len(binned_pair_names)}")
-    rstr = r'binned_pair_counts_n(?P<N_R_BINS>\d+)_m(?P<N_MU_BINS>\d+)_j(?P<N_JACK>\d+)_(?P<CORR_INDEX>\d+).dat' if jackknife else r'RR_counts_n(?P<N_R_BINS>\d+)_m(?P<N_MU_BINS>\d+)_(?P<CORR_INDEX>\d+).dat' # regex
+    rstr = r'binned_pair_counts_n(?P<N_R_BINS>\d+)_m(?P<N_MU_BINS>\d+)_j(?P<N_JACK>\d+)_(?P<CORR_INDEX>\d+).dat' if jackknife_present else r'RR_counts_n(?P<N_R_BINS>\d+)_m(?P<N_MU_BINS>\d+)_(?P<CORR_INDEX>\d+).dat' # regex
     if (m := fullmatch(rstr, binned_pair_names[0])):
         if n_r_bins is None: n_r_bins = int(m["N_R_BINS"])
         if n_mu_bins is None: n_mu_bins = int(m["N_MU_BINS"])
