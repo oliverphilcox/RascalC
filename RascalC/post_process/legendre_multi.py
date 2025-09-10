@@ -40,9 +40,9 @@ def post_process_legendre_multi(file_root: str, n: int, max_l: int, outdir: str,
     output_dict = {"full_theory_covariance": c_comb, "all_covariances": c_tot, "shot_noise_rescaling": alphas, "full_theory_precision": prec_comb, "N_eff": N_eff, "full_theory_D_matrix": D_est, "individual_theory_covariances": c_comb_subsamples}
 
     output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Legendre_n%d_l%d.npz'%(n,max_l))
-
     np.savez_compressed(output_name, **output_dict)
-
+    output_dict["path"] = output_name
+    output_dict["filename"] = os.path.basename(output_name)
     print_function("Saved output covariance matrices as %s"%output_name)
 
     return output_dict

@@ -45,7 +45,8 @@ def post_process_legendre(file_root: str, n: int, max_l: int, outdir: str, alpha
 
     output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Legendre_n%d_l%d.npz'%(n,max_l))
     np.savez_compressed(output_name, **output_dict)
-
+    output_dict["path"] = output_name
+    output_dict["filename"] = os.path.basename(output_name)
     print_function("Saved output covariance matrices as %s"%output_name)
 
     return output_dict

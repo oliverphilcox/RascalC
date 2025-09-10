@@ -46,7 +46,8 @@ def post_process_default(file_root: str, n: int, m: int, outdir: str, alpha: flo
 
     output_name = os.path.join(outdir, f'Rescaled_Covariance_Matrices_Default_n{n}_m{m}.npz')
     np.savez_compressed(output_name, **output_dict)
-
+    output_dict["path"] = output_name
+    output_dict["filename"] = os.path.basename(output_name)
     print_function("Saved output covariance matrices as %s"%output_name)
 
     return output_dict

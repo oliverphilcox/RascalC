@@ -290,6 +290,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         Post-processing results as a dictionary with string keys and Numpy array values. All this information is also saved in a ``Rescaled_Covariance_Matrices*.npz`` file in the output directory.
         Selected common keys are: ``"full_theory_covariance"`` for the final covariance matrix and ``"shot_noise_rescaling"`` for the shot-noise rescaling value(s).
         There will also be a ``Raw_Covariance_Matices*.npz`` file in the output directory (as long as the C++ code has run without errors), which can be post-processed separately in a different way using e.g. :func:`RascalC.post_process_auto`.
+        For convenience, in the output dictionary only, ``"filename"`` contains the exact name of this file, and ``"path"`` contains path to it (also obtainable by :func:`os.path.join`-ing ``out_dir`` with the filename)
     """
 
     if mode not in ("s_mu", "legendre_accumulated", "legendre_projected"): raise ValueError("Given mode not supported")

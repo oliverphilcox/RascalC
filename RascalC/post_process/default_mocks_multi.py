@@ -78,7 +78,8 @@ def post_process_default_mocks_multi(mock_cov_file: str, file_root: str, n: int,
 
     output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Default_Mocks_n%d_m%d.npz' % (n, m))
     np.savez_compressed(output_name, **output_dict)
-
+    output_dict["path"] = output_name
+    output_dict["filename"] = os.path.basename(output_name)
     print_function("Saved output covariance matrices as %s" % output_name)
 
     return output_dict
