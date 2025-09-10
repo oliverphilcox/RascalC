@@ -283,7 +283,7 @@ def post_process_auto(file_root: str,
     else:
         if legendre:
             if mocks:
-                results = post_process_legendre_mocks(mock_cov_name, file_root, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
+                results = post_process_legendre_mocks(mock_cov_name, file_root, n_r_bins, max_l, out_dir, skip_s_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
             elif jackknife:
                 results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
             else:
