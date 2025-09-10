@@ -267,13 +267,13 @@ def post_process_auto(file_root: str,
     if two_tracers:
         if legendre:
             if mocks:
-                results = post_process_legendre_mocks_multi(mock_cov_name, out_dir, n_r_bins, max_l, out_dir, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
+                results = post_process_legendre_mocks_multi(mock_cov_name, file_root, n_r_bins, max_l, out_dir, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
             elif jackknife:
                 results = post_process_legendre_mix_jackknife_multi(*xi_jack_names, os.path.join(file_root, "weights"), file_root, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
             else:
                 results = post_process_legendre_multi(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, shot_noise_rescaling2, skip_s_bins, skip_l, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
         elif mocks:
-            results = post_process_default_mocks_multi(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_s_bins, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
+            results = post_process_default_mocks_multi(mock_cov_name, file_root, n_r_bins, n_mu_bins, out_dir, skip_s_bins, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
         elif jackknife:
             results = post_process_jackknife_multi(*xi_jack_names, os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_s_bins, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
         else: # default
@@ -281,13 +281,13 @@ def post_process_auto(file_root: str,
     else:
         if legendre:
             if mocks:
-                results = post_process_legendre_mocks(mock_cov_name, out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
+                results = post_process_legendre_mocks(mock_cov_name, file_root, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
             elif jackknife:
                 results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
             else:
                 results = post_process_legendre(file_root, n_r_bins, max_l, out_dir, shot_noise_rescaling1, skip_s_bins, skip_l, tracer = tracer, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
         elif mocks:
-            results = post_process_default_mocks(mock_cov_name, out_dir, n_r_bins, n_mu_bins, out_dir, skip_s_bins, tracer = tracer, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
+            results = post_process_default_mocks(mock_cov_name, file_root, n_r_bins, n_mu_bins, out_dir, skip_s_bins, tracer = tracer, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
         elif jackknife:
             results = post_process_jackknife(xi_jack_names[0], os.path.join(file_root, "weights"), file_root, n_mu_bins, out_dir, skip_s_bins, tracer = tracer, n_samples = n_samples, print_function = print_function, dry_run = dry_run)
         else: # default
