@@ -1,5 +1,7 @@
-## Script to post-process the single-field Legendre binned integrals computed by the C++ code.
-## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
+"""
+Function to post-process the single-field Legendre binned integrals computed by the C++ code.
+We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
+"""
 
 import numpy as np
 import os
@@ -8,7 +10,11 @@ from ..raw_covariance_matrices import load_raw_covariances_legendre
 from typing import Literal, Callable, Iterable
 
 
-def post_process_legendre(file_root: str, n: int, max_l: int, outdir: str, alpha: float = 1, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print) -> dict[str]:
+def post_process_legendre(file_root: str, n: int, max_l: int, outdir: str, alpha: float = 1, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print, dry_run: bool = False) -> dict[str]:
+    output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Legendre_n%d_l%d.npz' % (n, max_l))
+    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
+    if dry_run: return name_dict
+
     cov_filter = cov_filter_legendre(n, max_l, skip_r_bins, skip_l)
     
     input_file = load_raw_covariances_legendre(file_root, n, max_l, n_samples, print_function)
@@ -43,10 +49,7 @@ def post_process_legendre(file_root: str, n: int, max_l: int, outdir: str, alpha
 
     output_dict = {"full_theory_covariance": full_cov, "shot_noise_rescaling": alpha, "full_theory_precision": full_prec, "N_eff": N_eff_D, "full_theory_D_matrix": full_D_est, "individual_theory_covariances": partial_cov}
 
-    output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_Legendre_n%d_l%d.npz'%(n,max_l))
     np.savez_compressed(output_name, **output_dict)
-    output_dict["path"] = output_name
-    output_dict["filename"] = os.path.basename(output_name)
     print_function("Saved output covariance matrices as %s"%output_name)
 
-    return output_dict
+    return output_dict | name_dict

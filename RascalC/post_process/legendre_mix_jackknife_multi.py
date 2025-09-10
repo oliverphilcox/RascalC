@@ -1,5 +1,7 @@
-## Function to post-process the multi-field integrals computed by the C++ code in mixed Legendre (LEGENDRE_MIX) mode. This computes the shot-noise rescaling parameter, alpha, from a data-derived covariance matrix.
-## We output the data and theory jackknife covariance matrices, in addition to full theory covariance matrices and (quadratic-bias corrected) precision matrices. The effective number of samples, N_eff, is also computed.
+"""
+Function to post-process the multi-field integrals computed by the C++ code in mixed Legendre (LEGENDRE_MIX) mode. This computes the shot-noise rescaling parameter, alpha, from a data-derived covariance matrix.
+We output the data and theory jackknife covariance matrices, in addition to full theory covariance matrices and (quadratic-bias corrected) precision matrices. The effective number of samples, N_eff, is also computed.
+"""
 
 import numpy as np
 import os
@@ -9,7 +11,11 @@ from ..raw_covariance_matrices import load_raw_covariances_legendre
 from typing import Iterable, Callable
 
 
-def post_process_legendre_mix_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str, jackknife_file_22: str, weight_dir: str, file_root: str, m: int, max_l: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print):
+def post_process_legendre_mix_jackknife_multi(jackknife_file_11: str, jackknife_file_12: str, jackknife_file_22: str, weight_dir: str, file_root: str, m: int, max_l: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print, dry_run: bool = False):
+    output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Legendre_Jackknife_n%d_m%d_j%d.npz' % (n, max_l, n_jack))
+    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
+    if dry_run: return name_dict
+
     ## First load jackknife xi estimates from data:
     print_function("Loading correlation function jackknife estimates")
     xi_jack_11 = np.loadtxt(jackknife_file_11, skiprows=2)
@@ -141,10 +147,7 @@ def post_process_legendre_mix_jackknife_multi(jackknife_file_11: str, jackknife_
 
     output_dict = {"full_theory_covariance": c_comb, "all_covariances": c_tot, "shot_noise_rescaling": alpha_best, "full_theory_precision": prec_comb, "N_eff": N_eff, "full_theory_D_matrix": D_est, "individual_theory_covariances": c_comb_subsamples, "jackknife_data_covariance": data_cov, "jackknife_theory_covariance": cj_comb, "all_jackknife_covariances": cj_tot, "jackknife_theory_precision": precj_comb, "individual_theory_jackknife_covariances": cj_comb_subsamples}
 
-    output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Legendre_Jackknife_n%d_m%d_j%d.npz' % (n, max_l, n_jack))
     np.savez_compressed(output_name, **output_dict)
-    output_dict["path"] = output_name
-    output_dict["filename"] = os.path.basename(output_name)
     print_function("Saved output covariance matrices as %s" % output_name)
 
-    return output_dict
+    return output_dict | name_dict
