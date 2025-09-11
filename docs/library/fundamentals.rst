@@ -211,7 +211,7 @@ Practical remarks particular to the mock pipeline with :func:`RascalC.run_cov` i
             
                 - However, the cross-correlation functions are currently not used for shot-noise tuning. Thus, it may be easier to tune the shot-noise rescaling separately for each of the two tracers and plug them into :func:`RascalC.run_cov` or :func:`RascalC.post_process_auto` via ``shot_noise_rescaling1`` and ``shot_noise_rescaling2`` respectively.
         - If you use the ``skip_s_bins`` option (and/or ``skip_l`` with Legendre binning), the requested bins will be removed from the sample covariance. I.e., the computed sample covariance must match the ``RascalC`` binning before those cuts.
-    - Running the :ref:`pipeline_basic` (providing neither of the above nor ``random_samples1`` for jackknife to :func:`RascalC.run_cov`) and then providing either ``xi_11_samples`` or ``xi_sample_cov`` at additional post-processing with :func:`RascalC.post_process_auto`.
+    - Running the :ref:`pipeline_basic` (providing neither of the above nor ``random_samples1`` for jackknife to :func:`RascalC.run_cov`) or the :ref:`pipeline_jack` (if you want jackknife-based tuning as well — it is not possible without computed jackknife model) and then providing either ``xi_11_samples`` or ``xi_sample_cov`` at additional post-processing with :func:`RascalC.post_process_auto`.
 - In any case, to run :func:`RascalC.run_cov`, you still need to provide
 
     - RR counts via ``pycorr_allcounts_11``, this can be from one mock realization, or a sum of mock realizations (unless you disable ``normalize_wcounts``);
