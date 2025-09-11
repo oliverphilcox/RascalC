@@ -232,7 +232,7 @@ def post_process_auto(file_root: str,
     mocks = mocks_new or load_sample_cov
 
     if not (jackknife or mocks):
-        # cases when the shot-noise rescaling is not tuned - as it should be, or due to the lack of implementation
+        # case when the shot-noise rescaling is not tuned - as it should be; lacking implementations resolved
         print_function(f"Using {shot_noise_rescaling1=}" + two_tracers * f" and {shot_noise_rescaling2=}")
 
     if mocks_new:
