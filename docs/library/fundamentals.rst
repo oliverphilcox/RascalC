@@ -191,7 +191,7 @@ Practical remarks particular to the mock pipeline with :func:`RascalC.run_cov` i
 - Mock **post-processing** involves fitting the full covariance model to the (mock) sample covariance to find the optimal shot-noise rescaling and substituting that value into the full covariance model to obtain the final covariance. In this case, the best-fit model covariance is the final answer (unlike for :ref:`pipeline_jack`). These operations normally are invoked at the end of :func:`RascalC.run_cov`, but they can also be performed separately using :func:`RascalC.post_process_auto`. The results are saved in a ``Rescaled_Covariance_Matrices*Mocks*.npz`` file in the chosen output directory.
 - Accordingly, the mock pipeline can be used in the following ways:
 
-    - Providing a sample (list or tuple) of (mock) ``pycorr`` correlation function estimators to :func:`RascalC.run_cov` through the ``xi_11_samples`` argument. Each should be rebinned for the covariance, i.e. in the same way as ``pycorr_allcounts_11``.
+    - Providing a sample (list or tuple) of (mock) ``pycorr`` correlation function estimators to :func:`RascalC.run_cov` through the ``xi_11_samples`` argument. Each should be rebinned for the covariance, i.e. in the same way as ``pycorr_allcounts_11`` (if you use the ``skip_s_bins`` option, the requested separations bins will be removed from the sample covariance).
 
         - In this case, it makes even more sense to **run the mock counts/correlation functions in separate, independent processes from the one calling** :func:`RascalC.run_cov` (**both should be parallelized and they are known to interfere with each other's efficiency**).
         - For two tracers, it is also necessary to provide ``xi_22_samples`` for the second tracer's auto-correlation function. It must have the same binning and number of samples as ``xi_11_samples``.
@@ -210,6 +210,7 @@ Practical remarks particular to the mock pipeline with :func:`RascalC.run_cov` i
             - For two tracers, the topmost-level ordering is always by the type of the correlation function. Traditionally, the order is: first tracer auto-correlation, then cross-correlation, then second tracer auto-correlation. The lower-level blocks are then ordered as described above, depending on ``s_mu`` vs Legendre binning mode.
             
                 - However, the cross-correlation functions are currently not used for shot-noise tuning. Thus, it may be easier to tune the shot-noise rescaling separately for each of the two tracers and plug them into :func:`RascalC.run_cov` or :func:`RascalC.post_process_auto` via ``shot_noise_rescaling1`` and ``shot_noise_rescaling2`` respectively.
+        - If you use the ``skip_s_bins`` option (and/or ``skip_l`` with Legendre binning), the requested bins will be removed from the sample covariance. I.e., the computed sample covariance must match the ``RascalC`` binning before those cuts.
     - Running the :ref:`pipeline_basic` (providing neither of the above nor ``random_samples1`` for jackknife to :func:`RascalC.run_cov`) and then providing either ``xi_11_samples`` or ``xi_sample_cov`` at additional post-processing with :func:`RascalC.post_process_auto`.
 - In any case, to run :func:`RascalC.run_cov`, you still need to provide
 

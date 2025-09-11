@@ -112,6 +112,7 @@ def post_process_auto(file_root: str,
         In "s_mu" ``mode``, the top-level ordering/grouping is by separation/radial bins and then by angular/µ bins, i.e. the neighboring angular/µ bins (after wrapping!) in one separation/radial bin are next to each other.
         In any of the Legendre ``mode``\s, the top-level ordering/grouping is by multipoles and then by separation/radial bins, i.e. the same multipole moments in neighboring radial bins are next to each other.
         For multi-tracer, the topmost-level ordering must be by the correlation function: 11, 12, 22.
+        If you use the ``skip_s_bins`` option (and/or ``skip_l`` with Legendre binning), the requested bins will be removed from the sample covariance. I.e., the computed sample covariance must match the ``RascalC`` binning before those cuts.
     
     print_function : Callable
         (Optional) custom function to use for printing. Default is ``print``.
