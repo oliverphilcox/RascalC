@@ -122,6 +122,7 @@ def post_process_auto(file_root: str,
 
     jackknife : boolean or None
         (Optional) boolean value sets jackknife mode manually. If None (default), this mode is determined automatically.
+        Note that jackknife post-processing can not be enabled if the jackknife functionality was not enabled in :func:`RascalC.run_cov`.
 
     load_sample_cov : boolean or None
         (Optional) boolean value sets whether to load the (mock) sample covariance saved in a default file under ``file_root``. If None (default), this is determined automatically by the existence of the file. Enabling this option contradicts with ``xi_11_samples``, ``xi_sample_cov`` and ``jackknife``.
@@ -160,6 +161,7 @@ def post_process_auto(file_root: str,
     jackknife_present = os.path.isdir(os.path.join(file_root, "xi_jack")) # whether the directory contains jackknife results. we might not use them depending on jackknife value
 
     if jackknife: # check for explicit incompatibilities
+        if not jackknife_present: raise ValueError("Jackknife can not be enabled because the necessary `xi_jack` directory was not found in `file_root`. This means you probably have not run `RascalC.run_cov` with jackknife functionality, and you can not use jackknife post-processing for this run.")
         if mocks_precomputed: raise ValueError("Provided xi sample covariance is not compatible with enabled jackknife")
         if mocks_from_samples: raise ValueError("Provided xi samples are not compatible with enabled jackknife")
         if load_sample_cov: raise ValueError("Loading xi sample covariance is not compatible with enabled jackknife")
