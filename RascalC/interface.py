@@ -631,7 +631,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     else:
         if legendre:
             if mocks:
-                results = post_process_legendre_mocks(mock_cov_name, out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
+                results = post_process_legendre_mocks(mock_cov_name, out_dir, n_r_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
             elif jackknife:
                 results = post_process_legendre_mix_jackknife(xi_jack_names[0], os.path.dirname(jackknife_weights_names[0]), out_dir, n_mu_bins, max_l, out_dir, skip_s_bins, skip_l, print_function = print_and_log)
             else:
