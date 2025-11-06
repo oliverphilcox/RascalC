@@ -88,8 +88,12 @@ int main(int argc, char *argv[]) {
     int no_functions=1; // required number of xi / random_draws / jackknife_weight functions
     int no_fields=1; // number of different fields used
     if(par.multi_tracers==true){
+#ifdef THREE_PCF
+        printf("# WARNING: 3PCF covariances are not implemented for multiple tracers. Will proceed for single tracer.\n");
+#else
         no_functions=3;
         no_fields=2;
+#endif
     }
     const int max_no_functions=3, max_no_fields=2; // constant upper limits for array sizes (no variable length arrays in C++ standards)
 #if (defined LEGENDRE)||(defined THREE_PCF)||(defined POWER)
