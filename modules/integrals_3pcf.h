@@ -3,6 +3,7 @@
 #include "correlation_function.h"
 #include "cell_utilities.h"
 #include "legendre_utilities.h"
+#include <algorithm>
 
 #ifndef INTEGRALS_3PCF_H
 #define INTEGRALS_3PCF_H
@@ -38,7 +39,7 @@ public:
         out_file = par->out_file; // output directory
         max_l = par->max_l; // maximum Legendre polynomial to output
         n_param = sc->n_param; // maximum survey correction Legendre moment
-        max_leg = fmax(max_l,n_param); // maximum Legendre multipole to use
+        max_leg = std::max(max_l, n_param); // maximum Legendre multipole to use
         
         int ec=0;
         array_len = nbin*nbin*mbin;
