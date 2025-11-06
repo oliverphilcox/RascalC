@@ -10,24 +10,22 @@ import scipy.spatial as ss
 from typing import Callable
 
 
-def compute_3pcf_correction_function(gal_file: str, binfile: str, outdir: str, periodic: bool, RRR_file: str | None = None, print_function: Callable[[str], None] = print) -> None:
+def compute_3pcf_correction_function(random_filename: str, binfile: str, outdir: str, periodic: bool, RRR_file: str | None = None, print_function: Callable[[str], None] = print) -> None:
     if periodic:
         print_function("\nAssuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
     elif RRR_file is None:
         raise TypeError("RRR counts file is required if aperiodic")
     ## Load galaxies
-    print_function("\nLoading galaxies")
-    all_gal = np.loadtxt(gal_file)
-    gal_x = all_gal[:,0]
-    gal_y = all_gal[:,1]
-    gal_z = all_gal[:,2]
-    gal_w = all_gal[:,3]
+    print_function("\nLoading randoms")
+    randoms_data = np.loadtxt(random_filename)
+    random_pos = randoms_data[:, :3]
+    random_w = randoms_data[:, 3]
 
-    N_gal = len(all_gal)
-    w_bar = np.mean(gal_w)
+    N_gal = len(randoms_data)
+    w_bar = np.mean(random_w)
 
     ## Find survey volume via ConvexHull in Scipy
-    hull = ss.ConvexHull(np.vstack([gal_x,gal_y,gal_z]).T)
+    hull = ss.ConvexHull(random_pos)
     print_function('\nSurvey volume is approximately: %.2f (Gpc/h)^3'%(hull.volume/1e9))
     V=hull.volume # in (Mpc/h)^3
 
@@ -55,7 +53,7 @@ def compute_3pcf_correction_function(gal_file: str, binfile: str, outdir: str, p
         from scipy.special import legendre
         
         ## Load triple counts and renormalize
-        tmp_triple_counts = np.loadtxt(RRR_file)*np.sum(gal_w)**3
+        tmp_triple_counts = np.loadtxt(RRR_file)*np.sum(random_w)**3
         
         # Compute number of angular bins in data-set
         m = (len(tmp_triple_counts)//n)//n
