@@ -1,22 +1,19 @@
 ## Script to post-process the single-field 3PCF Legendre binned integrals computed by the C++ code.
 ## We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 
-import sys
+import argparse
 
-# PARAMETERS
-if len(sys.argv) not in (6, 7):
-    print("Usage: python post_process_3pcf.py {COVARIANCE_DIR} {N_R_BINS} {MAX_L} {N_SUBSAMPLES} {OUTPUT_DIR} [{SHOT_NOISE_RESCALING}]")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description="Script to post-process the single-field 3PCF Legendre binned integrals computed by the C++ code")
+parser.add_argument("covariance_dir", type=str, help="directory containing the covariance matrix subdirectory")
+parser.add_argument("n_r_bins", type=int, help="number if radial/separation bins")
+parser.add_argument("max_l", type=int, help="maximum multipole index")
+parser.add_argument("n_subsamples", type=int, help="number of covariance subsamples (used for precision estimation)")
+parser.add_argument("output_dir", type=str, help="directory to write the post-processing results")
+parser.add_argument("shot_noise_rescaling", type=float, default=1, help="shot-noise rescaling parameter value to use")
+args = parser.parse_args()
 
-from utils import adjust_path, get_arg_safe
+from utils import adjust_path
 adjust_path()
 from RascalC.post_process_3pcf import post_process_3pcf
-        
-file_root = str(sys.argv[1])
-n = int(sys.argv[2])
-max_l = int(sys.argv[3])
-n_samples = int(sys.argv[4])
-outdir = str(sys.argv[5])
-alpha = get_arg_safe(6, float, 1)
 
-post_process_3pcf(file_root, n, max_l, n_samples, outdir, alpha)
+post_process_3pcf(args.covariance_dir, args.n_r_bins, args.max_l, args.n_subsamples, args.output_dir, args.shot_noise_rescaling)
