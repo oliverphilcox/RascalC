@@ -22,7 +22,6 @@ def compute_3pcf_correction_function(gal_file: str, binfile: str, outdir: str, p
     gal_y = all_gal[:,1]
     gal_z = all_gal[:,2]
     gal_w = all_gal[:,3]
-    gal_n = (1./gal_w-1.)/20000. # this assumes only FKP weights with a particular P0
 
     N_gal = len(all_gal)
     w_bar = np.mean(gal_w)
@@ -35,17 +34,12 @@ def compute_3pcf_correction_function(gal_file: str, binfile: str, outdir: str, p
     ## Galaxy number density
     n_bar = N_gal/V
 
-    if periodic:
-        nw3_bar = n_bar**3*w_bar**3
-    else:
-        nw3_bar = np.mean(gal_n**3*gal_w**3)
-
     # Load in binning files 
     r_bins = np.loadtxt(binfile)
     n=len(r_bins)
 
     ## Define normalization constant
-    norm = 6.*V*nw3_bar
+    norm = 6. * V * n_bar**3 * w_bar**3 # I don't think there is an exactly right answer once number density or weights vary across the survey
 
     print_function("Normalizing output survey correction by %.2e"%norm)
 
@@ -92,7 +86,7 @@ def compute_3pcf_correction_function(gal_file: str, binfile: str, outdir: str, p
         phi_inv_mult = np.zeros([n,n,7])
         for b1 in range(n):
             for b2 in range(n):
-                phi_inv_mult[b1,b2,:] = leg_triple[b1,b2,:]/(3.*nw3_bar*V*vol_r(b1)*vol_r(b2))
+                phi_inv_mult[b1,b2,:] = leg_triple[b1,b2,:] / (.5 * norm * vol_r(b1) * vol_r(b2))
                 
         ## Check all seems reasonable
         if np.mean(phi_inv_mult[:,:,0])<1e-3:
