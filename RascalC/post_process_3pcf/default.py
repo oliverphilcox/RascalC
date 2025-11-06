@@ -6,9 +6,14 @@ We output the theoretical covariance matrices, (quadratic-bias corrected) precis
 import numpy as np
 import os
 from tqdm import trange
+from typing import Callable
 
 
-def post_process_3pcf(file_root: str, n: int, max_l: int, n_samples: int, outdir: str, alpha: float = 1, print_function = print):
+def post_process_3pcf(file_root: str, n: int, max_l: int, n_samples: int, outdir: str, alpha: float = 1, print_function: Callable[[str], None] = print, dry_run: bool = False) -> dict[str]:
+    output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_3PCF_n%d_l%d.npz' % (n, max_l))
+    name_dict = dict(path=output_name, filename=os.path.basename(output_name))
+    if dry_run: return name_dict
+
     m = max_l+1
     # Create output directory
     if not os.path.exists(outdir):
@@ -105,10 +110,11 @@ def post_process_3pcf(file_root: str, n: int, max_l: int, n_samples: int, outdir
             N_eff_D = (n_bins+1.)/D_value+1.
             print_function("Total N_eff Estimate: %.4e"%N_eff_D)        
 
-    output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_3PCF_n%d_l%d.npz'%(n,max_l))
-    np.savez(output_name,full_theory_covariance=full_cov,
-            shot_noise_rescaling=alpha,full_theory_precision=full_prec,
-            N_eff=N_eff_D,full_theory_D_matrix=full_D_est,
-            individual_theory_covariances=partial_cov)
-
+    output_dict = dict(full_theory_covariance=full_cov, shot_noise_rescaling=alpha,
+                       full_theory_precision=full_prec, N_eff=N_eff_D,
+                       full_theory_D_matrix=full_D_est, individual_theory_covariances=partial_cov)
+    
+    np.savez_compressed(output_name, **output_dict)
     print_function("Saved output covariance matrices as %s"%output_name)
+
+    return output_dict | name_dict
