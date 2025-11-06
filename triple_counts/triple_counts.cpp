@@ -46,6 +46,7 @@ typedef double3 Float3;
     #include "../modules/correlation_function.h"
     #include "../modules/random_draws.h"
     #include "../modules/driver.h"
+    #include "../modules/string_format.h"
 
 // Get the correlation function into the integrator
 CorrelationFunction * RandomDraws::corr;
@@ -239,10 +240,9 @@ public:
     }
     
     void save_triples(char* suffix){
-        char RRRname[1000];
-        snprintf(RRRname, sizeof RRRname, "%s/RRR_counts_n%d_m%d_%s.txt", out_file,nbin, mbin,suffix);
-        FILE * RRRFile = fopen(RRRname,"w"); 
-        for(int j=0;j<nbin*nbin*mbin;j++) fprintf(RRRFile,"%le\n",RRR[j]);
+        std::string RRRname = string_format("%s/RRR_counts_n%d_m%d_%s.txt", out_file, nbin, mbin, suffix);
+        FILE* RRRFile = fopen(RRRname.c_str(), "w");
+        for (int j=0; j<nbin*nbin*mbin; j++) fprintf(RRRFile, "%le\n", RRR[j]);
         
         fflush(NULL);
         fclose(RRRFile);

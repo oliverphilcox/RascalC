@@ -1,5 +1,9 @@
 // safer replacement for snprintf with some reasonable upper limit on the string length (often was 1000)
 // from https://stackoverflow.com/a/26221725/23322509
+
+#ifndef STRING_FORMAT_H
+#define STRING_FORMAT_H
+
 #include <memory>
 #include <string>
 #include <stdexcept>
@@ -20,3 +24,5 @@ inline std::string string_format( const std::string& format, Args ... args ) // 
 {
     return string_format( format.c_str(), args ... );
 }
+
+#endif
