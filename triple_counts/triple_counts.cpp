@@ -494,16 +494,18 @@ int main(int argc, char *argv[]) {
     
 	Parameters par=Parameters(argc,argv);
         
-    int max_no_functions=1; // required number of xi / random_draws / jackknife_weight functions
+    // int no_functions=1; // required number of xi / random_draws / jackknife_weight functions
     int no_fields=1; // number of different fields used
     if(par.multi_tracers==true){
-        max_no_functions=3;
+        // does this code actually support 2 tracers?
+        // no_functions=3;
         no_fields=2;
     }
+    const int max_no_functions=3, max_no_fields=2; // constant upper limits for array sizes (no variable length arrays in C++ standards)
 
     // Now read in particles
-    Particle* all_particles[no_fields];
-    int all_np[no_fields];
+    Particle* all_particles[max_no_fields];
+    int all_np[max_no_fields];
 
     for (int index = 0; index < no_fields; index++) {
         Float3 shift;
@@ -513,6 +515,7 @@ int main(int argc, char *argv[]) {
             else filename = par.fname2;
 #ifdef JACKKNIFE
             all_particles[index] = read_particles(par.rescale, &all_np[index], filename, par.rstart, par.nmax, &all_weights[index]);
+            // does this code actually support jackknife? does it matter?
 #else
             all_particles[index] = read_particles(par.rescale, &all_np[index], filename, par.rstart, par.nmax);
 #endif
@@ -529,7 +532,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Now put particles to grid(s)
-    Grid all_grid[no_fields]; // create empty grids
+    Grid all_grid[max_no_fields]; // create empty grids
     Float max_density = 16., min_density = 2.;
     int nside_attempts = 3; // number of attempts to meet the constraints by changing nside
     bool nside_global_failure = true; // assume failure until success
