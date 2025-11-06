@@ -13,7 +13,7 @@ public:
     CorrelationFunction *cf;
     
 private:
-    int nbin, mbin, max_l, array_len, max_leg, n_param;
+    int nbin, mbin, max_l, array_len, max_leg;
     Float rmin,rmax,mumin,mumax; //Ranges in r and mu
     Float *r_high, *r_low; // Max and min of each radial bin
     Float *c3, *c4, *c5, *c6; // Arrays to accumulate integrals
@@ -38,8 +38,7 @@ public:
         mbin = par->mbin; // number of Legendre bins, should be simply max_l+1
         out_file = par->out_file; // output directory
         max_l = par->max_l; // maximum Legendre polynomial to output
-        n_param = sc->n_param; // maximum survey correction Legendre moment
-        max_leg = std::max(max_l, n_param); // maximum Legendre multipole to use
+        max_leg = std::max(max_l, sc->n_param); // maximum Legendre multipole to use
         
         int ec=0;
         array_len = nbin*nbin*mbin;
