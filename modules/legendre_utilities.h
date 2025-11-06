@@ -4,6 +4,7 @@
 #define LEGENDRE_UTILITIES_H
 
 #ifdef THREE_PCF
+const int max_no_multipoles = 11; // for array allocation on stack - no variable length arrays in C++ standards. needs to be consistent with (not less than) the number of multipoles written below
 inline void legendre_polynomials_preload(Float mu, int max_l, Float *poly_out){
     // Declare Legendre polynomials using pre-computed powers of mu from correction function
     

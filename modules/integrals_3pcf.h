@@ -12,7 +12,7 @@ public:
     CorrelationFunction *cf;
     
 private:
-    int nbin, mbin, max_l, array_len,max_leg,n_param,mbin_leg;
+    int nbin, mbin, max_l, array_len, max_leg, n_param;
     Float rmin,rmax,mumin,mumax; //Ranges in r and mu
     Float *r_high, *r_low; // Max and min of each radial bin
     Float *c3, *c4, *c5, *c6; // Arrays to accumulate integrals
@@ -34,12 +34,11 @@ public:
     
     void init(Parameters *par){
         nbin = par->nbin; // number of radial bins
-        mbin = par->mbin; // number of mu bins
+        mbin = par->mbin; // number of Legendre bins, should be simply max_l+1
         out_file = par->out_file; // output directory
         max_l = par->max_l; // maximum Legendre polynomial to output
         n_param = sc->n_param; // maximum survey correction Legendre moment
         max_leg = fmax(max_l,n_param); // maximum Legendre multipole to use
-        mbin_leg = max_leg+1; // number of legendre bins used in transit
         
         int ec=0;
         array_len = nbin*nbin*mbin;
@@ -209,8 +208,8 @@ public:
         int bins_ijk[6];
         Particle pi;
         Float3 pjk;
-        int tmp_radial_bin, tmp_radial_bin2, out_bin, bin_1, bin_2,bin_3,bin_4;
-        Float polynomials_tmp[mbin_leg],correction_factor1,correction_factor2;
+        int tmp_radial_bin, tmp_radial_bin2, out_bin, bin_1, bin_2, bin_3, bin_4;
+        Float polynomials_tmp[max_no_multipoles], correction_factor1, correction_factor2;
         
         // Define j-k norm and bin
         pjk = pj.pos-pk.pos;
@@ -334,8 +333,8 @@ public:
         int bins_jkl[6]; 
         bool dont_compute=false;
         int bin_1,bin_2,bin_3,bin_4,out_bin, tmp_radial_bin, tmp_radial_bin2;
-        Float polynomials_tmp1[mbin_leg], correction_factor1,correction_factor2, tmp_phi_inv;
-        Float all_correction_factor_jkl[3],all_legendre_jkl[3*mbin];
+        Float polynomials_tmp1[max_no_multipoles], correction_factor1, correction_factor2, tmp_phi_inv;
+        Float all_correction_factor_jkl[3], all_legendre_jkl[3*max_no_multipoles];
         
         // Define triangle sides independent of i
         triangle_bins(pj.pos,pk.pos,pl.pos,norm_jkl,ang_jkl,norm_jk,2);
@@ -450,8 +449,8 @@ public:
     inline void fifth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, Particle pm, const int pj_id, const int pk_id, const int pl_id, const int pm_id, const double prob, const Float* wijkl, const int* bins_ijk, const Float* all_correction_factor_ijk, const Float* all_legendre_ijk, const Float* xi_pass, const Float* xi_pass2, const Float norm_kl, const int bin_kl, Float* &wijklm, Float &xi_pass3, Float &norm_lm, int &bin_lm, int index){
         // Accumulates the five point integral C5.
         
-        Float norm_klm[3],ang_klm[3],los_tmp, tmp_xi1,tmp_xi2, polynomials_tmp[mbin_leg];
-        Float all_correction_factor_klm[3],all_legendre_klm[3*mbin],tmp_weight,c5v, this_poly, correction_factor1, correction_factor2, tmp_phi_inv;
+        Float norm_klm[3], ang_klm[3], los_tmp, tmp_xi1, tmp_xi2, polynomials_tmp[max_no_multipoles];
+        Float all_correction_factor_klm[3], all_legendre_klm[3*max_no_multipoles], tmp_weight, c5v, this_poly, correction_factor1, correction_factor2, tmp_phi_inv;
         int bins_klm[6], bin_1,bin_2,bin_3,bin_4,tmp_radial_bin, tmp_radial_bin2, out_bin;
         Particle pi;
         bool dont_compute=false;
@@ -564,8 +563,8 @@ public:
     inline void sixth(const Particle* pi_list, const int* prim_ids, const int pln, const Particle pj, const Particle pk, const Particle pl, const Particle pm, const Particle pn, const int pj_id, const int pk_id, const int pl_id, const int pm_id, const int pn_id, const double prob, const Float* wijklm, const int* bins_ijk,  const Float* all_correction_factor_ijk, const Float* all_legendre_ijk, const Float* xi_pass, const Float* xi_pass2, const Float xi_pass3, const Float norm_lm, const int bin_lm, int index){
         // Accumulates the six point integral C6.
          
-        Float norm_lmn[3],ang_lmn[3],norm_tmp,los_tmp, tmp_xi1,tmp_xi2,tmp_xi3, polynomials_tmp[mbin_leg],correction_factor1,correction_factor2,this_poly;
-        Float all_correction_factor_lmn[3],all_legendre_lmn[3*mbin],c6v,tmp_phi_inv;
+        Float norm_lmn[3], ang_lmn[3], norm_tmp,los_tmp, tmp_xi1, tmp_xi2, tmp_xi3, polynomials_tmp[max_no_multipoles], correction_factor1, correction_factor2, this_poly;
+        Float all_correction_factor_lmn[3], all_legendre_lmn[3*max_no_multipoles], c6v, tmp_phi_inv;
         int bins_lmn[6], bin_1,bin_2,bin_3,bin_4,tmp_radial_bin,tmp_radial_bin2,out_bin;
         Particle pi;
         
