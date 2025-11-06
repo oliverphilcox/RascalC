@@ -538,19 +538,19 @@ int main(int argc, char *argv[]) {
         // Compute bounding box using all particles. Do it inside the attempt loop because nside could change.
         Float3 shift; // default value is zero
         if (!par.make_random) {
-            par.perbox = compute_bounding_box(all_particles, all_np, no_fields, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
-#ifdef PERIODIC
-            par.rect_boxsize = {par.boxsize, par.boxsize, par.boxsize}; // restore the given boxsize if periodic
-            par.cellsize = par.boxsize / (Float)par.nside; // set cell size manually
-            // keep the shift from compute_bounding_box, allowing for coordinate ranges other than [0, par.boxsize) but still of length par.boxsize - this is quite generic and precise at the same time.
-#endif
+            compute_bounding_box(all_particles, all_np, no_fields, par.rect_boxsize, par.cellsize, par.rmax, shift, par.nside);
         }
         else {
             // If randoms particles were made we keep the boxsize
             par.cellsize = par.boxsize / (Float)par.nside;
-            // set as periodic if we make the random particles
-            par.perbox = true;
         }
+#ifdef PERIODIC
+        assert(par.rect_boxsize == Float3(par.boxsize)); // assure consistent box size
+        assert(par.cellsize == par.boxsize / par.nside); // assure consistent cell size
+        // keep the shift from compute_bounding_box, allowing for coordinate ranges other than [0, par.boxsize) but still of length par.boxsize - this is quite generic and precise at the same time.
+        // should think how to update the following condition for 3PCF, but this is probably not top priority + it is probably not relevant to counts in particular
+        // if (2 * (par.rmax + par.xicutoff) > par.boxsize) printf("# WARNING: some of the interparticle distances may not be correctly periodically wrapped because of the small box period, so some 4-point configurations may be missed in error. To avoid this, keep the sum of rmax (maximum separation in the covariance bins) and the xi cutoff scale smaller than half of the box size.");
+#endif
 
         // Create grid(s) and see if the particle density is acceptable
         bool nside_local_success = true; // assume this attempt succeeded be default, can be unset

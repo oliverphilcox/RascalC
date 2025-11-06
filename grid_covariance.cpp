@@ -174,6 +174,7 @@ int main(int argc, char *argv[]) {
         // but if the true distance between particles 3 and 4 is larger than rmax, they should not contribute to the covariance integral and it does not matter (unless rmax > boxsize/2, but the final condition will exclude this possibility)
         // for the true distance to become smaller than rmax given the wrapping is wrong, the "naive" separation should exceed boxsize - rmax
         // thus the final condition for the issue is 2*(xicutoff + rmax) > boxsize (which is necessarily true if rmax > boxsize/2 as xicutoff > 0)
+        // generally, would be nice to update the condition for the 3PCF, but this is probably not top priority
 #endif
 
         // Create grid(s) and see if the particle density is acceptable
