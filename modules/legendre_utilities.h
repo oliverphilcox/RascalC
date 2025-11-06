@@ -92,7 +92,6 @@ public:
     Float* phi_coeffs = nullptr; // houses polynomial coefficients for the correction function
 #ifdef THREE_PCF
     int n_param = 7;
-    int max_l;
 #else
     int n_param = 7; // number of polynomial coefficients in fitting model (only 5 are independent)
     Float mu_crit = 0.75; // critical mu to change between polynomial models
@@ -131,8 +130,7 @@ public:
 #ifdef THREE_PCF
     SurveyCorrection(Parameters *par){
         // This initializes the function and reads in the relevant polynomial coefficients for each radial bin. 
-        // NB: coefficients are indexed as INDEX = RADIAL_BIN_1*N_COEFF^2. + RADIAL_BIN_2*N_COEFF + COEFF_ID where N_COEFF is the total number of coefficients for each model; here 7. 
-        max_l = par->max_l;
+        // NB: coefficients are indexed as INDEX = RADIAL_BIN_1*N_COEFF^2. + RADIAL_BIN_2*N_COEFF + COEFF_ID where N_COEFF is the total number of coefficients for each model; here 7.
 #else
     SurveyCorrection(Parameters *par, int index1, int index2){
         // This initializes the function and reads in the relevant polynomial coefficients for each radial bin
