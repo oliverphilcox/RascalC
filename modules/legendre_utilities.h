@@ -114,12 +114,21 @@ public:
 #endif
     }
     
+#ifdef THREE_PCF
+    void rescale(Float norm1, Float norm2, Float norm3){
+        // Rescale the survey correction function by a factor (N_rand_1/N_gal_1)*(N_rand2/N_gal2)*(N_rand3/N_gal3) - inverse of RRR counts rescaling (if it was implemented)
+        Float rescale_factor = norm1*norm2*norm3;
+        printf("Rescaling survey correction function by a factor (N_rand_1/N_gal_1)*(N_rand2/N_gal2)*(N_rand3/N_gal3) = %.1e\n", rescale_factor);
+        for(int i = 0; i < nbin * nbin * n_param; i++) phi_coeffs[i] *= rescale_factor;
+    }
+#else
     void rescale(Float norm1, Float norm2){
         // Rescale the survey correction function by a factor (N_rand_1/N_gal_1)*(N_rand2/N_gal2) - inverse of RR counts rescaling
         Float rescale_factor = norm1*norm2;
         printf("Rescaling survey correction function by a factor (N_rand_1/N_gal_1)*(N_rand2/N_gal2) = %.1e\n", rescale_factor);
         for(int i = 0; i < nbin * n_param; i++) phi_coeffs[i] *= rescale_factor;
     }
+#endif
     
     // Empty operator
     SurveyCorrection(){};

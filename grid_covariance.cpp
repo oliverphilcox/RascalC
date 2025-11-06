@@ -244,19 +244,23 @@ int main(int argc, char *argv[]) {
     printf("Max Radius in Grid Units = %6.5e\n", gridsize);
     if (gridsize < 1) printf("#\n# WARNING: grid appears inefficiently coarse\n#\n");
 
-#if (!defined LEGENDRE && !defined THREE_PCF && !defined POWER)
-    // Now rescale weights based on number of particles (whether or not using jackknives)
+#ifdef THREE_PCF
+    // Now rescale the correction function based on number of particles
+    all_survey[0].rescale(all_grid[0].norm, all_grid[0].norm, all_grid[0].norm);
+    // multi-tracer 3PCF cov not implemented, there should be a warning about that above.
+#elif (defined LEGENDRE || defined POWER)
+    // Now rescale correction functions based on number of particles
+    all_survey[0].rescale(all_grid[0].norm, all_grid[0].norm);
+    if(par.multi_tracers==true){
+        all_survey[1].rescale(all_grid[1].norm,all_grid[1].norm);
+        all_survey[2].rescale(all_grid[0].norm,all_grid[1].norm);
+    }
+#else
+    // Now rescale weights based on number of particles (whether or not using jackknives) - similar to the correction functions above
     all_weights[0].rescale(all_grid[0].norm,all_grid[0].norm);
     if(par.multi_tracers==true){
         all_weights[1].rescale(all_grid[1].norm,all_grid[1].norm);
         all_weights[2].rescale(all_grid[0].norm,all_grid[1].norm);
-    }
-#else
-    // Now rescale correction functions based on number of particles - similar to RR counts above
-    all_survey[0].rescale(all_grid[0].norm,all_grid[0].norm);
-    if(par.multi_tracers==true){
-        all_survey[1].rescale(all_grid[1].norm,all_grid[1].norm);
-        all_survey[2].rescale(all_grid[0].norm,all_grid[1].norm);
     }
 #endif
 
