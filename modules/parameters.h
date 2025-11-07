@@ -69,7 +69,7 @@ public:
 
     //-------- LEGENDRE PARAMETERS -------------------------------------------
 
-#if (defined LEGENDRE || defined LEGENDRE_MIX || defined THREE_PCF)
+#if (defined LEGENDRE || defined LEGENDRE_MIX || defined THREE_PCF || defined POWER)
     int max_l = 2; // max Legendre moment (must be even unless computing 3PCF)
 #endif
 
