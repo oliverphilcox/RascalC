@@ -391,7 +391,7 @@ public:
     }
 
 
-    void save_integrals(char* suffix, bool save_all) {
+    void save_integrals(const char* suffix, bool save_all) {
     /* Print integral outputs to file.
         * In txt files {c2,c3,c4}_leg_n{nbin}_m{mbin}.txt there are lists of the outputs of c2,c3,c4 that are already normalized and multiplied by combinatoric factors. The n and m strings specify the number of n and m bins present.
         */
