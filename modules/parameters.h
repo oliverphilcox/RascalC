@@ -87,11 +87,15 @@ public:
 
     //-------- POWER PARAMETERS (not yet publicly released) ------------------
 
+#ifdef POWER
     Float R0 = 100; // truncation radius in Mpc/h
     Float power_norm = 4.; // normalization of the power spectrum
+    Float kmin = 0.; // min wavenumber
+    Float kmax = 1.; // max wavenumber
 
     char *inv_phi_file = NULL; // Inverse survey correction function multipole coefficient file
     const char default_inv_phi_file[500] = "";
+#endif
 
     //---------- PRECISION PARAMETERS ---------------------------------------
 
