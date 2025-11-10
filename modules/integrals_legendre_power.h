@@ -125,7 +125,7 @@ public:
         Float tmp_weight, tmp_xi, rij_mag=0, rij_mu=0, c2v;
         Particle pi;
         int tmp_bin,out_bin,tmp_out_bin;
-        Float polynomials[max_legendre/2+1], tmp_phi_inv;
+        Float polynomials[max_no_multipoles], tmp_phi_inv;
 
         for(int i=0;i<pln;i++){ // Iterate over particle in pi_list
             if((prim_ids[i]==pj_id)&&(I1==I2)){
@@ -179,7 +179,7 @@ public:
         // First define variables:
         Particle pi;
         Float tmp_phi_inv=0,tmp_kernel=0;
-        Float rik_mag, rik_mu, c3v, rjk_mag, rjk_mu, tmp_weight, xi_ik_tmp,polynomials_jk[max_legendre/2+1];
+        Float rik_mag, rik_mu, c3v, rjk_mag, rjk_mu, tmp_weight, xi_ik_tmp,polynomials_jk[max_no_multipoles];
         int tmp_bin=0, tmp_full_bin,out_bin;
 
         // Define jk distance and angle
@@ -243,7 +243,7 @@ public:
         Particle pi;
         Float rjl_mag, rjl_mu, rkl_mag, rkl_mu, c4v, xi_jl, tmp_weight;
         int tmp_bin, tmp_full_bin,out_bin;
-        Float polynomials_kl[max_legendre/2+1],tmp_phi_inv=0;
+        Float polynomials_kl[max_no_multipoles],tmp_phi_inv=0;
 
         cleanup_l(pl.pos,pk.pos,rkl_mag,rkl_mu);
         if(rkl_mag>R0) return; // if k-l separation too large
