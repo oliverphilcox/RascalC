@@ -277,7 +277,7 @@ public:
                 
                 // Compute correction function
                 tmp_phi_inv=0.;
-                for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp[l_i]*sc->correction_function_3pcf(bin_1,bin_2,l_i);
+                for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp[l_i]*sc->inv_correction_function_3pcf(bin_1,bin_2,l_i);
                 all_correction_factor[i*3+bin_index] = 1./tmp_phi_inv;
                 
                 // Store relevant legendre polynomials
@@ -376,7 +376,7 @@ public:
                 
             // Compute correction function
             tmp_phi_inv=0.;
-            for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp1[l_i]*sc->correction_function_3pcf(bin_1,bin_2,l_i);
+            for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp1[l_i]*sc->inv_correction_function_3pcf(bin_1,bin_2,l_i);
             all_correction_factor_jkl[bin_index] = 1./tmp_phi_inv;
                 
             // Store legendre polynomials
@@ -497,7 +497,7 @@ public:
                 
             // Compute correction function
             tmp_phi_inv=0.;
-            for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp[l_i]*sc->correction_function_3pcf(bin_1,bin_2,l_i);
+            for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp[l_i]*sc->inv_correction_function_3pcf(bin_1,bin_2,l_i);
             all_correction_factor_klm[bin_index] = 1./tmp_phi_inv;
                 
             // Store legendre polynomials
@@ -605,7 +605,7 @@ public:
                 
             // Compute correction function
             tmp_phi_inv=0;
-            for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp[l_i]*sc->correction_function_3pcf(bin_1,bin_2,l_i);
+            for(int l_i=0;l_i<sc->n_param;l_i++) tmp_phi_inv+=polynomials_tmp[l_i]*sc->inv_correction_function_3pcf(bin_1,bin_2,l_i);
             all_correction_factor_lmn[bin_index] = 1./tmp_phi_inv;
                 
             // Store legendre polynomials

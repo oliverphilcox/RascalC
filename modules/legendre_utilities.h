@@ -89,11 +89,12 @@ inline void legendre_polynomials(Float mu,int max_l, Float *poly_out){
 class SurveyCorrection{
     // this class stores the correction functions for each bin, giving the difference between the true and estimated RR counts. It is created by reading in coefficients to recompute smooth Phi(mu) functions for each radial bin.
     
-public:        
-    Float* phi_coeffs = nullptr; // houses polynomial coefficients for the correction function
+public:
 #ifdef THREE_PCF
+    Float* inv_phi_multipoles = nullptr; // houses multipole moments of the inverse correction function
     int n_param = 7;
 #else
+    Float* phi_coeffs = nullptr; // houses polynomial coefficients for the correction function
     int n_param = 7; // number of polynomial coefficients in fitting model (only 5 are independent)
     Float mu_crit = 0.75; // critical mu to change between polynomial models
 #endif
@@ -106,8 +107,8 @@ public:
         n_param=sc->n_param;
         nbin=sc->nbin;
 #ifdef THREE_PCF
-        phi_coeffs=(Float *)malloc(sizeof(Float)*nbin*nbin*n_param);
-        for(int i=0;i<nbin*nbin*n_param;i++) phi_coeffs[i]=sc->phi_coeffs[i];
+        inv_phi_multipoles = (Float *)malloc(sizeof(Float)*nbin*nbin*n_param);
+        for(int i=0; i<nbin*nbin*n_param; i++) inv_phi_multipoles[i] = sc->inv_phi_multipoles[i];
 #else
         mu_crit=sc->mu_crit;
         phi_coeffs=(Float *)malloc(sizeof(Float)*nbin*n_param);
@@ -120,7 +121,7 @@ public:
         // Rescale the survey correction function by a factor (N_rand_1/N_gal_1)*(N_rand2/N_gal2)*(N_rand3/N_gal3) - inverse of RRR counts rescaling (if it was implemented)
         Float rescale_factor = norm1*norm2*norm3;
         printf("Rescaling survey correction function by a factor (N_rand_1/N_gal_1)*(N_rand2/N_gal2)*(N_rand3/N_gal3) = %.1e\n", rescale_factor);
-        for(int i = 0; i < nbin * nbin * n_param; i++) phi_coeffs[i] *= rescale_factor;
+        for(int i = 0; i < nbin * nbin * n_param; i++) inv_phi_multipoles[i] /= rescale_factor; // need to divide because the coefficients are actually for the inverse of the correction function
     }
 #else
     void rescale(Float norm1, Float norm2){
@@ -181,7 +182,7 @@ public:
         // Now allocate memory to the weights array
 #ifdef THREE_PCF
         assert(line_no==nbin*nbin); // need correct number of functions
-        ec+=posix_memalign((void **) &phi_coeffs, PAGE, sizeof(Float)*n_param*nbin*nbin);
+        ec+=posix_memalign((void **) &inv_phi_multipoles, PAGE, sizeof(Float)*n_param*nbin*nbin);
 #else
         assert(line_no==nbin); // need correct number of functions
         ec+=posix_memalign((void **) &phi_coeffs, PAGE, sizeof(Float)*n_param*nbin);
@@ -203,7 +204,11 @@ public:
                 
             // Iterate over line
             while (split_string!=NULL){
-                phi_coeffs[index]=atof(split_string);
+#ifdef THREE_PCF
+                inv_phi_multipoles[index] = atof(split_string);
+#else
+                phi_coeffs[index] = atof(split_string);
+#endif
                 split_string = strtok(NULL, " \t");
                 index++;
                 }
@@ -224,19 +229,23 @@ public:
 public:
     ~SurveyCorrection(){
         // The destructor
+#ifdef THREE_PCF
+        free(inv_phi_multipoles);
+#else
         free(phi_coeffs);
+#endif
         return;
     }
     
 #ifdef THREE_PCF
-    Float correction_function_3pcf(int radial_bin1, int radial_bin2, int ell){
+    Float inv_correction_function_3pcf(int radial_bin1, int radial_bin2, int ell){
         // Create function to output polynomial RRR correction model given two radial bin numbers and a Legendre polynomial index
         // This gives the ell-th multipole of 1/Phi for convenience
         int base_bin = (radial_bin1*nbin+radial_bin2)*n_param;
         //if(ell==0) return 1;
         //else return 0;
         
-        return phi_coeffs[base_bin+ell];
+        return inv_phi_multipoles[base_bin+ell];
         
     }
 #else
