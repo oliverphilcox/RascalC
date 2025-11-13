@@ -115,7 +115,7 @@ public:
 
             // Compute 1/Phi function
             tmp_phi_inv=0.;
-            for(int l_i=0;l_i<sc12->l_bins;l_i++) tmp_phi_inv+=legendre[l_i]*sc12->inv_correction_function(l_i*2,rij_mu);
+            for(int l_i=0;l_i<sc12->l_bins;l_i++) tmp_phi_inv+=legendre[l_i]*sc12->inv_correction_function(l_i*2,rij_mag);
 
 #define UNBINNED
 #ifdef UNBINNED
@@ -183,7 +183,7 @@ public:
             legendre_polynomials(rjk_mu,max_legendre,legendre_jk);
 
             // Compute 1/Phi_jk function
-            for(int l_i=0;l_i<sc23->l_bins;l_i++) tmp_phi_inv+=legendre_jk[l_i]*sc23->inv_correction_function(l_i*2,rjk_mu);
+            for(int l_i=0;l_i<sc23->l_bins;l_i++) tmp_phi_inv+=legendre_jk[l_i]*sc23->inv_correction_function(l_i*2,rjk_mag);
 
             // Now compute multipole row elements
 #ifdef UNBINNED

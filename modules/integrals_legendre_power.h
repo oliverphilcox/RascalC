@@ -146,7 +146,7 @@ public:
             legendre_polynomials(rij_mu, max_legendre, polynomials);
             // Compute 1/Phi function
             tmp_phi_inv=0.;
-            for(int l_i=0;l_i<sc12->l_bins;l_i++) tmp_phi_inv+=polynomials[l_i]*sc12->inv_correction_function(l_i*2,rij_mu);
+            for(int l_i=0;l_i<sc12->l_bins;l_i++) tmp_phi_inv+=polynomials[l_i]*sc12->inv_correction_function(l_i*2,rij_mag);
 
             tmp_weight = pi.w*pj.w*pair_weight(rij_mag)/tmp_phi_inv;
 
@@ -195,7 +195,7 @@ public:
             legendre_polynomials(rjk_mu,max_legendre,polynomials_jk);
 
             // Compute 1/Phi_jk functions
-            for(int l_i=0;l_i<sc23->l_bins;l_i++) tmp_phi_inv+=polynomials_jk[l_i]*sc23->inv_correction_function(l_i*2,rjk_mu);
+            for(int l_i=0;l_i<sc23->l_bins;l_i++) tmp_phi_inv+=polynomials_jk[l_i]*sc23->inv_correction_function(l_i*2,rjk_mag);
 
             tmp_kernel = pj.w*pair_weight(rjk_mag)*4./(tmp_phi_inv*prob); // include symmetry factor
         }
@@ -257,7 +257,7 @@ public:
         legendre_polynomials(rkl_mu, max_l, polynomials_kl);
 
         // Compute 1/Phi_kl function
-        for(int l_i=0;l_i<sc34->l_bins;l_i++) tmp_phi_inv+=polynomials_kl[l_i]*sc34->inv_correction_function(l_i*2,rkl_mu);
+        for(int l_i=0;l_i<sc34->l_bins;l_i++) tmp_phi_inv+=polynomials_kl[l_i]*sc34->inv_correction_function(l_i*2,rkl_mag);
 
         tmp_weight = pl.w*pair_weight(rkl_mag)/(tmp_phi_inv*prob)*2*xi_jl; // with xi_ik*xi_jl = xi_il*xi_jk symmetry factor
 
