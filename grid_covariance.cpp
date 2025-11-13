@@ -274,7 +274,7 @@ int main(int argc, char *argv[]) {
     all_rd[0].copy(&tmp_rd);
 
     if(par.multi_tracers==true){
-         CorrelationFunction tmp_cf12(par.corname12, par.nbin_cf, par.radial_bins_low_cf, par.radial_bins_high_cf, par.mbin_cf, par.mumax-par.mumin), tmp_cf2(par.corname2, par.nbin_cf, par.radial_bins_low_cf, par.radial_bins_high_cf, par.mbin_cf, par.mumax-par.mumin);
+        CorrelationFunction tmp_cf12(par.corname12, par.nbin_cf, par.radial_bins_low_cf, par.radial_bins_high_cf, par.mbin_cf, par.mumax-par.mumin), tmp_cf2(par.corname2, par.nbin_cf, par.radial_bins_low_cf, par.radial_bins_high_cf, par.mbin_cf, par.mumax-par.mumin);
         all_cf[1].copy_function(&tmp_cf2);
         all_cf[2].copy_function(&tmp_cf12);
         RandomDraws rd2(&tmp_cf2,&par,NULL,0), rd12(&tmp_cf12,&par,NULL,0);
