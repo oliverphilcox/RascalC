@@ -570,6 +570,22 @@ public:
         printf("Output directory: '%s'\n",out_file);
 
 	}
+
+    char* particle_filename(int index) {
+        if (index == 0) return fname;
+        if (index == 1) return fname2;
+        fprintf(stderr, "Particle index %d out of bounds (must be 0 or 1)\n", index);
+        exit(1);
+    }
+
+    char* cf_filename(int index) {
+        if (index == 0) return corname;
+        if (index == 1) return corname2;
+        if (index == 2) return corname12;
+        fprintf(stderr, "Correlation function index %d out of bounds (must be 0, 1 or 2)\n", index);
+        exit(1);
+    }
+
 private:
 	void usage() {
 	    fprintf(stderr, "\nUsage for grid_covariance:\n\n");
