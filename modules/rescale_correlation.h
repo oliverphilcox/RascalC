@@ -209,6 +209,9 @@ public:
                 // Only update random draws on the final iteration for speed
                 RandomDraws tmp_rd(&all_cf[index],par,NULL,0);
                 all_rd[index].copy(&tmp_rd);
+                // Save the refined correlation function to a file (to save the effort in repeated computation and/or for comparison)
+                std::string rescaled_cf_filename = string_format("%s.refined.txt", par->cf_filename(index)); // might want to alter the filename later
+                all_cf[index].savetxt(rescaled_cf_filename.c_str());
             }
             else fprintf(stderr, "\nSkipping refinement for correlation function %d of %d.\n", index+1, number_xi);
         }

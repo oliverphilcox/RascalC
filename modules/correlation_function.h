@@ -76,6 +76,28 @@ class CorrelationFunction{
             }
         }
 
+        void savetxt(const char *filename) {
+            // Save the correlation function table to a text file in the same format as input file
+            // (intended for use after refinement)
+            FILE* fp = fopen(filename, "r");
+            if (fp == NULL) {
+                fprintf(stderr, "File %s could not be opened for writing\n", filename);
+                return;
+            }
+            // write the radial bins, excluding the first one with r=0 because it is trivial and also to avoid division by zero later
+            for (int i = 1; i < xsize; i++) fprintf(fp, "%le\t", x[i]);
+            fprintf(fp, "\n");
+            // write the angular/mu bins
+            for (int j = 0; j < ysize; j++) fprintf(fp, "%le\t", y[j]);
+            fprintf(fp, "\n");
+            // write the correlation function values
+            for (int i = 1; i < xsize; i++) { // exclude the first radial bin with r=0 because it is trivial and also to avoid division next
+                for (int j = 0; j < ysize; j++) fprintf(fp, "%le\t", z[i * xsize + j] / pow(x[i], 2)); // remember that z = xi * r^2 for smoother interpolation
+                fprintf(fp, "\n");
+            }
+            fclose(fp);
+        }
+
 
     private:
 
@@ -305,7 +327,7 @@ class CorrelationFunction{
         mumax=1.;
 
         // Multiply correlation function by r^2 for smoother interpolation
-        // If one wants to change this also the readData function needs to be changed
+        // If one wants to change this, they should modify the readData and savetxt functions accordingly
         int ct=0;
         for(int i=0;i<xsize;i++){
             for(int j=0;j<ysize;j++){
