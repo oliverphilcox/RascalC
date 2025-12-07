@@ -39,7 +39,7 @@ def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega
 
     all_ra, all_dec, all_z = ra_dec_z_pos
 
-    comoving_radius_Mpch = comoving_distance_Mpch(all_z, Omega_m, w_dark_energy, Omega_k)
+    comoving_radius_Mpch = comoving_distance_Mpch(all_z, Omega_m, Omega_k, w_dark_energy)
 
     # Convert to polar coordinates in radians
     all_phi_rad = np.deg2rad(all_ra)
