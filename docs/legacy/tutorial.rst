@@ -25,15 +25,23 @@ For advanced users who would like to do things in parallel when possible, here i
 1) Pre-Processing
 ------------------
 
-**Inputs**:
+**Inputs** (can be retrieved from https://data.sdss.org/sas/dr12/boss/lss/qpm_mocks/):
 
-- ``mock_galaxy_DR12_CMASS_N_QPM_0001.txt``: Galaxy positions and weights for the QPM mock in (Ra,Dec,redshift,weight) format.
-- ``mock_random_DR12_CMASS_N_50x1.txt``: 50x Random positions and weights for the CMASS survey in (Ra,Dec,redshift,weight).
+- ``mock_galaxy_DR12_CMASS_N_QPM_0001.rdzw``: Galaxy positions and weights for the QPM mock in (Ra,Dec,redshift,weight) format. Example download and extraction commands::
+
+    wget https://data.sdss.org/sas/dr12/boss/lss/qpm_mocks/mock_galaxy_DR12_CMASS_N_QPM_allmocks.tar.gz # download the archive with all mock galaxy catalogs (≈12 GB)
+    tar -xzvf mock_galaxy_DR12_CMASS_N_QPM_allmocks.tar.gz mock_galaxy_DR12_CMASS_N_QPM_0001.rdzw # unpack one catalog (≈37 MB)
+    rm mock_galaxy_DR12_CMASS_N_QPM_allmocks.tar.gz # remove the big (≈12 GB) archive
+
+- ``mock_random_DR12_CMASS_N_50x1.rdzw``: 50x Random positions and weights for the CMASS survey in (Ra,Dec,redshift,weight). Example download and unpacking commands::
+
+    wget https://data.sdss.org/sas/dr12/boss/lss/qpm_mocks/mock_random_DR12_CMASS_N_50x1.rdzw.gz # download the compressed random catalog (≈600 MB)
+    gunzip mock_random_DR12_CMASS_N_50x1.rdzw.gz # uncompress (≈1.5 GB), typically deleting the compressed version
 
 First, we'll convert these into Cartesian (x,y,z,weight) coordinates, using :math:`\Omega_m = 0.29`, :math:`\Omega_k = 0`, :math:`w_\Lambda = -1` (to be consistent with the QPM mock data creation)::
 
-    python scripts/convert_to_xyz.py mock_galaxy_DR12_CMASS_N_QPM_0001.txt qpm_galaxies.xyz 0.29 0. -1
-    python scripts/convert_to_xyz.py mock_random_DR12_CMASS_N_50x1.txt qpm_randoms_50x.xyz 0.29 0. -1
+    python scripts/convert_to_xyz.py mock_galaxy_DR12_CMASS_N_QPM_0001.rdzw qpm_galaxies.xyz 0.29 0. -1
+    python scripts/convert_to_xyz.py mock_random_DR12_CMASS_N_50x1.rdzw qpm_randoms_50x.xyz 0.29 0. -1
 
 (See :ref:`coord-conversion`).
 
@@ -80,7 +88,7 @@ Here we're using 36 radial bins for the covariance matrix. Let's have a look at 
 This all looks as expected.
 
 
-2) Jackknife Weights
+1) Jackknife Weights
 ----------------------
 
 We're now ready to compute the jackknife weights :math:`w_{aA}` for this set of random particles. This determines how much weight we assign to each jackknife region later in the analysis, via the :math:`RR` pair counts in each bin and jackknife.
