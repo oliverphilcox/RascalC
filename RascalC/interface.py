@@ -250,11 +250,11 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
 
     shot_noise_rescaling1 : float
         (Optional) shot-noise rescaling value for the first tracer if known beforehand. Default 1 (no rescaling).
-        Will be ignored in jackknife mode - then shot-noise rescaling is optimized on the auto-covariance.
+        Will be ignored in jackknife mode or if reference (mock) samples or covariance are provided - then shot-noise rescaling is optimized to fit the reference auto-covariance.
 
     shot_noise_rescaling2 : float
         (Optional) shot-noise rescaling value for the second tracer if known beforehand. Default 1 (no rescaling).
-        Will be ignored in jackknife mode - then shot-noise rescaling is optimized on the auto-covariance.
+        Will be ignored in jackknife mode or if reference (mock) samples or covariance are provided - then shot-noise rescaling is optimized to fit the reference auto-covariance.
 
     seed : integer or None
         (Optional) If given as an integer, sets the base RNG (random number generator) seed, allowing to reproduce the results with the same input data and settings (except the number of threads, which can be varied).
@@ -359,7 +359,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
                 raise ValueError("The sets of jackkknife labels of the two tracers must be the same")
 
     if periodic and 2 * (max(s_edges) + xi_cut_s) > boxsize:
-        warn("Some of the interparticle distances may not be correctly periodically wrapped because of the small box period, so some 4-point configurations may be missed in error. To avoid this, to keep the sum of s_max (maximum separation in the covariance bins) and the xi cutoff scale smaller than half of the box size.")
+        warn("Some of the interparticle distances may not be correctly periodically wrapped because of the small box period, so some 4-point configurations may be missed in error. To avoid this, keep the sum of s_max (maximum separation in the covariance bins) and the xi cutoff scale smaller than half of the box size.")
         # basically, xicutoff + rmax + xicutoff (particle separations 3-1, 1-2 and 2-4) is the max separation between particles 3 and 4 (in case of perfect alignment of the aforementioned ones) as the code sees it, and if it exceeds boxsize/2, this may not be the right wrapping for the true (minimal) distance
         # but if the true distance between particles 3 and 4 is larger than rmax, they should not contribute to the covariance integral and it does not matter (unless rmax > boxsize/2, but the final condition will exclude this possibility)
         # for the true distance to become smaller than rmax given the wrapping is wrong, the "naive" separation should exceed boxsize - rmax
