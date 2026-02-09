@@ -43,7 +43,7 @@ For general usage, we provide :doc:`library/fundamentals` and :doc:`library/tuto
    legacy/main-code
    legacy/post-processing
 
-For any queries regarding the code please contact `Michael 'Misha' Rashkovetskyi  <mailto:mrashkovetskyi@cfa.harvard.edu>`_.
+For any queries regarding the code please contact `Michael 'Misha' Rashkovetskyi <mailto:rashkovetskyi.1@osu.edu>`_.
 
 
 .. Indices and tables
