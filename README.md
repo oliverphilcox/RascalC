@@ -18,7 +18,10 @@ We also encourage the code users to cite [Rashkovetskyi et al 2023](https://arxi
 - Daniel Eisenstein (Harvard)
 - Ross O'Connell (Pittsburgh)
 - Alexander Wiegand (Garching)
-- Misha Rashkovetskyi (Harvard)
+- Misha Rashkovetskyi (Harvard -> The Ohio State University)
 
-We thank Yuting Wang and Ryuichiro Hada for pointing out and fixing a number of issues with the code and its documentation.
-We are particularly grateful to Uendert Andrade for finding a wide variety of improvements and bugs, and to Jiaxi Yu for feedback on the Python interface and Jupyter notebook tutorial!
+We thank
+- Yuting Wang and Ryuichiro Hada for pointing out and fixing a number of issues with the code and its documentation.
+- Uendert Andrade for finding a wide variety of improvements and bugs.
+- Jiaxi Yu for feedback on the Python interface (during its development) and Jupyter notebook tutorial.
+- Nick Sanders, Chris Blake and Jaide Swanson for reporting bugs and highlighting missing features in the Python interface.
