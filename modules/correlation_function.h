@@ -79,7 +79,7 @@ class CorrelationFunction{
         void savetxt(const char *filename) {
             // Save the correlation function table to a text file in the same format as input file
             // (intended for use after refinement)
-            FILE* fp = fopen(filename, "r");
+            FILE* fp = fopen(filename, "w");
             if (fp == NULL) {
                 fprintf(stderr, "File %s could not be opened for writing\n", filename);
                 return;
