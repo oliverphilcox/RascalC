@@ -1,5 +1,3 @@
-"This reads two sets of RascalC results and two triplets of cosmodesi/pycorr .npy files to combine two full 2-tracer covs following NS/GCcomb procedure for 2 tracers in Legendre mode and convert them . Covariance of N(GC) and S(GC) 2PCF is neglected."
-
 from pycorr import TwoPointCorrelationFunction
 import numpy as np
 from ..pycorr_utils.utils import reshape_pycorr
@@ -10,6 +8,7 @@ from typing import Callable
 
 
 def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function: Callable[[str], None] = print):
+    "This reads two sets of RascalC results and two triplets of cosmodesi/pycorr .npy files to combine two full 2-tracer covs following NS/GCcomb procedure for 2 tracers in Legendre mode and convert them to a covariance for a catalog of these two tracers concatenated, each tracer upweighted by bias (optionally). Covariance of N(GC) and S(GC) 2PCF is neglected."
     # Read RascalC results
     header1 = get_cov_header(rascalc_results1)
     cov1 = load_cov_legendre_multi(rascalc_results1, max_l, print_function)
@@ -37,8 +36,8 @@ def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: 
     results1 = [result * factor for result, factor in zip(results1, bias_weights)]
     results2 = [result * factor for result, factor in zip(results2, bias_weights)]
     # Extract not normalized RR counts
-    weights1 = np.array((get_counts_from_pycorr(result, counts_factor = 1) for result in results1))
-    weights2 = np.array((get_counts_from_pycorr(result, counts_factor = 1) for result in results2))
+    weights1 = np.array([get_counts_from_pycorr(result, counts_factor = 1) for result in results1])
+    weights2 = np.array([get_counts_from_pycorr(result, counts_factor = 1) for result in results2])
     # Other weights will be counts after summation and and normalization
     weight1 = get_counts_from_pycorr(sum(results1).normalize(), counts_factor = 1)
     weight2 = get_counts_from_pycorr(sum(results2).normalize(), counts_factor = 1)

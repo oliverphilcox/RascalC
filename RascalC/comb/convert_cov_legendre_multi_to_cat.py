@@ -1,5 +1,3 @@
-"This reads a .npy file of RascalC Legendre results (or txt covariance converted previously) and a triplet of cosmodesi/pycorr .npy files to produce a covariance for a catalog of these two tracers concatenated."
-
 from pycorr import TwoPointCorrelationFunction
 import numpy as np
 from ..pycorr_utils.utils import reshape_pycorr
@@ -20,6 +18,7 @@ def load_cov_text(filename: str) -> tuple[np.ndarray[float], str]:
     return cov, header
 
 def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, print_function: Callable[[str], None] = print):
+    "This reads a .npy file of RascalC Legendre results (or txt covariance converted previously) and a triplet of cosmodesi/pycorr .npy files to produce a covariance for a catalog of these two tracers concatenated, each tracer upweighted by bias (optionally)."
     # Read RascalC results
     if any(rascalc_results.endswith(ext) for ext in (".npy", ".npz")):
         # read numpy file
