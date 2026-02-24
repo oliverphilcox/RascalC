@@ -7,7 +7,7 @@ from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 from typing import Callable
 
 
-def load_cov_text(filename: str) -> tuple[np.ndarray[float], str]:
+def load_cov_text(filename: str) -> tuple[np.typing.NDArray[np.float64], str]:
     cov = np.loadtxt(filename)
     # read header line if present
     header = '' # blank header by default

@@ -18,7 +18,7 @@ randoms["comov_dist"] = comoving_distance_Mpch(randoms["Z"], Omega_m, Omega_k, w
 
 
 # Let us define a utility function for position formatting that will be useful on several more occasions.
-def get_rdd_positions(catalog: Table) -> tuple[np.ndarray[float]]: # utility function to format positions from a catalog
+def get_rdd_positions(catalog: Table) -> tuple[np.typing.NDArray[np.float64]]: # utility function to format positions from a catalog
     return (catalog["RA"], catalog["DEC"], catalog["comov_dist"])
 
 

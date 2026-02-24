@@ -57,7 +57,7 @@ def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[s
     np.savez_compressed(output_filename, **output_dictionary)
 
 
-def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_function: Callable[[str], None] = print) -> dict[str, dict[str, np.ndarray[float]]]:
+def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_function: Callable[[str], None] = print) -> dict[str, dict[str, np.typing.NDArray[np.float64]]]:
     """
     Collect the covariance matrices from text files written by the C++ code and organize them into a Numpy .npz file.
     With cleanup enabled (default), deletes the text files after collection.
@@ -261,7 +261,7 @@ def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_sa
 
     Returns
     -------
-    catenation_results : dict[str, np.ndarray[float]]
+    catenation_results : dict[str, np.typing.NDArray[np.float64]]
         Catenated raw covariance matrices as a dictionary with string keys and Numpy array values. All this information is also saved in a ``Raw_Covariance_Matrices*.npz`` file in the ``output_root``.
     """
     if collapse_factor <= 0: raise ValueError("Collapsing factor must be positive")

@@ -11,7 +11,7 @@ from .utils import blank_function
 from typing import Callable
 
 
-def compute_phi_periodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: float, V: float, n: int) -> np.ndarray[float]:
+def compute_phi_periodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: float, V: float, n: int) -> np.typing.NDArray[np.float64]:
     "Compute the survey correction function coefficients for the periodic box geometry."
     ## Define normalization constant
     this_norm = n_bar1 * n_bar2 * w_bar1 * w_bar2 # keep it simple, only need to be self-consistent - use the same norm everywhere
@@ -25,7 +25,7 @@ def compute_phi_periodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: fl
     return phi / norm
 
 
-def compute_phi_aperiodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: float, V: float, r_bins: np.ndarray[float], this_RR: np.ndarray[float], index: str, print_function: Callable[[str], None] = print) -> np.ndarray[float]:
+def compute_phi_aperiodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: float, V: float, r_bins: np.typing.NDArray[np.float64], this_RR: np.typing.NDArray[np.float64], index: str, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
     "Compute the survey correction function coefficients for the realistic survey geometry."
     print_function("\nComputing survey correction factor %s"%index)
     ## Define normalization constant
@@ -90,7 +90,7 @@ def compute_phi_aperiodic(w_bar1: float, w_bar2: float, n_bar1: float, n_bar2: f
     return np.asarray(fit_params) / norm
 
 
-def compute_V_n_w_bar(randoms_pos: np.ndarray[float], randoms_weights: np.ndarray[float], index: int = 1, print_function: Callable[[str], None] = blank_function) -> tuple[float, float, float]:
+def compute_V_n_w_bar(randoms_pos: np.typing.NDArray[np.float64], randoms_weights: np.typing.NDArray[np.float64], index: int = 1, print_function: Callable[[str], None] = blank_function) -> tuple[float, float, float]:
     "Compute the effective survey volume, average density and weight given positions of random particles."
     w_bar = np.mean(randoms_weights)
     N = len(randoms_weights)
@@ -107,13 +107,13 @@ def compute_V_n_w_bar(randoms_pos: np.ndarray[float], randoms_weights: np.ndarra
     return V, n_bar, w_bar
 
 
-def load_RR(RR_file: str, n: int) -> np.ndarray[float]:
+def load_RR(RR_file: str, n: int) -> np.typing.NDArray[np.float64]:
     "Helper function to read the RR counts."
     RR_flat = np.loadtxt(RR_file) # not change normalization here
     return RR_flat.reshape((n, -1))
 
 
-def load_randoms(random_filename: str) -> tuple[np.ndarray[float], np.ndarray[float]]:
+def load_randoms(random_filename: str) -> tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]]:
     "Helper function to load the text file of random particles"
     random_file_contents = np.loadtxt(random_filename)
     randoms_pos = random_file_contents[:, :3]
@@ -121,7 +121,7 @@ def load_randoms(random_filename: str) -> tuple[np.ndarray[float], np.ndarray[fl
     return randoms_pos, randoms_weights
 
 
-def compute_correction_function(randoms_pos: np.ndarray[float], randoms_weights: np.ndarray[float], binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, print_function: Callable[[str], None] = print) -> None:
+def compute_correction_function(randoms_pos: np.typing.NDArray[np.float64], randoms_weights: np.typing.NDArray[np.float64], binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, print_function: Callable[[str], None] = print) -> None:
     "Compute the single-tracer survey correction function coefficients and save to file."
     if periodic:
         print_function("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
@@ -159,7 +159,7 @@ def compute_correction_function_from_files(random_file: str, binfile: str, outdi
     compute_correction_function(*load_randoms(random_file), binfile, outdir, periodic, RR_file, print_function = print_function)
 
 
-def compute_correction_function_multi(randoms_pos1: np.ndarray[float], randoms_weights1: np.ndarray[float], randoms_pos2: np.ndarray[float], randoms_weights2: np.ndarray[float], binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, RR_file12: str | None = None, RR_file2: str | None = None, print_function: Callable[[str], None] = print) -> None:
+def compute_correction_function_multi(randoms_pos1: np.typing.NDArray[np.float64], randoms_weights1: np.typing.NDArray[np.float64], randoms_pos2: np.typing.NDArray[np.float64], randoms_weights2: np.typing.NDArray[np.float64], binfile: str, outdir: str, periodic: bool, RR_file: str | None = None, RR_file12: str | None = None, RR_file2: str | None = None, print_function: Callable[[str], None] = print) -> None:
     "Compute the multi-tracer survey correction function coefficients and save to file."
     if periodic:
         print_function("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")

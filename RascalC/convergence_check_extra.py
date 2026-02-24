@@ -10,7 +10,7 @@ from .cov_comparison import rms_eig_inv_test_covs, KL_div_covs, chi2_red_covs
 from typing import Callable
 
 
-def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_function: Callable[[str], None] = blank_function) -> dict[str, float]:
+def cmp_cov(cov_first: np.typing.NDArray[np.float64], cov_second: np.typing.NDArray[np.float64], print_function: Callable[[str], None] = blank_function) -> dict[str, float]:
     """
     Compute the selected comparison measures between two covariance matrices and return as a dictionary.
     This method is decribed in Section 3.2 of `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_.
@@ -30,7 +30,7 @@ def cmp_cov(cov_first: np.ndarray[float], cov_second: np.ndarray[float], print_f
     return result
 
 
-def convergence_check_extra_splittings(c_samples: np.ndarray[float], n_samples: int | None = None, print_function: Callable[[str], None] = blank_function) -> dict[str, dict[str, float]]:
+def convergence_check_extra_splittings(c_samples: np.typing.NDArray[np.float64], n_samples: int | None = None, print_function: Callable[[str], None] = blank_function) -> dict[str, dict[str, float]]:
     """
     Perform two different splittings in halves using the covariance matrix samples ``c_samples``, compute the comparison measures between the two average covariance matrices and return as a dictionary.
     This method is decribed in Section 3.2 of `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_.

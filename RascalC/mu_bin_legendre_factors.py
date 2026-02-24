@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 
-def compute_mu_bin_legendre_factors(mu_edges: np.ndarray[float], max_l: int, do_inverse: bool = False) -> np.ndarray[float] | tuple[np.ndarray[float], np.ndarray[float]]:
+def compute_mu_bin_legendre_factors(mu_edges: np.typing.NDArray[np.float64], max_l: int, do_inverse: bool = False) -> np.typing.NDArray[np.float64] | tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]]:
     """
     Compute projection factors from angular (mu) bins (first index) to (even) Legendre multipoles (second index).
     With do_inverse, also computes the projection factors from (even) Legendre multipoles (first index) to angular (mu) bins (second index).

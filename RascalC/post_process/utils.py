@@ -59,7 +59,7 @@ def cov_filter_legendre_pycorr(n: int, max_l: int, skip_r_bins: int = 0, skip_l:
     return np.ix_(indices_1d, indices_1d)
 
 
-def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tracer: Literal[1, 2] = 1, full: bool = True, jack: bool = False) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
+def load_matrices_single(input_data: dict[str], cov_filter: np.typing.NDArray[np.int_], tracer: Literal[1, 2] = 1, full: bool = True, jack: bool = False) -> tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]]:
     """Load the single-tracer covariance matrix terms. Allows to choose the tracer index (1-based) to load."""
     joint = "j" * jack + "_"
     suffix = str(tracer) * 2 + "_full" * full
@@ -78,7 +78,7 @@ def load_matrices_single(input_data: dict[str], cov_filter: np.ndarray[int], tra
     return tuple(c234)
 
 
-def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], alpha: float = 1, kind: str = "", warn_function: Callable = warn, print_function: Callable = blank_function) -> bool:
+def check_eigval_convergence(c2: np.typing.NDArray[np.float64], c4: np.typing.NDArray[np.float64], alpha: float = 1, kind: str = "", warn_function: Callable = warn, print_function: Callable = blank_function) -> bool:
     """
     Perform the eigenvalue convergence test on the covariance matrix terms.
     Warn about violated condition(s) using the `warn_function` (default: `warnings.warn`).
@@ -104,17 +104,17 @@ def check_eigval_convergence(c2: np.ndarray[float], c4: np.ndarray[float], alpha
     return result
 
 
-def check_positive_definiteness(full_cov: np.ndarray[float]) -> None:
+def check_positive_definiteness(full_cov: np.typing.NDArray[np.float64]) -> None:
     """Ensure that the final covariance matrix is positive definite; raise an error if it is not."""
     if np.any(np.linalg.eigvalsh(full_cov) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
 
 
-def add_cov_terms_single(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alpha: float = 1) -> np.ndarray[float]:
+def add_cov_terms_single(c2: np.typing.NDArray[np.float64], c3: np.typing.NDArray[np.float64], c4: np.typing.NDArray[np.float64], alpha: float = 1) -> np.typing.NDArray[np.float64]:
     """Add the single-tracer covariance matrix terms with a given shot-noise rescaling value."""
     return c4 + c3 * alpha + c2 * alpha**2
 
 
-def compute_D_precision_matrix(partial_cov: np.ndarray[float], full_cov: np.ndarray[float]) -> tuple[np.ndarray[float], np.ndarray[float]]:
+def compute_D_precision_matrix(partial_cov: np.typing.NDArray[np.float64], full_cov: np.typing.NDArray[np.float64]) -> tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]]:
     """Compute the quadratic order bias correction D and the precision bias with this correction."""
     n_samples = len(partial_cov)
     n_bins = len(full_cov)
@@ -128,7 +128,7 @@ def compute_D_precision_matrix(partial_cov: np.ndarray[float], full_cov: np.ndar
     return full_D_est, full_prec
 
 
-def compute_N_eff_D(full_D_est: np.ndarray[float], print_function = blank_function) -> float:
+def compute_N_eff_D(full_D_est: np.typing.NDArray[np.float64], print_function = blank_function) -> float:
     """Compute the effective number of mocks (giving an equivalent covariance matrix precision) from the quadratic order bias correction factor D."""
     n_bins = len(full_D_est)
     slogdetD = np.linalg.slogdet(full_D_est)
@@ -142,7 +142,7 @@ def compute_N_eff_D(full_D_est: np.ndarray[float], print_function = blank_functi
     return N_eff_D
 
 
-def Psi(alpha: float, c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.ndarray[float]):
+def Psi(alpha: float, c2: np.typing.NDArray[np.float64], c3: np.typing.NDArray[np.float64], c4: np.typing.NDArray[np.float64], c2s: np.typing.NDArray[np.float64], c3s: np.typing.NDArray[np.float64], c4s: np.typing.NDArray[np.float64]):
     """Compute precision matrix from covariance matrix, removing quadratic order bias terms."""
     c_tot = add_cov_terms_single(c2, c3, c4, alpha)
     partial_covs = add_cov_terms_single(c2s, c3s, c4s, alpha)
@@ -150,7 +150,7 @@ def Psi(alpha: float, c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarr
     return Psi
 
 
-def neg_log_L1(alpha: float, target_cov: np.ndarray[float], c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.ndarray[float]):
+def neg_log_L1(alpha: float, target_cov: np.typing.NDArray[np.float64], c2: np.typing.NDArray[np.float64], c3: np.typing.NDArray[np.float64], c4: np.typing.NDArray[np.float64], c2s: np.typing.NDArray[np.float64], c3s: np.typing.NDArray[np.float64], c4s: np.typing.NDArray[np.float64]):
     """Return negative log L1 likelihood between theory and target (data jackknife or mock sample) covariance matrices.
     log L1 is the Kullback-Leibler divergence with constant terms (including log(det(target_cov))) removed.
     As a result, the `target_cov` can be a singular matrix.
@@ -164,14 +164,14 @@ def neg_log_L1(alpha: float, target_cov: np.ndarray[float], c2: np.ndarray[float
     return np.trace(np.matmul(Psi_alpha, target_cov)) - logdet[1]
 
 
-def fit_shot_noise_rescaling(target_cov: np.ndarray[float], c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], c2s: np.ndarray[float], c3s: np.ndarray[float], c4s: np.ndarray[float]):
+def fit_shot_noise_rescaling(target_cov: np.typing.NDArray[np.float64], c2: np.typing.NDArray[np.float64], c3: np.typing.NDArray[np.float64], c4: np.typing.NDArray[np.float64], c2s: np.typing.NDArray[np.float64], c3s: np.typing.NDArray[np.float64], c4s: np.typing.NDArray[np.float64]):
     """Fit the covariance matrix model to `target_cov` to find the optimal shot-noise rescaling.
     `target_cov` can be a singular matrix."""
     alpha_best = fmin(neg_log_L1, 1., args = (target_cov, c2, c3, c4, c2s, c3s, c4s))
     return alpha_best[0]
 
 
-def load_matrices_multi(input_data: dict[str], cov_filter: np.ndarray[int], full: bool = True, jack: bool = False, ntracers: int = 2) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
+def load_matrices_multi(input_data: dict[str], cov_filter: np.typing.NDArray[np.int_], full: bool = True, jack: bool = False, ntracers: int = 2) -> tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]]:
     """Load the multi-tracer covariance matrix terms."""
     suffix_jack = "j" * jack
     suffix_full = "_full" * full
@@ -268,7 +268,7 @@ def gen_corr_tracers(ntracers: int = 2) -> list[tuple[int, int]]:
     return corr_tracers
 
 
-def add_cov_terms_multi(c2: np.ndarray[float], c3: np.ndarray[float], c4: np.ndarray[float], alphas: list[float] | np.ndarray[float], ntracers: int = 2) -> tuple[np.ndarray[float], np.ndarray[float]]:
+def add_cov_terms_multi(c2: np.typing.NDArray[np.float64], c3: np.typing.NDArray[np.float64], c4: np.typing.NDArray[np.float64], alphas: list[float] | np.typing.NDArray[np.float64], ntracers: int = 2) -> tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]]:
     """Add the multi-tracer covariance matrix terms with given shot-noise rescaling values."""
 
     def construct_fields(t1: int, t2: int, t3: int, t4: int, alpha1: float, alpha2: float):

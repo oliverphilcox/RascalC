@@ -12,7 +12,7 @@ def read_xi_file(xi_file: str):
     return r_vals, mu_vals, xi_vals
 
 
-def write_xi_file(xi_file: str, r_vals: np.ndarray[float], mu_vals: np.ndarray[float], xi_vals: np.ndarray[float]):
+def write_xi_file(xi_file: str, r_vals: np.typing.NDArray[np.float64], mu_vals: np.typing.NDArray[np.float64], xi_vals: np.typing.NDArray[np.float64]):
     # Reproduce RascalC text format using numpy functions
     header = my_a2s(r_vals) + '\n' + my_a2s(mu_vals)
     np.savetxt(xi_file, xi_vals, header=header, comments='')

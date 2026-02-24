@@ -27,12 +27,12 @@ H0_h = 100 * u.km / u.s / u.Mpc # h = 1
 D_H_Mpch = (c_light / H0_h).to(u.Mpc).value # Hubble distance in Mpc/h
 
 
-def comoving_distance_Mpch(z: np.ndarray[float], Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1) -> np.ndarray[float]:
+def comoving_distance_Mpch(z: np.typing.NDArray[np.float64], Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1) -> np.typing.NDArray[np.float64]:
     # default cosmology from the BOSS DR12 2016 clustering paper assuming LCDM
     comoving_distance_D_H = coorddist(z, Omega_m, w_dark_energy, Omega_k) # comoving distance in Hubble distances
     return comoving_distance_D_H * D_H_Mpch
 
-def convert_to_xyz(ra_dec_z_pos: np.ndarray[float], Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1) -> np.ndarray[float]:
+def convert_to_xyz(ra_dec_z_pos: np.typing.NDArray[np.float64], Omega_m: float = 0.31, Omega_k: float = 0, w_dark_energy: float = -1) -> np.typing.NDArray[np.float64]:
     # default cosmology from the BOSS DR12 2016 clustering paper assuming LCDM
     if ra_dec_z_pos.shape[0] != 3: ra_dec_z_pos = ra_dec_z_pos.T
     if ra_dec_z_pos.shape[0] != 3: raise ValueError("The input position do not appear 3D")

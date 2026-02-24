@@ -28,29 +28,29 @@ from .post_process import post_process_legendre_mocks_multi, post_process_legend
 def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             nthread: int, N2: int, N3: int, N4: int, n_loops: int, loops_per_sample: int,
             out_dir: str, tmp_dir: str,
-            randoms_positions1: np.ndarray[float], randoms_weights1: np.ndarray[float],
+            randoms_positions1: np.typing.NDArray[np.float64], randoms_weights1: np.typing.NDArray[np.float64],
             pycorr_allcounts_11: pycorr.twopoint_estimator.BaseTwoPointEstimator,
-            xi_table_11: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | list[np.ndarray[float]],
+            xi_table_11: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]] | tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]] | list[np.typing.NDArray[np.float64]],
             position_type: Literal["rdd", "xyz", "pos"] = "pos",
-            xi_table_12: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | list[np.ndarray[float]] = None,
-            xi_table_22: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]] | tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]] | list[np.ndarray[float]] = None,
+            xi_table_12: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]] | tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]] | list[np.typing.NDArray[np.float64]] = None,
+            xi_table_22: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]] | tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]] | list[np.typing.NDArray[np.float64]] = None,
             xi_cut_s: float = 250, xi_refinement_iterations: int = 10,
             pycorr_allcounts_12: pycorr.twopoint_estimator.BaseTwoPointEstimator | None = None, pycorr_allcounts_22: pycorr.twopoint_estimator.BaseTwoPointEstimator | None = None,
             normalize_wcounts: bool = True,
             no_data_galaxies1: float | None = None, no_data_galaxies2: float | None = None,
-            randoms_samples1: np.ndarray[int] | None = None,
-            randoms_positions2: np.ndarray[float] | None = None, randoms_weights2: np.ndarray[float] | None = None, randoms_samples2: np.ndarray[int] | None = None,
+            randoms_samples1: np.typing.NDArray[np.int_] | None = None,
+            randoms_positions2: np.typing.NDArray[np.float64] | None = None, randoms_weights2: np.typing.NDArray[np.float64] | None = None, randoms_samples2: np.typing.NDArray[np.int_] | None = None,
             xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
             xi_12_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
             xi_22_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
-            xi_sample_cov: np.ndarray[float] | None = None,
+            xi_sample_cov: np.typing.NDArray[np.float64] | None = None,
             max_l: int | None = None,
             boxsize: float | None = None,
             skip_s_bins: int | tuple[int, int] = 0, skip_l: int = 0,
             shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1,
             sampling_grid_size: int = 301, coordinate_scaling: float = 1, seed: int | None = None,
             start_integral_index = None, last_integral_index = None,
-            verbose: bool = False) -> dict[str, np.ndarray[float]]:
+            verbose: bool = False) -> dict[str, np.typing.NDArray[np.float64]]:
     r"""
     Run the 2-point correlation function covariance integration.
 
@@ -287,7 +287,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
 
     Returns
     -------
-    post_processing_results : dict[str, np.ndarray[float]]
+    post_processing_results : dict[str, np.typing.NDArray[np.float64]]
         Post-processing results as a dictionary with string keys and Numpy array values. All this information is also saved in a ``Rescaled_Covariance_Matrices*.npz`` file in the output directory.
         Selected common keys are: ``"full_theory_covariance"`` for the final covariance matrix and ``"shot_noise_rescaling"`` for the shot-noise rescaling value(s).
         There will also be a ``Raw_Covariance_Matices*.npz`` file in the output directory (as long as the C++ code has run without errors), which can be post-processed separately in a different way using e.g. :func:`RascalC.post_process_auto`.

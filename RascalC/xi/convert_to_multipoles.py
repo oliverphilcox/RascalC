@@ -7,7 +7,7 @@ from .utils import read_xi_file
 from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 
 
-def convert_xi_to_multipoles(xi_vals: np.ndarray[float], mu_edges: np.ndarray[float], max_l: int):
+def convert_xi_to_multipoles(xi_vals: np.typing.NDArray[np.float64], mu_edges: np.typing.NDArray[np.float64], max_l: int):
     ## Convert s, mu-binned correlation function to Legendre multipoles
     return xi_vals.dot(compute_mu_bin_legendre_factors(mu_edges, max_l))
 

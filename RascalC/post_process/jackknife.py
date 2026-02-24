@@ -11,7 +11,7 @@ from ..raw_covariance_matrices import load_raw_covariances_smu
 from typing import Literal, Callable, Iterable
 
 
-def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[int], RR: np.ndarray[float], weights: np.ndarray[float], tracer: Literal[1, 2] = 1, full: bool = True) -> np.ndarray[float]:
+def load_disconnected_term_single(input_data: dict[str], cov_filter: np.typing.NDArray[np.int_], RR: np.typing.NDArray[np.float64], weights: np.typing.NDArray[np.float64], tracer: Literal[1, 2] = 1, full: bool = True) -> np.typing.NDArray[np.float64]:
     suffix = "_" + str(tracer) * 2 + "_full" * full
     disconnected_array_names = ["EE1", "RR1", "EE2", "RR2"]
     disconnected_arrays = np.array([input_data[name + suffix] for name in disconnected_array_names])
@@ -20,7 +20,7 @@ def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[
     fact = 1 - np.matmul(np.asmatrix(weights).T, np.asmatrix(weights))
     norm = RRaRRb * fact
 
-    def compute_disconnected_term(EEaA1: np.ndarray[float], RRaA1: np.ndarray[float], EEaA2: np.ndarray[float], RRaA2: np.ndarray[float]):
+    def compute_disconnected_term(EEaA1: np.typing.NDArray[np.float64], RRaA1: np.typing.NDArray[np.float64], EEaA2: np.typing.NDArray[np.float64], RRaA2: np.typing.NDArray[np.float64]):
         # argument order follows disconnected_array_names
         w_aA1 = RRaA1 / RRaA1.sum(axis = 0)
         w_aA2 = RRaA2 / RRaA2.sum(axis = 0)
@@ -29,7 +29,7 @@ def load_disconnected_term_single(input_data: dict[str], cov_filter: np.ndarray[
         cx = np.matmul(diff1.T, diff2) / norm
         return cx[cov_filter]
     
-    def get_disconnected_term(disconnected_arrays: np.ndarray[float]):
+    def get_disconnected_term(disconnected_arrays: np.typing.NDArray[np.float64]):
         return compute_disconnected_term(*disconnected_arrays)
     
     if full: # 2D arrays

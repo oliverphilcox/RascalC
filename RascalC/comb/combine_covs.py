@@ -6,7 +6,7 @@ from ..pycorr_utils.counts import get_counts_from_pycorr
 from typing import Callable
 
 
-def combine_covs(rascalc_results1: str, rascalc_results2: str, pycorr_file1: str, pycorr_file2: str, output_cov_file: str, n_mu_bins: int | None = None, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function: Callable[[str], None] = print) -> np.ndarray[float]:
+def combine_covs(rascalc_results1: str, rascalc_results2: str, pycorr_file1: str, pycorr_file2: str, output_cov_file: str, n_mu_bins: int | None = None, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
     """
     Produce s,mu mode single-tracer covariance matrix for the region/footprint that is a combination of two regions/footprints neglecting the correlations between the clustering statistics in the different regions.
     For additional details, see Appendix B.1 of `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_.
@@ -44,7 +44,7 @@ def combine_covs(rascalc_results1: str, rascalc_results2: str, pycorr_file1: str
 
     Returns
     -------
-    combined_cov : np.ndarray[float]
+    combined_cov : np.typing.NDArray[np.float64]
         The resulting covariance matrix for the combined region.
     """
     # Read RascalC results

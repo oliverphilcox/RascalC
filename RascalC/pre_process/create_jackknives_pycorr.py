@@ -6,7 +6,7 @@ import pycorr
 from typing import Callable
 
 
-def get_subsampler_xirunpc(ref_positions: np.ndarray[float], njack: int, position_type: str = 'rdd') -> pycorr.KMeansSubsampler:
+def get_subsampler_xirunpc(ref_positions: np.typing.NDArray[np.float64], njack: int, position_type: str = 'rdd') -> pycorr.KMeansSubsampler:
     if len(ref_positions) != 3: ref_positions = ref_positions.T
     if len(ref_positions) != 3: raise ValueError("The reference positions do not appear 3-dimensional")
     # Remove the OMP_ environment variables temporarily
@@ -21,7 +21,7 @@ def get_subsampler_xirunpc(ref_positions: np.ndarray[float], njack: int, positio
     return subsampler
 
 
-def add_subsample_labels(subsampler: pycorr.twopoint_jackknife.BaseSubsampler, pos_etc: np.ndarray[float], position_type: str = "xyz") -> np.ndarray[float]:
+def add_subsample_labels(subsampler: pycorr.twopoint_jackknife.BaseSubsampler, pos_etc: np.typing.NDArray[np.float64], position_type: str = "xyz") -> np.typing.NDArray[np.float64]:
     positions = pos_etc[:, :3]
     labels = subsampler.label(positions.T, position_type = position_type)
     return np.column_stack((pos_etc, labels))

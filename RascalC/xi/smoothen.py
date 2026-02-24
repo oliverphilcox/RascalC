@@ -9,11 +9,11 @@ from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 from .utils import read_xi_file, write_xi_file
 
 
-def smoothen_xi_multipoles(xi_mult: np.ndarray[float], r_vals: np.ndarray[float], window_length: int, polyorder: int):
+def smoothen_xi_multipoles(xi_mult: np.typing.NDArray[np.float64], r_vals: np.typing.NDArray[np.float64], window_length: int, polyorder: int):
     return savgol_filter(xi_mult * r_vals**2, window_length, polyorder, axis=0) / r_vals**2 # apply filter to r^2 xi_ell and divide to get back xi_ell
 
 
-def smoothen_xi(xi_vals: np.ndarray[float], r_vals: np.ndarray[float], mu_edges: np.ndarray[float], max_l: int, window_length: int, polyorder: int):
+def smoothen_xi(xi_vals: np.typing.NDArray[np.float64], r_vals: np.typing.NDArray[np.float64], mu_edges: np.typing.NDArray[np.float64], max_l: int, window_length: int, polyorder: int):
     # Smoothen r, mu binned correlation function
 
     # Get projection factors to multipoles and back

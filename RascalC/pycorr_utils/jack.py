@@ -20,7 +20,7 @@ def jack_realizations_rascalc(jack_estimator: pycorr.twopoint_jackknife.Jackknif
     return [jack_realization_rascalc(jack_estimator, i) for i in jack_estimator.realizations]
 
 
-def get_jack_xi_weights_counts_from_pycorr(jack_estimator: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator, counts_factor: float | None = None, split_above: float = np.inf) -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
+def get_jack_xi_weights_counts_from_pycorr(jack_estimator: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator, counts_factor: float | None = None, split_above: float = np.inf) -> tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]]:
     realizations = jack_realizations_rascalc(jack_estimator)
 
     xi_jack = np.array([jack.corr.ravel() for jack in realizations]) # already wrapped
