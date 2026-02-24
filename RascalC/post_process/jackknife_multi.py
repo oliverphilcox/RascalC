@@ -21,7 +21,7 @@ def load_disconnected_term_multi(input_data: dict[str], cov_filter: np.typing.ND
     disconnected_arrays = np.zeros([len(disconnected_array_names)] + [ntracers] * 2 + EE_RR_single_array_shape)
 
     # put EE1/2 and RR1/2 into arrays with tracer indices
-    for matrix_name, matrices in input_data.values():
+    for matrix_name, matrices in input_data.items():
         matrix_name_split = matrix_name.split("_")
         if len(matrix_name_split) != 2 + full: continue # should skip full if not loading full, and skip subsamples if loading full
         if full and matrix_name_split[-1] != "full": continue # double-check for safety
