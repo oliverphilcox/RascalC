@@ -17,7 +17,7 @@ def combine_covs_legendre(rascalc_results1: str, rascalc_results2: str, pycorr_f
     rascalc_results1, rascalc_results2 : string
         Filenames for the RascalC (post-processing) results for the two regions in NumPy format.
     
-    pycorr_file1, pycorr_file2 : string
+    pycorr_file1, pycorr_file2 : list of strings
         Filenames for the ``pycorr`` (https://github.com/cosmodesi/pycorr) ``.npy`` files with the correlation functions and pair counts for the two regions.
         The order of regions must be the same as in RascalC results.
     
