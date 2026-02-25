@@ -17,8 +17,49 @@ def load_cov_text(filename: str) -> tuple[np.typing.NDArray[np.float64], str]:
             header = l[1:].strip() # take the rest of it as header, removing the leading/trailing spaces and the newline
     return cov, header
 
-def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, print_function: Callable[[str], None] = print):
-    "This reads a .npy file of RascalC Legendre results (or txt covariance converted previously) and a triplet of cosmodesi/pycorr .npy files to produce a covariance for a catalog of these two tracers concatenated, each tracer upweighted by bias (optionally)."
+def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
+    """
+    Given a two-tracer Legendre mode RascalC result (or a text covariance), produce a single-tracer covariance matrix for the combined/concatenated tracer (obtained by concatenating the catalogs of the two tracers, with weight in each optionally multiplied by the corresponding tracer's bias).
+    The correlations between the two tracers in each region are included.
+    For additional details, see `Valcin et al 2025 <https://arxiv.org/abs/2508.05467>`_ and Appendix B.2 of `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_.
+
+    Parameters
+    ----------
+    rascalc_results : string
+        Filename for the RascalC two-tracer post-processing results in NumPy format, or the text file with the covariance matrix converted from such a NumPy file.
+    
+    pycorr_files : list of strings
+        Filenames for the ``pycorr`` (https://github.com/cosmodesi/pycorr) ``.npy`` files with the correlation functions and pair counts.
+        The list must contain three filenames: first for the auto-correlation of the first tracer, second for the cross-correlation of the two tracers, and the third for the auto-correlation of the second tracer.
+    
+    output_cov_file : string
+        Filename for the output text file, in which the covariance matrix will be saved.
+
+    max_l : integer
+        The highest (even) multipole index, must match the RascalC results.
+
+    r_step : float
+        The width of the radial (separation) bins, must match the RascalC results.
+    
+    skip_r_bins : integer or tuple of two integers
+        (Optional) removal of some radial bins from the loaded ``pycorr`` counts before adjusting the radial (separation) bin width to match the covariance settings.
+        First (or the only) number sets the number of radial/separation bins to skip from the beginning.
+        Second number (if provided) sets the number of radial/separation bins to skip from the end.
+        By default, no bins are skipped.
+        E.g. if the ``pycorr`` counts are in 1 Mpc/h bins from 0 to 200 Mpc/h and the RascalC covariances are computed only between 20 and 200 Mpc/h, ``skip_r_bins`` should be ``20``.
+    
+    bias1, bias2 : float
+        (Optional) the bias values to upweight the first and the second tracer respectively.
+        Default is 1 for both tracers (i.e., no upweighting).
+    
+    print_function : Callable[[str], None]
+        (Optional) custom function to use for printing. Needs to take string arguments and not return anything. Default is ``print``.
+
+    Returns
+    -------
+    combined_cov : np.typing.NDArray[np.float64]
+        The resulting covariance matrix for the combined region.
+    """
     # Read RascalC results
     if any(rascalc_results.endswith(ext) for ext in (".npy", ".npz")):
         # read numpy file
@@ -60,3 +101,4 @@ def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[s
     # Produce and save combined cov
     cov_out = pd.T.dot(cov_in).dot(pd)
     np.savetxt(output_cov_file, cov_out, header = header)
+    return cov_out

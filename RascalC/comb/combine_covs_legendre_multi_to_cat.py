@@ -7,8 +7,54 @@ from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 from typing import Callable
 
 
-def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function: Callable[[str], None] = print):
-    "This reads two sets of RascalC results and two triplets of cosmodesi/pycorr .npy files to combine two full 2-tracer covs following NS/GCcomb procedure for 2 tracers in Legendre mode and convert them to a covariance for a catalog of these two tracers concatenated, each tracer upweighted by bias (optionally). Covariance of N(GC) and S(GC) 2PCF is neglected."
+def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
+    """
+    Given two-tracer Legendre mode RascalC results for two regions, produce a single-tracer covariance matrix for the combined/concatenated tracer (obtained by concatenating the catalogs of the two tracers, with weight in each optionally multiplied by the corresponding tracer's bias) for the region/footprint that is a combination of two regions/footprints.
+    The correlations between the clustering statistics in the different regions are neglected, but the correlations between the two tracers in each region are included.
+    More specifically, first the multi-tracer covariances for each region are converted to single-tracer covariances for the combined/concatenated tracer in each region, and then these single-tracer covariances are combined to produce the final covariance for the combined/concatenated tracer for the combined region.
+    For additional details, see `Valcin et al 2025 <https://arxiv.org/abs/2508.05467>`_ and Appendix B.2 of `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_.
+
+    Parameters
+    ----------
+    rascalc_results1, rascalc_results2 : string
+        Filenames for the RascalC (post-processing) results for the two regions in NumPy format.
+    
+    pycorr_files1, pycorr_files2 : list of strings
+        Filenames for the ``pycorr`` (https://github.com/cosmodesi/pycorr) ``.npy`` files with the correlation functions and pair counts for the two regions.
+        Each list must contain three filenames: first for the auto-correlation of the first tracer, second for the cross-correlation of the two tracers, and the third for the auto-correlation of the second tracer.
+        The order of regions must be the same as in RascalC results.
+    
+    output_cov_file : string
+        Filename for the output text file, in which the covariance matrix will be saved.
+
+    max_l : integer
+        The highest (even) multipole index, must match the RascalC results.
+
+    r_step : float
+        The width of the radial (separation) bins, must match the RascalC results.
+    
+    skip_r_bins : integer or tuple of two integers
+        (Optional) removal of some radial bins from the loaded ``pycorr`` counts before adjusting the radial (separation) bin width to match the covariance settings.
+        First (or the only) number sets the number of radial/separation bins to skip from the beginning.
+        Second number (if provided) sets the number of radial/separation bins to skip from the end.
+        By default, no bins are skipped.
+        E.g. if the ``pycorr`` counts are in 1 Mpc/h bins from 0 to 200 Mpc/h and the RascalC covariances are computed only between 20 and 200 Mpc/h, ``skip_r_bins`` should be ``20``.
+    
+    bias1, bias2 : float
+        (Optional) the bias values to upweight the first and the second tracer respectively.
+        Default is 1 for both tracers (i.e., no upweighting).
+    
+    output_cov_file1, output_cov_file2 : string or None
+        (Optional) if provided, the text covariance matrices for the corresponding region for the combined/concatenated tracer will be saved in this file.
+    
+    print_function : Callable[[str], None]
+        (Optional) custom function to use for printing. Needs to take string arguments and not return anything. Default is ``print``.
+
+    Returns
+    -------
+    combined_cov : np.typing.NDArray[np.float64]
+        The resulting covariance matrix for the combined region.
+    """
     # Read RascalC results
     header1 = get_cov_header(rascalc_results1)
     cov1 = load_cov_legendre_multi(rascalc_results1, max_l, print_function)
@@ -86,3 +132,4 @@ def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: 
     # Produce and save combined cov
     cov = pd1.T.dot(cov1).dot(pd1) + pd2.T.dot(cov2).dot(pd2)
     np.savetxt(output_cov_file, cov, header=header) # includes source parts and their shot-noise rescaling values in the header
+    return cov
