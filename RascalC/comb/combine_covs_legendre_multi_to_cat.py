@@ -53,7 +53,7 @@ def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: 
     Returns
     -------
     combined_cov : np.typing.NDArray[np.float64]
-        The resulting covariance matrix for the combined region.
+        The resulting covariance matrix for the combined/concatenated tracer in the combined region.
     """
     # Read RascalC results
     header1 = get_cov_header(rascalc_results1)

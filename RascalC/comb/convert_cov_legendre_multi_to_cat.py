@@ -58,7 +58,7 @@ def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[s
     Returns
     -------
     combined_cov : np.typing.NDArray[np.float64]
-        The resulting covariance matrix for the combined region.
+        The resulting covariance matrix for the combined/concatenated tracer.
     """
     # Read RascalC results
     if any(rascalc_results.endswith(ext) for ext in (".npy", ".npz")):

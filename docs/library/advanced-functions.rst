@@ -55,3 +55,11 @@ Legendre multipoles (``legendre`` binning modes)
 .. automodule:: RascalC.pycorr_utils.sample_cov_multipoles
     :members:
     :member-order: bysource
+
+Covariances for combined/concatenated tracers from two-tracer covariances
+-------------------------------------------------------------------------
+
+.. automodule:: RascalC.combine_tracers
+    :members:
+    :imported-members:
+    :member-order: bysource
