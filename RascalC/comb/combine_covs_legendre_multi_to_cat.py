@@ -1,5 +1,6 @@
 from pycorr import TwoPointCorrelationFunction
 import numpy as np
+import numpy.typing as npt
 from ..pycorr_utils.utils import reshape_pycorr
 from ..cov_utils import get_cov_header, load_cov_legendre_multi
 from ..pycorr_utils.counts import get_counts_from_pycorr
@@ -7,7 +8,7 @@ from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 from typing import Callable
 
 
-def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
+def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     """
     Given two-tracer Legendre mode RascalC results for two regions, produce a single-tracer covariance matrix for the combined/concatenated tracer (obtained by concatenating the catalogs of the two tracers, with weight in each optionally multiplied by the corresponding tracer's bias) for the region/footprint that is a combination of two regions/footprints.
     The correlations between the clustering statistics in the different regions are neglected, but the correlations between the two tracers in each region are included.
@@ -52,7 +53,7 @@ def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: 
 
     Returns
     -------
-    combined_cov : np.typing.NDArray[np.float64]
+    combined_cov : npt.NDArray[np.float64]
         The resulting covariance matrix for the combined/concatenated tracer in the combined region.
     """
     # Read RascalC results

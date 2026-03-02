@@ -2,10 +2,11 @@
 
 import pycorr
 import numpy as np
+import numpy.typing as npt
 from .utils import reshape_pycorr
 
 
-def get_counts_from_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator, counts_factor: float | None = None, split_above: float = np.inf) -> np.typing.NDArray[np.float64]:
+def get_counts_from_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator, counts_factor: float | None = None, split_above: float = np.inf) -> npt.NDArray[np.float64]:
     if not counts_factor: # use normalized counts
         return xi_estimator.R1R2.normalized_wcounts()
     paircounts = xi_estimator.R1R2.wcounts / counts_factor

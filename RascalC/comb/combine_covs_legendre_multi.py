@@ -1,5 +1,6 @@
 from pycorr import TwoPointCorrelationFunction
 import numpy as np
+import numpy.typing as npt
 from ..pycorr_utils.utils import reshape_pycorr
 from ..cov_utils import get_cov_header, load_cov_legendre_multi
 from ..pycorr_utils.counts import get_counts_from_pycorr
@@ -7,7 +8,7 @@ from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
 from typing import Callable
 
 
-def combine_covs_legendre_multi(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
+def combine_covs_legendre_multi(rascalc_results1: str, rascalc_results2: str, pycorr_files1: list[str], pycorr_files2: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, output_cov_file1: str | None = None, output_cov_file2: str | None = None, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     """
     Produce Legendre mode two-tracer covariance matrix for the region/footprint that is a combination of two regions/footprints neglecting the correlations between the clustering statistics in the different regions.
     For additional details, see Appendix B.2 of `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_.
@@ -46,7 +47,7 @@ def combine_covs_legendre_multi(rascalc_results1: str, rascalc_results2: str, py
 
     Returns
     -------
-    combined_cov : np.typing.NDArray[np.float64]
+    combined_cov : npt.NDArray[np.float64]
         The resulting covariance matrix for the combined region.
     """
     # Read RascalC results

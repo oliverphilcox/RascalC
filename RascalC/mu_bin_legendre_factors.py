@@ -2,10 +2,11 @@
 
 from scipy.special import legendre
 import numpy as np
+import numpy.typing as npt
 import os
 
 
-def compute_mu_bin_legendre_factors(mu_edges: np.typing.NDArray[np.float64], max_l: int, do_inverse: bool = False) -> np.typing.NDArray[np.float64] | tuple[np.typing.NDArray[np.float64], np.typing.NDArray[np.float64]]:
+def compute_mu_bin_legendre_factors(mu_edges: npt.NDArray[np.float64], max_l: int, do_inverse: bool = False) -> npt.NDArray[np.float64] | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """
     Compute projection factors from angular (mu) bins (first index) to (even) Legendre multipoles (second index).
     With do_inverse, also computes the projection factors from (even) Legendre multipoles (first index) to angular (mu) bins (second index).

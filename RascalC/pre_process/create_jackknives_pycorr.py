@@ -1,12 +1,13 @@
 """ This function will assign a jackknife region to each input particle, in a way compatible with pycorr used in DESI data processing. Data is saved as a 5 column text file."""
 
 import numpy as np
+import numpy.typing as npt
 import os
 import pycorr
 from typing import Callable
 
 
-def get_subsampler_xirunpc(ref_positions: np.typing.NDArray[np.float64], njack: int, position_type: str = 'rdd') -> pycorr.KMeansSubsampler:
+def get_subsampler_xirunpc(ref_positions: npt.NDArray[np.float64], njack: int, position_type: str = 'rdd') -> pycorr.KMeansSubsampler:
     if len(ref_positions) != 3: ref_positions = ref_positions.T
     if len(ref_positions) != 3: raise ValueError("The reference positions do not appear 3-dimensional")
     # Remove the OMP_ environment variables temporarily
@@ -21,7 +22,7 @@ def get_subsampler_xirunpc(ref_positions: np.typing.NDArray[np.float64], njack: 
     return subsampler
 
 
-def add_subsample_labels(subsampler: pycorr.twopoint_jackknife.BaseSubsampler, pos_etc: np.typing.NDArray[np.float64], position_type: str = "xyz") -> np.typing.NDArray[np.float64]:
+def add_subsample_labels(subsampler: pycorr.twopoint_jackknife.BaseSubsampler, pos_etc: npt.NDArray[np.float64], position_type: str = "xyz") -> npt.NDArray[np.float64]:
     positions = pos_etc[:, :3]
     labels = subsampler.label(positions.T, position_type = position_type)
     return np.column_stack((pos_etc, labels))

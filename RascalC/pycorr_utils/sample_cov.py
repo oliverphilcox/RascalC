@@ -2,10 +2,11 @@ r"These functions generate sample covariances of binned :math:`\xi(s,\mu)` from 
 
 import pycorr
 import numpy as np
+import numpy.typing as npt
 from .utils import reshape_pycorr
 
 
-def sample_cov_from_pycorr(xi_estimators: list[list[pycorr.twopoint_estimator.BaseTwoPointEstimator]], n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf) -> np.typing.NDArray[np.float64]:
+def sample_cov_from_pycorr(xi_estimators: list[list[pycorr.twopoint_estimator.BaseTwoPointEstimator]], n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf) -> npt.NDArray[np.float64]:
     r"""
     Produce a sample covariance of binned :math:`\xi(s,\mu)` from ``cosmodesi/pycorr`` ``s_mu`` `2PCF estimators <https://github.com/cosmodesi/pycorr>`_.
     Multiple tracers are supported.

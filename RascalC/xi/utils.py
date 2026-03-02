@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as npt
 import os
 from ..utils import my_a2s
 
@@ -12,7 +13,7 @@ def read_xi_file(xi_file: str):
     return r_vals, mu_vals, xi_vals
 
 
-def write_xi_file(xi_file: str, r_vals: np.typing.NDArray[np.float64], mu_vals: np.typing.NDArray[np.float64], xi_vals: np.typing.NDArray[np.float64]):
+def write_xi_file(xi_file: str, r_vals: npt.NDArray[np.float64], mu_vals: npt.NDArray[np.float64], xi_vals: npt.NDArray[np.float64]):
     # Reproduce RascalC text format using numpy functions
     header = my_a2s(r_vals) + '\n' + my_a2s(mu_vals)
     np.savetxt(xi_file, xi_vals, header=header, comments='')

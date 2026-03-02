@@ -1,11 +1,12 @@
 ## Simple functions to get shot noise rescaling from one or many RascalC files
 
 import numpy as np
+import numpy.typing as npt
 from .utils import blank_function
 from typing import Callable
 
 
-def get_shot_noise_rescaling(rascalc_filename: str) -> float | np.typing.NDArray[np.float64]:
+def get_shot_noise_rescaling(rascalc_filename: str) -> float | npt.NDArray[np.float64]:
     "Retrieve the shot noise rescaling value from RascalC Numpy (.npz) file."
     with np.load(rascalc_filename) as f:
         return f['shot_noise_rescaling']

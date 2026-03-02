@@ -7,6 +7,7 @@ This module contains convenience functions that
 """
 
 import numpy as np
+import numpy.typing as npt
 from typing import Callable
 from .get_shot_noise_rescaling import get_shot_noise_rescaling
 
@@ -19,7 +20,7 @@ def get_cov_header(rascalc_results_file: str) -> str:
     return "shot_noise_rescaling = " + str(get_shot_noise_rescaling(rascalc_results_file))
 
 
-def convert_cov_legendre(cov: np.typing.NDArray[np.float64], max_l: int) -> np.typing.NDArray[np.float64]:
+def convert_cov_legendre(cov: npt.NDArray[np.float64], max_l: int) -> npt.NDArray[np.float64]:
     """
     Change the bin ordering of the covariance matrix in Legendre mode for a single tracer.
     The original bin ordering (in ``RascalC`` ``.npy`` files) is by radial bins (top-level) and then by multipoles.
@@ -36,7 +37,7 @@ def convert_cov_legendre(cov: np.typing.NDArray[np.float64], max_l: int) -> np.t
     return cov
 
 
-def convert_cov_legendre_multi(cov: np.typing.NDArray[np.float64], max_l: int) -> np.typing.NDArray[np.float64]:
+def convert_cov_legendre_multi(cov: npt.NDArray[np.float64], max_l: int) -> npt.NDArray[np.float64]:
     """
     Change the bin ordering of the covariance matrix in Legendre mode for two tracers.
     The original bin ordering (in ``RascalC`` ``.npy`` files) is by the correlation function (top-level; first auto-correlation, then cross-correlation and last the second auto-correlation), then by radial bins and then by multipoles (bottom-level).
@@ -53,7 +54,7 @@ def convert_cov_legendre_multi(cov: np.typing.NDArray[np.float64], max_l: int) -
     return cov
 
 
-def convert_cov_multi_to_cross(cov: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.float64]:
+def convert_cov_multi_to_cross(cov: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     Select only the cross x cross-correlation part (middle block) of the full two-tracer covariance.
     This function does not change the bin order of the covariance.
@@ -67,7 +68,7 @@ def convert_cov_multi_to_cross(cov: np.typing.NDArray[np.float64]) -> np.typing.
     return cov
 
 
-def convert_cov_legendre_multi_to_cross(cov: np.typing.NDArray[np.float64], max_l: int) -> np.typing.NDArray[np.float64]:
+def convert_cov_legendre_multi_to_cross(cov: npt.NDArray[np.float64], max_l: int) -> npt.NDArray[np.float64]:
     """
     Select only the cross x cross-correlation part (middle block) of the full two-tracer covariance in Legendre mode.
     This function also changes the bin order of the covariance as in :func:`convert_cov_legendre`.
@@ -85,7 +86,7 @@ def convert_cov_legendre_multi_to_cross(cov: np.typing.NDArray[np.float64], max_
     return cov
 
 
-def load_cov(rascalc_results_file: str, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
+def load_cov(rascalc_results_file: str, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     "Load the theoretical covariance matrix from RascalC results file as-is, intended for the s_mu mode."
     with np.load(rascalc_results_file) as f:
         print_function(f"Max abs eigenvalue of inversion bias correction matrix is {np.max(np.abs(np.linalg.eigvals(f['full_theory_D_matrix']))):.2e}")
@@ -93,22 +94,22 @@ def load_cov(rascalc_results_file: str, print_function: Callable[[str], None] = 
         return f['full_theory_covariance']
 
 
-def load_cov_legendre(rascalc_results_file: str, max_l: int, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
+def load_cov_legendre(rascalc_results_file: str, max_l: int, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     "Load the theoretical covariance matrix from RascalC results file and change the bin ordering as in :func:`convert_cov_legendre`; intended for Legendre single-tracer mode."
     return convert_cov_legendre(load_cov(rascalc_results_file, print_function), max_l)
 
 
-def load_cov_legendre_multi(rascalc_results_file: str, max_l: int, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
+def load_cov_legendre_multi(rascalc_results_file: str, max_l: int, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     "Load the theoretical covariance matrix from RascalC results file and change the bin ordering as in :func:`convert_cov_legendre_multi`; intended for Legendre two-tracer mode."
     return convert_cov_legendre_multi(load_cov(rascalc_results_file, print_function), max_l)
 
 
-def load_cov_cross_from_multi(rascalc_results_file: str, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
+def load_cov_cross_from_multi(rascalc_results_file: str, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     "Load only the cross x cross-correlation part (middle block) of the full two-tracer covariance in a RascalC results file without conversion."
     return convert_cov_multi_to_cross(load_cov(rascalc_results_file, print_function))
 
 
-def load_cov_legendre_cross_from_multi(rascalc_results_file: str, max_l: int, print_function: Callable[[str], None] = print) -> np.typing.NDArray[np.float64]:
+def load_cov_legendre_cross_from_multi(rascalc_results_file: str, max_l: int, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     "Load only the cross x cross-correlation part (middle block) of the full two-tracer covariance in a RascalC results file with the Legendre-mode conversion (see :func:`convert_cov_legendre`)."
     return convert_cov_legendre_multi_to_cross(load_cov(rascalc_results_file, print_function), max_l)
 

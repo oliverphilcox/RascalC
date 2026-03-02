@@ -5,6 +5,7 @@ randoms_filename = "mock_random_DR12_CMASS_N_50x1.rdzw"
 
 # Read the original files: text with RA, DEC, Z (redshift) and weight columns.
 import numpy as np
+import numpy.typing as npt
 from astropy.table import Table
 galaxies = Table(np.loadtxt(galaxies_filename, usecols = range(4)), names = ["RA", "DEC", "Z", "WEIGHT"]) # ignore the last column, not sure what it is
 randoms = Table(np.loadtxt(randoms_filename, usecols = range(4)), names = ["RA", "DEC", "Z", "WEIGHT"])
@@ -18,7 +19,7 @@ randoms["comov_dist"] = comoving_distance_Mpch(randoms["Z"], Omega_m, Omega_k, w
 
 
 # Let us define a utility function for position formatting that will be useful on several more occasions.
-def get_rdd_positions(catalog: Table) -> tuple[np.typing.NDArray[np.float64]]: # utility function to format positions from a catalog
+def get_rdd_positions(catalog: Table) -> tuple[npt.NDArray[np.float64]]: # utility function to format positions from a catalog
     return (catalog["RA"], catalog["DEC"], catalog["comov_dist"])
 
 

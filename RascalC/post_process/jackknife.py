@@ -4,6 +4,7 @@ We output the data and theory jackknife covariance matrices, in addition to full
 """
 
 import numpy as np
+import numpy.typing as npt
 import os
 from warnings import warn
 from .utils import symmetrized, cov_filter_smu, load_matrices_single, check_eigval_convergence, add_cov_terms_single, fit_shot_noise_rescaling, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
@@ -11,7 +12,7 @@ from ..raw_covariance_matrices import load_raw_covariances_smu
 from typing import Literal, Callable, Iterable
 
 
-def load_disconnected_term_single(input_data: dict[str], cov_filter: np.typing.NDArray[np.int_], RR: np.typing.NDArray[np.float64], weights: np.typing.NDArray[np.float64], tracer: Literal[1, 2] = 1, full: bool = True) -> np.typing.NDArray[np.float64]:
+def load_disconnected_term_single(input_data: dict[str], cov_filter: npt.NDArray[np.int_], RR: npt.NDArray[np.float64], weights: npt.NDArray[np.float64], tracer: Literal[1, 2] = 1, full: bool = True) -> npt.NDArray[np.float64]:
     suffix = "_" + str(tracer) * 2 + "_full" * full
     disconnected_array_names = ["EE1", "RR1", "EE2", "RR2"]
     disconnected_arrays = np.array([input_data[name + suffix] for name in disconnected_array_names])
@@ -20,7 +21,7 @@ def load_disconnected_term_single(input_data: dict[str], cov_filter: np.typing.N
     fact = 1 - np.matmul(np.asmatrix(weights).T, np.asmatrix(weights))
     norm = RRaRRb * fact
 
-    def compute_disconnected_term(EEaA1: np.typing.NDArray[np.float64], RRaA1: np.typing.NDArray[np.float64], EEaA2: np.typing.NDArray[np.float64], RRaA2: np.typing.NDArray[np.float64]):
+    def compute_disconnected_term(EEaA1: npt.NDArray[np.float64], RRaA1: npt.NDArray[np.float64], EEaA2: npt.NDArray[np.float64], RRaA2: npt.NDArray[np.float64]):
         # argument order follows disconnected_array_names
         w_aA1 = RRaA1 / RRaA1.sum(axis = 0)
         w_aA2 = RRaA2 / RRaA2.sum(axis = 0)
@@ -29,7 +30,7 @@ def load_disconnected_term_single(input_data: dict[str], cov_filter: np.typing.N
         cx = np.matmul(diff1.T, diff2) / norm
         return cx[cov_filter]
     
-    def get_disconnected_term(disconnected_arrays: np.typing.NDArray[np.float64]):
+    def get_disconnected_term(disconnected_arrays: npt.NDArray[np.float64]):
         return compute_disconnected_term(*disconnected_arrays)
     
     if full: # 2D arrays

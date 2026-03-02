@@ -1,5 +1,6 @@
 from typing import Iterable, Callable, Literal
 import numpy as np
+import numpy.typing as npt
 import os
 from glob import glob
 from re import fullmatch
@@ -35,7 +36,7 @@ def post_process_auto(file_root: str,
                       xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
                       xi_12_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
                       xi_22_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
-                      xi_sample_cov: np.typing.NDArray[np.float64] | None = None,
+                      xi_sample_cov: npt.NDArray[np.float64] | None = None,
                       print_function: Callable[[str], None] = print,
                       extra_convergence_check: bool = True,
                       jackknife: bool | None = None, load_sample_cov: bool | None = None,
