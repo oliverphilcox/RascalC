@@ -5,7 +5,6 @@ import numpy.typing as npt
 import os
 from glob import glob
 from shutil import copy2, copytree
-from warnings import warn
 from typing import Callable, Iterable
 from .utils import rmdir_if_exists_and_empty
 
@@ -41,16 +40,16 @@ def organize_filename(filename: str, output_groups: dict, jack: bool = False) ->
     output_groups[output_group_name][matrix_name][suffix] = filename
 
 
-def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[str]):
+def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[str], print_function: Callable[[str], None] = print) -> None:
     "Save the dictionary of Numpy arrays into directory avoiding name clashes"
     output_filename = os.path.join(output_dir, f"Raw_Covariance_Matrices_{output_group_name}.npz")
     if os.path.exists(output_filename):
-        warn(f"The default output filename for group {output_group_name}, {output_filename}, already exists. Will try to find a replacement.")
+        print_function(f"The default output filename for group {output_group_name}, {output_filename}, already exists. Will try to find a replacement.")
         i = 1
         while True:
             output_filename = os.path.join(output_dir, f"Raw_Covariance_Matrices_{output_group_name}.{i}.npz")
             if not os.path.exists(output_filename):
-                warn(f"Found unused name {output_filename}, will save there.")
+                print_function(f"Found unused name {output_filename}, will save there.")
                 break
             i += 1
     
@@ -58,10 +57,12 @@ def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[s
     np.savez_compressed(output_filename, **output_dictionary)
 
 
-def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_function: Callable[[str], None] = print) -> dict[str, dict[str, npt.NDArray[np.float64]]]:
+def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, check_finished: bool = True, two_tracers: bool | None = None, print_function: Callable[[str], None] = print) -> dict[str, dict[str, npt.NDArray[np.float64]]]:
     """
     Collect the covariance matrices from text files written by the C++ code and organize them into a Numpy .npz file.
     With cleanup enabled (default), deletes the text files after collection.
+    With check_finished enabled (default), performs a heuristic check whether the run seems finished by looking for the presence of the full covariance matrices. If they are not found, the collection does not proceed and a warning is issued. This is to prevent disrupting ongoing runs by collecting and/or deleting the text files. If you want to check convergence of timed-out run(s) that did not produce the full matrices, you can disable this check, but be careful not to disrupt ongoing runs.
+    With check_finished enabled, the code additionally checks presence of all types of matrices for two tracers. Pass two_tracers = True to enable this check explicitly, or two_tracers = False to disable it. By default (two_tracers = None), the code will try to guess whether the run is for two tracers by looking for the presence of the xi_22.dat file, which is only produced for two tracers by :func:`RascalC.run_cov`.
     """
 
     cov_dir_all = os.path.join(cov_dir, 'CovMatricesAll/')
@@ -83,19 +84,30 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_fu
     
     for output_group_name, output_group in output_groups.items():
         print_function(f"Processing output group {output_group_name}")
-        # check that the different matrices have the same number of subsamples
-        subsample_numbers = []
-        for matrix_filenames_dictionary in output_group.values():
-            subsample_number = 0
-            for suffix in matrix_filenames_dictionary.keys():
-                if isinstance(suffix, int): subsample_number += 1
-                # subsamples have integer suffixes
-            subsample_numbers.append(subsample_number)
-        subsample_number = min(subsample_numbers)
 
-        if any(this_subsample_number != subsample_number for this_subsample_number in subsample_numbers):
-            warn(f"Some matrices in output group {output_group_name} have different number of subsamples. Will cut to the smallest number of subsamples.")
-            # now cut all to the minimal number of subsamples, using the lowest numbers present
+        # check if the run seems finished by looking for the presence of the full matrices, if check_finished is enabled
+        if check_finished:
+            unfinished_names = [matrix_name for matrix_name, matrix_filenames_dictionary in output_group.items() if "full" not in matrix_filenames_dictionary]
+            if unfinished_names:
+                print_function(f"WARNING: {unfinished_names} full matrices not found for output group {output_group_name}. This may indicate that the C++ code is still running. Will skip this output group to avoid disrupting an ongoing run by collecting and/or deleting the text files. If you are sure that the run(s) in this directory finished (e.g., it/they timed out without producing the full matrices), you can disable this check by setting check_finished to False, but be careful not to disrupt ongoing runs.")
+                continue
+            # additional checks for two tracers - all the different types of matrices should be present
+            if two_tracers is None: two_tracers = os.path.isfile(os.path.join(cov_dir, f"xi/xi_22.dat")) # simple heuristic if not provided explicitly, copied from post_process_auto
+            if two_tracers:
+                expected_matrix_names = ['c2_' + i + j for i in "12" for j in "12"] + ['c3_' + i + ',' + index2 for i in "12" for index2 in ("11", "12", "22")] + ['c4_' + indices for indices in ("11,11", "11,22", "12,11", "12,12", "12,21", "21,22", "22,22")]
+                not_found_names = [matrix_name for matrix_name in expected_matrix_names if matrix_name not in output_group]
+                if not_found_names:
+                    print_function(f"WARNING: {not_found_names} two-tracer matrices not found in output group {output_group_name}. This may indicate that the C++ code is still running. Will skip this output group to avoid disrupting an ongoing run by collecting and/or deleting the text files. If you are sure that the run(s) in this directory finished (e.g., it/they timed out without producing the full matrices), you can disable this check by setting check_finished to False, but be careful not to disrupt ongoing runs.")
+                    continue
+
+        # check that the different matrices have the same number of subsamples
+        subsample_numbers = {matrix_name: sum(isinstance(suffix, int) for suffix in matrix_filenames_dictionary.keys()) for matrix_name, matrix_filenames_dictionary in output_group.items()}
+        subsample_number = min(subsample_numbers.values())
+
+        if any(this_subsample_number != subsample_number for this_subsample_number in subsample_numbers.values()):
+            print_function(f"WARNING: Some matrices in output group {output_group_name} have different number of subsamples: {subsample_numbers}. " + ("This may indicate that the C++ code is still running. Will skip this output group to avoid disrupting an ongoing run by collecting and/or deleting the text files. If you are sure that the run(s) in this directory finished (e.g., it/they timed out without producing the full matrices), you can disable this check by setting check_finished to False, but be careful not to disrupt ongoing runs." if check_finished else "Will cut to the smallest number of subsamples."))
+            if check_finished: continue # skip the output group to avoid disrupting an ongoing run
+            # otherwise, cut all to the minimal number of subsamples, using the lowest numbers present
             for matrix_filenames_dictionary in output_group.values():
                 subsample_suffixes_increasing = sorted([suffix for suffix in matrix_filenames_dictionary.keys() if isinstance(suffix, int)])
                 if len(subsample_suffixes_increasing) == 0: continue # some arrays will not have subsamples
@@ -129,13 +141,13 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_fu
             full_matrix_name = matrix_name + "_full"
             if full_matrix_name in output_dictionary:
                 if not np.allclose(output_dictionary[full_matrix_name], full_matrix_computed):
-                    warn(f"For {matrix_name} matrix, the loaded full is different from the average of subsamples. The latter will be saved.")
+                    print_function(f"WARNING: For {matrix_name} matrix, the loaded full is different from the average of subsamples. The latter will be saved.")
                     matrix_filenames_dictionary.pop("full") # remove the filename since it will be technically unused
             output_dictionary[full_matrix_name] = full_matrix_computed
         
         return_dictionary[output_group_name] = output_dictionary
         
-        save_safe(cov_dir, output_group_name, output_dictionary)
+        save_safe(cov_dir, output_group_name, output_dictionary, print_function)
 
         # now that the file is saved (not any earlier to be sure), can remove all the text files
         # the list contains only the files that had their contents loaded and saved
@@ -154,7 +166,7 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, print_fu
     return return_dictionary
 
 
-def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print) -> dict[str]:
+def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Iterable[int] | Iterable[bool] = None, check_finished: bool = True, two_tracers: bool | None = None, print_function: Callable[[str], None] = print) -> dict[str]:
     """
     Load the raw covariance matrices as a dictionary. Uses the Numpy file if it exists, otherwise tried to run the collection function.
 
@@ -167,12 +179,15 @@ def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Ite
     - if a positive integer, returns as many samples from the beginning;
     - if a sequence of integers, returns subsamples with indices from this sequence;
     - sequence of boolean values is interpreted as a boolean mask for subsamples.
+
+    With check_finished enabled (default), before collecting raw covariance matrices (if needed), performs a heuristic check whether the run seems finished by looking for the presence of the full covariance matrices. If they are not found, the collection does not proceed and a warning is issued. This is to prevent disrupting ongoing runs by collecting and/or deleting the text files. If you want to check convergence of timed-out run(s) that did not produce the full matrices, you can disable this check, but be careful not to disrupt ongoing runs.
+    With check_finished enabled, the code additionally checks presence of all types of matrices for two tracers. Pass two_tracers = True to enable this check explicitly, or two_tracers = False to disable it. By default (two_tracers = None), the code will try to guess whether the run is for two tracers by looking for the presence of the xi_22.dat file, which is only produced for two tracers by :func:`RascalC.run_cov`.
     """
     input_filename = os.path.join(file_root, f"Raw_Covariance_Matrices_{label}.npz")
     if os.path.isfile(input_filename): raw_cov = dict(np.load(input_filename))
     else:
         print_function(f"Collecting the raw covariance matrices from {file_root}")
-        result = collect_raw_covariance_matrices(file_root, print_function = print_function)
+        result = collect_raw_covariance_matrices(file_root, check_finished=check_finished, two_tracers=two_tracers, print_function=print_function)
         if label not in result:
             raise ValueError(f"Raw covariance matrices for {label} not produced. Check the n and m/max_l values.")
         raw_cov = result[label]
@@ -193,7 +208,7 @@ def load_raw_covariances(file_root: str, label: str, n_samples: None | int | Ite
     return raw_cov
 
 
-def load_raw_covariances_smu(file_root: str, n: int, m: int, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print) -> dict[str]:
+def load_raw_covariances_smu(file_root: str, n: int, m: int, n_samples: None | int | Iterable[int] | Iterable[bool] = None, check_finished: bool = True, two_tracers: bool | None = None, print_function: Callable[[str], None] = print) -> dict[str]:
     """
     Load the raw covariance matrices from the s_mu mode as a dictionary. Uses the Numpy file if it exists, otherwise tried to run the collection function.
 
@@ -205,12 +220,15 @@ def load_raw_covariances_smu(file_root: str, n: int, m: int, n_samples: None | i
     - if a positive integer, returns as many samples from the beginning;
     - if a sequence of integers, returns subsamples with indices from this sequence;
     - sequence of boolean values is interpreted as a boolean mask for subsamples.
+
+    With check_finished enabled (default), before collecting raw covariance matrices (if needed), performs a heuristic check whether the run seems finished by looking for the presence of the full covariance matrices. If they are not found, the collection does not proceed and a warning is issued. This is to prevent disrupting ongoing runs by collecting and/or deleting the text files. If you want to check convergence of timed-out run(s) that did not produce the full matrices, you can disable this check, but be careful not to disrupt ongoing runs.
+    With check_finished enabled, the code additionally checks presence of all types of matrices for two tracers. Pass two_tracers = True to enable this check explicitly, or two_tracers = False to disable it. By default (two_tracers = None), the code will try to guess whether the run is for two tracers by looking for the presence of the xi_22.dat file, which is only produced for two tracers by :func:`RascalC.run_cov`.
     """
     label = f"n{n}_m{m}"
-    return load_raw_covariances(file_root, label, n_samples, print_function)
+    return load_raw_covariances(file_root, label, n_samples, check_finished, two_tracers, print_function)
 
 
-def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function = print) -> dict[str]:
+def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, n_samples: None | int | Iterable[int] | Iterable[bool] = None, check_finished: bool = True, two_tracers: bool | None = None, print_function = print) -> dict[str]:
     """
     Load the raw covariance matrices from the Legendre modes as a dictionary. Uses the Numpy file if it exists, otherwise tried to run the collection function.
 
@@ -222,12 +240,15 @@ def load_raw_covariances_legendre(file_root: str, n: int, max_l: int, n_samples:
     - if a positive integer, returns as many samples from the beginning;
     - if a sequence of integers, returns subsamples with indices from this sequence;
     - sequence of boolean values is interpreted as a boolean mask for subsamples.
+
+    With check_finished enabled (default), before collecting raw covariance matrices (if needed), performs a heuristic check whether the run seems finished by looking for the presence of the full covariance matrices. If they are not found, the collection does not proceed and a warning is issued. This is to prevent disrupting ongoing runs by collecting and/or deleting the text files. If you want to check convergence of timed-out run(s) that did not produce the full matrices, you can disable this check, but be careful not to disrupt ongoing runs.
+    With check_finished enabled, the code additionally checks presence of all types of matrices for two tracers. Pass two_tracers = True to enable this check explicitly, or two_tracers = False to disable it. By default (two_tracers = None), the code will try to guess whether the run is for two tracers by looking for the presence of the xi_22.dat file, which is only produced for two tracers by :func:`RascalC.run_cov`.
     """
     label = f"n{n}_l{max_l}"
-    return load_raw_covariances(file_root, label, n_samples, print_function)
+    return load_raw_covariances(file_root, label, n_samples, check_finished, two_tracers, print_function)
 
 
-def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_samples: list[None | int | Iterable[int] | Iterable[bool]], output_root: str, collapse_factor: int = 1, print_function: Callable[[str], None] = print) -> dict[str]:
+def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_samples: list[None | int | Iterable[int] | Iterable[bool]], output_root: str, collapse_factor: int = 1, check_finished: bool = True, two_tracers: bool | None = None, print_function: Callable[[str], None] = print) -> dict[str]:
     """
     Catenate the raw covariance matrices from one or more input directories, assuming they are from similar runs: the same number of input random points, ``N2``, ``N3``, ``N4`` and ``loops_per_sample``.
 
@@ -256,7 +277,13 @@ def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_sa
     collapse_factor : positive integer
         (Optional) allows to reduce the number of subsamples by averaging over a given number of adjacent subsamples.
         Default value is 1, meaning no reduction.
-    
+
+    check_finished : boolean
+        (Optional) whether to check if the runs are finished before collecting raw covariance matrices (if that is needed). Default is True.
+
+    two_tracers : boolean | None
+        (Optional) whether the runs are for two tracers (for an additional check for finished runs). If None (default), the code will try to guess by looking for the presence of the xi_22.dat file.
+
     print_function : Callable
         (Optional) custom function to use for printing. Default is ``print``.
 
@@ -272,7 +299,7 @@ def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_sa
     label = f"n{n}_{mstr}"
     result = {}
     for index, (input_root, n_samples) in enumerate(zip(input_roots, ns_samples)):
-        input_file = load_raw_covariances(input_root, label, n_samples, print_function)
+        input_file = load_raw_covariances(input_root, label, n_samples, check_finished, two_tracers, print_function)
         # ignore full arrays
         input_file = {key: value for (key, value) in input_file.items() if not key.endswith("_full")}
         # check that the keys are the same, unless the result is brand new
@@ -280,7 +307,7 @@ def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_sa
             result_keys = set(result.keys())
             input_keys = set(input_file.keys())
             if result_keys != input_keys:
-                warn("Different sets of matrices present among the input files, will only use the overlapping ones.")
+                print_function("Different sets of matrices present among the input files, will only use the overlapping ones.")
                 common_keys = result_keys & input_keys
                 result = {key: result[key] for key in common_keys}
                 input_file = {key: input_file[key] for key in common_keys}
@@ -299,7 +326,7 @@ def cat_raw_covariance_matrices(n: int, mstr: str, input_roots: list[str], ns_sa
         matrix_name_full = matrix_name + "_full"
         result[matrix_name_full] = np.mean(result[matrix_name], axis = 0)
     
-    save_safe(output_root, label, result)
+    save_safe(output_root, label, result, print_function)
 
     # copy other useful files from the first input root, unless identical with the output root
     # assuming they are the same among output roots; otherwise catenation should not be sensible

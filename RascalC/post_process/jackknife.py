@@ -41,7 +41,7 @@ def load_disconnected_term_single(input_data: dict[str], cov_filter: npt.NDArray
     return symmetrized(cx)
 
 
-def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print, dry_run: bool = False) -> dict[str]:
+def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str, m: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, tracer: Literal[1, 2] = 1, n_samples: None | int | Iterable[int] | Iterable[bool] = None, check_finished: bool = True, print_function: Callable[[str], None] = print, dry_run: bool = False) -> dict[str]:
     # Load jackknife xi estimates from data
     print_function(f"Loading correlation function jackknife estimates from {jackknife_file}")
     xi_jack = np.loadtxt(jackknife_file, skiprows=2)
@@ -81,7 +81,7 @@ def post_process_jackknife(jackknife_file: str, weight_dir: str, file_root: str,
     print_function(f"Loading weights file from {RR_file}")
     RR = np.loadtxt(RR_file)
     
-    input_file = load_raw_covariances_smu(file_root, n, m, n_samples, print_function)
+    input_file = load_raw_covariances_smu(file_root, n, m, n_samples, check_finished, print_function=print_function)
 
     # Create output directory
     if not os.path.exists(outdir):

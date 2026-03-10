@@ -10,7 +10,7 @@ from ..raw_covariance_matrices import load_raw_covariances_legendre
 from typing import Iterable, Callable
 
 
-def post_process_legendre_mocks_multi(mock_cov_file: str, file_root: str, n: int, max_l: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, print_function: Callable[[str], None] = print, dry_run: bool = False) -> dict[str]:
+def post_process_legendre_mocks_multi(mock_cov_file: str, file_root: str, n: int, max_l: int, outdir: str, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, check_finished: bool = True, print_function: Callable[[str], None] = print, dry_run: bool = False) -> dict[str]:
     output_name = os.path.join(outdir, 'Rescaled_Multi_Field_Covariance_Matrices_Legendre_Mocks_n%d_m%d.npz' % (n, max_l))
     name_dict = dict(path=output_name, filename=os.path.basename(output_name))
     if dry_run: return name_dict
@@ -19,7 +19,7 @@ def post_process_legendre_mocks_multi(mock_cov_file: str, file_root: str, n: int
 
     mock_cov = np.loadtxt(mock_cov_file)[cov_filter_legendre_pycorr(n, max_l, skip_r_bins, skip_l, multi=True)] # load external mock covariance matrix; select bins and switch their ordering right away
 
-    input_file = load_raw_covariances_legendre(file_root, n, max_l, n_samples, print_function)
+    input_file = load_raw_covariances_legendre(file_root, n, max_l, n_samples, check_finished, two_tracers=True, print_function=print_function)
 
     # Create output directory
     if not os.path.exists(outdir):
