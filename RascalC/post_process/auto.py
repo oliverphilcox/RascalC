@@ -236,43 +236,44 @@ def post_process_auto(file_root: str,
 
     mocks = mocks_new or load_sample_cov
 
-    if not (jackknife or mocks):
-        # case when the shot-noise rescaling is not tuned - as it should be; lacking implementations resolved
-        print_function(f"Using {shot_noise_rescaling1=}" + two_tracers * f" and {shot_noise_rescaling2=}")
+    if not dry_run: # skip the additional messages and filesystem changes if this is just a dry run to determine the output filename and path
+        if not (jackknife or mocks):
+            # case when the shot-noise rescaling is not tuned - as it should be
+            print_function(f"Using {shot_noise_rescaling1=}" + two_tracers * f" and {shot_noise_rescaling2=}")
 
-    if mocks_new:
-        mock_cov_name = os.path.join(out_dir, mock_cov_basename) # in this case, the sample covariance will be written, and that should be into the output directory and not file_root; they can be the same if desired
-        if os.path.isfile(mock_cov_name): warn(f"The default (mock) sample covariance file '{mock_cov_name}' exists and will be overwritten")
-        elif not os.path.isdir(out_dir): # Need to make sure that the output directory exists. This is also checked in each post-processing functions, but only after writing the sample covariance file
-            os.makedirs(os.path.abspath(out_dir)) # abspath is to exclude "../" for makedirs not to become "confused"
-    # then write the sample covariance to file
-    if mocks_precomputed:
-        np.savetxt(mock_cov_name, xi_sample_cov)
-    elif mocks_from_samples:
-        if len(xi_11_samples) <= 1: raise ValueError("Need more than 1 sample in xi_11_samples to compute the sample covariance")
-        if any(not np.allclose(xi_sample.edges[0], xi_11_samples[0].edges[0]) for xi_sample in xi_11_samples[1:]): raise ValueError(f"Found different separation/radial binning in xi_11_samples")
-        if any(not np.allclose(xi_sample.edges[1], np.linspace(0, 1, n_mu_bins + 1)) for xi_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with uniform and/or the inferred number of angular/µ bins")
-        xi_samples_all = [xi_11_samples]
-        if two_tracers:
-            # check the required 22 samples
-            if xi_22_samples is None: raise TypeError("xi_22_samples must be provided for multi-tracer")
-            if len(xi_22_samples) != len(xi_11_samples): raise ValueError("xi_22_samples must contain the same number of samples as xi_11_samples")
-            if any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_22_samples): raise ValueError(f"xi_22_samples must have the same binning as xi_11_samples")
-            # check 12 samples which are not critical. if anything is wrong, substitute 11 samples as a placeholder
-            if xi_12_samples is None:
-                warn("xi_12_samples not provided. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
-                xi_12_samples = xi_11_samples
-            elif len(xi_12_samples) != len(xi_11_samples):
-                warn("xi_12_samples must contain the same number of samples as xi_11_samples, will substitute them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
-                xi_12_samples = xi_11_samples
-            elif any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_12_samples):
-                warn(f"xi_12_samples must have the same binning as xi_11_samples, will substitute them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
-                xi_12_samples = xi_11_samples
-            xi_samples_all += [xi_12_samples, xi_22_samples]
-        if legendre:
-            sample_cov_multipoles_from_pycorr_to_file(xi_samples_all, mock_cov_name, max_l=max_l)
-        else:
-            sample_cov_from_pycorr_to_file(xi_samples_all, mock_cov_name)
+        if mocks_new:
+            mock_cov_name = os.path.join(out_dir, mock_cov_basename) # in this case, the sample covariance will be written, and that should be into the output directory and not file_root; they can be the same if desired
+            if os.path.isfile(mock_cov_name): warn(f"The default (mock) sample covariance file '{mock_cov_name}' exists and will be overwritten")
+            elif not os.path.isdir(out_dir): # Need to make sure that the output directory exists. This is also checked in each post-processing functions, but only after writing the sample covariance file
+                os.makedirs(os.path.abspath(out_dir)) # abspath is to exclude "../" for makedirs not to become "confused"
+        # then write the sample covariance to file
+        if mocks_precomputed:
+            np.savetxt(mock_cov_name, xi_sample_cov)
+        elif mocks_from_samples:
+            if len(xi_11_samples) <= 1: raise ValueError("Need more than 1 sample in xi_11_samples to compute the sample covariance")
+            if any(not np.allclose(xi_sample.edges[0], xi_11_samples[0].edges[0]) for xi_sample in xi_11_samples[1:]): raise ValueError(f"Found different separation/radial binning in xi_11_samples")
+            if any(not np.allclose(xi_sample.edges[1], np.linspace(0, 1, n_mu_bins + 1)) for xi_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with uniform and/or the inferred number of angular/µ bins")
+            xi_samples_all = [xi_11_samples]
+            if two_tracers:
+                # check the required 22 samples
+                if xi_22_samples is None: raise TypeError("xi_22_samples must be provided for multi-tracer")
+                if len(xi_22_samples) != len(xi_11_samples): raise ValueError("xi_22_samples must contain the same number of samples as xi_11_samples")
+                if any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_22_samples): raise ValueError(f"xi_22_samples must have the same binning as xi_11_samples")
+                # check 12 samples which are not critical. if anything is wrong, substitute 11 samples as a placeholder
+                if xi_12_samples is None:
+                    warn("xi_12_samples not provided. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                    xi_12_samples = xi_11_samples
+                elif len(xi_12_samples) != len(xi_11_samples):
+                    warn("xi_12_samples must contain the same number of samples as xi_11_samples, will substitute them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                    xi_12_samples = xi_11_samples
+                elif any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_12_samples):
+                    warn(f"xi_12_samples must have the same binning as xi_11_samples, will substitute them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                    xi_12_samples = xi_11_samples
+                xi_samples_all += [xi_12_samples, xi_22_samples]
+            if legendre:
+                sample_cov_multipoles_from_pycorr_to_file(xi_samples_all, mock_cov_name, max_l=max_l)
+            else:
+                sample_cov_from_pycorr_to_file(xi_samples_all, mock_cov_name)
 
     if two_tracers:
         if legendre:
