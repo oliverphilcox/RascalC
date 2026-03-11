@@ -15,7 +15,7 @@ Covariance comparison functions
 Extra convergence check functions
 ---------------------------------
 
-Extra convergence check is performed in the main wrapper function (``RascalC.run_cov``) and also performed by default in the automatic post-processing function (``RascalC.post_process_auto``), but the following functions may be useful to run additionally.
+Extra convergence check is performed in the main wrapper function (:func:`RascalC.run_cov`) and also performed by default in the automatic post-processing function (:func:`RascalC.post_process_auto`), but the following functions may be useful to run additionally.
 
 .. automodule:: RascalC.convergence_check_extra
     :members:
