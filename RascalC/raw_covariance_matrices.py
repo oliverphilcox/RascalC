@@ -159,7 +159,7 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, check_fi
         print_function(f"Finished with output group {output_group_name}")
 
     # remove subdirectories too if they are empty
-    if cleanup:
+    if cleanup and len(output_groups) > 0: # also don't want to delete directories if no output groups were found. This can happen when the run is ongoing at an early stage and the text files are not yet produced, removing a directory will cause an error when the C++ code eventually tries to write them
         rmdir_if_exists_and_empty(cov_dir_all)
         rmdir_if_exists_and_empty(cov_dir_jack)
 
