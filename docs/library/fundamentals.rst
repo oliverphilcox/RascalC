@@ -304,7 +304,7 @@ Post-processing
 ---------------
 
 A suitable post-processing routine is invoked at the end of the main wrapper function (:func:`RascalC.run_cov`), so in many circumstances you may not need to run it separately.
-However, this automated but customizable post-processing routine is useful for timed-out runs, switching the mode, testing different cuts and/or output combinations in cases of insufficient convergence, etc.
+However, this automated but customizable post-processing routine is useful for switching the mode, testing different cuts and/or output combinations in cases of insufficient convergence, inspecting aborted or timed-out runs, etc.
 
 .. autofunction:: RascalC.post_process_auto
 

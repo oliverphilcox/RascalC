@@ -52,7 +52,10 @@ def post_process_auto(file_root: str,
         - By default, this function guesses jackknife or mock pipeline and the covariance binning mode by the output directory contents, but you can also specify some or all of these regimes via optional arguments.
         - Note that ``skip_s_bins`` and ``skip_l`` are not auto-determined, so by default no bins are be skipped even if they were cut in :func:`RascalC.run_cov`.
 
-    Do not run this (or any other post-processing function/script) while the main RascalC computation is running — this may delete the output directory and cause the code to crash.
+    Now it should be safe to run this (or attempt other post-processing) while the main RascalC computation is still running, as long as you do not put multiple runs into one output directory.
+    Some extra caution may be needed for two-tracer computations, but they should be good if you ran them with :func:`RascalC.run_cov`.
+    This is achieved by a default heuristic check for the normal finishing of the main RascalC computation.
+    With this, inspecting the output of an aborted or timed-out run is harder, by default it will be considered unfinished. But if you are sure that the main computation is not running, you can disable the check via ``check_finished=False``. Doing this once should be sufficient, repeated post-processing attempts should no longer detect the run as unfinished.
 
     Parameters
     ----------
@@ -140,7 +143,7 @@ def post_process_auto(file_root: str,
         (Optional) integer value is used to set manually the number of radial bins, angular bins (not needed in some Legendre modes), jackknife regions (jackknife mode only) and maximum (even) ell (Legendre mode only) respectively. Each parameter which is None (default) is determined automatically.
     
     check_finished : boolean
-        (Optional) whether to check if the RascalC computation was finished successfully before post-processing to avoid disrupting ongoing runs. It is on by default. You can disable this check, but we advise to do so only if you are sure that the main RascalC computation is not running in the directory due to an interruption and/or time-out and you want to check the quality of this unfinished run's output.
+        (Optional) whether to check if the RascalC computation was finished successfully before post-processing to avoid disrupting ongoing runs. It is on by default for safety. You can disable this check, but we advise to do so only if you are sure that the main RascalC computation is not running in the directory due to an interruption and/or time-out and you want to check the quality of this unfinished run's output. Doing this once should be sufficient, repeated post-processing attempts should no longer detect the run as unfinished.
     
     dry_run: boolean
         (Optional) If True, this will not run actual post-processing, only determine the filename and path (see below).
