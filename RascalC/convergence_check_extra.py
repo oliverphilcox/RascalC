@@ -1,7 +1,7 @@
 """
 Functions to perform extra convergence check on full (and jackknife) RascalC integrals.
 More specifically, divide integral subsamples into halves and check similarity of their average results.
-These methods work in any mode — e.g. jackknife, Legendre, multi-tracer — as it utilizes universal data from RascalC file
+These methods work in any mode — e.g. jackknife, Legendre, multi-tracer — as they utilize universal data from a RascalC post-processed npz file.
 """
 
 import numpy as np
