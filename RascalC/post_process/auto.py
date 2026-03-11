@@ -45,7 +45,7 @@ def post_process_auto(file_root: str,
                       n_jack: int | None = None,
                       max_l: int | None = None,
                       check_finished: bool = True,
-                      dry_run: bool = False) -> dict[str]:
+                      dry_run: bool = False) -> dict[str, npt.NDArray[np.float64] | float | str]:
     r"""
     Automatic but highly customizable post-processing interface. Designed to work with the :func:`RascalC.run_cov` outputs.
 
