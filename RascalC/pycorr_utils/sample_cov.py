@@ -58,7 +58,7 @@ def sample_cov_from_pycorr_to_file(xi_estimators: list[list[pycorr.twopoint_esti
     np.savetxt(outfile_name, sample_cov_from_pycorr(xi_estimators, n_mu, r_step, r_max))
 
 
-def sample_cov_from_pycorr_files(infile_names: list[list[str]], outfile_name: str, n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf):
+def sample_cov_from_pycorr_files(infile_names: list[list[str]], outfile_name: str, n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf) -> None:
     r"""
     Produce a sample covariance of binned :math:`\xi(s,\mu)` from ``cosmodesi/pycorr`` ``s_mu`` `.npy` files and write the matrix to a text file.
     Multiple tracers are supported.

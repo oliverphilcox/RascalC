@@ -2,11 +2,12 @@
 
 import pycorr
 import numpy as np
+import numpy.typing as npt
 from .utils import reshape_pycorr, write_xi_file
 from typing import Callable
 
 
-def get_input_xi_from_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator):
+def get_input_xi_from_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator) -> npt.NDArray[np.float64]:
     # assume already wrapped; for input xi need to divide by SS instead of RR in post-recon case, in pre-recon case RR=SS so should work too
     return xi_estimator.corr * xi_estimator.R1R2.normalized_wcounts() / xi_estimator.S1S2.normalized_wcounts()
 
@@ -32,7 +33,7 @@ def convert_xi_from_pycorr_to_file(xi_estimators: list[pycorr.twopoint_estimator
     return mean_data_size1, mean_data_size2
 
 
-def convert_xi_from_pycorr_files(infile_names: list[str], outfile_name: str, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, print_function = print):
+def convert_xi_from_pycorr_files(infile_names: list[str], outfile_name: str, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, print_function = print) -> tuple[float, float]:
     # load all pycorr files
     xi_estimators = [pycorr.TwoPointCorrelationFunction.load(infile_name) for infile_name in infile_names]
     return convert_xi_from_pycorr_to_file(xi_estimators, outfile_name, n_mu, r_step, r_max, print_function)

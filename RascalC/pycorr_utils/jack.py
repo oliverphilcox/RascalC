@@ -35,7 +35,7 @@ def get_jack_xi_weights_counts_from_pycorr(jack_estimator: pycorr.twopoint_jackk
     return xi_jack, jack_weights, jack_pairs
 
 
-def convert_jack_xi_weights_counts_from_pycorr_to_files(xi_estimator_orig: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator, xi_jack_name: str, jackweights_name: str, jackpairs_name: str, binpairs_name: str, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, counts_factor: float | None = None, split_above: float = np.inf):
+def convert_jack_xi_weights_counts_from_pycorr_to_files(xi_estimator_orig: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator, xi_jack_name: str, jackweights_name: str, jackpairs_name: str, binpairs_name: str, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, counts_factor: float | None = None, split_above: float = np.inf) -> None:
     xi_estimator = reshape_pycorr(xi_estimator_orig, n_mu, r_step, r_max)
     binpairs = get_counts_from_pycorr(xi_estimator, counts_factor, split_above).ravel()
 
@@ -50,6 +50,6 @@ def convert_jack_xi_weights_counts_from_pycorr_to_files(xi_estimator_orig: pycor
     np.savetxt(jackpairs_name, np.column_stack((jack_numbers, jack_pairs)))
 
 
-def convert_jack_xi_weights_counts_from_pycorr_files(infile_name: str, xi_jack_name: str, jackweights_name: str, jackpairs_name: str, binpairs_name: str, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, counts_factor: float | None = None, split_above: float = np.inf):
+def convert_jack_xi_weights_counts_from_pycorr_files(infile_name: str, xi_jack_name: str, jackweights_name: str, jackpairs_name: str, binpairs_name: str, n_mu: int | None = None, r_step: float = 1, r_max: float = np.inf, counts_factor: float | None = None, split_above: float = np.inf) -> None:
     xi_estimator = pycorr.TwoPointCorrelationFunction.load(infile_name)
     convert_jack_xi_weights_counts_from_pycorr_to_files(xi_estimator, xi_jack_name, jackweights_name, jackpairs_name, binpairs_name, n_mu, r_step, r_max, counts_factor, split_above)

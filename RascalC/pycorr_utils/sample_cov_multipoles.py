@@ -2,10 +2,11 @@ r"These functions generate sample covariances of binned :math:`\xi_\ell(s)` from
 
 import pycorr
 import numpy as np
+import numpy.typing as npt
 from .utils import reshape_pycorr
 
 
-def sample_cov_multipoles_from_pycorr(xi_estimators: list[list[pycorr.twopoint_estimator.BaseTwoPointEstimator]], max_l: int, r_step: float | None = None, r_max: float = np.inf):
+def sample_cov_multipoles_from_pycorr(xi_estimators: list[list[pycorr.twopoint_estimator.BaseTwoPointEstimator]], max_l: int, r_step: float | None = None, r_max: float = np.inf) -> npt.NDArray[np.float64]:
     r"""
     Produce a sample covariance of binned :math:`\xi_\ell(s)` from ``cosmodesi/pycorr`` ``s_mu`` `2PCF estimators <https://github.com/cosmodesi/pycorr>`_.
     Considers only even multipoles.
@@ -47,7 +48,7 @@ def sample_cov_multipoles_from_pycorr(xi_estimators: list[list[pycorr.twopoint_e
     # Weights are assumed the same, hard to figure out alternatives, and they do not seem necessary
 
 
-def sample_cov_multipoles_from_pycorr_to_file(xi_estimators: list[list[pycorr.twopoint_estimator.BaseTwoPointEstimator]], outfile_name: str, max_l: int, r_step: float | None = None, r_max: float = np.inf):
+def sample_cov_multipoles_from_pycorr_to_file(xi_estimators: list[list[pycorr.twopoint_estimator.BaseTwoPointEstimator]], outfile_name: str, max_l: int, r_step: float | None = None, r_max: float = np.inf) -> None:
     r"""
     Produce a sample covariance of binned :math:`\xi_\ell(s)` from ``cosmodesi/pycorr`` ``s_mu`` `2PCF estimators <https://github.com/cosmodesi/pycorr>`_ and write the matrix to a text file.
     Considers only even multipoles.
@@ -61,7 +62,7 @@ def sample_cov_multipoles_from_pycorr_to_file(xi_estimators: list[list[pycorr.tw
     np.savetxt(outfile_name, sample_cov_multipoles_from_pycorr(xi_estimators, max_l, r_step, r_max))
 
 
-def sample_cov_multipoles_from_pycorr_files(infile_names: list[list[str]], outfile_name: str, max_l: int, r_step: float | None = None, r_max: float = np.inf):
+def sample_cov_multipoles_from_pycorr_files(infile_names: list[list[str]], outfile_name: str, max_l: int, r_step: float | None = None, r_max: float = np.inf) -> None:
     r"""
     Produce a sample covariance of binned :math:`\xi_\ell(s)` from ``cosmodesi/pycorr`` ``s_mu`` `.npy` files and write the matrix to a text file.
     Considers only even multipoles.
