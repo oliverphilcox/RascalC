@@ -25,12 +25,7 @@ def get_jack_xi_weights_counts_from_pycorr(jack_estimator: pycorr.twopoint_jackk
     realizations = jack_realizations_rascalc(jack_estimator)
 
     xi_jack = np.array([jack.corr.ravel() for jack in realizations]) # already wrapped
-    if counts_factor: # nonzero value
-        jack_pairs = np.array([jack.R1R2.wcounts.ravel() for jack in realizations]) / counts_factor # already wrapped
-        nonsplit_mask = (jack_estimator.sepavg(axis=0) < split_above)
-        if split_above > 0: jack_pairs[:, nonsplit_mask] /= counts_factor # divide once more below the splitting scale
-    else: # zero value, use normalized counts
-        jack_pairs = np.array([(jack.R1R2.wcounts / jack_estimator.R1R2.wnorm).ravel() for jack in realizations]) # already wrapped
+    jack_pairs = np.array([get_counts_from_pycorr(jack, counts_factor, split_above).ravel() for jack in realizations]) # already wrapped
     jack_weights = jack_pairs / np.sum(jack_pairs, axis=0)[None, :] # weights are pair counts normalized by their total
     return xi_jack, jack_weights, jack_pairs
 
