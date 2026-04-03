@@ -2,4 +2,5 @@ recommonmark
 sphinx-rtd-theme
 graphviz
 git+https://github.com/cosmodesi/pycorr
+git+https://github.com/adematti/lsstypes
 sphinxext-rediraffe
