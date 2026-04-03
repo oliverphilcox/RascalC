@@ -1,4 +1,4 @@
-"This reads a cosmodesi/pycorr .npy file and generates binned pair counts text file for RascalC to use"
+"This generates binned pair counts text file for RascalC from pycorr TwoPointCorrelationFunction objects/files"
 
 import pycorr
 import numpy as np

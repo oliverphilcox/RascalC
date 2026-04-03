@@ -1,4 +1,4 @@
-"This reads cosmodesi/pycorr .npy file(s) and generates input xi text file for RascalC to use"
+"This generates input xi text file for RascalC from pycorr TwoPointCorrelationFunction objects/files"
 
 import pycorr
 import numpy as np

@@ -1,4 +1,4 @@
-"This reads a cosmodesi/pycorr .npy file and generates jackknife xi, weight, paircounts, and total paircounts text files for RascalC to use"
+"This generates jackknife xi, weight, paircounts, and total paircounts text files for RascalC from pycorr TwoPointCorrelationFunction objects/files"
 
 import pycorr
 import numpy as np
@@ -7,7 +7,7 @@ from .utils import reshape_pycorr, fix_bad_bins_pycorr, write_xi_file
 from .counts import get_counts_from_pycorr
 
 
-def jack_realization_rascalc(jack_estimator: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator, i) -> pycorr.TwoPointEstimator:
+def jack_realization_rascalc(jack_estimator: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator, i: int) -> pycorr.TwoPointEstimator:
     # returns RascalC-framed jackknife realization, different from implemented in pycorr
     cls = jack_estimator.__class__.__bases__[0]
     kw = {}
