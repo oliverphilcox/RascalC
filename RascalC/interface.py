@@ -22,8 +22,8 @@ from .pycorr_utils.input_xi import get_input_xi_from_pycorr
 from .lsstypes_utils.jack import get_jack_xi_weights_counts_from_lsstypes
 from .lsstypes_utils.counts import get_counts_from_lsstypes
 from .lsstypes_utils.input_xi import get_input_xi_from_lsstypes
-from .pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
-from .pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pycorr_to_file
+from .sample_cov import sample_cov_to_file
+from .sample_cov_multipoles import sample_cov_multipoles_to_file
 from .mu_bin_legendre_factors import write_mu_bin_legendre_factors
 from .correction_function import compute_correction_function, compute_correction_function_multi
 from .convergence_check_extra import convergence_check_extra
@@ -530,9 +530,9 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
                     xi_12_samples = xi_11_samples
             xi_samples_all += [xi_12_samples, xi_22_samples]
         if legendre:
-            sample_cov_multipoles_from_pycorr_to_file(xi_samples_all, mock_cov_name, max_l=max_l)
+            sample_cov_multipoles_to_file(xi_samples_all, mock_cov_name, max_l=max_l)
         else:
-            sample_cov_from_pycorr_to_file(xi_samples_all, mock_cov_name)
+            sample_cov_to_file(xi_samples_all, mock_cov_name)
     
     # write the randoms file(s)
     randoms_positions = [randoms_positions1, randoms_positions2]
