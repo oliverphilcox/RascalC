@@ -436,9 +436,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     allcounts_all = (allcounts_11, allcounts_12, allcounts_22)
     for c, allcounts in enumerate(allcounts_all[:ncorr]):
         if not np.allclose(get_s_edges_from_allcounts(allcounts), s_edges): raise ValueError(f"allcounts_{indices_corr[c]} separation/radial binning is not consistent with allcounts_11")
-        if get_mu_edges_from_allcounts(allcounts)[0] < 0: # try to fix and wrap
-            print_and_log(f"Wrapping allcounts_{indices_corr[c]} to mu>=0")
-            allcounts = fix_and_wrap_allcounts(allcounts)
+        allcounts = fix_and_wrap_allcounts(allcounts) # try to fix and wrap to |mu| if needed
         if len(get_mu_edges_from_allcounts(allcounts)) != n_mu_bins + 1: raise ValueError(f"The number of angular/mu bins in allcounts_{indices_corr[c]} is not consistent with the number determined from allcounts_11")
         if not np.allclose(get_mu_edges_from_allcounts(allcounts), np.linspace(0, 1, n_mu_bins + 1)): raise ValueError(f"allcounts_{indices_corr[c]} mu binning is not consistent with linear between 0 and 1 (after wrapping)")
         RR_counts = allcount_switch_function(allcounts, lambda x: get_counts_from_pycorr(x, counts_factor), lambda x: get_counts_from_lsstypes(x, counts_factor))
@@ -471,8 +469,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             if xi.shape != all_xi[0].shape: raise ValueError(f"xi_table_{indices_corr[c]} must have the same shape as xi_table_11")
         if isinstance(xi, (pycorr.twopoint_estimator.BaseTwoPointEstimator, lsstypes.Count2Correlation)):
             refine_xi = True
-            if xi.edges[1][0] < 0:
-                xi = fix_and_wrap_allcounts(xi)
+            xi = fix_and_wrap_allcounts(xi) # try to fix and wrap to |mu| if needed
             if c == 0:
                 xi_n_mu_bins = len(get_mu_edges_from_allcounts(xi)) - 1
                 xi_s_edges = get_s_edges_from_allcounts(xi)
@@ -504,13 +501,18 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     elif mocks_from_samples:
         if len(xi_11_samples) <= 1: raise ValueError("Need more than 1 sample in xi_11_samples to compute the sample covariance")
         if any(not np.allclose(get_s_edges_from_allcounts(xi_11_sample), s_edges) for xi_11_sample in xi_11_samples): raise ValueError(f"Found separation/radial binning in xi_11_samples inconsistent with allcounts_11")
-        if any(not np.allclose(get_mu_edges_from_allcounts(xi_11_sample), np.linspace(0, 1, n_mu_bins + 1)) for xi_11_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with allcounts_11")
+        if not legendre: # mu binning is largely irrelevant for Legendre modes
+            xi_11_samples = [fix_and_wrap_allcounts(xi_sample) for xi_sample in xi_11_samples] # try to fix and wrap if needed
+            if any(not np.allclose(get_mu_edges_from_allcounts(xi_11_sample), np.linspace(0, 1, n_mu_bins + 1)) for xi_11_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with allcounts_11")
         xi_samples_all = [xi_11_samples]
         if two_tracers:
             # check the required 22 samples
             if xi_22_samples is None: raise TypeError("xi_22_samples must be provided for multi-tracer")
             if len(xi_22_samples) != len(xi_11_samples): raise ValueError("xi_22_samples must contain the same number of samples as xi_11_samples")
-            if any(not np.allclose(get_s_edges_from_allcounts(xi_sample), get_s_edges_from_allcounts(xi_11_samples[0])) for xi_sample in xi_22_samples): raise ValueError(f"xi_22_samples must have the same binning as xi_11_samples")
+            if any(not np.allclose(get_s_edges_from_allcounts(xi_sample), s_edges) for xi_sample in xi_22_samples): raise ValueError(f"Found separation/radial binning in xi_22_samples inconsistent with allcounts_11")
+            if not legendre: # mu binning is largely irrelevant for Legendre modes
+                xi_22_samples = [fix_and_wrap_allcounts(xi_sample) for xi_sample in xi_22_samples] # try to fix and wrap if needed
+                if any(not np.allclose(get_mu_edges_from_allcounts(xi_sample), np.linspace(0, 1, n_mu_bins + 1)) for xi_sample in xi_22_samples): raise ValueError(f"Found angular/µ binning in xi_22_samples inconsistent with allcounts_11")
             # check 12 samples which are not critical. if anything is wrong, substitute 11 samples as a placeholder
             if xi_12_samples is None:
                 print_and_log("WARNING: xi_12_samples not provided. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
@@ -518,9 +520,14 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             elif len(xi_12_samples) != len(xi_11_samples):
                 print_and_log("WARNING: xi_12_samples must contain the same number of samples as xi_11_samples, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
                 xi_12_samples = xi_11_samples
-            elif any(not np.allclose(get_s_edges_from_allcounts(xi_sample), get_s_edges_from_allcounts(xi_11_samples[0])) for xi_sample in xi_12_samples):
-                print_and_log(f"WARNING: xi_12_samples must have the same binning as xi_11_samples, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+            elif any(not np.allclose(get_s_edges_from_allcounts(xi_sample), s_edges) for xi_sample in xi_12_samples):
+                print_and_log(f"WARNING: Found separation/radial binning in xi_12_samples inconsistent with allcounts_11, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
                 xi_12_samples = xi_11_samples
+            elif not legendre: # mu binning is largely irrelevant for Legendre modes
+                xi_12_samples = [fix_and_wrap_allcounts(xi_sample) for xi_sample in xi_12_samples] # try to fix and wrap if needed
+                if any(not np.allclose(get_mu_edges_from_allcounts(xi_sample), np.linspace(0, 1, n_mu_bins + 1)) for xi_sample in xi_12_samples): 
+                    print_and_log(f"WARNING: Found angular/µ binning in xi_12_samples inconsistent with allcounts_11, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                    xi_12_samples = xi_11_samples
             xi_samples_all += [xi_12_samples, xi_22_samples]
         if legendre:
             sample_cov_multipoles_from_pycorr_to_file(xi_samples_all, mock_cov_name, max_l=max_l)

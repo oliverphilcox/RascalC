@@ -50,4 +50,4 @@ def fix_and_wrap_lsstypes(allcounts: lsstypes.Count2Correlation) -> lsstypes.Cou
 
 def fix_and_wrap_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation:
     "fix bad bins and wrap to |mu| bins for either pycorr estimator or lsstypes Count2Correlation"
-    return allcount_switch_function(allcounts, fix_and_wrap_pycorr, fix_and_wrap_lsstypes)
+    return allcount_switch_function(allcounts, fix_and_wrap_pycorr, fix_and_wrap_lsstypes) if get_mu_edges_from_allcounts(allcounts)[0] < 0 else allcounts # only try to fix and wrap if the first mu edge is negative, as a heuristic for whether it is already in |mu| bins
