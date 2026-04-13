@@ -19,12 +19,14 @@ from .legendre_mix_jackknife_multi import post_process_legendre_mix_jackknife_mu
 
 # dependencies for mock post-processing if we want to separate them at some point
 import pycorr
+import lsstypes
 from .default_mocks import post_process_default_mocks
 from .default_mocks_multi import post_process_default_mocks_multi
 from .legendre_mocks import post_process_legendre_mocks
 from .legendre_mocks_multi import post_process_legendre_mocks_multi
-from ..pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pycorr_to_file
-from ..pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
+from ..allcounts_utils import get_s_edges_from_allcounts, get_mu_edges_from_allcounts, fix_and_wrap_allcounts
+from ..sample_cov_multipoles import sample_cov_multipoles_to_file
+from ..sample_cov import sample_cov_to_file
 
 
 def post_process_auto(file_root: str,
@@ -33,9 +35,9 @@ def post_process_auto(file_root: str,
                       tracer: Literal[1, 2] = 1,
                       n_samples: None | int | Iterable[int] | Iterable[bool] = None,
                       shot_noise_rescaling1: float = 1, shot_noise_rescaling2: float = 1,
-                      xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
-                      xi_12_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
-                      xi_22_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
+                      xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation] | None = None,
+                      xi_12_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation] | None = None,
+                      xi_22_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation] | None = None,
                       xi_sample_cov: npt.NDArray[np.float64] | None = None,
                       print_function: Callable[[str], None] = print,
                       extra_convergence_check: bool = True,
@@ -95,18 +97,18 @@ def post_process_auto(file_root: str,
         (Optional) shot-noise rescaling value for the second tracer only in multi-tracer mode (default 1).
         In jackknife or mock mode, the shot-noise rescaling values are auto-determined, so this parameter has no effect.
     
-    xi_11_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
-        (Optional) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) for the first tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
+    xi_11_samples: None, or list or tuple of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s
+        (Optional) A set of :class:`pycorr.TwoPointEstimator`\s (typically from mocks) for the first tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
         Must have the same binning as the covariance (except possibly the angular/mu bins in Legendre mode).
         Providing this option is not compatible with jackknife (enabled explicitly).
         For two-tracer post-processing, providing this requires also passing ``xi_22_samples`` with the same number of samples and binning.
     
-    xi_22_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
-        (Optional, only for two-tracer post-processing) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) for the second tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
+    xi_22_samples: None, or list or tuple of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s
+        (Optional, only for two-tracer post-processing) A set of :class:`pycorr.TwoPointEstimator`\s (typically from mocks) for the second tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
         For two-tracer post-processing, this is necessary if ``xi_11_samples`` are provided, and the binning and the number of samples must be the same.
     
-    xi_12_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
-        (Optional, only for two-tracer post-processing) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) for the cross-correlation function between the first and the second tracers to compute the sample covariance.
+    xi_12_samples: None, or list or tuple of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s
+        (Optional, only for two-tracer post-processing) A set of :class:`pycorr.TwoPointEstimator`\s (typically from mocks) for the cross-correlation function between the first and the second tracers to compute the sample covariance.
         Must have the same binning and number of samples as ``xi_11_samples`` if provided.
         Only auto-covariances of the auto-correlation functions are used in two-tracer mock-based post-processing, so cross-correlation computations may be omitted if not needed for other reasons.
     
@@ -254,29 +256,40 @@ def post_process_auto(file_root: str,
             np.savetxt(mock_cov_name, xi_sample_cov)
         elif mocks_from_samples:
             if len(xi_11_samples) <= 1: raise ValueError("Need more than 1 sample in xi_11_samples to compute the sample covariance")
-            if any(not np.allclose(xi_sample.edges[0], xi_11_samples[0].edges[0]) for xi_sample in xi_11_samples[1:]): raise ValueError(f"Found different separation/radial binning in xi_11_samples")
-            if any(not np.allclose(xi_sample.edges[1], np.linspace(0, 1, n_mu_bins + 1)) for xi_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with uniform and/or the inferred number of angular/µ bins")
+            s_edges = get_s_edges_from_allcounts(xi_11_samples[0]) # get the separation/radial bin edges from the first sample and check that all other samples have the same binning
+            if any(not np.allclose(get_s_edges_from_allcounts(xi_11_sample), s_edges) for xi_11_sample in xi_11_samples): raise ValueError(f"Found inconsistent separation/radial binning in xi_11_samples")
+            if not legendre: # mu binning is largely irrelevant for Legendre modes
+                xi_11_samples = [fix_and_wrap_allcounts(xi_sample) for xi_sample in xi_11_samples] # try to fix and wrap if needed
+                if any(not np.allclose(get_mu_edges_from_allcounts(xi_11_sample), np.linspace(0, 1, n_mu_bins + 1)) for xi_11_sample in xi_11_samples): raise ValueError(f"Found inconsistent or/and not uniform angular/µ binning in xi_11_samples")
             xi_samples_all = [xi_11_samples]
             if two_tracers:
                 # check the required 22 samples
                 if xi_22_samples is None: raise TypeError("xi_22_samples must be provided for multi-tracer")
                 if len(xi_22_samples) != len(xi_11_samples): raise ValueError("xi_22_samples must contain the same number of samples as xi_11_samples")
-                if any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_22_samples): raise ValueError(f"xi_22_samples must have the same binning as xi_11_samples")
+                if any(not np.allclose(get_s_edges_from_allcounts(xi_sample), s_edges) for xi_sample in xi_22_samples): raise ValueError(f"Found inconsistent separation/radial binning in xi_22_samples")
+                if not legendre: # mu binning is largely irrelevant for Legendre modes
+                    xi_22_samples = [fix_and_wrap_allcounts(xi_sample) for xi_sample in xi_22_samples] # try to fix and wrap if needed
+                    if any(not np.allclose(get_mu_edges_from_allcounts(xi_sample), np.linspace(0, 1, n_mu_bins + 1)) for xi_sample in xi_22_samples): raise ValueError(f"Found angular/µ binning in xi_22_samples inconsistent with xi_11_samples")
                 # check 12 samples which are not critical. if anything is wrong, substitute 11 samples as a placeholder
                 if xi_12_samples is None:
-                    warn("xi_12_samples not provided. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                    warn("WARNING: xi_12_samples not provided. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
                     xi_12_samples = xi_11_samples
                 elif len(xi_12_samples) != len(xi_11_samples):
-                    warn("xi_12_samples must contain the same number of samples as xi_11_samples, will substitute them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                    warn("WARNING: xi_12_samples must contain the same number of samples as xi_11_samples, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
                     xi_12_samples = xi_11_samples
-                elif any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_12_samples):
-                    warn(f"xi_12_samples must have the same binning as xi_11_samples, will substitute them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                elif any(not np.allclose(get_s_edges_from_allcounts(xi_sample), s_edges) for xi_sample in xi_12_samples):
+                    warn(f"WARNING: Found separation/radial binning in xi_12_samples inconsistent with xi_11_samples, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
                     xi_12_samples = xi_11_samples
+                elif not legendre: # mu binning is largely irrelevant for Legendre modes
+                    xi_12_samples = [fix_and_wrap_allcounts(xi_sample) for xi_sample in xi_12_samples] # try to fix and wrap if needed
+                    if any(not np.allclose(get_mu_edges_from_allcounts(xi_sample), np.linspace(0, 1, n_mu_bins + 1)) for xi_sample in xi_12_samples): 
+                        warn(f"WARNING: Found angular/µ binning in xi_12_samples inconsistent with xi_11_samples, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
+                        xi_12_samples = xi_11_samples
                 xi_samples_all += [xi_12_samples, xi_22_samples]
             if legendre:
-                sample_cov_multipoles_from_pycorr_to_file(xi_samples_all, mock_cov_name, max_l=max_l)
+                sample_cov_multipoles_to_file(xi_samples_all, mock_cov_name, max_l=max_l)
             else:
-                sample_cov_from_pycorr_to_file(xi_samples_all, mock_cov_name)
+                sample_cov_to_file(xi_samples_all, mock_cov_name)
 
     if two_tracers:
         if legendre:
