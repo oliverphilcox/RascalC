@@ -42,14 +42,14 @@ Sample covariance utility functions
 Radial and angular bins (``s_mu`` binning mode)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: RascalC.pycorr_utils.sample_cov
+.. automodule:: RascalC.sample_cov
     :members:
     :member-order: bysource
 
 Legendre multipoles (``legendre`` binning modes)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: RascalC.pycorr_utils.sample_cov_multipoles
+.. automodule:: RascalC.sample_cov_multipoles
     :members:
     :member-order: bysource
 

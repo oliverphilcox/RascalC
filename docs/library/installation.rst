@@ -32,9 +32,10 @@ On macOS, install the following with `Homebrew <https://brew.sh/>`_ (other setup
 
     brew install gsl pkg-config libomp
 
-Additionally, the code requires `pycorr <https://github.com/cosmodesi/pycorr>`_ to deal with pair counts and data correlation function estimators.
-To compute pair counts of catalogs, you need a `custom version of Corrfunc <https://github.com/adematti/Corrfunc>`_ (see also `pycorr installation instructions <https://py2pcf.readthedocs.io/en/latest/user/building.html>`_).
-Both can be installed with a single command::
+Additionally, the code requires `pycorr <https://github.com/cosmodesi/pycorr>`_ and `lsstypes <https://github.com/adematti/lsstypes>`_ to deal with pair counts and data correlation function estimators.
+To compute pair counts of catalogs, you need a `custom version of Corrfunc <https://github.com/adematti/Corrfunc>`_ (see also `pycorr installation instructions <https://py2pcf.readthedocs.io/en/latest/user/building.html>`_), or `cucount <https://github.com/adematti/cucount>`_.
+
+``pycorr`` and custom ``Corrfunc`` can be both installed with a single command::
 
     python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'
 

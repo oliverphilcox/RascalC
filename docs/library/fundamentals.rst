@@ -59,33 +59,33 @@ General guidance
 
 General practical usage remarks for the Python wrapper function, :func:`RascalC.run_cov`:
 
-- RR counts and 2PCF can and should all be estimated at the same time using the ``pycorr`` `library for 2-point correlation function estimation <https://github.com/cosmodesi/pycorr>`_; this is an external step to :func:`RascalC.run_cov`.
+- RR counts and 2PCF can and should all be estimated at the same time using the ``pycorr`` `library for 2-point correlation function estimation <https://github.com/cosmodesi/pycorr>`_ (alternatively, `cucount <https://github.com/adematti/cucount>`_ or `desi-clustering <https://github.com/cosmodesi/desi-clustering>`_, which provide the output in `lsstypes <https://github.com/adematti/lsstypes>`_ format); this is an external step to :func:`RascalC.run_cov`.
 
-    - Use ``s_mu`` mode in ``pycorr``, other counting modes are not supported by ``RascalC``.
+    - Use ``s_mu`` mode, other counting modes are not supported by ``RascalC``.
     - Use the Landy-Szalay 2PCF estimator, or the natural 2PCF estimator with analytical RR counts in periodic boxes. Alternative estimators have a different (typically higher) variance and are not supported by ``RascalC``.
     - The necessary pair counts can be computed on GPU, whereas ``RascalC`` can only use CPU (currently).
     - Even if you need to use CPU, **you should run the counts in a separate, independent process from the one calling** :func:`RascalC.run_cov`, **because both should be parallelized and they are known to interfere with each other's efficiency**.
 - Choose a binning ``mode`` for the covariance:
 
     - ``s_mu`` mode for angular bins (uniform in :math:`0 \le \left| \mu \right| \le 1`, where :math:`\mu \equiv \cos \theta`; the mode was implemented in `Philcox et al. 2020 <https://arxiv.org/abs/1904.11070>`_ and used in `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_);
-    - ``legendre_projected`` mode for Legendre multipole moments in separation (radial) bins, corresponding to the ``pycorr`` multipole estimation via projection from angular bins (introduced and validated in `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_).
+    - ``legendre_projected`` mode for Legendre multipole moments in separation (radial) bins, corresponding to the ``pycorr`` (or ``lsstypes``) multipole estimation via projection from angular bins (introduced and validated in `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_).
     - ``legendre_accumulated`` mode for Legendre multipole moments accumulated at pair-counting, using a survey correction function with realistic survey geometry (introduced in `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_). It is simpler with periodic cubic boxes, but this mode is not compatible with jackknives.
-- Load the ``pycorr`` 2PCF estimator computed beforehand, **cut and/or rebin it to radial (separation) bins desired for the covariance** (e.g., 4 Mpc/h wide from 20 to 200 Mpc/h) and pass it through the ``pycorr_allcounts_11`` argument.
+- Load the ``pycorr`` (or ``lsstypes``) 2PCF estimator computed beforehand, **cut and/or rebin it to radial (separation) bins desired for the covariance** (e.g., 4 Mpc/h wide from 20 to 200 Mpc/h) and pass it through the ``allcounts_11`` argument.
 
     - In ``s_mu`` mode, you should also rebin angularly to the desired number of angular bins, barring wrapping of :math:`-1 \le \mu < 0`, as explained next:
     
         - It is recommended that you leave the counts in :math:`-1 \le \mu \le 1` bins (for potential error correction), the code will wrap them to :math:`0 \le \left| \mu \right| \le 1` automatically, halving the number of angular bins.
     - In Legendre modes, you can leave the angular (:math:`\mu`) bins as they are.
-- You also need to provide input clustering in a form of 2PCF table via the ``xi_table_11`` argument. You can use the pre-computed and loaded ``pycorr`` 2PCF estimator again, but you might want to rebin it differently from the previous case. It is usually advisable to have ``xi_table_11`` in finer radial bins than ``pycorr_allcounts_11``, but the angular (:math:`\mu`) should not be too fine to avoid noisiness.
+- You also need to provide input clustering in a form of 2PCF table via the ``xi_table_11`` argument. You can use the pre-computed and loaded ``pycorr`` (or ``lsstypes``) 2PCF estimator again, but you might want to rebin it differently from the previous case. It is usually advisable to have ``xi_table_11`` in finer radial bins than ``allcounts_11``, but the angular (:math:`\mu`) should not be too fine to avoid noisiness.
 - Random positions are another necessary input as the ``randoms_positions1`` argument.
 
     - The number of randoms for ``RascalC`` does not have to be the same as for pair counting and 2PCF estimation (except when you disable ``normalize_wcounts``). It should be high enough to provide a good representation of survey geometry, but not too high to keep the run time reasonable.
-    - For 2PCF covariance after standard BAO reconstruction, provide the **shifted** randoms (`Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_, `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_; the input 2PCF conversion in that case will be applied automatically to a ``pycorr`` estimator).
+    - For 2PCF covariance after standard BAO reconstruction, provide the **shifted** randoms (`Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_, `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_; the input 2PCF conversion in that case will be applied automatically to a ``pycorr`` or ``lsstypes`` estimator).
     - For a periodic cubic box (without reconstruction), you will need to generate uniform random positions yourself.
 - You must also pass the weights for the randoms through the ``randoms_weights1`` argument. These must match what you used for pair counting and 2PCF estimation with ``pycorr``.
 
-    - If you did not use weights in ``pycorr``, you should pass an array containing 1 for each random point as ``randoms_weights1``.
-- Set the output directory, ``out_dir``. We highly recommended a different output directory for each run. This directory will contain all information necessary for post-processing, and a complimentary log file (``log.txt``).
+    - If you did not use weights in ``pycorr`` (``cucount`` or ``desi-clustering``), you should pass an array containing 1 for each random point as ``randoms_weights1``.
+- Set the output directory, ``out_dir``. We highly recommend a different output directory for each run. This directory will contain all information necessary for post-processing, and a complimentary log file (``log.txt``).
 - Set the temporary directory, ``tmp_dir``. Bear in mind that it will need to temporarily contain the random catalog(s) (positions, weights, and jackknife regions if applicable) in text format. This directory can be deleted after the run, and the code normally strives to leave it in its original state. We highly recommended a different temporary directory for each run.
 - Set the number of threads via ``nthread``.
 
@@ -98,7 +98,7 @@ General practical usage remarks for the Python wrapper function, :func:`RascalC.
 - Set the number of loops per sample, ``loops_per_sample``. This sets the amount of auxiliary output used almost exclusively for :ref:`quality_control`. ``loops_per_sample`` needs to be a divider of ``n_loops``, and we recommend keeping ``n_loops / loops_per_sample`` (the number of output subsamples) roughly between 10 and 30. Smaller values may require you to wait too long before there is any usable output, or give insufficient information for :ref:`quality_control`. Larger values can lead to too much output.
 - To compute a full two-tracer covariance, you need to also provide all of the following:
 
-    - cross-counts as ``pycorr_allcounts_12`` and second tracer auto-counts as ``pycorr_allcounts_22`` (rebinned in the same way as ``pycorr_allcounts_11``);
+    - cross-counts as ``allcounts_12`` and second tracer auto-counts as ``allcounts_22`` (rebinned in the same way as ``allcounts_11``);
     - cross-correlation function as ``xi_table_12`` and the second tracer auto-correlation function as ``xi_table_22`` (in the same format as ``xi_table_11``);
     - second tracer random points positions (``randoms_positions2``) and weights (``randoms_weights2``).
 - ``RascalC`` in the flowcharts refers to the most computationally intensive steps (implemented in C++), at which the coefficients for the covariance matrix models are evaluated. These coefficients are saved in a ``Raw_Covariance_Matrices*.npz`` file in the chosen output directory.
@@ -147,10 +147,10 @@ It has been tested most thoroughly (see e.g. `Rashkovetskyi et al 2025 <https://
 
 Practical remarks particular to the jackknife pipeline with :func:`RascalC.run_cov` in addition to the :ref:`general_usage`:
 
-- Jackknife and full RR counts and 2PCF can and should all be estimated at the same time using the ``pycorr`` `library for 2-point correlation function estimation <https://github.com/cosmodesi/pycorr>`_.
+- Jackknife and full RR counts and 2PCF can and should all be estimated at the same time using the ``pycorr`` `library for 2-point correlation function estimation <https://github.com/cosmodesi/pycorr>`_ (alternatively, `cucount <https://github.com/adematti/cucount>`_ or `desi-clustering <https://github.com/cosmodesi/desi-clustering>`_, which provide the output in `lsstypes <https://github.com/adematti/lsstypes>`_ format).
 
     - Remember that **you should run the counts in a separate, independent process from the one calling** :func:`RascalC.run_cov`, **because both should be parallelized and they are known to interfere with each other's efficiency**.
-- The jackknife 2PCF will be loaded from the ``pycorr_allcounts_11`` argument (rebinned as explained above).
+- The jackknife 2PCF will be loaded from the ``allcounts_11`` argument (rebinned as explained above).
 - Assign the jackknife regions to the random points (``randoms_positions1``) in the same way as for 2PCF and pair counts, and pass the assignment results (jackknife region number for each random point) through the ``randoms_samples1`` argument.
 
     - Technically, passing the non-``None`` ``randoms_samples1`` argument switches on the jackknife functionality in :func:`RascalC.run_cov`.
@@ -191,7 +191,7 @@ Practical remarks particular to the mock pipeline with :func:`RascalC.run_cov` i
 - Mock **post-processing** involves fitting the full covariance model to the (mock) sample covariance to find the optimal shot-noise rescaling and substituting that value into the full covariance model to obtain the final covariance. In this case, the best-fit model covariance is the final answer (unlike for :ref:`pipeline_jack`). These operations normally are invoked at the end of :func:`RascalC.run_cov`, but they can also be performed separately using :func:`RascalC.post_process_auto`. The results are saved in a ``Rescaled_Covariance_Matrices*Mocks*.npz`` file in the chosen output directory.
 - Accordingly, the mock pipeline can be used in the following ways:
 
-    - Providing a sample (list or tuple) of (mock) ``pycorr`` correlation function estimators to :func:`RascalC.run_cov` through the ``xi_11_samples`` argument. Each should be rebinned for the covariance, i.e. in the same way as ``pycorr_allcounts_11`` (if you use the ``skip_s_bins`` option, the requested separations bins will be removed from the sample covariance).
+    - Providing a sample (list or tuple) of (mock) ``pycorr`` (or ``lsstypes``) correlation function estimators to :func:`RascalC.run_cov` through the ``xi_11_samples`` argument. Each should be rebinned for the covariance, i.e. in the same way as ``allcounts_11`` (if you use the ``skip_s_bins`` option, the requested separations bins will be removed from the sample covariance).
 
         - In this case, it makes even more sense to **run the mock counts/correlation functions in separate, independent processes from the one calling** :func:`RascalC.run_cov` (**both should be parallelized and they are known to interfere with each other's efficiency**).
         - For two tracers, it is also necessary to provide ``xi_22_samples`` for the second tracer's auto-correlation function. It must have the same binning and number of samples as ``xi_11_samples``.
@@ -199,14 +199,14 @@ Practical remarks particular to the mock pipeline with :func:`RascalC.run_cov` i
             - For two tracers, you should also provide ``xi_12_samples`` for the cross-correlation function between the two tracer (it must have the same binning and number of samples as ``xi_11_samples``). However, only the auto-covariances of the auto-correlation functions will be used for shot noise calibration, thus computation of cross-correlation functions can be omitted. On the other hand, if you provide ``xi_12_samples``, you receive a full sample covariance matrix (full meaning for all 3 correlaiton functions between the 2 tracers) as a byproduct, and it can be compared with the ``RascalC`` result, or used for other purposes.
         - The sample covariance will be saved in a text file named ``cov_sample_*.txt`` in the chosen output directory.
 
-            - Note that with Legendre binning, the sample covariance matrix follows the ``pycorr`` bin order convention, which is different from ``RascalC``, but ``RascalC`` results can be translated to ``pycorr`` convention for convenience — see :mod:`RascalC.cov_utils`.
+            - Note that with Legendre binning, the sample covariance matrix follows the ``pycorr`` (and ``lsstypes``) bin order convention, which is different from ``RascalC``, but ``RascalC`` results can be translated to ``pycorr`` (and ``lsstypes``) convention for convenience — see :mod:`RascalC.cov_utils`.
     - Providing the pre-computed reference covariance with the right covariance bins and bin ordering to :func:`RascalC.run_cov` via ``xi_sample_cov``.
 
         - We think using ``xi_11_samples`` is much easier, whereas this option can be tedious.
         - The correct bin ordering is:
 
-            - In ``s_mu`` binning mode: first by radial/separation bins (top-level) and then by angular (:math:`\mu`) bins; keep in mind that ``RascalC`` wraps :math:`-1 \le \mu < 0` into :math:`0 \le \mu \le 1`. You can refer to :mod:`RascalC.pycorr_utils.sample_cov`.
-            - In Legendre multipole modes: first by multipoles (top-level, only even multipoles, e.g. 0, then 2, then 4) and then by radial/separation bins. You can refer to :mod:`RascalC.pycorr_utils.sample_cov_multipoles`.
+            - In ``s_mu`` binning mode: first by radial/separation bins (top-level) and then by angular (:math:`\mu`) bins; keep in mind that ``RascalC`` wraps :math:`-1 \le \mu < 0` into :math:`0 \le \mu \le 1`. You can refer to :mod:`RascalC.sample_cov`.
+            - In Legendre multipole modes: first by multipoles (top-level, only even multipoles, e.g. 0, then 2, then 4) and then by radial/separation bins. You can refer to :mod:`RascalC.sample_cov_multipoles`.
             - For two tracers, the topmost-level ordering is always by the type of the correlation function. Traditionally, the order is: first tracer auto-correlation, then cross-correlation, then second tracer auto-correlation. The lower-level blocks are then ordered as described above, depending on ``s_mu`` vs Legendre binning mode.
             
                 - However, the cross-correlation functions are currently not used for shot-noise tuning. Thus, it may be easier to tune the shot-noise rescaling separately for each of the two tracers and plug them into :func:`RascalC.run_cov` or :func:`RascalC.post_process_auto` via ``shot_noise_rescaling1`` and ``shot_noise_rescaling2`` respectively.
@@ -214,8 +214,8 @@ Practical remarks particular to the mock pipeline with :func:`RascalC.run_cov` i
     - Running the :ref:`pipeline_basic` (providing neither of the above nor ``random_samples1`` for jackknife to :func:`RascalC.run_cov`) or the :ref:`pipeline_jack` (if you want jackknife-based tuning as well — it is not possible without computed jackknife model) and then providing either ``xi_11_samples`` or ``xi_sample_cov`` at additional post-processing with :func:`RascalC.post_process_auto`.
 - In any case, to run :func:`RascalC.run_cov`, you still need to provide
 
-    - RR counts via ``pycorr_allcounts_11``, this can be from one mock realization, or a sum of mock realizations (unless you disable ``normalize_wcounts``);
-    - representative correlation function via ``xi_table_11``, this can be a sum over all available mock realizations or from a single mock realization. Remember that it probably should be rebinned differently from ``pycorr_allcounts_11`` (see :ref:`general_usage`).
+    - RR counts via ``allcounts_11``, this can be from one mock realization, or a sum of mock realizations (unless you disable ``normalize_wcounts``);
+    - representative correlation function via ``xi_table_11``, this can be a sum over all available mock realizations or from a single mock realization. Remember that it probably should be rebinned differently from ``allcounts_11`` (see :ref:`general_usage`).
 
 Take a look at :ref:`quality_control` after the run.
 To work with the final results more conveniently, we recommend seeing :ref:`load_export_final_cov`.
@@ -282,7 +282,7 @@ This can be done in different ways:
 - Increase the number of loops (``n_loops``).
 
     - Occasionally bad convergence is just bad luck, so running again with the same settings, including ``n_loops`` might not be needed. In that case, just do not use the same fixed ``seed``, as that should reproduce the results exactly.
-    - If you keep other settings fixed (except ``n_loops``, ``nthread`` and naturally ``seed`` — you can change those more freely), you can also concatenate (combine) samples from different runs into a new, different directory using :func:`RascalC.cat_raw_covariance_matrices` to reach even better convegence (check it by post-processing the new directory with :func:`RascalC:post_process_auto`). However, combining samples does not always improve convergence, and keeping track of different sample combination can be hard.
+    - If you keep other settings fixed (except ``n_loops``, ``nthread`` and naturally ``seed`` — you can change those more freely), you can also concatenate (combine) samples from different runs into a new, different directory using :func:`RascalC.cat_raw_covariance_matrices` to reach even better convegence (check it by post-processing the new directory with :func:`RascalC.post_process_auto`). However, combining samples does not always improve convergence, and keeping track of different sample combination can be hard.
 - Increase ``N2`` — probably not recommended, because the effect is similar to increasing ``n_loops``, but sample combination is no longer an option.
 - Increase ``N4`` and/or ``N3``. It is probably more sensible than the previous options because we expect the higher-point terms to converge slower. ``N4`` will only affect the 4-point term :math:`C_4`; ``N3`` also affects the 3-point term :math:`C_3`.
 
