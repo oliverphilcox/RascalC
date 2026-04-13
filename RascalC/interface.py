@@ -6,17 +6,22 @@ Please bear with the long description; you can pay less attention to settings la
 """
 
 import pycorr
+import lsstypes
 import numpy as np
 import numpy.typing as npt
 import os
 from datetime import datetime
 from typing import Iterable, Literal
 from warnings import warn
-from .pycorr_utils.utils import fix_bad_bins_pycorr, write_xi_file
+from .allcounts_utils import get_s_edges_from_allcounts, get_mu_edges_from_allcounts, get_s_avg_from_allcounts, get_mu_avg_from_allcounts, allcount_switch_function, fix_and_wrap_allcounts
+from .xi.utils import write_xi_file
 from .write_binning_file import write_binning_file
 from .pycorr_utils.jack import get_jack_xi_weights_counts_from_pycorr
 from .pycorr_utils.counts import get_counts_from_pycorr
 from .pycorr_utils.input_xi import get_input_xi_from_pycorr
+from .lsstypes_utils.jack import get_jack_xi_weights_counts_from_lsstypes
+from .lsstypes_utils.counts import get_counts_from_lsstypes
+from .lsstypes_utils.input_xi import get_input_xi_from_lsstypes
 from .pycorr_utils.sample_cov import sample_cov_from_pycorr_to_file
 from .pycorr_utils.sample_cov_multipoles import sample_cov_multipoles_from_pycorr_to_file
 from .mu_bin_legendre_factors import write_mu_bin_legendre_factors
@@ -30,20 +35,20 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             nthread: int, N2: int, N3: int, N4: int, n_loops: int, loops_per_sample: int,
             out_dir: str, tmp_dir: str,
             randoms_positions1: npt.NDArray[np.float64], randoms_weights1: npt.NDArray[np.float64],
-            pycorr_allcounts_11: pycorr.twopoint_estimator.BaseTwoPointEstimator,
-            xi_table_11: pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | list[npt.NDArray[np.float64]],
+            allcounts_11: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation,
+            xi_table_11: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | list[npt.NDArray[np.float64]],
             position_type: Literal["rdd", "xyz", "pos"] = "pos",
-            xi_table_12: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | list[npt.NDArray[np.float64]] = None,
-            xi_table_22: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | list[npt.NDArray[np.float64]] = None,
+            xi_table_12: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | list[npt.NDArray[np.float64]] = None,
+            xi_table_22: None | pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]] | list[npt.NDArray[np.float64]] = None,
             xi_cut_s: float = 250, xi_refinement_iterations: int = 10,
-            pycorr_allcounts_12: pycorr.twopoint_estimator.BaseTwoPointEstimator | None = None, pycorr_allcounts_22: pycorr.twopoint_estimator.BaseTwoPointEstimator | None = None,
+            allcounts_12: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation | None = None, allcounts_22: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation | None = None,
             normalize_wcounts: bool = True,
             no_data_galaxies1: float | None = None, no_data_galaxies2: float | None = None,
             randoms_samples1: npt.NDArray[np.int_] | None = None,
             randoms_positions2: npt.NDArray[np.float64] | None = None, randoms_weights2: npt.NDArray[np.float64] | None = None, randoms_samples2: npt.NDArray[np.int_] | None = None,
-            xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
-            xi_12_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
-            xi_22_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator] | None = None,
+            xi_11_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation] | None = None,
+            xi_12_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation] | None = None,
+            xi_22_samples: Iterable[pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation] | None = None,
             xi_sample_cov: npt.NDArray[np.float64] | None = None,
             max_l: int | None = None,
             boxsize: float | None = None,
@@ -89,7 +94,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     randoms_samples1 : None or array of integers of length N_randoms
         Jackknife region numbers for random points for the first tracer.
         If given (and not None), enables the jackknife functionality (tuning of shot-noise rescaling on jackknife correlation function estimates).
-        The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_11`` (and ``pycorr_allcounts_12`` with multi-tracer functionality enabled).
+        The jackknife assignment must match the jackknife counts in ``allcounts_11`` (and ``allcounts_12`` with multi-tracer functionality enabled).
 
     randoms_positions2 : None or array of floats, shaped according to `position_type`
         (Optional) coordinates of random points for the second tracer.
@@ -102,8 +107,8 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         (Only for multi-tracer + jackknife functionality, although this combination has not been used yet) jackknife region numbers for the second tracer.
         The jackknife assignment must match the jackknife counts in ``pycorr_allcounts_12`` and ``pycorr_allcounts_22``.
 
-    pycorr_allcounts_11 : :class:`pycorr.TwoPointEstimator`
-        :class:`pycorr.TwoPointEstimator` with auto-counts for the first tracer.
+    allcounts_11 : :class:`pycorr.TwoPointEstimator` or :class:`lsstypes.Count2Correlation`
+        :class:`pycorr.TwoPointEstimator` or :class:`lsstypes.Count2Correlation` with auto-counts for the first tracer.
         Must be rebinned and/or cut to the separation (s) bins desired for the covariance.
         Note that more bins result in slower convergence. A typical configuration has been 4 Mpc/h wide bins between 20 and 200 Mpc/h.
         The counts will be wrapped to positive :math:`\mu`, so if the :math:`\mu` range in them is from -1 to 1, the number of :math:`\mu` bins must be even.
@@ -113,36 +118,36 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             - In "legendre_projected" ``mode``, it will be assumed that Legendre multipoles are projected from the same number of :math:`\mu` bins as present in these counts. One might consider rebinning more coarsely for faster performance but less guaranteed accuracy (neither effect has been tested yet).
             - In "legendre_accumulated" ``mode``, all the present :math:`\mu` bins (after wrapping) will be used to fit the survey correction functions.
         
-        For jackknife functionality, ``pycorr_allcounts_11`` must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1``.
+        For jackknife functionality, ``allcounts_11`` must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1``.
 
-        **NB**: If ``pycorr_allcounts_11.D1D2.size1`` is zero, you need to provide ``no_data_galaxies1``.
+        **NB**: You need to provide ``no_data_galaxies1`` unless ``allcounts_11`` is in ``pycorr`` format AND ``allcounts_11.D1D2.size1`` is not zero.
 
-    pycorr_allcounts_12 : :class:`pycorr.TwoPointEstimator`
-        (Only for the multi-tracer functionality) :class:`pycorr.TwoPointEstimator` with cross-counts between the two tracers (order does not matter, because absolute value of :math:`\mu` will be taken).
-        Must have the same bin configuration as ``pycorr_allcounts_11``.
+    allcounts_12 : :class:`pycorr.TwoPointEstimator` or :class:`lsstypes.Count2Correlation`
+        (Only for the multi-tracer functionality) :class:`pycorr.TwoPointEstimator` or :class:`lsstypes.Count2Correlation` with cross-counts between the two tracers (order does not matter, because absolute value of :math:`\mu` will be taken).
+        Must have the same bin configuration as ``allcounts_11``.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples1`` and ``randoms_samples2``.
         
-        If both ``pycorr_allcounts_11.D1D2.size1`` and ``pycorr_allcounts_12.D1D2.size1`` are set to zeros, you need to provide ``no_data_galaxies1``.
+        You need to provide ``no_data_galaxies1`` unless either ``allcounts_11`` or ``allcounts_12`` is in ``pycorr`` format AND either ``allcounts_11.D1D2.size1`` or ``allcounts_12.D1D2.size1`` is not zero.
 
-    pycorr_allcounts_22 : :class:`pycorr.TwoPointEstimator`
-        (Only for the multi-tracer functionality) :class:`pycorr.TwoPointEstimator` with auto-counts for the second tracer.
+    allcounts_22 : :class:`pycorr.TwoPointEstimator` or :class:`lsstypes.Count2Correlation`
+        (Only for the multi-tracer functionality) :class:`pycorr.TwoPointEstimator` or :class:`lsstypes.Count2Correlation` with auto-counts for the second tracer.
         Required for the multi-tracer functionality (full two-tracer covariance estimation).
-        Must have the same bin configuration as ``pycorr_allcounts_11``.
+        Must have the same bin configuration as ``allcounts_11``.
         For jackknife functionality, must contain jackknife RR counts and correlation function. The jackknife assigment must match ``randoms_samples2``.
 
-        If ``pycorr_allcounts_22.D1D2.size1`` is zero, you need to provide ``no_data_galaxies2``.
+        You need to provide ``no_data_galaxies2`` unless ``allcounts_22`` is in ``pycorr`` format AND ``allcounts_22.D1D2.size1`` is not zero.
     
-    xi_11_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
-        (Optional) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) for the first tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
-        Each must have the same shape as ``pycorr_allcounts_11``.
+    xi_11_samples: None, or list or tuple of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s
+        (Optional) A set of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s (typically from mocks) for the first tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
+        Each must have the same shape as ``allcounts_11``.
         With multi-tracer functionality, providing this requires also passing ``xi_22_samples`` with the same number of samples and binning.
     
-    xi_22_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
-        (Optional, only for the multi-tracer functionality) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) for the second tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
+    xi_22_samples: None, or list or tuple of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s
+        (Optional, only for the multi-tracer functionality) A set of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s (typically from mocks) for the second tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
         With multi-tracer functionality, this is necessary if ``xi_11_samples`` are provided, and the binning and the number of samples must be the same.
     
-    xi_12_samples: None, or list or tuple of ``pycorr.TwoPointEstimator``\s
-        (Optional, only for the multi-tracer functionality) A set of ``pycorr.TwoPointEstimator``\s (typically from mocks) for the cross-correlation function between the first and the second tracers to compute the sample covariance.
+    xi_12_samples: None, or list or tuple of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s
+        (Optional, only for the multi-tracer functionality) A set of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s (typically from mocks) for the cross-correlation function between the first and the second tracers to compute the sample covariance.
         Must have the same binning and number of samples as ``xi_11_samples`` if provided.
         Only auto-covariances of the auto-correlation functions are used in multi-tracer mock-based post-processing, so cross-correlation computations may be omitted if not needed for other reasons.
     
@@ -169,7 +174,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         (Optional) number of second tracer data (not random!) points for the covariance rescaling.
         If None (default), the code will attempt to obtain it from ``pycorr_allcounts_22``.
     
-    xi_table_11 : :class:`pycorr.TwoPointEstimator`, or sequence (tuple or list) of 3 elements: ``(s_values, mu_values, xi_values)``, or sequence (tuple or list) of 4 elements: ``(s_values, mu_values, xi_values, s_edges)``
+    xi_table_11 : :class:`pycorr.TwoPointEstimator` or :class:`lsstypes.Count2Correlation`, or sequence (tuple or list) of 3 elements: ``(s_values, mu_values, xi_values)``, or sequence (tuple or list) of 4 elements: ``(s_values, mu_values, xi_values, s_edges)``
         Table of first tracer auto-correlation function in separation (s) and :math:`\mu` bins.
         The code will use it for interpolation in the covariance matrix integrals.
         Important: if the given correlation function is an average in :math:`(s, \mu)` bins, the separation bin edges need to be provided (and the :math:`\mu` bins are assumed to be linear) for rescaling procedure which ensures that the interpolation results averaged over :math:`(s, \mu)` bins returns the given correlation function. In case of ``pycorr.TwoPointEstimator``, the edges will be recovered automatically. Unwrapped estimators (:math:`\mu` from -1 to 1) are preferred, because symmetry allows to fix some issues.
@@ -333,8 +338,8 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         if randoms_weights2 is None: raise TypeError("Second tracer weights must be provided in two-tracer mode")
         if jackknife: # although this case has not been used so far
             if randoms_samples2 is None: raise TypeError("Second tracer jackknife region numbers must be provided in two-tracer jackknife mode")
-        if pycorr_allcounts_12 is None: raise TypeError("Cross-counts must be provided in two-tracer mode")
-        if pycorr_allcounts_22 is None: raise TypeError("Second tracer auto-counts must be provided in two-tracer mode")
+        if allcounts_12 is None: raise TypeError("Cross-counts must be provided in two-tracer mode")
+        if allcounts_22 is None: raise TypeError("Second tracer auto-counts must be provided in two-tracer mode")
         if xi_table_12 is None: raise TypeError("Cross-correlation function must be provided in two-tracer mode")
         if xi_table_22 is None: raise TypeError("Second tracer auto-correlation function must be provided in two-tracer mode")
     
@@ -348,10 +353,11 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     indices_corr = indices_corr_all[:ncorr]
     suffixes_corr = suffixes_corr_all[:ncorr]
 
-    s_edges = pycorr_allcounts_11.edges[0]
+    s_edges = get_s_edges_from_allcounts(allcounts_11)
     n_r_bins = len(s_edges) - 1
-    n_mu_bins = pycorr_allcounts_11.shape[1]
-    if pycorr_allcounts_11.edges[1][0] < 0: n_mu_bins //= 2 # will be wrapped
+    mu_edges = get_mu_edges_from_allcounts(allcounts_11)
+    n_mu_bins = len(mu_edges) - 1
+    if mu_edges[0] < 0: n_mu_bins //= 2 # will be wrapped to positive mu, so if the mu range is from -1 to 1, the number of mu bins must be even
     if jackknife:
         jack_region_numbers = np.unique(randoms_samples1)
         njack = len(jack_region_numbers)
@@ -427,29 +433,29 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     ndata = [no_data_galaxies1, no_data_galaxies2][:ntracers]
 
     # convert counts and jackknife xi if needed; loading ndata too whenever not given
-    pycorr_allcounts_all = (pycorr_allcounts_11, pycorr_allcounts_12, pycorr_allcounts_22)
-    for c, pycorr_allcounts in enumerate(pycorr_allcounts_all[:ncorr]):
-        if c and not np.allclose(pycorr_allcounts.edges[0], pycorr_allcounts_11.edges[0]): raise ValueError(f"pycorr_allcounts_{indices_corr[c]} separation/radial binning is not consistent with pycorr_allcounts_11")
-        if pycorr_allcounts.edges[1][0] < 0: # try to fix and wrap
-            pycorr_allcounts = fix_bad_bins_pycorr(pycorr_allcounts)
-            print_and_log(f"Wrapping pycorr_allcounts_{indices_corr[c]} to mu>=0")
-            pycorr_allcounts = pycorr_allcounts.wrap()
-        if len(pycorr_allcounts.edges[1]) != n_mu_bins + 1: raise ValueError(f"The number of angular/mu bins in pycorr_allcounts_{indices_corr[c]} is not consistent with the number determined from pycorr_allcounts_11")
-        if not np.allclose(pycorr_allcounts.edges[1], np.linspace(0, 1, n_mu_bins + 1)): raise ValueError(f"pycorr_allcounts_{indices_corr[c]} mu binning is not consistent with linear between 0 and 1 (after wrapping)")
-        RR_counts = get_counts_from_pycorr(pycorr_allcounts, counts_factor)
+    allcounts_all = (allcounts_11, allcounts_12, allcounts_22)
+    for c, allcounts in enumerate(allcounts_all[:ncorr]):
+        if not np.allclose(get_s_edges_from_allcounts(allcounts), s_edges): raise ValueError(f"allcounts_{indices_corr[c]} separation/radial binning is not consistent with allcounts_11")
+        if get_mu_edges_from_allcounts(allcounts)[0] < 0: # try to fix and wrap
+            print_and_log(f"Wrapping allcounts_{indices_corr[c]} to mu>=0")
+            allcounts = fix_and_wrap_allcounts(allcounts)
+        if len(get_mu_edges_from_allcounts(allcounts)) != n_mu_bins + 1: raise ValueError(f"The number of angular/mu bins in allcounts_{indices_corr[c]} is not consistent with the number determined from allcounts_11")
+        if not np.allclose(get_mu_edges_from_allcounts(allcounts), np.linspace(0, 1, n_mu_bins + 1)): raise ValueError(f"allcounts_{indices_corr[c]} mu binning is not consistent with linear between 0 and 1 (after wrapping)")
+        RR_counts = allcount_switch_function(allcounts, lambda x: get_counts_from_pycorr(x, counts_factor), lambda x: get_counts_from_lsstypes(x, counts_factor))
         np.savetxt(binned_pair_names[c], RR_counts.reshape(-1, 1)) # the file needs to have 1 column
         if jackknife:
-            xi_jack, jack_weights, jack_RR_counts = get_jack_xi_weights_counts_from_pycorr(pycorr_allcounts, counts_factor)
+            xi_jack, jack_weights, jack_RR_counts = allcount_switch_function(allcounts, lambda x: get_jack_xi_weights_counts_from_pycorr(x, counts_factor), lambda x: get_jack_xi_weights_counts_from_lsstypes(x, counts_factor))
             if not np.allclose(np.sum(jack_RR_counts, axis=0), RR_counts.ravel()): raise ValueError("Total counts mismatch")
             ## Write to files using numpy functions
-            write_xi_file(xi_jack_names[c], pycorr_allcounts.sepavg(axis = 0), pycorr_allcounts.sepavg(axis = 1), xi_jack)
-            jack_numbers = pycorr_allcounts.realizations # column of jackknife numbers, may be useless but needed for format compatibility
-            if not np.array_equal(np.array(jack_region_numbers, dtype = int), np.sort(np.array(jack_numbers, dtype = int))): raise ValueError(f"The code requires integer jackknife numbers consistent between the randoms_samples1 and pycorr_allcounts_{indices_corr[c]}") # jack_region_numbers are the unique jackknife labels from the data (already sorted)
+            write_xi_file(xi_jack_names[c], get_s_avg_from_allcounts(allcounts), get_mu_avg_from_allcounts(allcounts), xi_jack)
+            jack_numbers = allcounts.realizations # column of jackknife numbers, may be useless but needed for format compatibility
+            if not np.array_equal(np.array(jack_region_numbers, dtype = int), np.sort(np.array(jack_numbers, dtype = int))): raise ValueError(f"The code requires integer jackknife numbers consistent between the randoms_samples1 and allcounts_{indices_corr[c]}") # jack_region_numbers are the unique jackknife labels from the data (already sorted)
             np.savetxt(jackknife_weights_names[c], np.column_stack((jack_numbers, jack_weights)))
             np.savetxt(jackknife_pairs_names[c], np.column_stack((jack_numbers, jack_RR_counts))) # not really needed for the C++ code or processing but let it be
         # fill ndata if not given
         if not ndata[tracer1 := tracer1_corr[c]]:
-            ndata[tracer1] = pycorr_allcounts.D1D2.size1
+            if isinstance(allcounts, pycorr.twopoint_estimator.BaseTwoPointEstimator):
+                ndata[tracer1] = allcounts.D1D2.size1
 
     if any(not tracer_ndata for tracer_ndata in ndata): raise ValueError("Not given and not recovered all the necessary normalization factors (no_data_galaxies1/2)")
     print_and_log(f"Number(s) of data galaxies: {ndata}")
@@ -463,18 +469,16 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         if c > 0:
             if type(xi) != type(all_xi[0]): raise TypeError(f"xi_table_{indices_corr[c]} must have the same type as xi_table_11")
             if xi.shape != all_xi[0].shape: raise ValueError(f"xi_table_{indices_corr[c]} must have the same shape as xi_table_11")
-        if isinstance(xi, pycorr.twopoint_estimator.BaseTwoPointEstimator):
+        if isinstance(xi, (pycorr.twopoint_estimator.BaseTwoPointEstimator, lsstypes.Count2Correlation)):
             refine_xi = True
             if xi.edges[1][0] < 0:
-                xi = fix_bad_bins_pycorr(xi)
-                print_and_log(f"Wrapping xi_table_{indices_corr[c]} to mu>=0")
-                xi = xi.wrap()
+                xi = fix_and_wrap_allcounts(xi)
             if c == 0:
-                xi_n_mu_bins = xi.shape[1]
-                xi_s_edges = xi.edges[0]
-            elif not np.allclose(xi_s_edges, xi.edges[0]): raise ValueError("Different binning for different correlation functions not supported")
-            if not np.allclose(xi.edges[1], np.linspace(0, 1, xi_n_mu_bins + 1)): raise ValueError(f"xi_table_{indices_corr[c]} mu binning is not consistent with linear between 0 and 1 (after wrapping)")
-            write_xi_file(cornames[c], xi.sepavg(axis = 0), xi.sepavg(axis = 1), get_input_xi_from_pycorr(xi))
+                xi_n_mu_bins = len(get_mu_edges_from_allcounts(xi)) - 1
+                xi_s_edges = get_s_edges_from_allcounts(xi)
+            elif not np.allclose(xi_s_edges, get_s_edges_from_allcounts(xi)): raise ValueError("Different binning for different correlation functions not supported")
+            if not np.allclose(get_mu_edges_from_allcounts(xi), np.linspace(0, 1, xi_n_mu_bins + 1)): raise ValueError(f"xi_table_{indices_corr[c]} mu binning is not consistent with linear between 0 and 1 (after wrapping)")
+            write_xi_file(cornames[c], get_s_avg_from_allcounts(xi), get_mu_avg_from_allcounts(xi), allcount_switch_function(xi, get_input_xi_from_pycorr, get_input_xi_from_lsstypes))
         elif isinstance(xi, Iterable):
             if len(xi) == 4: # the last element is the edges
                 refine_xi = True
@@ -491,7 +495,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
                     xi_s_edges = (r_vals[:-1] + r_vals[1:]) / 2 # middle values as midpoints of r_vals to be safe
                     xi_s_edges = [1e-4] + xi_s_edges + [2 * r_vals[-1] - xi_s_edges[-1]] # set the lowest edge near 0 and the highest beyond the last point of r_vals
             write_xi_file(cornames[c], r_vals, mu_vals, xi_vals)
-        else: raise TypeError(f"Xi table {indices_corr[c]} must be either a pycorr.TwoPointEstimator or a tuple/list")
+        else: raise TypeError(f"Xi table {indices_corr[c]} must be either a pycorr.TwoPointEstimator, a lsstypes.Count2Correlation, or a tuple/list")
     xi_refinement_iterations *= refine_xi # True is 1; False is 0 => 0 iterations => no refinement
 
     # deal with the mock covariance
@@ -499,14 +503,14 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
         np.savetxt(mock_cov_name, xi_sample_cov)
     elif mocks_from_samples:
         if len(xi_11_samples) <= 1: raise ValueError("Need more than 1 sample in xi_11_samples to compute the sample covariance")
-        if any(not np.allclose(xi_11_sample.edges[0], pycorr_allcounts_11.edges[0]) for xi_11_sample in xi_11_samples): raise ValueError(f"Found separation/radial binning in xi_11_samples inconsistent with pycorr_allcounts_11")
-        if any(not np.allclose(xi_11_sample.edges[1], np.linspace(0, 1, n_mu_bins + 1)) for xi_11_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with pycorr_allcounts_11")
+        if any(not np.allclose(get_s_edges_from_allcounts(xi_11_sample), s_edges) for xi_11_sample in xi_11_samples): raise ValueError(f"Found separation/radial binning in xi_11_samples inconsistent with allcounts_11")
+        if any(not np.allclose(get_mu_edges_from_allcounts(xi_11_sample), np.linspace(0, 1, n_mu_bins + 1)) for xi_11_sample in xi_11_samples): raise ValueError(f"Found angular/µ binning in xi_11_samples inconsistent with allcounts_11")
         xi_samples_all = [xi_11_samples]
         if two_tracers:
             # check the required 22 samples
             if xi_22_samples is None: raise TypeError("xi_22_samples must be provided for multi-tracer")
             if len(xi_22_samples) != len(xi_11_samples): raise ValueError("xi_22_samples must contain the same number of samples as xi_11_samples")
-            if any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_22_samples): raise ValueError(f"xi_22_samples must have the same binning as xi_11_samples")
+            if any(not np.allclose(get_s_edges_from_allcounts(xi_sample), get_s_edges_from_allcounts(xi_11_samples[0])) for xi_sample in xi_22_samples): raise ValueError(f"xi_22_samples must have the same binning as xi_11_samples")
             # check 12 samples which are not critical. if anything is wrong, substitute 11 samples as a placeholder
             if xi_12_samples is None:
                 print_and_log("WARNING: xi_12_samples not provided. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
@@ -514,7 +518,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             elif len(xi_12_samples) != len(xi_11_samples):
                 print_and_log("WARNING: xi_12_samples must contain the same number of samples as xi_11_samples, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
                 xi_12_samples = xi_11_samples
-            elif any(not np.allclose(xi_sample.edges, xi_11_samples[0].edges) for xi_sample in xi_12_samples):
+            elif any(not np.allclose(get_s_edges_from_allcounts(xi_sample), get_s_edges_from_allcounts(xi_11_samples[0])) for xi_sample in xi_12_samples):
                 print_and_log(f"WARNING: xi_12_samples must have the same binning as xi_11_samples, will replace them with a placeholder. The shot-noise calibration should be fine, but do not use the sample covariance from the output folder directly.")
                 xi_12_samples = xi_11_samples
             xi_samples_all += [xi_12_samples, xi_22_samples]
