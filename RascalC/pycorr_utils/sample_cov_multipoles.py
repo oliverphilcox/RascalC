@@ -38,7 +38,7 @@ def sample_cov_multipoles_from_pycorr(xi_estimators: list[list[pycorr.twopoint_e
         raise ValueError("Need the same number of files for different correlation functions")
     ells = np.arange(0, max_l+1, 2)
     # convert each xi estimator to multipoles array, and then turn list of lists into array too
-    xi = np.array([[reshape_pycorr(xi_estimator, r_step = r_step, r_max = r_max, n_mu = None).get_corr(mode='poles', ells = ells) for xi_estimator in xi_estimators_c] for xi_estimators_c in xi_estimators])
+    xi = np.array([[reshape_pycorr(xi_estimator, r_step=r_step, r_max=r_max, n_mu=None).get_corr(mode='poles', ells=ells) for xi_estimator in xi_estimators_c] for xi_estimators_c in xi_estimators])
     # now indices are [c, s, l, r]: correlation number, sample number, multipole index and then radial bin
     # need [s, c, l, r]
     xi = xi.transpose(1, 0, 2, 3)
@@ -95,5 +95,5 @@ def sample_cov_multipoles_from_pycorr_files(infile_names: list[list[str]], outfi
     if len(infile_names[0]) < 2: raise ValueError("Need at least two samples to compute the covariance matrix")
     if any(len(infile_names_c) != len(infile_names[0]) for infile_names_c in infile_names[1:]):
         raise ValueError("Need the same number of files for different correlation functions")
-    xi_estimators = [[reshape_pycorr(pycorr.TwoPointCorrelationFunction.load(infile_name), r_step = r_step, r_max = r_max, n_mu = None) for infile_name in infile_names_c] for infile_names_c in infile_names]
+    xi_estimators = [[reshape_pycorr(pycorr.TwoPointCorrelationFunction.load(infile_name), r_step=r_step, r_max=r_max, n_mu=None) for infile_name in infile_names_c] for infile_names_c in infile_names]
     sample_cov_multipoles_from_pycorr_to_file(xi_estimators, outfile_name, max_l, r_step, r_max)
