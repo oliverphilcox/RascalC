@@ -8,7 +8,7 @@ import numpy.typing as npt
 def get_counts_from_lsstypes(xi_estimator: lsstypes.Count2Correlation, counts_factor: float | None = None, split_above: float = np.inf) -> npt.NDArray[np.float64]:
     if not counts_factor: # use normalized counts
         return xi_estimator.get('RR').values('normalized_counts')
-    paircounts = xi_estimator.get('R1R2').values('counts') / counts_factor
+    paircounts = xi_estimator.get('RR').values('counts') / counts_factor
     nonsplit_mask = (xi_estimator.coords('s') < split_above)
     if split_above > 0: paircounts[nonsplit_mask] /= counts_factor # divide once more below the splitting scale
     return paircounts
