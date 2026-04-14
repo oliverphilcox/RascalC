@@ -5,8 +5,7 @@ import pycorr
 import lsstypes
 from typing import Callable, Any
 from .pycorr_utils.utils import fix_bad_bins_pycorr
-from .lsstypes_utils.utils import fix_bad_bins_lsstypes
-from .lsstypes_utils.wrap import wrap_correlation
+from .lsstypes_utils.utils import fix_bad_bins_lsstypes, wrap_correlation
 
 
 def allcount_switch_function(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation, func_pycorr: Callable[[pycorr.twopoint_estimator.BaseTwoPointEstimator], Any], func_lsstypes: Callable[[lsstypes.Count2Correlation], Any]) -> Any:
