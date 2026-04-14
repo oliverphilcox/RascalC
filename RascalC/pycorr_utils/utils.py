@@ -6,8 +6,10 @@ from ..xi.utils import write_xi_file # for convenience of use in other scripts
 
 
 def fix_bad_bins_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
-    # fixes bins with negative wcounts by overwriting their content by reflection
-    # only known cause for now is self-counts (DD, RR) in bin 0, n_mu_orig/2-1 – subtraction is sometimes not precise enough, especially with float32
+    """
+    Fixes bins with negative wcounts by overwriting their content by reflection.
+    Only known cause for now is self-counts (DD, RR) in bin 0, n_mu_orig/2-1 – subtraction is sometimes not precise enough, especially with float32.
+    """
     cls = xi_estimator.__class__
     kw = {}
     for name in xi_estimator.count_names:

@@ -43,8 +43,10 @@ def wrap_correlation(corr: lsstypes.Count2Correlation) -> lsstypes.Count2Correla
 
 
 def fix_bad_bins_lsstypes(xi_estimator: lsstypes.Count2Correlation) -> lsstypes.Count2Correlation:
-    # fixes bins with negative wcounts by overwriting their content by reflection
-    # only known cause for now is self-counts (DD, RR) in bin 0, n_mu_orig/2-1 – subtraction is sometimes not precise enough, especially with float32
+    """
+    Fixes bins with negative counts by overwriting their content by reflection.
+    Only known cause for now is self-counts (DD, RR) in bin 0, n_mu_orig/2-1 – subtraction is sometimes not precise enough, especially with float32.
+    """
     kw = {}
     for count_name in xi_estimator.count_names:
         counts : lsstypes.Count2 = xi_estimator.get(count_name)
