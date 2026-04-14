@@ -77,7 +77,7 @@ def reshape_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator
 
     # determine the mu binning factor
     n_mu_orig = xi_estimator.shape[1]
-    need_wrap = xi_estimator.edges[1][0] < 0 # wrap if extends to negative mu
+    need_wrap = np.any(xi_estimator.edges[1] < 0) # wrap if extends to negative mu
     if need_wrap:
         if n_mu_orig % 2 != 0: raise ValueError("Wrapping not possible")
         n_mu_orig //= 2
