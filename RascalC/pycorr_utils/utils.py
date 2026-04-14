@@ -23,6 +23,37 @@ def fix_bad_bins_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEsti
 
 
 def reshape_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator, n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf, skip_r_bins: int | tuple[int, int] = 0) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
+    """
+    Reshape a pycorr estimator to match the settings of the covariance matrix, by rebinning in r and mu, applying r_max cut and skipping some r bins if requested.
+
+    Parameters
+    ----------
+    xi_estimator : pycorr.twopoint_estimator.BaseTwoPointEstimator
+        The input pycorr estimator to reshape.
+
+    n_mu : integer
+        (Optional) the desired number of angular (|mu|) bins (after wrapping to absolute value of mu). If not provided, zero on None, the original number of mu bins is kept.
+
+    r_step : float
+        (Optional) the desired width of the radial (separation) bins. If not provided, zero or None, the original radial binning is kept. Rebinning is only supported for linear bins and will be done by integer factor, so the provided r_step needs to be close enough to an integer multiple of the original r_step in ``pycorr``.
+
+    r_max : float
+        (Optional) cut the radial bins with separations larger than the given r_max value. If not provided or infinity, no bins are removed by this criterion. The cut is applied after skipping bins but before rebinning.
+    
+    skip_r_bins : integer or tuple of two integers
+        (Optional) removal of some radial bins after radial rebinning.
+        First (or the only) number sets the number of radial/separation bins to skip from the beginning.
+        Second number (if provided) sets the number of radial/separation bins to skip from the end.
+        By default, no bins are skipped.
+    
+    output_cov_file1, output_cov_file2 : string or None
+        (Optional) if provided, the text covariance matrices for the corresponding region will be saved in this file.
+
+    Returns
+    -------
+    xi_estimator_reshaped : pycorr.twopoint_estimator.BaseTwoPointEstimator
+        The reshaped pycorr estimator.
+    """
     # determine the radius step in pycorr
     if not r_step: r_factor = 1
     else:
