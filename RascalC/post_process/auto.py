@@ -98,17 +98,17 @@ def post_process_auto(file_root: str,
         In jackknife or mock mode, the shot-noise rescaling values are auto-determined, so this parameter has no effect.
     
     xi_11_samples: None, or list or tuple of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s
-        (Optional) A set of :class:`pycorr.TwoPointEstimator`\s (typically from mocks) for the first tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
+        (Optional) A set of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s (typically from mocks) for the first tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
         Must have the same binning as the covariance (except possibly the angular/mu bins in Legendre mode).
         Providing this option is not compatible with jackknife (enabled explicitly).
         For two-tracer post-processing, providing this requires also passing ``xi_22_samples`` with the same number of samples and binning.
     
     xi_22_samples: None, or list or tuple of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s
-        (Optional, only for two-tracer post-processing) A set of :class:`pycorr.TwoPointEstimator`\s (typically from mocks) for the second tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
+        (Optional, only for two-tracer post-processing) A set of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s (typically from mocks) for the second tracer auto-correlation function to compute the sample covariance to use as reference in shot-noise rescaling optimization.
         For two-tracer post-processing, this is necessary if ``xi_11_samples`` are provided, and the binning and the number of samples must be the same.
     
     xi_12_samples: None, or list or tuple of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s
-        (Optional, only for two-tracer post-processing) A set of :class:`pycorr.TwoPointEstimator`\s (typically from mocks) for the cross-correlation function between the first and the second tracers to compute the sample covariance.
+        (Optional, only for two-tracer post-processing) A set of :class:`pycorr.TwoPointEstimator`\s or :class:`lsstypes.Count2Correlation`\s (typically from mocks) for the cross-correlation function between the first and the second tracers to compute the sample covariance.
         Must have the same binning and number of samples as ``xi_11_samples`` if provided.
         Only auto-covariances of the auto-correlation functions are used in two-tracer mock-based post-processing, so cross-correlation computations may be omitted if not needed for other reasons.
     
