@@ -1,11 +1,16 @@
 from pycorr import TwoPointCorrelationFunction
+import lsstypes
 import numpy as np
 import numpy.typing as npt
 from ..pycorr_utils.utils import reshape_pycorr
+from ..lsstypes_utils.utils import reshape_lsstypes
+from ..allcounts_utils import get_s_edges_from_allcounts, get_mu_edges_from_allcounts
 from ..cov_utils import get_cov_header, load_cov_legendre_multi
 from ..pycorr_utils.counts import get_counts_from_pycorr
+from ..lsstypes_utils.counts import get_counts_from_lsstypes
 from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
-from typing import Callable
+from .utils import guess_allcounts_format
+from typing import Callable, Literal
 
 
 def load_cov_text(filename: str) -> tuple[npt.NDArray[np.float64], str]:
@@ -18,7 +23,8 @@ def load_cov_text(filename: str) -> tuple[npt.NDArray[np.float64], str]:
             header = l[1:].strip() # take the rest of it as header, removing the leading/trailing spaces and the newline
     return cov, header
 
-def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
+
+def convert_cov_legendre_multi_to_cat(rascalc_results: str, allcounts_files: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, allcounts_format: Literal[None, "pycorr", "lsstypes"] = None, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     """
     Given a two-tracer Legendre mode RascalC result (or a text covariance), produce a single-tracer covariance matrix for the combined/concatenated tracer (obtained by concatenating the catalogs of the two tracers, with weight in each optionally multiplied by the corresponding tracer's bias).
     The correlations between the two tracers in each region are included.
@@ -29,8 +35,8 @@ def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[s
     rascalc_results : string
         Filename for the RascalC two-tracer post-processing results in NumPy format, or the text file with the covariance matrix converted from such a NumPy file.
     
-    pycorr_files : list of strings
-        Filenames for the ``pycorr`` (https://github.com/cosmodesi/pycorr) ``.npy`` files with the correlation functions and pair counts.
+    allcounts_files : list of strings
+        Filenames for the ``pycorr`` (https://github.com/cosmodesi/pycorr) ``.npy`` or ``lsstypes`` (https://github.com/adematti/lsstypes) ``.h5``/``.hdf5``/``.txt`` files with the correlation functions and pair counts.
         The list must contain three filenames: first for the auto-correlation of the first tracer, second for the cross-correlation of the two tracers, and the third for the auto-correlation of the second tracer.
     
     output_cov_file : string
@@ -53,6 +59,9 @@ def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[s
         (Optional) the bias values to upweight the first and the second tracer respectively.
         Default is 1 for both tracers (i.e., no upweighting).
     
+    allcounts_format : None, "pycorr" or "lsstypes"
+        (Optional) the format of the allcounts files, either "pycorr" for files with pycorr TwoPointCorrelationFunction objects or "lsstypes" for files with lsstypes Count2Correlation objects. Default is None for auto-determination based on file extensions.
+    
     print_function : Callable[[str], None]
         (Optional) custom function to use for printing. Needs to take string arguments and not return anything. Default is ``print``.
 
@@ -72,15 +81,23 @@ def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[s
     
     n_bins = len(cov_in)
 
-    # Read pycorr files to figure out weights
+    allcounts_format = guess_allcounts_format(allcounts_format, allcounts_files)
+
+    # Read allcounts files to figure out weights
     weights = []
-    for pycorr_file in pycorr_files:
-        xi_estimator = reshape_pycorr(TwoPointCorrelationFunction.load(pycorr_file), n_mu = None, r_step = r_step, skip_r_bins = skip_r_bins)
-        weights.append(get_counts_from_pycorr(xi_estimator, counts_factor = 1))
+    for allcounts_file in allcounts_files:
+        if allcounts_format == "pycorr":
+            xi_estimator = reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
+            weights.append(get_counts_from_pycorr(xi_estimator, counts_factor=1))
+            # not normalized weights
+        else:
+            xi_estimator = reshape_lsstypes(lsstypes.read(allcounts_file), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
+            weights.append(get_counts_from_lsstypes(xi_estimator, counts_factor=1))
+            # not normalized weights
     weights = np.array(weights)
 
-    n = xi_estimator.shape[0]
-    mu_edges = xi_estimator.edges[1]
+    n_r_bins = len(get_s_edges_from_allcounts(xi_estimator)) - 1
+    mu_edges = get_mu_edges_from_allcounts(xi_estimator)
 
     # Add weighting by bias for each tracer
     bias_weights = np.array((bias1**2, 2*bias1*bias2, bias2**2)) # auto1, cross12, auto2 are multiplied by product of biases of tracers involved in each. Moreover, cross12 enters twice because wrapped cross21 is the same.
@@ -89,17 +106,17 @@ def convert_cov_legendre_multi_to_cat(rascalc_results: str, pycorr_files: list[s
     # Normalize weights across the correlation type axis
     weights /= np.sum(weights, axis=0)[None, :, :]
 
-    mu_leg_factors, leg_mu_factors = compute_mu_bin_legendre_factors(mu_edges, max_l, do_inverse = True)
+    mu_leg_factors, leg_mu_factors = compute_mu_bin_legendre_factors(mu_edges, max_l, do_inverse=True)
 
     # Derivatives of angularly binned 2PCF wrt Legendre are leg_mu_factors[ell//2, mu_bin]
     # Angularly binned 2PCF are added with weights (normalized) weights[tracer, r_bin, mu_bin]
     # Derivatives of Legendre wrt binned 2PCF are mu_leg_factors[mu_bin, ell//2]
     # So we need to sum such product over mu bins, while tracers and radial bins stay independent, and the partial derivative of combined 2PCF wrt the 2PCFs 1/2 will be
-    pd = np.einsum('il,tkl,lj,km->tikjm', leg_mu_factors, weights, mu_leg_factors, np.eye(n)).reshape(n_bins, n_bins // 3)
+    pd = np.einsum('il,tkl,lj,km->tikjm', leg_mu_factors, weights, mu_leg_factors, np.eye(n_r_bins)).reshape(n_bins, n_bins // 3)
     # We have correct [t_in, l_in, r_in, l_out, r_out] ordering and want to make these matrices in the end thus the reshape.
     # The output cov is single-tracer (for the combined catalog) so there is no t_out.
 
     # Produce and save combined cov
     cov_out = pd.T.dot(cov_in).dot(pd)
-    np.savetxt(output_cov_file, cov_out, header = header)
+    np.savetxt(output_cov_file, cov_out, header=header)
     return cov_out
