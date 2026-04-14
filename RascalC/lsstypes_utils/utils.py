@@ -68,11 +68,12 @@ def fix_bad_bins_lsstypes(xi_estimator: lsstypes.Count2Correlation) -> lsstypes.
 def reshape_lsstypes(xi_estimator: lsstypes.Count2Correlation, n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf, skip_r_bins: int | tuple[int, int] = 0) -> lsstypes.Count2Correlation:
     """
     Reshape a lsstypes estimator to match the settings of the covariance matrix, by rebinning in r and mu, applying r_max cut and skipping some r bins if requested.
+    Also checks negative counts and wraps to |mu| bins if the input extends to negative mu.
 
     Parameters
     ----------
     xi_estimator : lsstypes.Count2Correlation
-        The input lsstypes estimator to reshape.
+        The input pycorr estimator to reshape. It is recommended not to wrap it to |mu| bins beforehand, as the results could be weird (in pycorr) if the wrapping was done before rebinning.
 
     n_mu : integer
         (Optional) the desired number of angular (|mu|) bins (after wrapping to absolute value of mu). If not provided, zero on None, the original number of mu bins is kept.

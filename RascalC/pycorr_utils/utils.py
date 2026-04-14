@@ -25,11 +25,12 @@ def fix_bad_bins_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEsti
 def reshape_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator, n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf, skip_r_bins: int | tuple[int, int] = 0) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
     """
     Reshape a pycorr estimator to match the settings of the covariance matrix, by rebinning in r and mu, applying r_max cut and skipping some r bins if requested.
+    Also checks negative counts and wraps to |mu| bins if the input extends to negative mu.
 
     Parameters
     ----------
     xi_estimator : pycorr.twopoint_estimator.BaseTwoPointEstimator
-        The input pycorr estimator to reshape.
+        The input pycorr estimator to reshape. It is recommended not to wrap it to |mu| bins beforehand, as the results could be weird if the wrapping was done before rebinning.
 
     n_mu : integer
         (Optional) the desired number of angular (|mu|) bins (after wrapping to absolute value of mu). If not provided, zero on None, the original number of mu bins is kept.
