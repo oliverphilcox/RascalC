@@ -32,11 +32,11 @@ def combine_covs_legendre(rascalc_results1: str, rascalc_results2: str, pycorr_f
         The width of the radial (separation) bins, must match the RascalC results.
     
     skip_r_bins : integer or tuple of two integers
-        (Optional) removal of some radial bins from the loaded ``pycorr`` counts before adjusting the radial (separation) bin width to match the covariance settings.
+        (Optional) removal of some radial bins from the loaded ``pycorr`` counts after adjusting the radial (separation) bin width to match the covariance settings.
         First (or the only) number sets the number of radial/separation bins to skip from the beginning.
         Second number (if provided) sets the number of radial/separation bins to skip from the end.
         By default, no bins are skipped.
-        E.g. if the ``pycorr`` counts are in 1 Mpc/h bins from 0 to 200 Mpc/h and the RascalC covariances are computed only between 20 and 200 Mpc/h, ``skip_r_bins`` should be ``20``.
+        E.g. if the ``pycorr`` counts are in 1 Mpc/h bins from 0 to 200 Mpc/h and the RascalC covariances are computed only between 20 and 200 Mpc/h in 4 Mpc/h wide bins, ``skip_r_bins`` should be ``5`` or ``(5, 0)``.
     
     output_cov_file1, output_cov_file2 : string or None
         (Optional) if provided, the text covariance matrices for the corresponding region will be saved in this file.
