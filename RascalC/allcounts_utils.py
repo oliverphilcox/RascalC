@@ -4,8 +4,9 @@ import numpy.typing as npt
 import pycorr
 import lsstypes
 from typing import Callable, Any
-from RascalC.pycorr_utils.utils import fix_bad_bins_pycorr
-from RascalC.lsstypes_utils.wrap import wrap_correlation
+from .pycorr_utils.utils import fix_bad_bins_pycorr
+from .lsstypes_utils.utils import fix_bad_bins_lsstypes
+from .lsstypes_utils.wrap import wrap_correlation
 
 
 def allcount_switch_function(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation, func_pycorr: Callable[[pycorr.twopoint_estimator.BaseTwoPointEstimator], Any], func_lsstypes: Callable[[lsstypes.Count2Correlation], Any]) -> Any:
@@ -38,16 +39,15 @@ def get_mu_avg_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointE
 
 
 def fix_and_wrap_pycorr(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
-    "fix bad bins in pycorr estimator and wrap to |mu| bins"
-    allcounts = fix_bad_bins_pycorr(allcounts)
-    return allcounts.wrap()
+    "check for negative counts in pycorr estimator, try to fix by symmetry and wrap to |mu| bins"
+    return fix_bad_bins_pycorr(allcounts).wrap()
 
 
 def fix_and_wrap_lsstypes(allcounts: lsstypes.Count2Correlation) -> lsstypes.Count2Correlation:
-    "wrap lsstypes Count2Correlation to |mu| bins. no bin fixing for now; may be unnecessary"
-    return wrap_correlation(allcounts)
+    "check for negative counts in lsstypes Count2Correlation, try to fix by symmetry and wrap to |mu| bins"
+    return wrap_correlation(fix_bad_bins_lsstypes(allcounts))
 
 
 def fix_and_wrap_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation:
-    "fix bad bins and wrap to |mu| bins for either pycorr estimator or lsstypes Count2Correlation"
+    "check for negative counts and wrap to |mu| bins for either pycorr estimator or lsstypes Count2Correlation"
     return allcount_switch_function(allcounts, fix_and_wrap_pycorr, fix_and_wrap_lsstypes) if get_mu_edges_from_allcounts(allcounts)[0] < 0 else allcounts # only try to fix and wrap if the first mu edge is negative, as a heuristic for whether it is already in |mu| bins
