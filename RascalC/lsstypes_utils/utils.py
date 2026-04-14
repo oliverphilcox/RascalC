@@ -98,11 +98,10 @@ def reshape_lsstypes(xi_estimator: lsstypes.Count2Correlation, n_mu: int | None 
     xi_estimator_reshaped : lsstypes.Count2Correlation
         The reshaped lsstypes estimator.
     """
-    r_edges = xi_estimator.get('DD')._data['s_edges']
     # determine the radius step in lsstypes
     if not r_step: r_factor = 1
     else:
-        r_steps_orig = np.diff(r_edges)
+        r_steps_orig = np.diff(xi_estimator.get('DD')._data['s_edges'])
         r_step_orig = np.mean(r_steps_orig)
         if not np.allclose(r_steps_orig, r_step_orig, rtol=5e-3, atol=5e-3): raise ValueError("Radial rebinning only supported for linear bins")
         r_factor_exact = r_step / r_step_orig
