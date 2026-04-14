@@ -87,17 +87,17 @@ def convert_cov_legendre_multi_to_cat(rascalc_results: str, allcounts_files: lis
     weights = []
     for allcounts_file in allcounts_files:
         if allcounts_format == "pycorr":
-            xi_estimator = reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
-            weights.append(get_counts_from_pycorr(xi_estimator, counts_factor=1))
+            allcounts = reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
+            weights.append(get_counts_from_pycorr(allcounts, counts_factor=1))
             # not normalized weights
         else:
-            xi_estimator = reshape_lsstypes(lsstypes.read(allcounts_file), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
-            weights.append(get_counts_from_lsstypes(xi_estimator, counts_factor=1))
+            allcounts = reshape_lsstypes(lsstypes.read(allcounts_file), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
+            weights.append(get_counts_from_lsstypes(allcounts, counts_factor=1))
             # not normalized weights
     weights = np.array(weights)
 
-    n_r_bins = len(get_s_edges_from_allcounts(xi_estimator)) - 1
-    mu_edges = get_mu_edges_from_allcounts(xi_estimator)
+    n_r_bins = len(get_s_edges_from_allcounts(allcounts)) - 1
+    mu_edges = get_mu_edges_from_allcounts(allcounts)
 
     # Add weighting by bias for each tracer
     bias_weights = np.array((bias1**2, 2*bias1*bias2, bias2**2)) # auto1, cross12, auto2 are multiplied by product of biases of tracers involved in each. Moreover, cross12 enters twice because wrapped cross21 is the same.

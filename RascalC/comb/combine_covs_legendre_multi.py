@@ -75,23 +75,23 @@ def combine_covs_legendre_multi(rascalc_results1: str, rascalc_results2: str, al
     weight1 = []
     for allcounts_file1 in allcounts_files1:
         if allcounts_format == "pycorr":
-            xi_estimator1 = reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file1), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins).normalize()
-            weight1.append(get_counts_from_pycorr(xi_estimator1, counts_factor=1))
+            allcounts = reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file1), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins).normalize()
+            weight1.append(get_counts_from_pycorr(allcounts, counts_factor=1))
         else:
-            xi_estimator1 = reshape_lsstypes(lsstypes.read(allcounts_file1), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
-            weight1.append(get_counts_from_lsstypes(xi_estimator1) * xi_estimator1.get(xi_estimator1.count_names[0]).norm) # the first counts are presumably DD - mirroring the lsstypes code at https://github.com/adematti/lsstypes/blob/3bf32b393f81fa7068fbccd027fa793193e056c3/lsstypes/types.py#L1343
+            allcounts = reshape_lsstypes(lsstypes.read(allcounts_file1), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
+            weight1.append(get_counts_from_lsstypes(allcounts) * allcounts.get(allcounts.count_names[0]).norm) # the first counts are presumably DD - mirroring the lsstypes code at https://github.com/adematti/lsstypes/blob/3bf32b393f81fa7068fbccd027fa793193e056c3/lsstypes/types.py#L1343
     weight1 = np.array(weight1)
 
-    n_r_bins = len(get_s_edges_from_allcounts(xi_estimator1)) - 1
-    mu_edges = get_mu_edges_from_allcounts(xi_estimator1)
+    n_r_bins = len(get_s_edges_from_allcounts(allcounts)) - 1
+    mu_edges = get_mu_edges_from_allcounts(allcounts)
 
     weight2 = []
     for allcounts_file2 in allcounts_files2:
         if allcounts_format == "pycorr":
             weight2.append(get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file2), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins).normalize(), counts_factor=1))
         else:
-            xi_estimator2 = reshape_lsstypes(lsstypes.read(allcounts_file2), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
-            weight2.append(get_counts_from_lsstypes(xi_estimator2) * xi_estimator2.get(xi_estimator2.count_names[0]).norm)
+            allcounts = reshape_lsstypes(lsstypes.read(allcounts_file2), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
+            weight2.append(get_counts_from_lsstypes(allcounts) * allcounts.get(allcounts.count_names[0]).norm)
     weight2 = np.array(weight2)
 
     # Normalize weights

@@ -73,18 +73,18 @@ def combine_covs_legendre(rascalc_results1: str, rascalc_results2: str, allcount
 
     # Read allcounts files to figure out weights of s, mu binned 2PCF
     if allcounts_format == "pycorr":
-        xi_estimator1 = reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file1), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins).normalize()
+        allcounts = reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file1), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins).normalize()
     else:
-        xi_estimator1 = reshape_lsstypes(lsstypes.read(allcounts_file1), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
-    n_r_bins = len(get_s_edges_from_allcounts(xi_estimator1)) - 1
-    mu_edges = get_mu_edges_from_allcounts(xi_estimator1)
+        allcounts = reshape_lsstypes(lsstypes.read(allcounts_file1), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
+    n_r_bins = len(get_s_edges_from_allcounts(allcounts)) - 1
+    mu_edges = get_mu_edges_from_allcounts(allcounts)
     if allcounts_format == "pycorr":
-        weight1 = get_counts_from_pycorr(xi_estimator1, counts_factor=1)
+        weight1 = get_counts_from_pycorr(allcounts, counts_factor=1)
         weight2 = get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file2), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins).normalize(), counts_factor=1)
     else:
-        weight1 = get_counts_from_lsstypes(xi_estimator1) * xi_estimator1.get(xi_estimator1.count_names[0]).norm # the first counts are presumably DD - mirroring the lsstypes code at https://github.com/adematti/lsstypes/blob/3bf32b393f81fa7068fbccd027fa793193e056c3/lsstypes/types.py#L1343
-        xi_estimator2 = reshape_lsstypes(lsstypes.read(allcounts_file2), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
-        weight2 = get_counts_from_lsstypes(xi_estimator2) * xi_estimator2.get(xi_estimator2.count_names[0]).norm
+        weight1 = get_counts_from_lsstypes(allcounts) * allcounts.get(allcounts.count_names[0]).norm # the first counts are presumably DD - mirroring the lsstypes code at https://github.com/adematti/lsstypes/blob/3bf32b393f81fa7068fbccd027fa793193e056c3/lsstypes/types.py#L1343
+        allcounts = reshape_lsstypes(lsstypes.read(allcounts_file2), n_mu=None, r_step=r_step, skip_r_bins=skip_r_bins)
+        weight2 = get_counts_from_lsstypes(allcounts) * allcounts.get(allcounts.count_names[0]).norm
 
     # Normalize weights
     sum_weight = weight1 + weight2

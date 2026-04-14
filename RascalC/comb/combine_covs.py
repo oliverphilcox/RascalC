@@ -73,10 +73,10 @@ def combine_covs(rascalc_results1: str, rascalc_results2: str, allcounts_file1: 
         weight1 = get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file1), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins).normalize(), counts_factor=1).ravel()
         weight2 = get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file2), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins).normalize(), counts_factor=1).ravel()
     else:
-        xi_estimator1 = reshape_lsstypes(lsstypes.Count2Correlation.load(allcounts_file1), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins)
-        weight1 = (get_counts_from_lsstypes(xi_estimator1) * xi_estimator1.get(xi_estimator1.count_names[0]).norm).ravel() # the first counts are presumably DD - mirroring the lsstypes code at https://github.com/adematti/lsstypes/blob/3bf32b393f81fa7068fbccd027fa793193e056c3/lsstypes/types.py#L1343
-        xi_estimator2 = reshape_lsstypes(lsstypes.Count2Correlation.load(allcounts_file2), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins)
-        weight2 = (get_counts_from_lsstypes(xi_estimator2) * xi_estimator2.get(xi_estimator2.count_names[0]).norm).ravel()
+        allcounts1 = reshape_lsstypes(lsstypes.read(allcounts_file1), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins)
+        weight1 = (get_counts_from_lsstypes(allcounts1) * allcounts1.get(allcounts1.count_names[0]).norm).ravel() # the first counts are presumably DD - mirroring the lsstypes code at https://github.com/adematti/lsstypes/blob/3bf32b393f81fa7068fbccd027fa793193e056c3/lsstypes/types.py#L1343
+        allcounts2 = reshape_lsstypes(lsstypes.read(allcounts_file2), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins)
+        weight2 = (get_counts_from_lsstypes(allcounts2) * allcounts2.get(allcounts2.count_names[0]).norm).ravel()
 
     # Produce and save combined cov
     # following xi = (xi1 * weight1 + xi2 * weight2) / (weight1 + weight2)

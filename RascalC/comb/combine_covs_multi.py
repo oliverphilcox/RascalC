@@ -75,15 +75,15 @@ def combine_covs_multi(rascalc_results1: str, rascalc_results2: str, allcounts_f
         if allcounts_format == "pycorr":
             weight1 = np.append(weight1, get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file1).normalize(), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins), counts_factor=1).ravel())
         else:
-            xi_estimator = reshape_lsstypes(lsstypes.read(allcounts_file1), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins)
-            weight1 = np.append(weight1, (get_counts_from_lsstypes(xi_estimator) * xi_estimator.get(xi_estimator.count_names[0]).norm).ravel()) # the first counts are presumably DD - mirroring the lsstypes code at https://github.com/adematti/lsstypes/blob/3bf32b393f81fa7068fbccd027fa793193e056c3/lsstypes/types.py#L1343
+            allcounts = reshape_lsstypes(lsstypes.read(allcounts_file1), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins)
+            weight1 = np.append(weight1, (get_counts_from_lsstypes(allcounts) * allcounts.get(allcounts.count_names[0]).norm).ravel()) # the first counts are presumably DD - mirroring the lsstypes code at https://github.com/adematti/lsstypes/blob/3bf32b393f81fa7068fbccd027fa793193e056c3/lsstypes/types.py#L1343
     weight2 = np.zeros(0)
     for allcounts_file2 in allcounts_files2:
         if allcounts_format == "pycorr":
             weight2 = np.append(weight2, get_counts_from_pycorr(reshape_pycorr(TwoPointCorrelationFunction.load(allcounts_file2).normalize(), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins), counts_factor=1).ravel())
         else:
-            xi_estimator = reshape_lsstypes(lsstypes.read(allcounts_file2), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins)
-            weight2 = np.append(weight2, (get_counts_from_lsstypes(xi_estimator) * xi_estimator.get(xi_estimator.count_names[0]).norm).ravel())
+            allcounts = reshape_lsstypes(lsstypes.read(allcounts_file2), n_mu=n_mu_bins, r_step=r_step, skip_r_bins=skip_r_bins)
+            weight2 = np.append(weight2, (get_counts_from_lsstypes(allcounts) * allcounts.get(allcounts.count_names[0]).norm).ravel())
 
     # Produce and save combined cov
     # following xi = (xi1 * weight1 + xi2 * weight2) / (weight1 + weight2)
