@@ -357,7 +357,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     n_r_bins = len(s_edges) - 1
     mu_edges = get_mu_edges_from_allcounts(allcounts_11)
     n_mu_bins = len(mu_edges) - 1
-    if mu_edges[0] < 0: n_mu_bins //= 2 # will be wrapped to positive mu, so if the mu range is from -1 to 1, the number of mu bins must be even
+    if np.any(mu_edges < 0): n_mu_bins //= 2 # will be wrapped to positive mu, so if the mu range is from -1 to 1, the number of mu bins must be even
     if jackknife:
         jack_region_numbers = np.unique(randoms_samples1)
         njack = len(jack_region_numbers)

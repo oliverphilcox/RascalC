@@ -48,5 +48,8 @@ def fix_and_wrap_lsstypes(allcounts: lsstypes.Count2Correlation) -> lsstypes.Cou
 
 
 def fix_and_wrap_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation:
-    "check for negative counts and wrap to |mu| bins for either pycorr estimator or lsstypes Count2Correlation"
-    return allcount_switch_function(allcounts, fix_and_wrap_pycorr, fix_and_wrap_lsstypes) if get_mu_edges_from_allcounts(allcounts)[0] < 0 else allcounts # only try to fix and wrap if the first mu edge is negative, as a heuristic for whether it is already in |mu| bins
+    """
+    For estimators with negative mu values, check for negative counts and wrap to |mu| bins for either pycorr estimator or lsstypes Count2Correlation.
+    For estimators with only positive mu values, return the input as is, assuming it is already in |mu| bins.
+    """
+    return allcount_switch_function(allcounts, fix_and_wrap_pycorr, fix_and_wrap_lsstypes) if np.any(get_mu_edges_from_allcounts(allcounts) < 0) else allcounts # only try to fix and wrap if the first mu edge is negative, as a heuristic for whether it is already in |mu| bins
