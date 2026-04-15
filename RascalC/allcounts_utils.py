@@ -5,7 +5,7 @@ import pycorr
 import lsstypes
 from typing import Callable, Any
 from .pycorr_utils.utils import fix_bad_bins_pycorr
-from .lsstypes_utils.utils import fix_bad_bins_lsstypes, wrap_correlation
+from .lsstypes_utils.utils import get_edges_from_lsstypes_to_pycorr, fix_bad_bins_lsstypes, wrap_correlation
 
 
 def allcount_switch_function(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation, func_pycorr: Callable[[pycorr.twopoint_estimator.BaseTwoPointEstimator], Any], func_lsstypes: Callable[[lsstypes.Count2Correlation], Any]) -> Any:
@@ -19,12 +19,12 @@ def allcount_switch_function(allcounts: pycorr.twopoint_estimator.BaseTwoPointEs
 
 def get_s_edges_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> npt.NDArray[np.float64]:
     "get separation/radial bin edges from allcounts or xi estimator"
-    return allcount_switch_function(allcounts, lambda x: x.edges[0], lambda x: x.get('RR')._data['s_edges'])
+    return allcount_switch_function(allcounts, lambda x: x.edges[0], lambda x: get_edges_from_lsstypes_to_pycorr(x, 's'))
 
 
 def get_mu_edges_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> npt.NDArray[np.float64]:
     "get mu/angular bin edges from allcounts or xi estimator"
-    return allcount_switch_function(allcounts, lambda x: x.edges[1], lambda x: x.get('RR')._data['mu_edges'])
+    return allcount_switch_function(allcounts, lambda x: x.edges[1], lambda x: get_edges_from_lsstypes_to_pycorr(x, 'mu'))
 
 
 def get_s_avg_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> npt.NDArray[np.float64]:

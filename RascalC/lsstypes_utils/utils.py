@@ -1,7 +1,21 @@
 import lsstypes
 import numpy as np
+import numpy.typing as npt
 from warnings import warn
+from typing import Literal
 from ..utils import format_skip_r_bins
+
+
+def get_edges_from_lsstypes_to_pycorr(xi_estimator: lsstypes.Count2Correlation, coord: Literal['s', 'mu']) -> npt.NDArray[np.float64]:
+    """
+    Get edges from a lsstypes Count2Correlation RR counts, and change their format to match the previous convention from pycorr.
+    lsstypes edges are stored as a 2D array with shape (n_bins, 2), where the second dimension corresponds to the left and right edges of the bins.
+    pycorr edges are stored as a 1D array with shape (n_bins + 1), where left and right edges of the i'th bin are at positions i and i+1 respectively.
+    """
+    edges = xi_estimator.get('RR').edges(coord)
+    if edges.shape[1] != 2: raise ValueError(f"Expected edges to have shape (n_bins, 2), got {edges.shape}")
+    if not np.allclose(edges[1:, 0], edges[:-1, 1]): raise ValueError("Bins appear to be non-adjacent, cannot proceed")
+    return np.concatenate([[edges[0, 0]], (edges[1:, 0] + edges[:-1, 1]) / 2, [edges[-1, 1]]])
 
 
 # copied from https://github.com/adematti/lsstypes/blob/3bf32b393f81fa7068fbccd027fa793193e056c3/tests/test.py#L1044
@@ -101,7 +115,7 @@ def reshape_lsstypes(xi_estimator: lsstypes.Count2Correlation, n_mu: int | None 
     # determine the radius step in lsstypes
     if not r_step: r_factor = 1
     else:
-        r_steps_orig = np.diff(xi_estimator.get('RR')._data['s_edges']) # s_edges is a 2D array with shape (n_s_bins, 2), where the second dimension corresponds to the left and right edges of the bins, so diff along axis 0 gives the widths of the bins; we check that they are all close enough to their mean to make sure the bins are linear
+        r_steps_orig = np.diff(xi_estimator.get('RR').edges('s')) # edges returns a 2D array with shape (n_s_bins, 2), where the second dimension corresponds to the left and right edges of the bins, so diff along axis 0 gives the widths of the bins; we check that they are all close enough to their mean to make sure the bins are linear
         r_step_orig = np.mean(r_steps_orig)
         if not np.allclose(r_steps_orig, r_step_orig, rtol=5e-3, atol=5e-3): raise ValueError("Radial rebinning only supported for linear bins")
         r_factor_exact = r_step / r_step_orig
@@ -116,7 +130,7 @@ def reshape_lsstypes(xi_estimator: lsstypes.Count2Correlation, n_mu: int | None 
     xi_estimator = xi_estimator.select(s=(0, r_max))
 
     # determine the mu binning factor
-    mu_edges = xi_estimator.get('RR')._data['mu_edges'] # mu_edges is a 2D array with shape (n_mu_bins, 2), where the second dimension corresponds to the left and right edges of the bins
+    mu_edges = xi_estimator.get('RR').edges('mu') # edges returns a 2D array with shape (n_mu_bins, 2), where the second dimension corresponds to the left and right edges of the bins
     n_mu_orig = len(mu_edges)
     need_wrap = np.any(mu_edges < 0) # wrap if extends to negative mu
     if need_wrap:
