@@ -19,22 +19,22 @@ def allcount_switch_function(allcounts: pycorr.twopoint_estimator.BaseTwoPointEs
 
 def get_s_edges_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> npt.NDArray[np.float64]:
     "get separation/radial bin edges from allcounts or xi estimator"
-    return allcount_switch_function(allcounts, lambda x: x.edges[0], lambda x: x.get('DD')._data['s_edges'])
+    return allcount_switch_function(allcounts, lambda x: x.edges[0], lambda x: x.get('RR')._data['s_edges'])
 
 
 def get_mu_edges_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> npt.NDArray[np.float64]:
     "get mu/angular bin edges from allcounts or xi estimator"
-    return allcount_switch_function(allcounts, lambda x: x.edges[1], lambda x: x.get('DD')._data['mu_edges'])
+    return allcount_switch_function(allcounts, lambda x: x.edges[1], lambda x: x.get('RR')._data['mu_edges'])
 
 
 def get_s_avg_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> npt.NDArray[np.float64]:
     "get separation/radial bin averages from allcounts or xi estimator"
-    return allcount_switch_function(allcounts, lambda x: x.sepavg(axis=0), lambda x: x.get('DD')._data['s'])
+    return allcount_switch_function(allcounts, lambda x: x.sepavg(axis=0), lambda x: x.get('RR')._data['s'])
 
 
 def get_mu_avg_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> npt.NDArray[np.float64]:
     "get mu/angular bin averages from allcounts or xi estimator"
-    return allcount_switch_function(allcounts, lambda x: x.sepavg(axis=1), lambda x: x.get('DD')._data['mu'])
+    return allcount_switch_function(allcounts, lambda x: x.sepavg(axis=1), lambda x: x.get('RR')._data['mu'])
 
 
 def fix_and_wrap_pycorr(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
