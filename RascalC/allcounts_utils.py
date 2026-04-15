@@ -29,12 +29,12 @@ def get_mu_edges_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPoin
 
 def get_s_avg_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> npt.NDArray[np.float64]:
     "get separation/radial bin averages from allcounts or xi estimator"
-    return allcount_switch_function(allcounts, lambda x: x.sepavg(axis=0), lambda x: x.get('RR')._data['s'])
+    return allcount_switch_function(allcounts, lambda x: x.sepavg(axis=0), lambda x: x.get('RR').values('s'))
 
 
 def get_mu_avg_from_allcounts(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator | lsstypes.Count2Correlation) -> npt.NDArray[np.float64]:
     "get mu/angular bin averages from allcounts or xi estimator"
-    return allcount_switch_function(allcounts, lambda x: x.sepavg(axis=1), lambda x: x.get('RR')._data['mu'])
+    return allcount_switch_function(allcounts, lambda x: x.sepavg(axis=1), lambda x: x.get('RR').values('mu'))
 
 
 def fix_and_wrap_pycorr(allcounts: pycorr.twopoint_estimator.BaseTwoPointEstimator) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
