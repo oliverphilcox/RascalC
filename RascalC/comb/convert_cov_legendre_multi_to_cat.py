@@ -9,7 +9,7 @@ from ..cov_utils import get_cov_header, load_cov_legendre_multi
 from ..pycorr_utils.counts import get_counts_from_pycorr
 from ..lsstypes_utils.counts import get_counts_from_lsstypes
 from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
-from .utils import guess_allcounts_format
+from .utils import validate_allcounts_format
 from typing import Callable, Literal
 
 
@@ -81,7 +81,7 @@ def convert_cov_legendre_multi_to_cat(rascalc_results: str, allcounts_files: lis
     
     n_bins = len(cov_in)
 
-    allcounts_format = guess_allcounts_format(allcounts_format, allcounts_files)
+    allcounts_format = validate_allcounts_format(allcounts_format, allcounts_files)
 
     # Read allcounts files to figure out weights
     weights = []

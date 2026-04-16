@@ -9,7 +9,7 @@ from ..cov_utils import get_cov_header, load_cov_legendre_multi
 from ..pycorr_utils.counts import get_counts_from_pycorr
 from ..lsstypes_utils.counts import get_counts_from_lsstypes
 from ..mu_bin_legendre_factors import compute_mu_bin_legendre_factors
-from .utils import guess_allcounts_format
+from .utils import validate_allcounts_format
 from typing import Callable, Literal
 
 
@@ -69,7 +69,7 @@ def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: 
     if len(allcounts_files2) != 3:
         raise ValueError("Need 3 allcounts_files2 for auto1, cross12, auto2")
     
-    allcounts_format = guess_allcounts_format(allcounts_format, allcounts_files1 + allcounts_files2)
+    allcounts_format = validate_allcounts_format(allcounts_format, allcounts_files1 + allcounts_files2)
     
     # Read RascalC results
     header1 = get_cov_header(rascalc_results1)

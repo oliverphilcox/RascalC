@@ -7,7 +7,7 @@ from ..lsstypes_utils.utils import reshape_lsstypes
 from ..cov_utils import get_cov_header, load_cov
 from ..pycorr_utils.counts import get_counts_from_pycorr
 from ..lsstypes_utils.counts import get_counts_from_lsstypes
-from .utils import guess_allcounts_format
+from .utils import validate_allcounts_format
 from typing import Callable, Literal
 
 
@@ -67,7 +67,7 @@ def combine_covs_multi(rascalc_results1: str, rascalc_results2: str, allcounts_f
     if output_cov_file2: np.savetxt(output_cov_file2, cov2, header=header2)
     header = f"combined from {rascalc_results1} with {header1} and {rascalc_results2} with {header2}" # form the final header to include both
 
-    allcounts_format = guess_allcounts_format(allcounts_format, allcounts_files1 + allcounts_files2)
+    allcounts_format = validate_allcounts_format(allcounts_format, allcounts_files1 + allcounts_files2)
 
     # Read allcounts files to figure out weights
     weight1 = np.zeros(0)
