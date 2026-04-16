@@ -66,11 +66,9 @@ def fix_bad_bins_counts(counts: lsstypes.Count2) -> lsstypes.Count2:
     for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
         warn(f"Negative normalized_counts ({counts.values('normalized_counts')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.values('normalized_counts')[s_bin, -1-mu_bin]:.2e})")
         counts._data['normalized_counts'][s_bin, mu_bin] = counts._data['normalized_counts'][s_bin, -1-mu_bin]
-        counts._data['norm'][s_bin, mu_bin] = counts._data['norm'][s_bin, -1-mu_bin]
-    bad_bins_mask = counts.values('counts') < 0
+    bad_bins_mask = counts.values('norm') < 0
     for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
-        warn(f"Negative counts ({counts.values('counts')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.values('counts')[s_bin, -1-mu_bin]:.2e})")
-        counts._data['counts'][s_bin, mu_bin] = counts._data['counts'][s_bin, -1-mu_bin]
+        warn(f"Negative norm ({counts.values('norm')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.values('norm')[s_bin, -1-mu_bin]:.2e})")
         counts._data['norm'][s_bin, mu_bin] = counts._data['norm'][s_bin, -1-mu_bin]
     return counts
 
