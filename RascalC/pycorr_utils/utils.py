@@ -2,7 +2,23 @@ import pycorr
 import numpy as np
 from warnings import warn
 from ..utils import format_skip_r_bins
-from ..xi.utils import write_xi_file # for convenience of use in other scripts
+from ..xi.utils import write_xi_file # for convenience of use in other modules
+
+
+def fix_bad_bins_counts(counts: pycorr.twopoint_counter.BaseTwoPointCounter) -> pycorr.twopoint_counter.BaseTwoPointCounter:
+    """
+    Takes a counts object and fixes bins with negative wcounts by overwriting their content by reflection.
+    Only known cause for now is self-counts (DD, RR) in bin 0, n_mu_orig/2-1 – subtraction is sometimes not precise enough, especially with float32.
+    """
+    bad_bins_mask = counts.wcounts < 0
+    for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
+        warn(f"Negative {counts.name}.wcounts ({counts.wcounts[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.wcounts[s_bin, -1-mu_bin]:.2e})")
+        counts.wcounts[s_bin, mu_bin] = counts.wcounts[s_bin, -1-mu_bin]
+    bad_bins_mask = counts.wnorm < 0
+    for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
+        warn(f"Negative {counts.name}.wnorm ({counts.wnorm[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.wnorm[s_bin, -1-mu_bin]:.2e})")
+        counts.wnorm[s_bin, mu_bin] = counts.wnorm[s_bin, -1-mu_bin]
+    return counts
 
 
 def fix_bad_bins_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEstimator) -> pycorr.twopoint_estimator.BaseTwoPointEstimator:
@@ -13,11 +29,13 @@ def fix_bad_bins_pycorr(xi_estimator: pycorr.twopoint_estimator.BaseTwoPointEsti
     cls = xi_estimator.__class__
     kw = {}
     for name in xi_estimator.count_names:
-        counts = getattr(xi_estimator, name)
-        bad_bins_mask = counts.wcounts < 0
-        for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
-            warn(f"Negative {name}.wcounts ({counts.wcounts[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.wcounts[s_bin, -1-mu_bin]:.2e})")
-            counts.wcounts[s_bin, mu_bin] = counts.wcounts[s_bin, -1-mu_bin]
+        counts : pycorr.twopoint_counter.BaseTwoPointCounter = getattr(xi_estimator, name)
+        counts = fix_bad_bins_counts(counts)
+        if isinstance(counts, pycorr.twopoint_jackknife.JackknifeTwoPointCounter): # need to fix the counts in all realizations of the jackknife counter
+            for i in xi_estimator.realizations:
+                counts.auto[i] = fix_bad_bins_counts(counts.auto[i])
+                counts.cross12[i] = fix_bad_bins_counts(counts.cross12[i])
+                counts.cross21[i] = fix_bad_bins_counts(counts.cross21[i])
         kw[name] = counts
     return cls(**kw)
 

@@ -12,7 +12,7 @@ def jack_realization_rascalc(jack_estimator: pycorr.twopoint_jackknife.Jackknife
     cls = jack_estimator.__class__.__bases__[0]
     kw = {}
     for name in jack_estimator.count_names:
-        counts = getattr(jack_estimator, name)
+        counts : pycorr.twopoint_jackknife.JackknifeTwoPointCounter = getattr(jack_estimator, name)
         kw[name] = counts.auto[i] + 0.5 * (counts.cross12[i] + counts.cross21[i]) # j1 x all2 + all1 x j2 = 2 x j1 x j2 + j1 x (all2 - j2) + j2 x (all1 - j1); by conventions from jackknife_weights{,_cross}.py needs to be divided by 2
     return fix_bad_bins_pycorr(cls(**kw))
 
