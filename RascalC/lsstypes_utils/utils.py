@@ -57,26 +57,30 @@ def wrap_correlation(corr: lsstypes.Count2Correlation) -> lsstypes.Count2Correla
     return corr.map(lambda count: wrap_counts(count), level=None, is_leaf=lambda branch: False)  #type(branch) is lsstypes.Count2)
 
 
-def fix_bad_bins_lsstypes(xi_estimator: lsstypes.Count2Correlation) -> lsstypes.Count2Correlation:
+def fix_bad_bins_counts(counts: lsstypes.Count2) -> lsstypes.Count2:
     """
-    Fixes bins with negative counts by overwriting their content by reflection.
+    Takes a counts object and fixes bins with negative counts by overwriting their content by reflection.
     Only known cause for now is self-counts (DD, RR) in bin 0, n_mu_orig/2-1 – subtraction is sometimes not precise enough, especially with float32.
     """
-    kw = {}
-    for count_name in xi_estimator.count_names:
-        counts : lsstypes.Count2 = xi_estimator.get(count_name)
-        bad_bins_mask = counts.values('normalized_counts') < 0
-        for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
-            warn(f"Negative {count_name}.normalized_counts ({counts.values('normalized_counts')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.values('normalized_counts')[s_bin, -1-mu_bin]:.2e})")
-            counts._data['normalized_counts'][s_bin, mu_bin] = counts._data['normalized_counts'][s_bin, -1-mu_bin]
-            counts._data['norm'][s_bin, mu_bin] = counts._data['norm'][s_bin, -1-mu_bin]
-        bad_bins_mask = counts.values('counts') < 0
-        for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
-            warn(f"Negative {count_name}.counts ({counts.values('counts')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.values('counts')[s_bin, -1-mu_bin]:.2e})")
-            counts._data['normalized_counts'][s_bin, mu_bin] = counts._data['normalized_counts'][s_bin, -1-mu_bin]
-            counts._data['norm'][s_bin, mu_bin] = counts._data['norm'][s_bin, -1-mu_bin]
-        kw[count_name] = counts
-    return lsstypes.Count2Correlation(**kw, estimator=xi_estimator.estimator, attrs=xi_estimator.attrs)
+    bad_bins_mask = counts.values('normalized_counts') < 0
+    for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
+        warn(f"Negative normalized_counts ({counts.values('normalized_counts')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.values('normalized_counts')[s_bin, -1-mu_bin]:.2e})")
+        counts._data['normalized_counts'][s_bin, mu_bin] = counts._data['normalized_counts'][s_bin, -1-mu_bin]
+        counts._data['norm'][s_bin, mu_bin] = counts._data['norm'][s_bin, -1-mu_bin]
+    bad_bins_mask = counts.values('counts') < 0
+    for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
+        warn(f"Negative counts ({counts.values('counts')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.values('counts')[s_bin, -1-mu_bin]:.2e})")
+        counts._data['counts'][s_bin, mu_bin] = counts._data['counts'][s_bin, -1-mu_bin]
+        counts._data['norm'][s_bin, mu_bin] = counts._data['norm'][s_bin, -1-mu_bin]
+    return counts
+
+
+def fix_bad_bins_lsstypes(xi_estimator: lsstypes.Count2Correlation) -> lsstypes.Count2Correlation:
+    """
+    Takes a correlation function and fixes bins with negative counts by overwriting their content by reflection.
+    Only known cause for now is self-counts (DD, RR) in bin 0, n_mu_orig/2-1 – subtraction is sometimes not precise enough, especially with float32.
+    """
+    return xi_estimator.map(lambda count: fix_bad_bins_counts(count), level=None, is_leaf=lambda branch: False) # restructuring suggested by Arnaud de Mattia, should work more properly with Count2JackknifeCorrelation
 
 
 def reshape_lsstypes(xi_estimator: lsstypes.Count2Correlation, n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf, skip_r_bins: int | tuple[int, int] = 0) -> lsstypes.Count2Correlation:
