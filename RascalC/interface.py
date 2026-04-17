@@ -177,7 +177,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
     xi_table_11 : :class:`pycorr.TwoPointEstimator` or :class:`lsstypes.Count2Correlation`, or sequence (tuple or list) of 3 elements: ``(s_values, mu_values, xi_values)``, or sequence (tuple or list) of 4 elements: ``(s_values, mu_values, xi_values, s_edges)``
         Table of first tracer auto-correlation function in separation (s) and :math:`\mu` bins.
         The code will use it for interpolation in the covariance matrix integrals.
-        Important: if the given correlation function is an average in :math:`(s, \mu)` bins, the separation bin edges need to be provided (and the :math:`\mu` bins are assumed to be linear) for rescaling procedure which ensures that the interpolation results averaged over :math:`(s, \mu)` bins returns the given correlation function. In case of ``pycorr.TwoPointEstimator``, the edges will be recovered automatically. Unwrapped estimators (:math:`\mu` from -1 to 1) are preferred, because symmetry allows to fix some issues.
+        Important: if the given correlation function is an average in :math:`(s, \mu)` bins, the separation bin edges need to be provided (and the :math:`\mu` bins are assumed to be linear) for rescaling procedure which ensures that the interpolation results averaged over :math:`(s, \mu)` bins returns the given correlation function. In case of ``pycorr.TwoPointEstimator`` or :class:`lsstypes.Count2Correlation`, the edges will be recovered automatically. Unwrapped estimators (:math:`\mu` from -1 to 1) are preferred, because symmetry allows to fix some issues.
         In the sequence format:
 
             - ``s_values`` must be a 1D array of reference separation (s) values for the table, of length N;
@@ -186,7 +186,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             - ``s_edges``, if given, must be a 1D array of separation bin edges of length N+1. The bins must come close to zero separation (say start at ``s <= 0.01``).
         
         The sequence containing 3 elements should be used for theoretical models evaluated at a grid of s, mu values.
-        The 4-element format should be used for bin-averaged estimates (unless they are in a :class:`pycorr.TwoPointEstimator`).
+        The 4-element format should be used for bin-averaged estimates (unless they are in a :class:`pycorr.TwoPointEstimator` or :class:`lsstypes.Count2Correlation`).
 
     xi_table_12 : None or the same format as ``xi_table_11``
         Table of the two tracer's cross-correlation function in separation (s) and :math:`\mu` bins.
