@@ -551,7 +551,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
             if len(randoms_samples[t]) != nrandoms: raise ValueError(f"Number of sample labels for randoms {t+1} mismatches the number of positions")
             randoms_properties.append(randoms_samples[t])
         np.savetxt(input_filename, np.column_stack(randoms_properties))
-        randoms_properties = None
+    del randoms_properties # free memory
 
     # write the binning files
     binfile = os.path.join(out_dir, "radial_binning_cov.csv")
