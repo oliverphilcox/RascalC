@@ -20,14 +20,14 @@ public:
     T x, y, z;
     
     // constructors:
-    inline ThreeVector<T>() 
+    inline ThreeVector() 
     : x(static_cast<T>(0)),
       y(static_cast<T>(0)),
       z(static_cast<T>(0))
     {}
 
     template <class U>
-    inline ThreeVector<T>( const ThreeVector<U>& other )
+    inline ThreeVector( const ThreeVector<U>& other )
     :  x(static_cast<T>(other.x)),
         y(static_cast<T>(other.y)),
         z(static_cast<T>(other.z))
@@ -35,7 +35,7 @@ public:
     
     // want to be able to write: ThreeVector<double> x(2,2.5,4)
     template <class U, class V, class W>
-    inline ThreeVector<T>( const U rhsx, const V rhsy, W const rhsz ) 
+    inline ThreeVector( const U rhsx, const V rhsy, W const rhsz ) 
     : x(static_cast<T>(rhsx)), 
         y(static_cast<T>(rhsy)), 
         z(static_cast<T>(rhsz))
@@ -43,7 +43,7 @@ public:
     
     // broadcast a scalar
     template <class U>
-    inline explicit ThreeVector<T>( const U& s)
+    inline explicit ThreeVector( const U& s)
     : x(static_cast<T>(s)),
         y(static_cast<T>(s)),
         z(static_cast<T>(s))
