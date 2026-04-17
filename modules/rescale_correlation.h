@@ -197,7 +197,7 @@ public:
         int grid1_index[3] = {0,1,0}, grid2_index[3] = {0,1,1};
 
         for(int index=0;index<number_xi;index++){ // iterate over correlation functions
-            if (par->cf_loops>0){
+            if ((par->cf_loops>0) && (par->max_loops>0)) { // only refine if we are doing at least one loop of integration and have at least one loop to do it with
                 fprintf(stderr, "\nRefining correlation function %d of %d.\n",index+1,number_xi);
                 true_cf.copy_function(&all_cf[index]); // store initial correlation function
                 for(int n_refine=0;n_refine<par->cf_loops;n_refine++){ // refine cf_loops times per correlation function
