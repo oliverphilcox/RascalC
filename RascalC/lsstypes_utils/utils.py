@@ -31,7 +31,7 @@ def wrap_counts(count: lsstypes.Count2) -> lsstypes.Count2:
     coord_name = count._coords_names[1]
     mu_edges = count.edges(coord_name)
     if not np.allclose(mu_edges[sl_neg], - mu_edges[sl_pos, ::-1]):
-        raise ValueError(f'input counts cannot be wrapped as 2nd dimension edges are not symmetric; {mu_edges[sl_neg]} != {-mu_edges[sl_pos, ::-1]}')
+        raise ValueError(f'input counts cannot be wrapped as 2nd dimension edges are not symmetric: {mu_edges[sl_neg]} != {-mu_edges[sl_pos, ::-1]}')
     mu_edges = mu_edges[sl_pos]
     counts = count.values('counts')
     # Sum counts in the negative and positive halves along the 2nd dimension
@@ -57,20 +57,23 @@ def wrap_correlation(corr: lsstypes.Count2Correlation) -> lsstypes.Count2Correla
     return corr.map(lambda count: wrap_counts(count), level=None, is_leaf=lambda branch: False)  #type(branch) is lsstypes.Count2)
 
 
-def fix_bad_bins_counts(counts: lsstypes.Count2) -> lsstypes.Count2:
+def fix_bad_bins_counts(count: lsstypes.Count2) -> lsstypes.Count2:
     """
     Takes a counts object and fixes bins with negative counts by overwriting their content by reflection.
     Only known cause for now is self-counts (DD, RR) in bin 0, n_mu_orig/2-1 – subtraction is sometimes not precise enough, especially with float32.
     """
-    bad_bins_mask = counts.values('normalized_counts') < 0
+    mu_edges = count.edges(1)
+    if not np.allclose(mu_edges, -mu_edges[::-1, ::-1]):
+        raise ValueError(f'input counts cannot be fixed by symmetry as 2nd dimension edges are not symmetric: {mu_edges} != {-mu_edges[::-1, ::-1]}')
+    bad_bins_mask = count.values('normalized_counts') < 0
     for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
-        warn(f"Negative normalized_counts ({counts.values('normalized_counts')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.values('normalized_counts')[s_bin, -1-mu_bin]:.2e})")
-        counts._data['normalized_counts'][s_bin, mu_bin] = counts._data['normalized_counts'][s_bin, -1-mu_bin]
-    bad_bins_mask = counts.values('norm') < 0
+        warn(f"Negative normalized_counts ({count.values('normalized_counts')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({count.values('normalized_counts')[s_bin, -1-mu_bin]:.2e})")
+        count._data['normalized_counts'][s_bin, mu_bin] = count._data['normalized_counts'][s_bin, -1-mu_bin]
+    bad_bins_mask = count.values('norm') < 0
     for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
-        warn(f"Negative norm ({counts.values('norm')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.values('norm')[s_bin, -1-mu_bin]:.2e})")
-        counts._data['norm'][s_bin, mu_bin] = counts._data['norm'][s_bin, -1-mu_bin]
-    return counts
+        warn(f"Negative norm ({count.values('norm')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({count.values('norm')[s_bin, -1-mu_bin]:.2e})")
+        count._data['norm'][s_bin, mu_bin] = count._data['norm'][s_bin, -1-mu_bin]
+    return count
 
 
 def fix_bad_bins_lsstypes(xi_estimator: lsstypes.Count2Correlation) -> lsstypes.Count2Correlation:

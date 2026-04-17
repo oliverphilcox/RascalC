@@ -10,6 +10,9 @@ def fix_bad_bins_counts(counts: pycorr.twopoint_counter.BaseTwoPointCounter) -> 
     Takes a counts object and fixes bins with negative wcounts by overwriting their content by reflection.
     Only known cause for now is self-counts (DD, RR) in bin 0, n_mu_orig/2-1 – subtraction is sometimes not precise enough, especially with float32.
     """
+    mu_edges = counts.edges[1]
+    if not np.allclose(mu_edges, -mu_edges[::-1]):
+        raise ValueError(f'input counts cannot be fixed by symmetry as 2nd dimension edges are not symmetric: {mu_edges} != {-mu_edges[::-1]}')
     bad_bins_mask = counts.wcounts < 0
     for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
         warn(f"Negative {counts.name}.wcounts ({counts.wcounts[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.wcounts[s_bin, -1-mu_bin]:.2e})")
