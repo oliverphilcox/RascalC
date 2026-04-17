@@ -12,8 +12,8 @@ def jack_realization_rascalc(jack_estimator: lsstypes.Count2JackknifeCorrelation
     kw = {}
     for count_name in jack_estimator.count_names:
         jack_counts : lsstypes.Count2Jackknife = jack_estimator.get(count_name)
-        counts = jack_counts.get(realizations=ii, cross='ii').values('counts') + 0.5 * (jack_counts.get(realizations=ii, cross='ij').values('counts') + jack_counts.get(realizations=ii, cross='ji').values('counts')) # j1 x all2 + all1 x j2 = 2 x j1 x j2 + j1 x (all2 - j2) + j2 x (all1 - j1); by conventions from jackknife_weights{,_cross}.py needs to be divided by 2
-        kw[count_name] = lsstypes.Count2(counts=counts, norm=jack_counts.values('norm'), attrs=jack_counts.get(realizations=ii, cross='ii').attrs) # we want the norm to be the same as for the total counts for further RascalC usage, otherwise the normalized counts of the jackknife realizations would not sum to the total normalized counts
+        counts = jack_counts.get(realization=ii, cross='ii').values('counts') + 0.5 * (jack_counts.get(realization=ii, cross='ij').values('counts') + jack_counts.get(realization=ii, cross='ji').values('counts')) # j1 x all2 + all1 x j2 = 2 x j1 x j2 + j1 x (all2 - j2) + j2 x (all1 - j1); by conventions from jackknife_weights{,_cross}.py needs to be divided by 2
+        kw[count_name] = lsstypes.Count2(counts=counts, norm=jack_counts.values('norm'), attrs=jack_counts.get(realization=ii, cross='ii').attrs) # we want the norm to be the same as for the total counts for further RascalC usage, otherwise the normalized counts of the jackknife realizations would not sum to the total normalized counts
         # could set the proper coordinates (average separations) as in lsstypes.Count2Jackknife.realization, but RascalC is not going to use them
         # could also set size attributes as in lsstypes.Count2Jackknife.realization, but it is not clear how to do this right, and RascalC is not going to use them either
     return lsstypes.Count2Correlation(**kw, estimator=jack_estimator.estimator, attrs=jack_estimator.attrs)
