@@ -3,7 +3,7 @@
 import pycorr
 import numpy as np
 import numpy.typing as npt
-from .utils import reshape_pycorr, fix_bad_bins_pycorr, write_xi_file
+from .utils import reshape_pycorr, write_xi_file
 from .counts import get_counts_from_pycorr
 
 
@@ -15,7 +15,7 @@ def jack_realization_rascalc(jack_estimator: pycorr.twopoint_jackknife.Jackknife
         counts : pycorr.twopoint_jackknife.JackknifeTwoPointCounter = getattr(jack_estimator, name)
         kw[name] = counts.auto[i] + 0.5 * (counts.cross12[i] + counts.cross21[i]) # j1 x all2 + all1 x j2 = 2 x j1 x j2 + j1 x (all2 - j2) + j2 x (all1 - j1); by conventions from jackknife_weights{,_cross}.py needs to be divided by 2
         kw[name].wnorm = counts.wnorm # we want the norm to be the same as for the total counts for further RascalC usage, otherwise the normalized counts of the jackknife realizations would not sum to the total normalized counts
-    return fix_bad_bins_pycorr(cls(**kw))
+    return cls(**kw)
 
 
 def jack_realizations_rascalc(jack_estimator: pycorr.twopoint_jackknife.JackknifeTwoPointEstimator) -> list[pycorr.TwoPointEstimator]:
