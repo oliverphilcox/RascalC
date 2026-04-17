@@ -12,7 +12,7 @@ def jack_realization_rascalc(jack_estimator: lsstypes.Count2JackknifeCorrelation
     kw = {}
     for count_name in jack_estimator.count_names:
         jack_counts : lsstypes.Count2Jackknife = jack_estimator.get(count_name)
-        new_counts : lsstypes.Count2 = jack_counts.realization(ii, cross='ii').copy()
+        new_counts : lsstypes.Count2 = jack_counts.get(realizations=ii, cross='ii').copy()
         for qname in ['counts', 'norm']:
             new_counts._data[qname] = jack_counts.get(realizations=ii, cross='ii').values(qname) + 0.5 * (jack_counts.get(realizations=ii, cross='ij').values(qname) + jack_counts.get(realizations=ii, cross='ji').values(qname)) # j1 x all2 + all1 x j2 = 2 x j1 x j2 + j1 x (all2 - j2) + j2 x (all1 - j1); by conventions from jackknife_weights{,_cross}.py needs to be divided by 2
         new_counts._data['normalized_counts'] = new_counts._data.pop('counts') / new_counts._data['norm']
