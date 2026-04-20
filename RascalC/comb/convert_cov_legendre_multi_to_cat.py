@@ -2,6 +2,7 @@ from pycorr import TwoPointCorrelationFunction
 import lsstypes
 import numpy as np
 import numpy.typing as npt
+from pathlib import Path
 from ..pycorr_utils.utils import reshape_pycorr
 from ..lsstypes_utils.utils import reshape_lsstypes
 from ..allcounts_utils import get_s_edges_from_allcounts, get_mu_edges_from_allcounts
@@ -13,7 +14,7 @@ from .utils import validate_allcounts_format
 from typing import Callable, Literal
 
 
-def load_cov_text(filename: str) -> tuple[npt.NDArray[np.float64], str]:
+def load_cov_text(filename: str | Path) -> tuple[npt.NDArray[np.float64], str]:
     cov = np.loadtxt(filename)
     # read header line if present
     header = '' # blank header by default
@@ -24,7 +25,7 @@ def load_cov_text(filename: str) -> tuple[npt.NDArray[np.float64], str]:
     return cov, header
 
 
-def convert_cov_legendre_multi_to_cat(rascalc_results: str, allcounts_files: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, allcounts_format: Literal[None, "pycorr", "lsstypes"] = None, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
+def convert_cov_legendre_multi_to_cat(rascalc_results: str | Path, allcounts_files: list[str | Path], output_cov_file: str | Path, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, allcounts_format: Literal[None, "pycorr", "lsstypes"] = None, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     """
     Given a two-tracer Legendre mode RascalC result (or a text covariance), produce a single-tracer covariance matrix for the combined/concatenated tracer (obtained by concatenating the catalogs of the two tracers, with weight in each optionally multiplied by the corresponding tracer's bias).
     The correlations between the two tracers in each region are included.
@@ -32,14 +33,14 @@ def convert_cov_legendre_multi_to_cat(rascalc_results: str, allcounts_files: lis
 
     Parameters
     ----------
-    rascalc_results : string
+    rascalc_results : string or Path object
         Filename for the RascalC two-tracer post-processing results in NumPy format, or the text file with the covariance matrix converted from such a NumPy file.
     
-    allcounts_files : list of strings
+    allcounts_files : list of strings or Path objects
         Filenames for the ``pycorr`` (https://github.com/cosmodesi/pycorr) ``.npy`` or ``lsstypes`` (https://github.com/adematti/lsstypes) ``.h5``/``.hdf5``/``.txt`` files with the correlation functions and pair counts.
         The list must contain three filenames: first for the auto-correlation of the first tracer, second for the cross-correlation of the two tracers, and the third for the auto-correlation of the second tracer.
     
-    output_cov_file : string
+    output_cov_file : string or Path object
         Filename for the output text file, in which the covariance matrix will be saved.
 
     max_l : integer

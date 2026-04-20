@@ -2,6 +2,7 @@ from pycorr import TwoPointCorrelationFunction
 import lsstypes
 import numpy as np
 import numpy.typing as npt
+from pathlib import Path
 from ..pycorr_utils.utils import reshape_pycorr
 from ..lsstypes_utils.utils import reshape_lsstypes
 from ..allcounts_utils import get_s_edges_from_allcounts, get_mu_edges_from_allcounts
@@ -13,7 +14,7 @@ from .utils import validate_allcounts_format
 from typing import Callable, Literal
 
 
-def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: str, allcounts_files1: list[str], allcounts_files2: list[str], output_cov_file: str, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, output_cov_file1: str | None = None, output_cov_file2: str | None = None, allcounts_format: Literal[None, "pycorr", "lsstypes"] = None, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
+def combine_covs_legendre_multi_to_cat(rascalc_results1: str | Path, rascalc_results2: str | Path, allcounts_files1: list[str | Path], allcounts_files2: list[str | Path], output_cov_file: str | Path, max_l: int, r_step: float = 1, skip_r_bins: int | tuple[int, int] = 0, bias1: float = 1, bias2: float = 1, output_cov_file1: str | Path | None = None, output_cov_file2: str | Path | None = None, allcounts_format: Literal[None, "pycorr", "lsstypes"] = None, print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     """
     Given two-tracer Legendre mode RascalC results for two regions, produce a single-tracer covariance matrix for the combined/concatenated tracer (obtained by concatenating the catalogs of the two tracers, with weight in each optionally multiplied by the corresponding tracer's bias) for the region/footprint that is a combination of two regions/footprints.
     The correlations between the clustering statistics in the different regions are neglected, but the correlations between the two tracers in each region are included.
@@ -22,15 +23,15 @@ def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: 
 
     Parameters
     ----------
-    rascalc_results1, rascalc_results2 : string
+    rascalc_results1, rascalc_results2 : string or Path object
         Filenames for the RascalC (post-processing) results for the two regions in NumPy format.
     
-    allcounts_files1, allcounts_files2 : list of strings
+    allcounts_files1, allcounts_files2 : list of strings or Path objects
         Filenames for the ``pycorr`` (https://github.com/cosmodesi/pycorr) ``.npy`` or ``lsstypes`` (https://github.com/adematti/lsstypes) ``.h5``/``.hdf5``/``.txt`` files with the correlation functions and pair counts for the two regions.
         Each list must contain three filenames: first for the auto-correlation of the first tracer, second for the cross-correlation of the two tracers, and the third for the auto-correlation of the second tracer.
         The order of regions must be the same as in RascalC results.
     
-    output_cov_file : string
+    output_cov_file : string or Path object
         Filename for the output text file, in which the covariance matrix will be saved.
 
     max_l : integer
@@ -50,7 +51,7 @@ def combine_covs_legendre_multi_to_cat(rascalc_results1: str, rascalc_results2: 
         (Optional) the bias values to upweight the first and the second tracer respectively.
         Default is 1 for both tracers (i.e., no upweighting).
     
-    output_cov_file1, output_cov_file2 : string or None
+    output_cov_file1, output_cov_file2 : string or Path object or None
         (Optional) if provided, the text covariance matrices for the corresponding region for the combined/concatenated tracer will be saved in this file.
 
     allcounts_format : None, "pycorr" or "lsstypes"
