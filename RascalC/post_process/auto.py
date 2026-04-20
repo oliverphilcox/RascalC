@@ -211,19 +211,19 @@ def post_process_auto(file_root: str,
 
     # Determine max_l automatically if needed
     if legendre and max_l is None:
-        raw_filenames = glob(f"Raw_Covariance_Matrices_n{n_r_bins}_l*.npz", root_dir = file_root)
+        raw_filenames = glob(f"Raw_Covariance_Matrices_n{n_r_bins}_l*.npz", root_dir=file_root)
         if raw_filenames:
-            if len(raw_filenames) > 1: warn("Found multiple `max_l` options.")
             rstr = fr"Raw_Covariance_Matrices_n{n_r_bins}_l(?P<MAX_L>\d+).npz"
             if not (m := fullmatch(rstr, raw_filenames[0])): raise ValueError("Raw covariance matrices filename suddenly not matched")
             max_l = int(m["MAX_L"])
+            if len(raw_filenames) > 1: warn(f"Found multiple `max_l` options, chosen {max_l=}")
         else:
             prefix = f"n{n_r_bins}_l"
-            raw_matrices = collect_raw_covariance_matrices(file_root, print_function = print_function)
+            raw_matrices = collect_raw_covariance_matrices(file_root, dry_run=True, check_finished=check_finished, two_tracers=two_tracers, print_function=print_function) # safer to skip the actual collection at this stage
             matched_labels = [label[len(prefix):] for label in raw_matrices.keys() if label.startswith(prefix)]
             if not matched_labels: raise ValueError("No Legendre results matched by the number of radial bins.")
-            if len(matched_labels) > 1: warn("Found multiple `max_l` options.")
             max_l = int(matched_labels[0])
+            if len(matched_labels) > 1: warn(f"Found multiple `max_l` options, chosen {max_l=}")
 
     if jackknife:
         xi_jack_names = [os.path.join(file_root, f"xi_jack/xi_jack_n{n_r_bins}_m{n_mu_bins}_j{n_jack}_{index}.dat") for index in indices_corr]

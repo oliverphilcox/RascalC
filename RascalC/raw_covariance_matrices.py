@@ -57,9 +57,10 @@ def save_safe(output_dir: str, output_group_name: str, output_dictionary: dict[s
     np.savez_compressed(output_filename, **output_dictionary)
 
 
-def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, check_finished: bool = True, two_tracers: bool | None = None, print_function: Callable[[str], None] = print) -> dict[str, dict[str, npt.NDArray[np.float64]]]:
+def collect_raw_covariance_matrices(cov_dir: str, dry_run: bool = False, cleanup: bool = True, check_finished: bool = True, two_tracers: bool | None = None, print_function: Callable[[str], None] = print) -> dict[str, dict[str, npt.NDArray[np.float64]]]:
     """
     Collect the covariance matrices from text files written by the C++ code and organize them into a Numpy .npz file.
+    With dry_run enabled, this function will only return the output group names via the dictionary, and not perform the actual collection.
     With cleanup enabled (default), deletes the text files after collection.
     With check_finished enabled (default), performs a heuristic check whether the run seems finished by looking for the presence of the full covariance matrices. If they are not found, the collection does not proceed and a warning is issued. This is to prevent disrupting ongoing runs by collecting and/or deleting the text files. If you want to check convergence of timed-out run(s) that did not produce the full matrices, you can disable this check, but be careful not to disrupt ongoing runs.
     With check_finished enabled, the code additionally checks presence of all types of matrices for two tracers. Pass two_tracers = True to enable this check explicitly, or two_tracers = False to disable it. By default (two_tracers = None), the code will try to guess whether the run is for two tracers by looking for the presence of the xi_22.dat file, which is only produced for two tracers by :func:`RascalC.run_cov`.
@@ -72,13 +73,15 @@ def collect_raw_covariance_matrices(cov_dir: str, cleanup: bool = True, check_fi
 
     # load the full matrices
     for input_filename in glob(cov_dir_all + "*.txt"):
-        organize_filename(input_filename, output_groups, jack = False)
+        organize_filename(input_filename, output_groups, jack=False)
 
     # load the jack matrices if present
     for input_filename in glob(cov_dir_jack + "*.txt"):
-        organize_filename(input_filename, output_groups, jack = True)
+        organize_filename(input_filename, output_groups, jack=True)
     
     print_function(f"Detected {len(output_groups)} output group(s) in {cov_dir}")
+
+    if dry_run: return {output_group_name: {} for output_group_name in output_groups} # return the group names via the dictionary, skipping any actual collection
 
     return_dictionary = {}
     
