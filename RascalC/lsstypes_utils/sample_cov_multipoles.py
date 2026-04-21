@@ -37,11 +37,12 @@ def sample_cov_multipoles_from_lsstypes(xi_estimators: list[list[lsstypes.Count2
     if any(len(xi_estimators_c) != len(xi_estimators[0]) for xi_estimators_c in xi_estimators[1:]):
         raise ValueError("Need the same number of files for different correlation functions")
     ells = np.arange(0, max_l+1, 2)
+    ells = list(ells) # make it a list, because lsstypes expects that (for now)
     # convert each xi estimator to multipoles array, and then turn list of lists into array too
-    xi = np.array([[reshape_lsstypes(xi_estimator, r_step=r_step, r_max=r_max, n_mu=None).project(mode='poles', ells=ells) for xi_estimator in xi_estimators_c] for xi_estimators_c in xi_estimators])
-    # now indices are [c, s, l, r]: correlation number, sample number, multipole index and then radial bin
-    # need [s, c, l, r]
-    xi = xi.transpose(1, 0, 2, 3)
+    xi = np.array([[reshape_lsstypes(xi_estimator, r_step=r_step, r_max=r_max, n_mu=None).project(mode='poles', ells=ells).value() for xi_estimator in xi_estimators_c] for xi_estimators_c in xi_estimators])
+    # now indices are [c, s, l_r]: correlation number, sample number, multipole index and then radial bin (the latter two together because each correlation function will be flattened)
+    # need [s, c, l_r]
+    xi = xi.transpose(1, 0, 2)
     # now flatten all dimensions except the samples
     xi = xi.reshape(xi.shape[0], -1)
     return np.cov(xi.T) # xi has to be transposed, because variables (bins) are in columns (2nd index) of it and np.cov expects otherwise.
