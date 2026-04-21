@@ -59,7 +59,7 @@ def sample_cov_multipoles_from_pycorr_to_file(xi_estimators: list[list[pycorr.tw
     outfile_name : string (filename)
         The name for the output text file.
     """
-    np.savetxt(outfile_name, sample_cov_multipoles_from_pycorr(xi_estimators, max_l, r_step, r_max))
+    np.savetxt(outfile_name, sample_cov_multipoles_from_pycorr(xi_estimators, max_l, r_step, r_max), header=f"n_samples={len(xi_estimators[0])}, {max_l=}, {r_step=}, {r_max=}")
 
 
 def sample_cov_multipoles_from_pycorr_files(infile_names: list[list[str]], outfile_name: str, max_l: int, r_step: float | None = None, r_max: float = np.inf) -> None:

@@ -55,7 +55,7 @@ def sample_cov_from_lsstypes_to_file(xi_estimators: list[list[lsstypes.Count2Cor
     outfile_name : string (filename)
         The name for the output text file.
     """
-    np.savetxt(outfile_name, sample_cov_from_lsstypes(xi_estimators, n_mu, r_step, r_max))
+    np.savetxt(outfile_name, sample_cov_from_lsstypes(xi_estimators, n_mu, r_step, r_max), header=f"n_samples={len(xi_estimators[0])}, {n_mu=}, {r_step=}, {r_max=}")
 
 
 def sample_cov_from_lsstypes_files(infile_names: list[list[str]], outfile_name: str, n_mu: int | None = None, r_step: float | None = None, r_max: float = np.inf) -> None:
