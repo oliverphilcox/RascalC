@@ -69,10 +69,11 @@ def fix_bad_bins_counts(count: lsstypes.Count2) -> lsstypes.Count2:
     for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
         warn(f"Negative normalized_counts ({count.values('normalized_counts')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({count.values('normalized_counts')[s_bin, -1-mu_bin]:.2e})")
         count._data['normalized_counts'][s_bin, mu_bin] = count._data['normalized_counts'][s_bin, -1-mu_bin]
-    bad_bins_mask = count.values('norm') < 0
-    for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
-        warn(f"Negative norm ({count.values('norm')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({count.values('norm')[s_bin, -1-mu_bin]:.2e})")
-        count._data['norm'][s_bin, mu_bin] = count._data['norm'][s_bin, -1-mu_bin]
+    if np.ndim(count.values('norm')) == 2: # can't check and fix norm if it is a scalar (i.e., the same for all bins) or a 1D array. previously, in most practical cases, norm was a 2D array because counts below 20 Mpc/h were from concatenated randoms and from split/disjoint randoms above 20 Mpc/h (in principle, in such cases it could be a 1D array barring the potential array broadcasting issues)
+        bad_bins_mask = count.values('norm') < 0
+        for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
+            warn(f"Negative norm ({count.values('norm')[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({count.values('norm')[s_bin, -1-mu_bin]:.2e})")
+            count._data['norm'][s_bin, mu_bin] = count._data['norm'][s_bin, -1-mu_bin]
     return count
 
 

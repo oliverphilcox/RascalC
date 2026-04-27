@@ -17,10 +17,11 @@ def fix_bad_bins_counts(counts: pycorr.twopoint_counter.BaseTwoPointCounter) -> 
     for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
         warn(f"Negative {counts.name}.wcounts ({counts.wcounts[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.wcounts[s_bin, -1-mu_bin]:.2e})")
         counts.wcounts[s_bin, mu_bin] = counts.wcounts[s_bin, -1-mu_bin]
-    bad_bins_mask = counts.wnorm < 0
-    for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
-        warn(f"Negative {counts.name}.wnorm ({counts.wnorm[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.wnorm[s_bin, -1-mu_bin]:.2e})")
-        counts.wnorm[s_bin, mu_bin] = counts.wnorm[s_bin, -1-mu_bin]
+    if np.ndim(counts.wnorm) == 2: # can't check and fix wnorm if it is a scalar (i.e., the same for all bins) or a 1D array. previously, in most practical cases, wnorm was a 2D array because counts below 20 Mpc/h were from concatenated randoms and from split/disjoint randoms above 20 Mpc/h (in principle, in such cases it could be a 1D array barring the potential array broadcasting issues)
+        bad_bins_mask = counts.wnorm < 0
+        for s_bin, mu_bin in zip(*np.nonzero(bad_bins_mask)):
+            warn(f"Negative {counts.name}.wnorm ({counts.wnorm[s_bin, mu_bin]:.2e}) found in bin {s_bin}, {mu_bin}; replacing them with reflected bin ({counts.wnorm[s_bin, -1-mu_bin]:.2e})")
+            counts.wnorm[s_bin, mu_bin] = counts.wnorm[s_bin, -1-mu_bin]
     return counts
 
 
