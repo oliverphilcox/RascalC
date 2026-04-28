@@ -6,13 +6,14 @@ Package installation
 Simplified way for DESI members at NERSC
 ----------------------------------------
 
-Recommended to use with `cosmodesi` environment.
+Recommended to use with ``cosmodesi`` environment.
 In particular, load it before installing::
 
     source /global/common/software/desi/users/adematti/cosmodesi_environment.sh main
     pip install -e /global/common/software/desi/users/mrash/RascalC
 
-This installs the library from a common software folder in the development mode, so that after I update it e.g. with some fix, you will have the new version without the need to re-install.
+This installs the library from a common software folder in the development mode, so that after I update it e.g. with some fix, you will have the new version without the need to re-install most of the time.
+You may occasionally need to re-install `RascalC` (e.g., when the Python version changes in the `main` `cosmodesi` environment).
 
 Generic installation
 --------------------
@@ -39,10 +40,10 @@ To compute pair counts of catalogs, you need a `custom version of Corrfunc <http
 
     python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'
 
-If you get the GPU support problem with Corrfunc (``Error: To compile with GPU support define "CUDA_HOME" Else set "USE_GPU=0"``), it is probably easiest to prepend either definition to the command: ``CUDA_HOME=... python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'`` or ``USE_GPU=0 python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'``.
+If you get the GPU support problem with ``Corrfunc`` (``Error: To compile with GPU support define "CUDA_HOME" Else set "USE_GPU=0"``), it is probably easiest to prepend either definition to the command: ``CUDA_HOME=... python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'`` or ``USE_GPU=0 python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'``.
 Alternatively, you can ``export CUDA_HOME=...`` or ``export USE_GPU=0`` in your shell before running ``python3 -m pip install 'git+https://github.com/cosmodesi/pycorr#egg=pycorr[corrfunc]'``.
 
-One of the reasons we recommend Linux is that building Corrfunc with multi-threading support on macOS has been a very hard experience.
+One of the reasons we recommend Linux is that building ``Corrfunc`` with multi-threading support on macOS has been a very hard experience.
 
 RascalC Python package
 ^^^^^^^^^^^^^^^^^^^^^^
