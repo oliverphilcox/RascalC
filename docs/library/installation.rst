@@ -13,7 +13,7 @@ In particular, load it before installing::
     pip install -e /global/common/software/desi/users/mrash/RascalC
 
 This installs the library from a common software folder in the development mode, so that after I update it e.g. with some fix, you will have the new version without the need to re-install most of the time.
-You may occasionally need to re-install `RascalC` (e.g., when the Python version changes in the `main` `cosmodesi` environment).
+You may occasionally need to re-install ``RascalC`` (e.g., when the Python version changes in the ``main`` ``cosmodesi`` environment).
 
 Generic installation
 --------------------
