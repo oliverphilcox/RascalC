@@ -27,7 +27,7 @@ def convert_cov_3pcf_legendre(cov: npt.NDArray[np.float64], max_l: int, exclude_
     cov = cov.reshape(n_r_bin_pairs, n_l, n_r_bin_pairs, n_l) # convert to 4D from 2D with [r_bin_pair, l] ordering for both rows and columns
     if apply_scaling: # prepare to apply the ell-dependent factor between RascalC and ENCORE basis functions
         ells = np.arange(0, max_l + 1, 1 + exclude_odd_l)
-        ell_factor = ((-1)**ells * np.sqrt(2 * ells + 1) / (4 * np.pi)) # the ell-dependent factor between the ENCORE 3-point basis functions and Legendre polynomials given by Equation (16) in https://arxiv.org/pdf/2105.08722
+        ell_factor = ((-1)**ells * np.sqrt(2 * ells + 1) / (4 * np.pi)) # the ell-dependent factor between the ENCORE 3-point basis functions and Legendre polynomials given by Equation (17) in https://arxiv.org/pdf/2105.08722
         cov /= ell_factor[:, None, None] * ell_factor[None, None, :] # apply the factor, NumPy broadcasting matches trailing dimensions. need to check if it is not multiplication; there might also be a factor of 2 or something similar
     cov = cov.transpose(1, 0, 3, 2) # change ordering to [l, r_pair] for both rows and columns
     cov = cov.reshape(n_bins, n_bins) # convert back from 4D to 2D

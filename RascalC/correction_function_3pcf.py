@@ -154,7 +154,7 @@ def compute_3pcf_correction_function_from_encore(randoms_pos: npt.NDArray[np.flo
 
     # change normalization from ENCORE to simple multipoles used in RascalC
     triple_counts = triple_counts * ((-1)**ells * np.sqrt(2 * ells + 1) / (4 * np.pi))[:, None] # add the second dimension, corresponding to the radial bins, to avoid indexing errors. don't use *= to avoid overriding the original argument outside the function
-    # the ell-dependent factor between the ENCORE 3-point basis functions and Legendre polynomials given by Equation (16) in https://arxiv.org/pdf/2105.08722
+    # the ell-dependent factor between the ENCORE 3-point basis functions and Legendre polynomials given by Equation (17) in https://arxiv.org/pdf/2105.08722
     # need to check if it is not division; there might also be a factor of 2 or something similar
 
     # ensure the number of multipoles in triple_counts is right to avoid indexing errors

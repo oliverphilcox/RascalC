@@ -131,7 +131,7 @@ def post_process_3pcf_mocks(mock_cov_file: str, file_root: str, n: int, max_l: i
     # prepare ell indexing and scaling factor accounting for the different basis
     ells = np.arange(0, max_l + 1, 1+exclude_odd_l)
     if skip_l > 0: ells = ells[:-skip_l] # without the condition, wouldn't work right for skip_l=0
-    ell_factor = ((-1)**ells * np.sqrt(2 * ells + 1) / (4 * np.pi)) # the ell-dependent factor between the ENCORE 3-point basis functions and Legendre polynomials given by Equation (16) in https://arxiv.org/pdf/2105.08722
+    ell_factor = ((-1)**ells * np.sqrt(2 * ells + 1) / (4 * np.pi)) # the ell-dependent factor between the ENCORE 3-point basis functions and Legendre polynomials given by Equation (17) in https://arxiv.org/pdf/2105.08722
     # scale and transpose the covariance
     if max_l_mock is None: max_l_mock = max_l
     mock_cov = mock_cov.reshape(max_l_mock + 1, n_r_pairs_orig, max_l_mock + 1, n_r_pairs_orig) # reshape the covariance from 2D to 4D, the ENCORE ordering is [l, r_bin_pair] for both rows and columns
