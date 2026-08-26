@@ -105,7 +105,8 @@ def check_eigval_convergence(cN: npt.NDArray[np.float64], c2N: npt.NDArray[np.fl
 
 def check_positive_definiteness(full_cov: npt.NDArray[np.float64]) -> None:
     """Ensure that the final covariance matrix is positive definite; raise an error if it is not."""
-    if np.any(np.linalg.eigvalsh(full_cov) <= 0): raise ValueError("The full covariance is not positive definite - insufficient convergence")
+    eigvals = np.linalg.eigvalsh(full_cov)
+    if np.any(eigvals <= 0): raise ValueError(f"The full covariance is not positive definite - insufficient convergence. For reference, its eigenvalues are {eigvals}.")
 
 
 def add_cov_terms_single(c2: npt.NDArray[np.float64], c3: npt.NDArray[np.float64], c4: npt.NDArray[np.float64], alpha: float = 1) -> npt.NDArray[np.float64]:

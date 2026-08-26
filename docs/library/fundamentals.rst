@@ -234,6 +234,7 @@ The convergence checks mostly follow Section 6.1 of `Rashkovetskyi et al 2025 <h
 
         - Shot-noise rescaling values smaller than 1 (which are quite common, e.g. in `Rashkovetskyi et al 2025 <https://arxiv.org/abs/2404.03007>`_) make this criterion stricter, because they scale the 2-point term down by :math:`\alpha_{\rm SN}^2`. So the code now repeats the test is the optimal shot-noise rescaling value becomes less than 1.
     - On the other hand, the compared eigenvalues of :math:`C_4` and :math:`C_2` can correspond to quite different separation scales, making the original criterion unnecessarily strict in some cases. This consideration led us to introduce the weaker version, where we compare the eigenvalues of :math:`C_2^{-1/2} C_4 C_2^{-1/2}` with :math:`-1` or :math:`-\alpha_{\rm SN}^2`. Here :math:`C_2^{-1/2}` is the inverse of `the matrix square root <https://en.wikipedia.org/wiki/Square_root_of_a_matrix>`_ (`scipy.linalg.sqrtm <https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.sqrtm.html>`_) of the 2-point term, which scales the different parts of the 4-point term matrix more appropriately. (The 2-point term is either diagonal or block-diagonal with small blocks, so taking its matrix square root should be numerically stable.)
+    - We suspect that neither of the two eigenvalue tests is completely reliable (unfortunately). One reason is that they only consider the 4-point term (vs the 2-point term), but the 3-point term also exists (presumably, it converges better than the 4-point term, but worse than the 2-point term, but this is not guaranteed).
 3. Finally, there is the extra convergence check (:mod:`RascalC.convergence_check_extra`) performed at the end of :func:`RascalC.run_cov` or :func:`RascalC.post_process_auto` by default.
 
     - After Section 3.2 of `Rashkovetskyi et al 2023 <https://arxiv.org/abs/2306.06320>`_, we recommend focusing on ``R_inv`` (:math:`R_{\rm inv}`) values. There is no universal threshold, but some decent reference values are:
@@ -257,7 +258,8 @@ Use these instructions when
 - the ``R_inv`` values from the extra convergence check are worryingly high (see above for reference, or reach out if in doubt);
 - you get the ``4-point covariance matrix has not converged properly via the weaker eigenvalue test`` warnings, although they seldom appear without one of the previous two issues;
 
-    - you can probably ignore the warning(s) about ``the stronger eigenvalue test`` if they appear alone.
+    - you can probably ignore the warning(s) about ``the stronger eigenvalue test`` if they appear alone;
+    - you may dismiss the weaker one as well if the full covariance is produced and the ``R_inv`` values are comfortably small (see above).
 
 First, you can re-run post-processing with alternative options using :func:`RascalC.post_process_auto`:
 

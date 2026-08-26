@@ -221,9 +221,13 @@ def post_process_auto(file_root: str,
             prefix = f"n{n_r_bins}_l"
             raw_matrices = collect_raw_covariance_matrices(file_root, dry_run=True, check_finished=check_finished, two_tracers=two_tracers, print_function=print_function)[0] # safer to skip the actual collection at this stage
             matched_labels = [label[len(prefix):] for label in raw_matrices.keys() if label.startswith(prefix)]
-            if not matched_labels: raise ValueError("No Legendre results matched by the number of radial bins.")
-            max_l = int(matched_labels[0])
-            if len(matched_labels) > 1: warn(f"Found multiple `max_l` options, chosen {max_l=}")
+            if not matched_labels:
+                if not dry_run: raise ValueError("No Legendre results matched by the number of radial bins.")
+                max_l = 0 # should help to retrieve some filename in RascalC-scripts make_covs.py. this filename will not exist, but that should be fine with the rest of the logic there. raising an error, on the contrary, would cause the script to stop and not update the hash info file, which is undesirable
+                print_function(f"WARNING: No Legendre results matched by the number of radial bins. For the dry run, set {max_l=} as a placeholder.")
+            else:
+                max_l = int(matched_labels[0])
+                if len(matched_labels) > 1: warn(f"Found multiple `max_l` options, chosen {max_l=}")
 
     if jackknife:
         xi_jack_names = [os.path.join(file_root, f"xi_jack/xi_jack_n{n_r_bins}_m{n_mu_bins}_j{n_jack}_{index}.dat") for index in indices_corr]
