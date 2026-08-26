@@ -65,8 +65,8 @@ def compute_inv_phi_aperiodic_3pcf(n: int, m: int, n_multipoles: int, r_bins: np
     vol_r = 4 * np.pi / 3 * (r_bins[:, 1] **3 - r_bins[:, 0] ** 3)
 
     ## Construct multipoles of inverse Phi
-    phi_inv_mult = leg_triple / (.5 * vol_r[:, None, None] * vol_r[None, :, None]) # wouldn't it be easier to remove 0.5 from here and use 3 instead of 6 in the normalization?
-            
+    phi_inv_mult = leg_triple / (vol_r[:, None, None] * vol_r[None, :, None]) # here we restore the bin volume factors from the numerator in Equation 4.10 of https://arxiv.org/pdf/1910.04764
+
     ## Check all seems reasonable
     check_inv_phi_values(phi_inv_mult, print_function=print_function)
 
@@ -96,8 +96,10 @@ def compute_3pcf_correction_function(randoms_pos: npt.NDArray[np.float64], rando
     n=len(r_bins)
 
     ## Define normalization constant
-    norm = 6. * V * n_bar**3 * w_bar**3 # I don't think there is an exactly right answer once number density or weights vary across the survey
-    # this is equal to 6 * np.sum(randoms_weights)**3 / V**2, but the other form is easier to compare against the definitions in the paper (Sections 4.2 and 5.2.1 of https://arxiv.org/pdf/1910.04764)
+    norm = 3. * V * n_bar**3 * w_bar**3 # this nearly corresponds to the definitions in the paper (the numerator in Equation 4.10 of https://arxiv.org/pdf/1910.04764, barring the bin volumes). It doesn't match exactly, but it is easier to compute in practice, and I don't think there is a completely right answer once number density or weights vary across the survey
+    # this is also equal to 3 * np.sum(randoms_weights)**3 / V**2; this form is more useful for thinking about scaling with random weight normalization or the volume estimate
+    # the value of the norm is actually important in the periodic case - it scales the final output
+    # in the aperiodic case, the final output does not depend on this norm value (see below), but it is used for a sanity check on the values (albeit with a wide margin)
 
     print_function("Normalizing output survey correction by %.2e"%norm)
 
@@ -118,8 +120,9 @@ def compute_3pcf_correction_function(randoms_pos: npt.NDArray[np.float64], rando
     else:
         outfile = os.path.join(outdir, 'BinCorrectionFactor3PCF_n%d_m%d.txt'%(n,m))
     
-    np.savetxt(outfile, phi_inv_mult.reshape(n*n, n_multipoles) * norm)
-    print_function("Saved (normalized) output to %s\n"%outfile)
+    np.savetxt(outfile, phi_inv_mult.reshape(n*n, n_multipoles) * norm * 2)
+    # saved object is not the survey correction function (or its inverse) as defined in the paper (Equation 4.10 of https://arxiv.org/pdf/1910.04764). the reason is probably that we don't want to deal with the volumes and weights in the C++ code. rather, the saved object is the Legendre polynomial decomposition of 6 * V * n_bar^3 * w_bar^3 / Phi(r1, r2, mu), the inverse of which appears in the covariance estimators (Equation 5.11 of https://arxiv.org/pdf/1910.04764 combined with Equation 4.16 defining/explaining the K factors).
+    print_function("Saved correction factors to %s\n"%outfile)
 
     return outfile
 
@@ -182,11 +185,13 @@ def compute_3pcf_correction_function_from_encore(randoms_pos: npt.NDArray[np.flo
     V, n_bar, w_bar = compute_V_n_w_bar(randoms_pos, randoms_weights)
 
     ## Define normalization constant
-    norm = 6. * V * n_bar**3 * w_bar**3 # I don't think there is an exactly right answer once number density or weights vary across the survey
-    # this is equal to 6 * np.sum(randoms_weights)**3 / V**2, but the other form is easier to compare against the definitions in the paper (Sections 4.2 and 5.2.1 of https://arxiv.org/pdf/1910.04764)
+    norm = 3. * V * n_bar**3 * w_bar**3 # this nearly corresponds to the definitions in the paper (the numerator in Equation 4.10 of https://arxiv.org/pdf/1910.04764, barring the bin volumes). It doesn't match exactly, but it is easier to compute in practice, and I don't think there is a completely right answer once number density or weights vary across the survey
+    # this is also equal to 3 * np.sum(randoms_weights)**3 / V**2; this form is more useful for thinking about scaling with random weight normalization or the volume estimate
+    # the value of the norm is actually important in the periodic case - it scales the final output
+    # in the aperiodic case, the final output does not depend on this norm value (see below), but it is used for a sanity check on the values (albeit with a wide margin)
 
     ## Construct multipoles of inverse Phi
-    phi_inv_mult = leg_triple / (.5 * norm * vol_r[:, None, None] * vol_r[None, :, None])
+    phi_inv_mult = leg_triple / (norm * vol_r[:, None, None] * vol_r[None, :, None]) # here we also add the bin volume factors from the numerator in Equation 4.10 of https://arxiv.org/pdf/1910.04764
 
     # fill the middle diagonal elements, which have been zeros
     # seems better to do in phi_inv_mult because its values change less
@@ -205,7 +210,8 @@ def compute_3pcf_correction_function_from_encore(randoms_pos: npt.NDArray[np.flo
         
     outfile = os.path.join(outdir, 'BinCorrectionFactor3PCF_n%d.txt' % n)
     
-    np.savetxt(outfile, phi_inv_mult.reshape(n*n, n_multipoles) * norm)
-    print_function("Saved (normalized) output to %s\n"%outfile)
+    np.savetxt(outfile, phi_inv_mult.reshape(n*n, n_multipoles) * norm * 2)
+    # saved object is not the survey correction function (or its inverse) as defined in the paper (Equation 4.10 of https://arxiv.org/pdf/1910.04764). the reason is probably that we don't want to deal with the volumes and weights in the C++ code. rather, the saved object is the Legendre polynomial decomposition of 6 * V * n_bar^3 * w_bar^3 / Phi(r1, r2, mu), the inverse of which appears in the covariance estimators (Equation 5.11 of https://arxiv.org/pdf/1910.04764 combined with Equation 4.16 defining/explaining the K factors).
+    print_function("Saved correction factors to %s\n"%outfile)
 
     return outfile
