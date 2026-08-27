@@ -51,13 +51,13 @@ def compute_inv_phi_aperiodic_3pcf(n: int, m: int, n_multipoles: int, r_bins: np
     
     ## reshape RRR counts and add symmetries
     RRR_true = triple_counts.reshape(n, n, m)
-    RRR_true = (RRR_true + RRR_true.transpose(1, 0, 2)) / 2 # although wouldn't they be symmetric in radial bins already, having come from triple_counts?
+    RRR_true = (RRR_true + RRR_true.transpose(1, 0, 2)) / 2 # triple_counts code accumulates each triple to the three possible pairs of radial bins, but only to one of the two possible orderings of the pair, with twice the weight. so this symmetrization should give the counts where each triple contributes to the 6 bin triplets it can according to the RascalC convention (see Section 4.1 of https://arxiv.org/pdf/1910.04764, Equations 4.2-4.4). However, there may be a factor of 2 here that could explain its lack in the Legendre projection below.
         
     ## Now construct Legendre moments
     leg_triple = np.zeros([n, n, n_multipoles])
     for ell in range(n_multipoles):
         # (NB: we've absorbed a factor of delta_mu into RRR_true here)
-        leg_triple[:, :, ell] += (2.*ell+1.) * np.sum(legendre(ell)(mu_cen)[None, None, :] * RRR_true, axis=-1) # shouldn't this be divided by 2 due to the legendre polynomial normalization?
+        leg_triple[:, :, ell] += (2.*ell+1.) * np.sum(legendre(ell)(mu_cen)[None, None, :] * RRR_true, axis=-1) # shouldn't this be divided by 2 due to the Legendre polynomial normalization?
     
     # as a precaution, check for negative counts
     check_triple_counts_positive(leg_triple, n_multipoles, print_function=print_function)
