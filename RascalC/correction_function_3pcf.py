@@ -122,7 +122,7 @@ def compute_3pcf_correction_function(randoms_pos: npt.NDArray[np.float64], rando
     
     np.savetxt(outfile, phi_inv_mult.reshape(n*n, n_multipoles) * norm * 2)
     # saved object is not the survey correction function (or its inverse) as defined in the paper (Equation 4.10 of https://arxiv.org/pdf/1910.04764). the reason is probably that we don't want to deal with the survey volume and weights in the C++ code. rather, the saved object is the Legendre polynomial decomposition of 6 * V * n_bar^3 * w_bar^3 / Phi(r1, r2, mu), the inverse of which appears in the covariance estimators (Equation 5.13 of https://arxiv.org/pdf/1910.04764 combined with Equation 4.16 defining/explaining the K factors) as the correction_factor in modules/integrals_3pcf.h. not sure why 2 from the K factor couldn't be absorbed to cancel the 2 in norm * 2, but probably easier to leave it be
-    # the bin volume factors are re-applied inside the C++ code at the end of the computation with the normalize() function in modules/integrals_3pcf.h
+    # the bin volume and (2*p+1) factors are re-applied inside the C++ code at the end of the computation with the normalize() function in modules/integrals_3pcf.h
     print_function("Saved correction factors to %s\n"%outfile)
 
     return outfile
@@ -215,7 +215,7 @@ def compute_3pcf_correction_function_from_encore(randoms_pos: npt.NDArray[np.flo
     
     np.savetxt(outfile, phi_inv_mult.reshape(n*n, n_multipoles) * norm * 2)
     # saved object is not the survey correction function (or its inverse) as defined in the paper (Equation 4.10 of https://arxiv.org/pdf/1910.04764). the reason is probably that we don't want to deal with the survey volume and weights in the C++ code. rather, the saved object is the Legendre polynomial decomposition of 6 * V * n_bar^3 * w_bar^3 / Phi(r1, r2, mu), the inverse of which appears in the covariance estimators (Equation 5.13 of https://arxiv.org/pdf/1910.04764 combined with Equation 4.16 defining/explaining the K factors) as the correction_factor in modules/integrals_3pcf.h. not sure why 2 from the K factor couldn't be absorbed to cancel the 2 in norm * 2, but probably easier to leave it be
-    # the bin volume factors are re-applied inside the C++ code at the end of the computation with the normalize() function in modules/integrals_3pcf.h
+    # the bin volume and (2*p+1) factors are re-applied inside the C++ code at the end of the computation with the normalize() function in modules/integrals_3pcf.h
     print_function("Saved correction factors to %s\n"%outfile)
 
     return outfile
