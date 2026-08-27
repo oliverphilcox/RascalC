@@ -156,11 +156,13 @@ def compute_3pcf_correction_function_from_encore(randoms_pos: npt.NDArray[np.flo
     # check this after removing the ells column if present
     # the columns correspond to radial bins
 
-    triple_counts = 6 * triple_counts # the factor of 6 comes from the fact that ENCORE counts each triplet only once, whereas RascalC counts each triplet 6 times (once for each permutation of the three points). both should encounter every triplet in every relevant permutations on top of this. don't use *= to avoid overriding the original argument outside the function
-    # change normalization from ENCORE to simple Legendre polynomials used in RascalC (according to Equation 4.11 in https://arxiv.org/pdf/1910.04764)
+    # conversion from ENCORE to RascalC (triple_counts) convention
+    triple_counts = 6 * triple_counts # the factor of 6 comes from the fact that ENCORE counts each triplet only once, whereas RascalC counts each triplet 6 times (once for each permutation of the three points, see the end of Section 4.2 below Equation 4.16 in https://arxiv.org/pdf/1910.04764). both should encounter every triplet in every relevant permutations on top of this. (don't use *= at first to avoid overriding the variable passed to the function)
+    triple_counts *= 8 * np.pi**2 # the factor of 8 pi^2 comes from the fact that ENCORE seems to weigh each triplet by its basis functions (given by Equation 17 in https://arxiv.org/pdf/2105.08722). it is not the same as projecting onto the basis function, because the square norm of the basis function, its integral over mu=cos(theta) from -1 to 1, is not 1 but rather 1/(8 pi^2). so, to get the coefficient in the basis decomposition, we need to multiply by 8 pi^2
+    # convert ell coefficients from ENCORE basis to simple Legendre polynomials used in RascalC (according to Equation 4.11 in https://arxiv.org/pdf/1910.04764)
     triple_counts *= ((-1)**ells * np.sqrt(2 * ells + 1) / (4 * np.pi))[:, None] # add the second dimension, corresponding to the radial bins, to avoid indexing errors. should be fine to use *= now because triple_counts is a new local variable
     # the ell-dependent factor between the ENCORE 3-point basis functions and Legendre polynomials given by Equation (17) in https://arxiv.org/pdf/2105.08722
-    # need to check if it is not division; there might also be a factor of 2 or something similar
+    triple_counts *= 2 # this factor of 2 is not yet completely understood, but it corresponds to the lack of division of 2 that seems to be needed in the decomposition onto Legendre polynomials in compute_inv_phi_aperiodic_3pcf() above, and Karim validated empirically that the resulting final covariance is consistent with the ENCORE mock sample covariance at <~20% level, so it is evidently not off by a factor of 2 (or rather 4)
 
     # ensure the number of multipoles in triple_counts is right to avoid indexing errors
     if len(triple_counts) < n_multipoles: # this seems more likely
