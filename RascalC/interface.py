@@ -499,7 +499,7 @@ def run_cov(mode: Literal["s_mu", "legendre_projected", "legendre_accumulated"],
                 xi_n_mu_bins = len(mu_vals)
                 if not refine_xi:
                     xi_s_edges = (r_vals[:-1] + r_vals[1:]) / 2 # middle values as midpoints of r_vals to be safe
-                    xi_s_edges = [1e-4] + xi_s_edges + [2 * r_vals[-1] - xi_s_edges[-1]] # set the lowest edge near 0 and the highest beyond the last point of r_vals
+                    xi_s_edges = np.concatenate([[1e-4], xi_s_edges, [2 * r_vals[-1] - xi_s_edges[-1]]]) # set the lowest edge near 0 and the highest beyond the last point of r_vals
             write_xi_file(cornames[c], r_vals, mu_vals, xi_vals)
         else: raise TypeError(f"Xi table {indices_corr[c]} must be either a pycorr.TwoPointEstimator, a lsstypes.Count2Correlation, or a tuple/list")
     xi_refinement_iterations *= refine_xi # True is 1; False is 0 => 0 iterations => no refinement
