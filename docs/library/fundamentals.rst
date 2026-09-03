@@ -1,5 +1,5 @@
-Fundamentals
-============
+Fundamentals (2PCF covariances)
+===============================
 
 Introduction
 ------------

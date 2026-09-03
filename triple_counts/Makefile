@@ -4,14 +4,10 @@ CC = gcc
 CFLAGS = -O3 -Wall -MMD
 CXX = g++
 CXXFLAGS	= -O3 -Wall -MMD -std=c++11 -ffast-math $(shell pkg-config --cflags gsl)
-CXXFLAGS	+= -DOPENMP -DTHREE_PCF -DPRINTPERCENTS
+CXXFLAGS	+= -DOPENMP -DTRIPLE -DPRINTPERCENTS
 #-DOPENMP  # use this to run multi-threaded with OPENMP
 #-DPERIODIC # use this to enable periodic behavior
-#-DLEGENDRE # use this to compute 2PCF covariances in Legendre bins (original mode, corresponding to direct accumulation into multipoles from pair counts)
-#-DLEGENDRE_MIX # also compute 2PCF covariances in Legendre bins, but in other, "mixed" mode, corresponding to projection of s,µ bins into multipoles
-# without either of the two Legendre flags above, the covariance is computed in s,µ bins
-#-DJACKKNIFE # use this to compute (r,mu)-space 2PCF covariances and jackknife covariances. Incompatible with -DLEGENDRE but works with -DLEGENDRE_MIX
-#-DTHREE_PCF # use this to compute 3PCF autocovariances
+#-DTRIPLE # need this to have mumin=-1 and not 0 to be consistent with the 3PCF covariance
 #-DPRINTPERCENTS # use this to print percentage of progress in each loop. This can be a lot of output
 
 LFLAGS	= $(shell pkg-config --libs gsl) # common part

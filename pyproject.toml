@@ -51,4 +51,4 @@ path = "RascalC/__init__.py"
 out_dir = "./RascalC/bin"
 work_dir = "./RascalC"
 commands = ["make"]
-artifacts = ["RascalC/bin/cov.*"]
+artifacts = ["RascalC/bin/cov.*", "RascalC/bin/triple.*"]

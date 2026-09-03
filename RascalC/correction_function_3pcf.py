@@ -1,110 +1,229 @@
-### Function to fit a model (piecewise polynomial) to the 3PCF survey correction function, defined as the ratio between idealistic and true RRR pair counts for a single survey.
-
-## NB: Input RRR counts should be normalized by the cube of the sum of random weights here. ## is this useful/necessary?
-## NB: Assume mu is in [-1,1] limit here
-
-
 import os
 import numpy as np
-import scipy.spatial as ss
+import numpy.typing as npt
 from typing import Callable
+from scipy.special import legendre
+from .correction_function import compute_V_n_w_bar, load_randoms
 
 
-def compute_3pcf_correction_function(random_filename: str, binfile: str, outdir: str, periodic: bool, RRR_file: str | None = None, print_function: Callable[[str], None] = print) -> None:
+def compute_inv_phi_periodic_3pcf(n: int, n_multipoles: int) -> npt.NDArray[np.float64]:
+    "Compute the inverse 3PCF survey correction function multipoles for the periodic box geometry."
+    ## Output periodic survey correction function
+    phi_inv_mult = np.zeros([n, n, n_multipoles])
+    
+    ## Set to correct periodic survey values
+    phi_inv_mult[:, :, 0] = 1
+
+    return phi_inv_mult
+
+
+def check_triple_counts_positive(leg_triple: npt.NDArray[np.float64], lenient_samebins: bool = False, print_function: Callable[[str], None] = print) -> None:
+    "Check for negative counts, which should be problematic"
+    n_chi = 2001
+    triple_counts = np.zeros(list(leg_triple.shape[:-1]) + [n_chi])
+    chi_values = np.linspace(-1, 1, n_chi)
+    for ell in range(leg_triple.shape[-1]):
+        triple_counts += leg_triple[:, :, ell][:, :, None] * legendre(ell)(chi_values)[None, None, :]
+    problem_indices = np.argwhere(triple_counts <= 0)
+    if len(problem_indices) > 0:
+        rbins, chi_counts = np.unique(problem_indices[:, :2], axis=0, return_counts=True)
+        for ((rbin1, rbin2), chi_count) in zip(rbins, chi_counts):
+            if rbin1 > rbin2: continue # this case can be skipped by symmetry
+            title = "WARNING"
+            if lenient_samebins and rbin1 == rbin2: title = "INFO" # the problem for same-bin pairs is less critical (and seems more likely), for different-bin pairs it is more critical
+            print_function(f"{title}: counts are not positive for radial bin pair {rbin1}, {rbin2} for {chi_count} chi values of {n_chi} checked")
+
+
+def check_inv_phi_values(phi_inv_mult: npt.NDArray[np.float64], print_function: Callable[[str], None] = print) -> None:
+    """
+    Check that the mean of the monopole is neither too small nor too large.
+    Its values should be close to 1, which is the value for the ideal survey. But it is not clear how far they can deviate for a realistic survey with complicated geometry, varying density and weights. Moreover, the values also depend on the volume estimate, which may be off by a factor of a few.
+    So, this check is given a wide margin, but it may still be useful to catch some obvious problems with the RRR counts normalization.
+    """
+    print_function(f"INFO: mean±std of the monopole of the inverse survey correction function is {np.mean(phi_inv_mult[:, :, 0])}±{np.std(phi_inv_mult[:, :, 0], ddof=1)}, expected to be not very far from 1. NB: this diagnostic depends on an empirical volume estimate with ConvexHull, which may be off (overestimated) by a factor of a few for realistic survey geometries.")
+    if np.mean(phi_inv_mult[:, :, 0]) < 1e-3:
+        raise ValueError("Survey correction function seems too small - are the RRR counts normalized correctly?")
+    if np.mean(phi_inv_mult[:, :, 0]) > 1e3:
+        raise ValueError("Survey correction function seems too large - are the RRR counts normalized correctly?")
+
+
+def compute_inv_phi_aperiodic_3pcf(n: int, m: int, n_multipoles: int, r_bins: npt.NDArray[np.float64], RRRbin_over_3Vn3v3_raw: npt.NDArray[np.float64], print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
+    "Compute the inverse 3PCF survey correction function multipoles for the realistic survey geometry."
+
+    chi_all = np.linspace(-1,1,m+1)
+    chi_cen = 0.5*(chi_all[1:]+chi_all[:-1])
+    
+    ## reshape RRR counts and add symmetries
+    # 3Vn3v3 is just part of the normalization for the (inverse) survey correction function, see Equation 4.10 of https://arxiv.org/pdf/1910.04764
+    RRRbin_over_3Vn3v3 = RRRbin_over_3Vn3v3_raw.reshape(n, n, m)
+    RRRbin_over_3Vn3v3 = (RRRbin_over_3Vn3v3 + RRRbin_over_3Vn3v3.transpose(1, 0, 2)) / 2 # triple_counts code accumulates each triple to the three possible pairs of radial bins, but only to one of the two possible orderings of the pair, with twice the weight. so this symmetrization should give the counts where each triple contributes to the 6 bin triplets it can according to the RascalC convention (see Section 4.1 of https://arxiv.org/pdf/1910.04764, Equations 4.2-4.4). in the end, this is exactly symmetric under the interchange of the two radial bins, as it should be but wasn't before this step
+        
+    ## Now construct Legendre moments
+    RRRleg_over_3Vn3v3 = np.zeros([n, n, n_multipoles])
+    for ell in range(n_multipoles):
+        # we've absorbed a factor of delta_chi into RRRbin... here, because RRRbin is RRR^{ab}_c ≈ RRR^{ab}(chi_central) delta_chi in terms of Section 4.2 of https://arxiv.org/pdf/1910.04764
+        # we want the Legendre polynomial decomposition of the inverse survey correction function 1/Phi(r_a, r_b, chi), which is proportional to RRR^ab(chi) according to Equation 4.10 of https://arxiv.org/pdf/1910.04764
+        # so what we want is proportinal to RRR^{ab}_ell = (2 ell + 1)/2 int_{-1}^{1} L_ell(chi) RRR^{ab}(chi) dchi ≈ (2 ell + 1)/2 sum_c L_ell(chi_central_c) RRR^{ab}(chi_central_c) delta_chi ≈ (2 ell + 1)/2 sum_c L_ell(chi_central_c) RRR^{ab}_c
+        # absorption of delta_chi makes sense, but the lack of division by 2 is not completely understood (whereas it is empirically validated on the ENCORE side, see below)
+        RRRleg_over_3Vn3v3[:, :, ell] += (2.*ell+1.) * np.sum(legendre(ell)(chi_cen)[None, None, :] * RRRbin_over_3Vn3v3, axis=-1)
+    
+    # as a precaution, check for negative counts
+    check_triple_counts_positive(RRRleg_over_3Vn3v3, n_multipoles, print_function=print_function)
+
+    vol_r = 4 * np.pi / 3 * (r_bins[:, 1] **3 - r_bins[:, 0] ** 3)
+
+    ## Construct multipoles of inverse Phi
+    phi_inv_mult = RRRleg_over_3Vn3v3 / (vol_r[:, None, None] * vol_r[None, :, None]) # here we restore the bin volume factors from the numerator in Equation 4.10 of https://arxiv.org/pdf/1910.04764. so we finally get to the Legendre polynomial decomposition coefficients of 1/Phi(r_a, r_b, chi)
+
+    # Check that values seem reasonable
+    check_inv_phi_values(phi_inv_mult, print_function=print_function)
+
+    return phi_inv_mult
+
+
+def compute_3pcf_correction_function(randoms_pos: npt.NDArray[np.float64], randoms_weights: npt.NDArray[np.float64], binfile: str, outdir: str, periodic: bool, RRR_file: str | None = None, print_function: Callable[[str], None] = print) -> str:
+    """
+    Function to compute the multipole decomposition of the 3PCF inverse survey correction function.
+    The 3PCF survey correction function is defined as the ratio between idealistic and true RRR pair counts for a single survey.
+
+    NB: Input RRR counts should be normalized by the cube of the sum of random weights here.
+    NB: Assume chi is in [-1,1] limit here - it is the cosine of the angle in the triangle, and its sign is important (unlike for mu in the 2PCF context)
+    """
+
+    n_multipoles = 7 # matches the value hard-coded in the C++ code
+
     if periodic:
-        print_function("\nAssuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
+        print_function("Assuming periodic boundary conditions - so Phi(r_a, r_b, chi) = 1 everywhere")
     elif RRR_file is None:
         raise TypeError("RRR counts file is required if aperiodic")
-    ## Load galaxies
-    print_function("\nLoading randoms")
-    randoms_data = np.loadtxt(random_filename)
-    random_pos = randoms_data[:, :3]
-    random_w = randoms_data[:, 3]
 
-    N_gal = len(randoms_data)
-    w_bar = np.mean(random_w)
-
-    ## Find survey volume via ConvexHull in Scipy
-    hull = ss.ConvexHull(random_pos)
-    print_function('\nSurvey volume is approximately: %.2f (Gpc/h)^3'%(hull.volume/1e9))
-    V=hull.volume # in (Mpc/h)^3
-
-    ## Galaxy number density
-    n_bar = N_gal/V
+    V, n_bar, w_bar = compute_V_n_w_bar(randoms_pos, randoms_weights)
 
     # Load in binning files 
     r_bins = np.loadtxt(binfile)
     n=len(r_bins)
 
     ## Define normalization constant
-    norm = 6. * V * n_bar**3 * w_bar**3 # I don't think there is an exactly right answer once number density or weights vary across the survey
+    norm = 3. * V * n_bar**3 * w_bar**3 # this nearly corresponds to the definitions in the paper (the numerator in Equation 4.10 of https://arxiv.org/pdf/1910.04764, barring the bin volumes). It doesn't match exactly, but it is easier to compute in practice, and I don't think there is a completely right answer once number density or weights vary across the survey
+    # this is also equal to 3 * np.sum(randoms_weights)**3 / V**2; this form is more useful for thinking about scaling with random weight normalization or the volume estimate
+    # the value of the norm is actually important in the periodic case - it scales the final output
+    # in the aperiodic case, the final output does not depend on this norm value (see below), but it is used for a sanity check on the values (albeit with a wide margin)
 
     print_function("Normalizing output survey correction by %.2e"%norm)
 
     if periodic:
-        
-        ## Output periodic survey correction function
-        phi_inv_mult = np.zeros([n,n,7]);
-        
-        ## Set to correct periodic survey values
-        phi_inv_mult[:,:,0]=1.
+        phi_inv_mult = compute_inv_phi_periodic_3pcf(n, n_multipoles)
 
     else:
-        from scipy.special import legendre
-        
-        ## Load triple counts and renormalize
-        tmp_triple_counts = np.loadtxt(RRR_file)*np.sum(random_w)**3
-        
+        triple_counts = np.loadtxt(RRR_file)*np.sum(randoms_weights)**3
+    
         # Compute number of angular bins in data-set
-        m = (len(tmp_triple_counts)//n)//n
-        if len(tmp_triple_counts) % m != 0: raise ValueError("Incorrect RRR format")
-        
+        m = (len(triple_counts)//n)//n
+        if len(triple_counts) % m != 0: raise ValueError("Incorrect RRR format")
 
-        mu_all = np.linspace(-1,1,m+1)
-        mu_cen = 0.5*(mu_all[1:]+mu_all[:-1])
-        
-        RRR_true = np.zeros([n,n,m])
-        
-        ## load in RRR counts (and add symmetries)
-        for i in range(len(tmp_triple_counts)):
-            RRR_true[(i//m)//n,(i//m)%n,i%m] += tmp_triple_counts[i]*0.5
-            RRR_true[(i//m)%n,(i//m)//n,i%m] += tmp_triple_counts[i]*0.5
-            
-        ## Now construct Legendre moments
-        leg_triple = np.zeros([n,n,7])
-        for a in range(n):
-            for b in range(n):
-                for ell in range(7):
-                    # (NB: we've absorbed a factor of delta_mu into RRR_true here)
-                    leg_triple[a,b,ell]+=np.sum(legendre(ell)(mu_cen)*RRR_true[a,b,:])*(2.*ell+1.)
-
-        vol_r = lambda b: 4.*np.pi/3.*(r_bins[b,1]**3.-r_bins[b,0]**3.)
-
-        ## Construct inverse multipoles of Phi
-        phi_inv_mult = np.zeros([n,n,7])
-        for b1 in range(n):
-            for b2 in range(n):
-                phi_inv_mult[b1,b2,:] = leg_triple[b1,b2,:] / (.5 * norm * vol_r(b1) * vol_r(b2))
-                
-        ## Check all seems reasonable
-        if np.mean(phi_inv_mult[:,:,0])<1e-3:
-            print_function(phi_inv_mult[:,:,0])
-            raise ValueError("Survey correction function seems too small - are the RRR counts normalized correctly?")
-        if np.mean(phi_inv_mult[:,:,0])>1e3:
-            raise ValueError("Survey correction function seems too large - are the RRR counts normalized correctly?")
+        phi_inv_mult = compute_inv_phi_aperiodic_3pcf(n, m, n_multipoles, r_bins, triple_counts / norm, print_function=print_function)
         
     if periodic:
         outfile = os.path.join(outdir, 'BinCorrectionFactor3PCF_n%d_periodic.txt'%(n))
     else:
         outfile = os.path.join(outdir, 'BinCorrectionFactor3PCF_n%d_m%d.txt'%(n,m))
+    
+    np.savetxt(outfile, phi_inv_mult.reshape(n*n, n_multipoles) * norm * 2)
+    # saved object is not the survey correction function (or its inverse) as defined in the paper (Equation 4.10 of https://arxiv.org/pdf/1910.04764). the reason is probably that we don't want to deal with the survey volume and weights in the C++ code. rather, the saved object is the Legendre polynomial decomposition of 6 * V * n_bar^3 * w_bar^3 / Phi(r1, r2, mu), the inverse of which appears in the covariance estimators (Equation 5.13 of https://arxiv.org/pdf/1910.04764 combined with Equation 4.16 defining/explaining the K factors) as the correction_factor in modules/integrals_3pcf.h. not sure why 2 from the K factor couldn't be absorbed to cancel the 2 in norm * 2 (it is applied in the integrals in the C++ code instead, see modules/integrals_3pcf.h), but probably easier to leave it be
+    # the bin volume and (2*p+1) factors are re-applied inside the C++ code at the end of the computation with the normalize() function in modules/integrals_3pcf.h
+    print_function("Saved correction factors to %s\n"%outfile)
+
+    return outfile
+
+
+def compute_3pcf_correction_function_from_files(random_filename: str, binfile: str, outdir: str, periodic: bool, RRR_file: str | None = None, print_function: Callable[[str], None] = print) -> str:
+    print_function("Loading randoms")
+    return compute_3pcf_correction_function(*load_randoms(random_filename), binfile, outdir, periodic, RRR_file, print_function = print_function)
+
+
+def compute_3pcf_correction_function_from_encore(randoms_pos: npt.NDArray[np.float64], randoms_weights: npt.NDArray[np.float64], binfile: str, outdir: str, triple_counts: npt.NDArray[np.float64], print_function: Callable[[str], None] = print) -> str:
+    """
+    Function to compute the multipole decomposition of the 3PCF inverse survey correction function from ENCORE triple counts.
+    The 3PCF survey correction function is defined as the ratio between idealistic and true RRR pair counts for a single survey.
+
+    NB: Input RRR counts are not normalized here, and are already in multipole format.
+    Caveat: ENCORE only computes the triple counts for pairs of different radial bins, whereas RascalC expects them for all pairs of radial bins, crucially including the pairs of identical bins. Here we try to fill the missing data for those identical-bin pairs using the neighboring bin pairs. These should only affect the covariance rows and columns corresponding to the identical-bin pairs, which should be removed from the covariance for use with ENCORE 3PCF measurements in the end. So, those missing bin pairs should not matter in the end, but it is nicer not to have complete nonsence in the intermediate products.
+    """
+
+    n_multipoles = 7 # matches the value hard-coded in the C++ code
+
+    ells = np.arange(len(triple_counts)) # rows in triple_counts correspond to multipoles, columns - to radial bin pairs; the first column might just contain these ells
+
+    if np.array_equal(triple_counts[:, 0], ells): triple_counts = triple_counts[:, 1:] # remove the first column if it is all ells
+
+    # Load in binning files 
+    r_bins = np.loadtxt(binfile)
+    n = len(r_bins)
+
+    if triple_counts.shape[1] != n*(n-1)//2: raise ValueError("The shape of RRR_counts is inconsistent with the radial bins provided")
+    # check this after removing the ells column if present
+    # the columns correspond to radial bins
+
+    # conversion from ENCORE to RascalC (triple_counts) convention
+    triple_counts = 6 * triple_counts # the factor of 6 comes from the fact that ENCORE counts each triplet only once, whereas RascalC counts each triplet 6 times (once for each permutation of the three points, see the end of Section 4.2 below Equation 4.16 in https://arxiv.org/pdf/1910.04764). both should encounter every triplet in every relevant permutations on top of this. (don't use *= at first to avoid overriding the variable passed to the function)
+    triple_counts *= 8 * np.pi**2 # the factor of 8 pi^2 comes from the fact that ENCORE seems to weigh each triplet by its basis functions (given by Equation 17 in https://arxiv.org/pdf/2105.08722). it is not the same as projecting onto the basis function, because the square norm of the basis function, its integral over chi (cosine of the angle in the triangle) from -1 to 1, is not 1 but rather 1/(8 pi^2). so, to get the coefficient in the basis decomposition, we need to multiply by 8 pi^2. (this issue probably only applies to counts from ENCORE. its 3PCF are obtained by division by the RRR monopole, which should cancel the constant normalization factor. so in the other two places in the code, where we convert the 3PCF between conventions, the basis conversion factor below is sufficient)
+    # convert ell coefficients from ENCORE basis to simple Legendre polynomials used in RascalC (according to Equation 4.11 in https://arxiv.org/pdf/1910.04764)
+    triple_counts *= ((-1)**ells * np.sqrt(2 * ells + 1) / (4 * np.pi))[:, None] # add the second dimension, corresponding to the radial bins, to avoid indexing errors. should be fine to use *= now because triple_counts is a new local variable
+    # the ell-dependent factor between the ENCORE 3-point basis functions and Legendre polynomials given by Equation (17) in https://arxiv.org/pdf/2105.08722
+    triple_counts *= 2 # this factor of 2 is not yet completely understood, but it corresponds to the lack of division of 2 that seems to be needed in the decomposition onto Legendre polynomials in compute_inv_phi_aperiodic_3pcf() above, and Karim validated empirically that the resulting final covariance is consistent with the ENCORE mock sample covariance at <~20% level, so it is evidently not off by a factor of 2 (or rather 4)
+
+    # ensure the number of multipoles in triple_counts is right to avoid indexing errors
+    if len(triple_counts) < n_multipoles: # this seems more likely
+        print_function(f"INFO: ENCORE triple counts have {len(triple_counts)} multipoles, fewer than {n_multipoles} used for the survey correction function, extending by zeros")
+        triple_counts = np.vstack([triple_counts, np.zeros([n_multipoles - len(triple_counts), triple_counts.shape[1]])])
+    elif len(triple_counts) > n_multipoles: # this seems less likely
+        print_function(f"INFO: ENCORE triple counts have {len(triple_counts)} multipoles, more than {n_multipoles} used for the survey correction function, discarding the higher multipoles")
+        triple_counts = triple_counts[:n_multipoles]
+
+    bin_indices = np.arange(n)
+    bin_index1 = np.repeat(bin_indices, n-1-bin_indices)
+    bin_index2 = np.concatenate([bin_indices[i+1:] for i in range(n)])
+    # bin_index1 and bin_index2 cover all the bin pairs under the condition bin_index1 < bin_index2, the order follows the ENCORE format
+    # they could be read from first two non-comment rows of the ENCORE file, but this seems unnecessary
+
+    leg_triple = np.zeros([n, n, n_multipoles])
+    leg_triple[bin_index1, bin_index2] = triple_counts.T # fill above the diagonal; transposition puts radial bin pair index first and multipole index last
+    leg_triple[bin_index2, bin_index1] = triple_counts.T # fill below the diagonal symmetrically
+    # leave zeros at the diagonal for now
+
+    vol_r = 4 * np.pi / 3 * (r_bins[:, 1] ** 3 - r_bins[:, 0] ** 3) # volume of radial/separation bins as 1D array
+
+    V, n_bar, w_bar = compute_V_n_w_bar(randoms_pos, randoms_weights)
+
+    ## Define normalization constant
+    norm = 3. * V * n_bar**3 * w_bar**3 # this nearly corresponds to the definitions in the paper (the numerator in Equation 4.10 of https://arxiv.org/pdf/1910.04764, barring the bin volumes). It doesn't match exactly, but it is easier to compute in practice, and I don't think there is a completely right answer once number density or weights vary across the survey
+    # this is also equal to 3 * np.sum(randoms_weights)**3 / V**2; this form is more useful for thinking about scaling with random weight normalization or the volume estimate
+    # the value of the norm is actually important in the periodic case - it scales the final output
+    # in the aperiodic case, the final output does not depend on this norm value (see below), but it is used for a sanity check on the values (albeit with a wide margin)
+
+    ## Construct multipoles of inverse Phi
+    phi_inv_mult = leg_triple / (norm * vol_r[:, None, None] * vol_r[None, :, None]) # here we also add the bin volume factors from the numerator in Equation 4.10 of https://arxiv.org/pdf/1910.04764
+
+    # fill the middle diagonal elements, which have been zeros
+    # seems better to do in phi_inv_mult because its values change less
+    bin_indices_middle = bin_indices[1:-1]
+    phi_inv_mult[bin_indices_middle, bin_indices_middle] = (phi_inv_mult[bin_indices_middle+1, bin_indices_middle] + phi_inv_mult[bin_indices_middle-1, bin_indices_middle]) / 2 # average the neighboring elements along the column. the neighboring elements along the row are the same due to symmetry
+
+    # fill the edge/corner diagonal elements, which are more tricky and have been zeros
+    phi_inv_mult[0, 0] = (2 * (2 * phi_inv_mult[1, 0] - phi_inv_mult[2, 0]) + (2 * phi_inv_mult[1, 1] - phi_inv_mult[2, 2])) / 3
+    phi_inv_mult[-1, -1] = (2 * (2 * phi_inv_mult[-2, -1] - phi_inv_mult[-3, -1]) + (2 * phi_inv_mult[-2, -2] - phi_inv_mult[-3, -3])) / 3
+    
+    # check for negative triple counts (or rather the correction function as it is passed to RascalC), which should be problematic
+    check_triple_counts_positive(phi_inv_mult * norm, lenient_samebins=True, print_function=print_function)
+            
+    # Check that the values seem reasonable
+    check_inv_phi_values(phi_inv_mult, print_function=print_function)
         
-    with open(outfile,"w+") as out:
-        for b1 in range(n):
-            for b2 in range(n):
-                for ell in range(7):
-                    out.write("%.8e"%(phi_inv_mult[b1,b2,ell]*norm))
-                    if ell<6:
-                        out.write("\t")
-                    if ell==6:
-                        out.write("\n")
-    print_function("\nSaved (normalized) output to %s\n"%outfile)
+    outfile = os.path.join(outdir, 'BinCorrectionFactor3PCF_n%d.txt' % n)
+    
+    np.savetxt(outfile, phi_inv_mult.reshape(n*n, n_multipoles) * norm * 2)
+    # saved object is not the survey correction function (or its inverse) as defined in the paper (Equation 4.10 of https://arxiv.org/pdf/1910.04764). the reason is probably that we don't want to deal with the survey volume and weights in the C++ code. rather, the saved object is the Legendre polynomial decomposition of 6 * V * n_bar^3 * w_bar^3 / Phi(r1, r2, mu), the inverse of which appears in the covariance estimators (Equation 5.13 of https://arxiv.org/pdf/1910.04764 combined with Equation 4.16 defining/explaining the K factors) as the correction_factor in modules/integrals_3pcf.h. not sure why 2 from the K factor couldn't be absorbed to cancel the 2 in norm * 2 (it is applied in the integrals in the C++ code instead, see modules/integrals_3pcf.h), but probably easier to leave it be
+    # the bin volume and (2*p+1) factors are re-applied inside the C++ code at the end of the computation with the normalize() function in modules/integrals_3pcf.h
+    print_function("Saved correction factors to %s\n"%outfile)
+
+    return outfile

@@ -339,16 +339,16 @@ public:
         // Define triangle sides independent of i
         triangle_bins(pj.pos,pk.pos,pl.pos,norm_jkl,ang_jkl,norm_jk,2);
         
+        // Save lengths and bins for later
+        norm_kl = norm_jkl[0];
+        
         // Define first xi function
         if(index==0){
-            los_tmp = compute_los(pk.pos,pl.pos,norm_jkl[0]);
-            tmp_xi1 = cf->xi(norm_jkl[0],los_tmp); //xi_kl
+            los_tmp = compute_los(pk.pos, pl.pos, norm_kl);
+            tmp_xi1 = cf->xi(norm_kl, los_tmp); //xi_kl
             xi_pass2[0] = tmp_xi1;
         }
         else tmp_xi1 = xi_pass[0]; //xi_jk
-        
-        // Save lengths and bins for later
-        norm_kl = norm_jkl[0];
         
         // Compute radial bins for this triangle
         int x = all_bins(norm_jkl,bins_jkl,bin_jk,2);
@@ -462,13 +462,13 @@ public:
         
         // Define first xi function
         if(index==0){
-            los_tmp = compute_los(pl.pos,pm.pos,norm_klm[0]);
-            tmp_xi1 = cf->xi(norm_klm[0],los_tmp); // xi_lm
+            los_tmp = compute_los(pl.pos, pm.pos, norm_lm);
+            tmp_xi1 = cf->xi(norm_lm, los_tmp); // xi_lm
         }
         else{
-            Float norm_tmp;
-            cleanup_l(pj.pos,pm.pos,norm_tmp,los_tmp);
-            tmp_xi1 = cf->xi(norm_tmp,los_tmp); // xi_jm
+            Float norm_jm;
+            cleanup_l(pj.pos, pm.pos, norm_jm, los_tmp);
+            tmp_xi1 = cf->xi(norm_jm, los_tmp); // xi_jm
             xi_pass3 = tmp_xi1; // save for next integrator
         }        
 
@@ -767,15 +767,15 @@ public:
         }
     }
     
-    void save_counts(uint64 triple_counts,uint64 quad_counts, uint64 quint_counts, uint64 hex_counts, int index){
+    void save_counts(uint64 triple_counts, uint64 quad_counts, uint64 quint_counts, uint64 hex_counts, int index){
         // Print the counts for each integral (used for combining the estimates outside of C++)
         // This is the number of counts used in each loop [always the same]
         std::string counts_file = string_format("%s3PCFCovMatricesAll/total_counts_n%d_l%d_%d.txt", out_file, nbin, max_l, index);
         FILE * CountsFile = fopen(counts_file.c_str(), "w");
-        fprintf(CountsFile,"%llu\n",triple_counts);
-        fprintf(CountsFile,"%llu\n",quad_counts);
-        fprintf(CountsFile,"%llu\n",quint_counts);
-        fprintf(CountsFile,"%llu\n",hex_counts);
+        fprintf(CountsFile, "%llu\n", triple_counts);
+        fprintf(CountsFile, "%llu\n", quad_counts);
+        fprintf(CountsFile, "%llu\n", quint_counts);
+        if (index != 0) fprintf(CountsFile, "%llu\n", hex_counts); // only print hex counts for second loop since we don't compute hexes in first loop
         
         fflush(NULL);
         fclose(CountsFile);
@@ -790,25 +790,25 @@ public:
         
         std::string c3name = string_format("%s3PCFCovMatricesAll/c3_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
         std::string c4name = string_format("%s3PCFCovMatricesAll/c4_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
-        std::string c5name = string_format("%s3PCFCovMatricesAll/c5_n%d_l%d_%d_%s.txt", out_file,nbin, max_l,index, suffix);
-        std::string c6name = string_format("%s3PCFCovMatricesAll/c6_n%d_l%d_%d_%s.txt", out_file,nbin, max_l,index,suffix);
+        std::string c5name = string_format("%s3PCFCovMatricesAll/c5_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
+        std::string c6name = string_format("%s3PCFCovMatricesAll/c6_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
         
         FILE * C3File = fopen(c3name.c_str(), "w"); // for c3 part of integral
         FILE * C4File = fopen(c4name.c_str(), "w"); // for c4 part of integral
         FILE * C5File = fopen(c5name.c_str(), "w"); // for c5 part of integral
-        FILE * C6File = fopen(c6name.c_str(), "w"); // for c6 part of integral
+        FILE * C6File = index != 0 ? fopen(c6name.c_str(), "w") : NULL; // for c6 part of integral; don't create the file for the first integral since we don't compute the 6-point term then
         
-        for(int i=0;i<array_len;i++){
-            for(int j=0;j<array_len;j++){
-                fprintf(C3File,"%le\t",c3[i*array_len+j]);
-                fprintf(C4File,"%le\t",c4[i*array_len+j]);
-                fprintf(C5File,"%le\t",c5[i*array_len+j]);
-                fprintf(C6File,"%le\t",c6[i*array_len+j]);
+        for (int i = 0; i < array_len ; i++) {
+            for (int j = 0; j < array_len; j++) {
+                fprintf(C3File, "%le\t", c3[i*array_len+j]);
+                fprintf(C4File, "%le\t", c4[i*array_len+j]);
+                fprintf(C5File, "%le\t", c5[i*array_len+j]);
+                if (index != 0) fprintf(C6File, "%le\t", c6[i*array_len+j]); // don't print the 6-point term for the first integral since we don't compute it then
             }
-            fprintf(C3File,"\n"); // new line each end of row
-            fprintf(C4File,"\n");
-            fprintf(C5File,"\n");
-            fprintf(C6File,"\n");
+            fprintf(C3File, "\n"); // new line each end of row
+            fprintf(C4File, "\n");
+            fprintf(C5File, "\n");
+            if (index != 0) fprintf(C6File, "\n"); // don't print the 6-point term for the first integral since we don't compute it then
         }
         
         fflush(NULL);
@@ -817,11 +817,11 @@ public:
         fclose(C3File);
         fclose(C4File);
         fclose(C5File);
-        fclose(C6File);
+        if (index != 0) fclose(C6File); // the file was not opened for the first integral since we don't compute the 6-point term then
         
-        if(save_all==1){
+        if (save_all) {
             std::string binname6 = string_format("%s3PCFCovMatricesAll/binct_c6_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
-            FILE * BinFile6 = fopen(binname6.c_str(), "w");
+            FILE * BinFile6 = index != 0 ? fopen(binname6.c_str(), "w") : NULL; // for c6 part of integral counts; don't create the file for the first integral since we don't compute the 6-point term then
         
             std::string binname5 = string_format("%s3PCFCovMatricesAll/binct_c5_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
             FILE * BinFile5 = fopen(binname5.c_str(), "w");
@@ -832,23 +832,23 @@ public:
             std::string binname3 = string_format("%s3PCFCovMatricesAll/binct_c3_n%d_l%d_%d_%s.txt", out_file, nbin, max_l, index, suffix);
             FILE * BinFile3 = fopen(binname3.c_str(), "w");
             
-            for(int i=0;i<array_len;i++){
-                for(int j=0;j<array_len;j++){
-                    fprintf(BinFile3,"%llu\t",binct3[i*array_len+j]);
-                    fprintf(BinFile4,"%llu\t",binct4[i*array_len+j]);
-                    fprintf(BinFile5,"%llu\t",binct5[i*array_len+j]);
-                    fprintf(BinFile6,"%llu\t",binct6[i*array_len+j]);
-                    }
-                fprintf(BinFile3,"\n");
-                fprintf(BinFile4,"\n");
-                fprintf(BinFile5,"\n");
-                fprintf(BinFile6,"\n");
+            for (int i = 0; i < array_len; i++) {
+                for (int j=0; j < array_len; j++) {
+                    fprintf(BinFile3, "%llu\t", binct3[i*array_len+j]);
+                    fprintf(BinFile4, "%llu\t", binct4[i*array_len+j]);
+                    fprintf(BinFile5, "%llu\t", binct5[i*array_len+j]);
+                    if (index != 0) fprintf(BinFile6, "%llu\t", binct6[i*array_len+j]); // don't print the 6-point term for the first integral since we don't compute it then
+                }
+                fprintf(BinFile3, "\n");
+                fprintf(BinFile4, "\n");
+                fprintf(BinFile5, "\n");
+                if (index != 0) fprintf(BinFile6,"\n"); // don't print the 6-point term for the first integral since we don't compute it then
             }
         
             fclose(BinFile3);
             fclose(BinFile4);
             fclose(BinFile5);
-            fclose(BinFile6);
+            if (index != 0) fclose(BinFile6); // the file was not opened for the first integral since we don't compute the 6-point term then
         }
     }
 

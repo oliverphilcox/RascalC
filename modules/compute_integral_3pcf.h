@@ -52,14 +52,19 @@ class compute_integral{
             // MAIN FUNCTION TO COMPUTE INTEGRALS
             
             int tot_iter=2; // total number of integral sets to compute
+            assert((iter_no >= 0) && (iter_no < tot_iter)); // ensure that the iteration number/index is as it should be
+
+            if ((iter_no+1 < par->start_integral_index) || (iter_no+1 > par->last_integral_index)) { // here, iter_no starts from 0 for compatibility with other pieces of 3PCF code, whereas integral_indices start from 1 for compatibility with 2PCF
+                printf("# Skipping integral computation %d of %d; only running %d through %d (both inclusive).\n", iter_no+1, tot_iter, par->start_integral_index, par->last_integral_index);
+                return;
+            }
             
             nbin = par->nbin; // number of radial bins
             mbin = par->mbin; // number of Legendre bins
             
+            STimer* LoopTimes = new STimer[par->max_loops];
             STimer initial, TotalTime; // Time initialization
-            initial.Start(); 
-            
-            int convergence_counter=0, printtime=0;// counter to stop loop early if convergence is reached.
+            initial.Start();
               
     //-----------INITIALIZE OPENMP + CLASSES----------
             unsigned long seed_step = (unsigned long)(std::numeric_limits<uint32_t>::max()) / (unsigned long)(par->max_loops); // restrict the seeds to 32 bits to avoid possible collisions, as most GSL random generators only accept 32-bit seeds and truncate the higher bits. unsigned long is at least 32 bits but can be more.
@@ -67,11 +72,17 @@ class compute_integral{
             if (par->random_seed) {
                 std::random_device urandom("/dev/urandom");
                 std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
-                seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+                seed_shift = dist(urandom); // for each iteration, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+                par->seed = seed_shift; // save the random seed
+                par->random_seed = false; // avoid random seed resetting in the future — different seeds for xi rescaling and the main computation are much harder to reproduce
             }
+            printf("# INFO: the base RNG seed is %lu, incremented by %lu in each integration loop (matching these should guarantee the same results in a completed computation with the same input catalogs and correlation functions).\n", seed_shift, seed_step);
 
             gsl_rng_env_setup(); // initialize gsl rng
+            int completed_loops = 0; // counter of completed loops, since may not finish in index order
+            uint64 used_triples_per_sample = 0, used_quads_per_sample = 0, used_quints_per_sample = 0, used_hexes_per_sample = 0; // triple, quad, quint and hex counts for the normalization of the current output sample
             Integrals sumint(par, cf, survey_corr); // total integral
+            Integrals outint(par, cf, survey_corr); // current output integral
 
             uint64 tot_triples=0, tot_quads=0, tot_quints=0, tot_hexes=0; // global number of particle sets used (including those rejected for being in the wrong bins)
             uint64 cell_attempt3=0,cell_attempt4=0,cell_attempt5=0,cell_attempt6=0; // number of k,l,m,n cells attempted
@@ -87,15 +98,15 @@ class compute_integral{
             TotalTime.Start(); // Start timer
             
 #ifdef OPENMP       
-    #pragma omp parallel firstprivate(seed_step,seed_shift,par,printtime,grid,cf) shared(sumint,TotalTime,gsl_rng_default,rd) reduction(+:convergence_counter,cell_attempt3,cell_attempt4,cell_attempt5,cell_attempt6,used_cell3,used_cell4,used_cell5,used_cell6,tot_triples,tot_quads,tot_quints,tot_hexes)
+    #pragma omp parallel firstprivate(seed_step,seed_shift,par,grid,cf) shared(sumint,TotalTime,LoopTimes,gsl_rng_default,rd) reduction(+:cell_attempt3,cell_attempt4,cell_attempt5,cell_attempt6,used_cell3,used_cell4,used_cell5,used_cell6,tot_triples,tot_quads,tot_quints,tot_hexes)
             { // start parallel loop
             // Decide which thread we are in
             int thread = omp_get_thread_num();
             assert(omp_get_num_threads()<=par->nthread);
-            if (thread==0) printf("# Starting integral computation %d of %d on %d threads.\n", iter_no, tot_iter, omp_get_num_threads());        
+            if (thread==0) printf("# Starting integral computation %d of %d on %d threads.\n", iter_no+1, tot_iter, omp_get_num_threads());
 #else
             int thread = 0;
-            printf("# Starting integral computation %d of %d single threaded.\n",iter_no,tot_iter);
+            printf("# Starting integral computation %d of %d single threaded.\n", iter_no + 1, tot_iter);
             { // start loop
 #endif
             
@@ -110,7 +121,9 @@ class compute_integral{
             Float *correction_ijk, *legendre_ijk, *xi_pass, *xi_pass2, xi_pass3=0, *w_ijk, *w_ijkl, *w_ijklm;
             Float norm_jk=0, norm_kl=0, norm_lm=0; // arrays to store xi and weight values
             int *bins_ijk, bin_jk=0, bin_kl=0, bin_lm=0; // i-j separation bin
+#ifdef PRINTPERCENTS
             Float percent_counter;
+#endif
             int x, prim_id_1D;
             integer3 delta2, delta3, delta4, delta5, delta6, prim_id, sec_id, thi_id, fou_id, fif_id, six_id;
             Float3 cell_sep2,cell_sep3,cell_sep4,cell_sep5,cell_sep6;
@@ -140,15 +153,11 @@ class compute_integral{
     #pragma omp for schedule(dynamic)
     #endif
             for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
+#ifdef PRINTPERCENTS
                 percent_counter=0.;
-                loc_used_triples=0; loc_used_quads=0; loc_used_quints=0; loc_used_hexes=0;  
-                
-                // End loops early if convergence has been acheived
-                if (convergence_counter==10){ 
-                    if (printtime==0) printf("1 percent convergence acheived in C6 10 times, exiting.\n");
-                    printtime++;
-                    continue;
-                    }
+#endif
+                loc_used_triples=0; loc_used_quads=0; loc_used_quints=0; loc_used_hexes=0;
+                LoopTimes[n_loops].Start();
                 
                 // Set/reset the RNG seed based on loop number instead of thread number to reproduce results with different number of threads but other parameters kept the same. Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
                 gsl_rng_set(locrng, seed_step * (unsigned long)n_loops + seed_shift); // the second number, seed, will not overflow and will be unique for each loop in one run. Here, seed_shift is a random number between 0 and seed_step-1, inclusively.
@@ -157,11 +166,13 @@ class compute_integral{
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid->nf;n1++){
                     
+#ifdef PRINTPERCENTS
                     // Print time left
                     if((float(n1)/float(grid->nf)*100)>=percent_counter){
-                        printf("Integral %d of %d, run %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n",iter_no+1,tot_iter,1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),thread, n1+1,grid->nf,percent_counter);
+                        printf("Integral %d of %d, iteration %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n", iter_no+1, tot_iter, n_loops, par->max_loops, thread, n1+1, grid->nf, percent_counter);
                         percent_counter+=5.;
                     }
+#endif
                     
                     // Pick first particle
                     prim_id_1D = grid->filled[n1]; // 1d ID for cell i 
@@ -241,7 +252,7 @@ class compute_integral{
                                 
                                  // LOOP OVER N5 M CELLS
                                 for (int n5=0; n5<par->N5; n5++){
-                                    cell_attempt5+=1; // new fourth cell attempted
+                                    cell_attempt5+=1; // new fifth cell attempted
                                     
                                     // Draw fifth cell from l or i cell
                                     delta5 = rd->random_xidraw(locrng,&p5); 
@@ -258,16 +269,18 @@ class compute_integral{
                                     if(x==1) continue;
                                     if((pid_m==pid_l)||(pid_m==pid_k)||(pid_m==pid_j)) continue;
                                     
-                                    used_cell5+=1; // new fourth cell used
+                                    used_cell5+=1; // new fifth cell used
                                     
                                     p5*=p4/(double)filn;
                                     
-                                    // Now compute the four-point integral
-                                    locint.fifth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, particle_m, pid_j, pid_k, pid_l, pid_m, p5, w_ijkl, bins_ijk, correction_ijk, legendre_ijk, xi_pass, xi_pass2, norm_kl, bin_kl, w_ijklm, xi_pass3, norm_lm, bin_lm, iter_no); 
+                                    // Now compute the five-point integral
+                                    locint.fifth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, particle_m, pid_j, pid_k, pid_l, pid_m, p5, w_ijkl, bins_ijk, correction_ijk, legendre_ijk, xi_pass, xi_pass2, norm_kl, bin_kl, w_ijklm, xi_pass3, norm_lm, bin_lm, iter_no);
+
+                                    if (iter_no == 0) continue; // skip the first 6-point term, because it should be small but is also hard to compute (see Section 5.2.3 and Appendix A of https://arxiv.org/abs/1910.04764)
                                     
                                     // LOOP OVER N6 N CELLS
                                     for (int n6=0; n6<par->N6; n6++){
-                                        cell_attempt6+=1; // new fourth cell attempted
+                                        cell_attempt6+=1; // new sixth cell attempted
                                         
                                         // Draw sixth cell from m cell weighted by xi(r)
                                         delta6 = rd->random_xidraw(locrng,&p6); 
@@ -288,7 +301,7 @@ class compute_integral{
                                         
                                         p6*=p5/(double)siln;
                                         
-                                        // Now compute the four-point integral
+                                        // Now compute the six-point integral
                                         locint.sixth(prim_list, prim_ids, pln, particle_j, particle_k, particle_l, particle_m, particle_n, pid_j, pid_k, pid_l, pid_m, pid_n, p6, w_ijklm, bins_ijk, correction_ijk, legendre_ijk, xi_pass, xi_pass2, xi_pass3, norm_lm, bin_lm, iter_no); 
                                     }
                                 }
@@ -307,35 +320,49 @@ class compute_integral{
     #pragma omp critical // only one processor can access at once
     #endif
             {
-                if ((n_loops+1)%par->nthread==0){ // Print every nthread loops
+                int subsample_index = completed_loops / par->loops_per_sample; // index of output subsample for this loop
+                completed_loops++; // increment completed loops counter, since they may be done not according to n_loops order
+                printf("Integral %d of %d, iteration %d of %d on thread %d completed (%d/%d)\n", iter_no+1, tot_iter, n_loops, par->max_loops, thread, completed_loops, par->max_loops);
+                if (completed_loops % par->nthread == 0) { // Print every nthread completed loops
                     TotalTime.Stop(); // interrupt timing to access .Elapsed()
                     int current_runtime = TotalTime.Elapsed();
-                    int remaining_time = current_runtime/((n_loops+1)/par->nthread)*(par->max_loops/par->nthread-(n_loops+1)/par->nthread);  // estimated remaining time
-                    fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops+1,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
-                    
+                    int remaining_time = current_runtime*(par->max_loops - completed_loops)/completed_loops;  // estimated remaining time
+                    fprintf(stderr, "\nFinished %d integral loops of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n", completed_loops, par->max_loops, current_runtime, remaining_time/3600, remaining_time/60%60, remaining_time%60, remaining_time);
+
                     TotalTime.Start(); // Restart the timer
-                    Float frob_C3, frob_C4, frob_C5, frob_C6;
-                    sumint.frobenius_difference_sum(&locint,n_loops, frob_C3, frob_C4, frob_C5, frob_C6);
-                    if(frob_C6<0.01) convergence_counter++;
-                    if (n_loops!=0){
-                        fprintf(stderr,"Frobenius percent difference after loop %d is %.3f (C3), %.3f (C4), %.3f (C5), %.3f (C6) \n",n_loops,frob_C3, frob_C4, frob_C5, frob_C6);
-                    }
                 }
-                    
+                int accumulated_loops = subsample_index * par->loops_per_sample; // number of (completed) integral loops accumulated in sumint (as can be seen later, it is updated every loops_per_sample completed loops)
+                if ((subsample_index > 0) && (completed_loops == accumulated_loops + 1)) { // the condition when the Frobenius difference after adding one loop is most straightforward to compute sensibly, because sumint is updated only every loops_per_sample completed loops. Also works for loops_per_sample=1 unlike the possible alternative condition, completed_loops % loops_per_sample == 1
+                    Float frob_C3, frob_C4, frob_C5, frob_C6;
+                    sumint.frobenius_difference_sum(&locint, accumulated_loops, frob_C3, frob_C4, frob_C5, frob_C6); // computes the Frobenius relative differences (in percents) after adding one integral loop result (locint) to the accumulation of accumulated_loops loops in sumint; the method signature is different with and without jackknives
+                    fprintf(stderr, "Frobenius percent difference between %d and %d loops is %.3f (C3), %.3f (C4), %.3f (C5), %.3f (C6) \n", accumulated_loops, completed_loops, frob_C3, frob_C4, frob_C5, frob_C6);
+                }
+
                 // Sum up integrals
-                sumint.sum_ints(&locint); 
-                
-                // Save output after each loop
-                std::string output_string = string_format("%d", n_loops);
-                
-                locint.normalize(grid->norm,(Float)loc_used_triples, (Float)loc_used_quads, (Float)loc_used_quints, (Float)loc_used_hexes);
-                locint.save_integrals(output_string.c_str(), 0, iter_no);
-                locint.sum_total_counts(cnt3, cnt4, cnt5, cnt6); 
+                outint.sum_ints(&locint); // subsample total
+
+                // Sum up pairs, triples, quads for the group
+                used_triples_per_sample += loc_used_triples;
+                used_quads_per_sample += loc_used_quads;
+                used_quints_per_sample += loc_used_quints;
+                used_hexes_per_sample += loc_used_hexes;
+
+                // Save output if the group is done
+                if (completed_loops % par->loops_per_sample == 0) {
+                    sumint.sum_ints(&outint); // add to grand total
+                    std::string output_string = string_format("%d", subsample_index);
+                    outint.normalize(grid->norm, (Float)used_triples_per_sample, (Float)used_quads_per_sample, (Float)used_quints_per_sample, (Float)used_hexes_per_sample);
+                    outint.save_integrals(output_string.c_str(), 0, iter_no);
+                    // Reset the current output sample variables
+                    outint.reset();
+                    used_triples_per_sample = used_quads_per_sample = used_quints_per_sample = used_hexes_per_sample = 0;
+                }
+                locint.sum_total_counts(cnt3, cnt4, cnt5, cnt6);
                 locint.reset();
                 
                 }
             
-                
+            LoopTimes[n_loops].Stop();
             } // end cycle loop
             
             // Free up allocated memory at end of process
@@ -365,7 +392,11 @@ class compute_integral{
         cnt6/=(9.*mbin*mbin);
         
         int runtime = TotalTime.Elapsed();
-        printf("\n\nINTEGRAL %d OF %d COMPLETE\n",iter_no+1,tot_iter); 
+        printf("\n\nINTEGRAL %d OF %d COMPLETE\n",iter_no+1,tot_iter);
+        for (int n_loop = 0; n_loop < par->max_loops; n_loop++) {
+            int loop_runtime = LoopTimes[n_loop].Elapsed();
+            fprintf(stderr, "Loop %d time: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", n_loop, loop_runtime, loop_runtime/3600, loop_runtime/60%60, loop_runtime%60);
+        }
         fprintf(stderr, "\nTotal process time for %.2e sets of cells and %.2e hexes of particles: %d s, i.e. %2.2d:%2.2d:%2.2d hms\n", double(used_cell6),double(tot_hexes),runtime, runtime/3600,runtime/60%60,runtime%60);
         printf("We tried %.2e triples, %.2e quads, %.2e quints and %.2e hexes of cells.\n",double(cell_attempt3),double(cell_attempt4),double(cell_attempt5),double(cell_attempt6));
         printf("Of these, we accepted %.2e triples, %.2e quads, %.2e quints and %.2e hexes of cells.\n",double(used_cell3),double(used_cell4),double(used_cell5),double(used_cell6));

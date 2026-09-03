@@ -1,5 +1,7 @@
-__version__ = "3.2"
+__version__ = "3.3.alpha1"
 
 from .interface import run_cov
 from .post_process import post_process_auto
 from .raw_covariance_matrices import cat_raw_covariance_matrices
+
+from .interface_3pcf import run_cov_3pcf

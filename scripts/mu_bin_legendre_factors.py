@@ -1,18 +1,15 @@
 "Simple script to produce the file of mu bin Legendre factors for the C++ code in LEGENDRE_MIX mode."
 
-import sys
+import argparse
 
-## PARAMETERS
-if len(sys.argv) != 4:
-    print("Usage: python mu_bin_legendre_factors.py {N_MU_BINS} {MAX_L} {OUTPUT_DIR}.")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description="Simple script to produce the file of mu bin Legendre factors for the C++ code in LEGENDRE_MIX mode.")
+parser.add_argument("n_mu_bins", type=int, help="number of angular (mu) bins")
+parser.add_argument("max_l", type=int, help="maximum multipole index")
+parser.add_argument("output_dir", type=str, help="directory to save the resulting file")
+args = parser.parse_args()
 
 from utils import adjust_path
 adjust_path()
 from RascalC.mu_bin_legendre_factors import write_mu_bin_legendre_factors
 
-n_mu_bins = int(sys.argv[1])
-max_l = int(sys.argv[2])
-output_dir = str(sys.argv[3])
-
-write_mu_bin_legendre_factors(n_mu_bins, max_l, output_dir)
+write_mu_bin_legendre_factors(args.n_mu_bins, args.max_l, args.output_dir)

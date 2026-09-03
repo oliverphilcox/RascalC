@@ -60,6 +60,13 @@ def cov_filter_legendre_pycorr(n: int, max_l: int, skip_r_bins: int = 0, skip_l:
     return np.ix_(indices_1d, indices_1d)
 
 
+def apply_cov_filter(A: np.typing.NDArray[np.float64], cov_filter: np.typing.NDArray[np.int_]) -> np.typing.NDArray[np.float64]:
+    "Apply the 2D cov filter, accounting for the possibility for an extra first dimension for subsamples"
+    if A.ndim == 2: return A[cov_filter]
+    if A.ndim == 3: return A[np.arange(A.shape[0])[:, None, None], cov_filter[0][None, :, :], cov_filter[1][None, :, :]] # this correctly selects according to the cov_filter along the last 2 axes
+    raise ValueError("Matrix dimension must be 2 or 3")
+
+
 def load_matrices_single(input_data: dict[str], cov_filter: npt.NDArray[np.int_], tracer: Literal[1, 2] = 1, full: bool = True, jack: bool = False) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Load the single-tracer covariance matrix terms. Allows to choose the tracer index (1-based) to load."""
     joint = "j" * jack + "_"
@@ -67,19 +74,10 @@ def load_matrices_single(input_data: dict[str], cov_filter: npt.NDArray[np.int_]
     c2 = input_data["c2" + joint + suffix]
     c3 = input_data["c3" + joint + str(tracer) + "," + suffix]
     c4 = input_data["c4" + joint + str(tracer) * 2 + "," + suffix]
-    matrices = (c2, c3, c4)
-
-    def finalize_matrix(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        return symmetrized(a[cov_filter])
-    
-    if full: # 2D matrices, filter can be applied directly
-        c234 = [finalize_matrix(a) for a in matrices]
-    else: # 3D matrices, need to loop over the first index first
-        c234 = [np.array(list(map(finalize_matrix, a))) for a in matrices]
-    return tuple(c234)
+    return tuple([symmetrized(apply_cov_filter(a, cov_filter)) for a in (c2, c3, c4)])
 
 
-def check_eigval_convergence(c2: npt.NDArray[np.float64], c4: npt.NDArray[np.float64], alpha: float = 1, kind: str = "", warn_function: Callable = warn, print_function: Callable = blank_function) -> bool:
+def check_eigval_convergence(cN: npt.NDArray[np.float64], c2N: npt.NDArray[np.float64], alpha: float = 1, kind: str = "", Npcf: Literal[2, 3] = 2, warn_function: Callable = warn, print_function: Callable = blank_function) -> bool:
     """
     Perform the eigenvalue convergence test on the covariance matrix terms.
     Warn about violated condition(s) using the `warn_function` (default: `warnings.warn`).
@@ -90,17 +88,17 @@ def check_eigval_convergence(c2: npt.NDArray[np.float64], c4: npt.NDArray[np.flo
     """
     result = True
     if kind and not kind.endswith(" "): kind += " "
-    min_eig_c2 = min(np.linalg.eigvalsh(c2))
-    min_eig_c4 = min(np.linalg.eigvalsh(c4))
-    print_function(f"{kind}4-point covariance matrix convergence check: min eigenvalue of C2 = {min_eig_c2:.2e}, min eigenvalue of C4 = {min_eig_c4:.2e}")
-    inv_sqrt_c2 = np.linalg.inv(sqrtm(c2))
-    min_eig_comb = min(np.linalg.eigvalsh(inv_sqrt_c2.dot(c4).dot(inv_sqrt_c2)))
-    print_function(f"{kind}4-point covariance matrix convergence check: min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min_eig_comb:.2f}")
+    min_eig_cN = min(np.linalg.eigvalsh(cN))
+    min_eig_c2N = min(np.linalg.eigvalsh(c2N))
+    print_function(f"{kind}{2*Npcf}-point covariance matrix convergence check: min eigenvalue of C{Npcf} = {min_eig_cN:.2e}, min eigenvalue of C{2*Npcf} = {min_eig_c2N:.2e}")
+    inv_sqrt_cN = np.linalg.inv(sqrtm(cN))
+    min_eig_comb = min(np.linalg.eigvalsh(inv_sqrt_cN.dot(c2N).dot(inv_sqrt_cN)))
+    print_function(f"{kind}{2*Npcf}-point covariance matrix convergence check: min eigenvalue of C{Npcf}^{{-1/2}} C{2*Npcf} C{Npcf}^{{-1/2}} = {min_eig_comb:.2f}")
     if min_eig_comb <= -alpha**2:
-        warn_function(f"{kind}4-point covariance matrix has not converged properly via the weaker eigenvalue test for shot-noise rescaling >= {alpha:.2f}. Min eigenvalue of C2^{{-1/2}} C4 C2^{{-1/2}} = {min_eig_comb:.2f}, should be > {-alpha**2:.2f}")
+        warn_function(f"{kind}{2*Npcf}-point covariance matrix has not converged properly via the weaker eigenvalue test for shot-noise rescaling >= {alpha:.2f}. Min eigenvalue of C{Npcf}^{{-1/2}} C{2*Npcf} C{Npcf}^{{-1/2}} = {min_eig_comb:.2f}, should be > {-alpha**2:.2f}")
         result = False
-    if min_eig_c4 < - min_eig_c2 * alpha**2:
-        warn_function(f"{kind}4-point covariance matrix has not converged properly via the stronger eigenvalue test for shot-noise rescaling >= {alpha:.2f}. Min eigenvalue of C2 = {min_eig_c2:.2e}, min eigenvalue of C4 = {min_eig_c4:.2e}")
+    if min_eig_c2N < - min_eig_cN * alpha**2:
+        warn_function(f"{kind}{2*Npcf}-point covariance matrix has not converged properly via the stronger eigenvalue test for shot-noise rescaling >= {alpha:.2f}. Min eigenvalue of C{Npcf} = {min_eig_cN:.2e}, min eigenvalue of C{2*Npcf} = {min_eig_c2N:.2e}")
         result = False
     return result
 
@@ -144,7 +142,7 @@ def compute_N_eff_D(full_D_est: npt.NDArray[np.float64], print_function = blank_
     return N_eff_D
 
 
-def Psi(alpha: float, c2: npt.NDArray[np.float64], c3: npt.NDArray[np.float64], c4: npt.NDArray[np.float64], c2s: npt.NDArray[np.float64], c3s: npt.NDArray[np.float64], c4s: npt.NDArray[np.float64]):
+def Psi(alpha: float, c2: npt.NDArray[np.float64], c3: npt.NDArray[np.float64], c4: npt.NDArray[np.float64], c2s: npt.NDArray[np.float64], c3s: npt.NDArray[np.float64], c4s: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """Compute precision matrix from covariance matrix, removing quadratic order bias terms."""
     c_tot = add_cov_terms_single(c2, c3, c4, alpha)
     partial_covs = add_cov_terms_single(c2s, c3s, c4s, alpha)
@@ -152,7 +150,7 @@ def Psi(alpha: float, c2: npt.NDArray[np.float64], c3: npt.NDArray[np.float64], 
     return Psi
 
 
-def neg_log_L1(alpha: float, target_cov: npt.NDArray[np.float64], c2: npt.NDArray[np.float64], c3: npt.NDArray[np.float64], c4: npt.NDArray[np.float64], c2s: npt.NDArray[np.float64], c3s: npt.NDArray[np.float64], c4s: npt.NDArray[np.float64]):
+def neg_log_L1(alpha: float, target_cov: npt.NDArray[np.float64], c2: npt.NDArray[np.float64], c3: npt.NDArray[np.float64], c4: npt.NDArray[np.float64], c2s: npt.NDArray[np.float64], c3s: npt.NDArray[np.float64], c4s: npt.NDArray[np.float64]) -> float:
     """Return negative log L1 likelihood between theory and target (data jackknife or mock sample) covariance matrices.
     log L1 is the Kullback-Leibler divergence with constant terms (including log(det(target_cov))) removed.
     As a result, the `target_cov` can be a singular matrix.
@@ -166,7 +164,7 @@ def neg_log_L1(alpha: float, target_cov: npt.NDArray[np.float64], c2: npt.NDArra
     return np.trace(np.matmul(Psi_alpha, target_cov)) - logdet[1]
 
 
-def fit_shot_noise_rescaling(target_cov: npt.NDArray[np.float64], c2: npt.NDArray[np.float64], c3: npt.NDArray[np.float64], c4: npt.NDArray[np.float64], c2s: npt.NDArray[np.float64], c3s: npt.NDArray[np.float64], c4s: npt.NDArray[np.float64]):
+def fit_shot_noise_rescaling(target_cov: npt.NDArray[np.float64], c2: npt.NDArray[np.float64], c3: npt.NDArray[np.float64], c4: npt.NDArray[np.float64], c2s: npt.NDArray[np.float64], c3s: npt.NDArray[np.float64], c4s: npt.NDArray[np.float64]) -> float:
     """Fit the covariance matrix model to `target_cov` to find the optimal shot-noise rescaling.
     `target_cov` can be a singular matrix."""
     alpha_best = fmin(neg_log_L1, 1., args = (target_cov, c2, c3, c4, c2s, c3s, c4s))
@@ -190,18 +188,12 @@ def load_matrices_multi(input_data: dict[str], cov_filter: npt.NDArray[np.int_],
     n3 = np.zeros([ntracers] * 3)
     n4 = np.zeros([ntracers] * 4)
 
-    def finalize_matrix(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        return a[cov_filter]
-
     # accumulate the values
     for matrix_name, matrices in input_data.items():
         matrix_name_split = matrix_name.split("_")
         if len(matrix_name_split) != 2 + full: continue # should skip full if not loading full, and skip subsamples if loading full
         if full and matrix_name_split[-1] != "full": continue # double-check for safety
-        if full: # 2D matrix, can apply cov filter directly
-            matrices = finalize_matrix(matrices)
-        else: # 3D matrix, should loops over the first index first
-            matrices = np.array(list(map(finalize_matrix, matrices)))
+        matrices = apply_cov_filter(matrices, cov_filter)
         matrix_name = matrix_name_split[0]
         index = matrix_name_split[1]
         if matrix_name == "c2" + suffix_jack:

@@ -1,114 +1,118 @@
 """
-Function to post-process the single-field 3PCF Legendre binned integrals computed by the C++ code.
+Function to post-process the single-field 3PCF Legendre binned integrals computed by the C++ code with a given shot-noise rescaling parameter value, alpha.
 We output the theoretical covariance matrices, (quadratic-bias corrected) precision matrices and the effective number of samples, N_eff.
 """
 
 import numpy as np
 import os
-from tqdm import trange
-from typing import Callable
+from ..post_process.utils import check_eigval_convergence, check_positive_definiteness, compute_D_precision_matrix, compute_N_eff_D
+from ..raw_covariance_matrices import load_raw_covariances_3pcf_legendre
+from .utils import cov_filter_3pcf_legendre, load_matrices, add_cov_terms
+from typing import Callable, Iterable
 
 
-def post_process_3pcf(file_root: str, n: int, max_l: int, n_samples: int, outdir: str, alpha: float = 1, print_function: Callable[[str], None] = print, dry_run: bool = False) -> dict[str]:
+def post_process_3pcf(file_root: str, n: int, max_l: int, outdir: str | None = None, alpha: float = 1, skip_r_bins: int | tuple[int, int] = 0, skip_l: int = 0, n_samples: None | int | Iterable[int] | Iterable[bool] = None, exclude_samebins: bool = True, exclude_odd_l: bool = False, check_finished: bool = True, print_function: Callable[[str], None] = print, dry_run: bool = False) -> dict[str]:
+    r"""
+    3PCF post-processing for Legendre (accumulated) mode for a given shot-noise rescaling parameter value, alpha.
+
+    Now it should be safe to run this post-processing while the main RascalC computation is still running, as long as you do not put multiple runs into one output directory.
+    This is achieved by a default heuristic check for the normal finishing of the main RascalC computation.
+    With this, inspecting the output of an aborted or timed-out run is harder, by default it will be considered unfinished. But if you are sure that the main computation is not running, you can disable the check via ``check_finished=False``. Doing this once should be sufficient, repeated post-processing attempts should no longer detect the run as unfinished.
+
+    Parameters
+    ----------
+    file_root : string
+        Path to the RascalC (:func:`RascalC.run_cov_3pcf` or command-line) output directory.
+    
+    n : integer
+        The number of radial bins used in the RascalC run (before applying ``skip_r_bins`` if it is provided).
+    
+    max_l : integer
+        The maximum ell (Legendre moment index) used in the RascalC run (before applying ``skip_l`` if it is provided).
+
+    outdir : string or None
+        (Optional) path to the directory in which the post-processing results should be saved. If None (default), is set to ``file_root``. Empty string means the current working directory.
+        We advise to use different output directories for different post-processing options.
+
+    alpha : float
+        Fixed shot-noise rescaling value to use. In principle optional, but the default value of 1 may not be particularly good.
+
+    skip_r_bins : integer or tuple of two integers
+        (Optional) removal of some radial bins.
+        First (or the only) number sets the number of radial/separation bins to skip from the beginning.
+        Second number (if provided) sets the number of radial/separation bins to skip from the end.
+        By default, no bins are skipped.
+
+    skip_l : integer
+        (Optional) number of higher multipoles to skip (from the end, counting all multipoles by default and only even multipoles if exlude_odd_l is True).
+
+    n_samples : None, integer, array/list/tuple/etc of integers or boolean values
+        (Optional) selection of RascalC subsamples (independent realizations of Monte-Carlo integrals).
+        
+            - If None, use all (default).
+            - If an integer, use the given number of samples from the beginning.
+            - If an array/list/tuple/etc of integers, it will be used as a NumPy index array.
+            - If an array/list/tuple/etc of boolean, it will be used as a NumPy boolean array mask.
+    
+    exclude_samebins : boolean
+        (Optional) If False, the covariance will include the pairs of the same radial bins.
+        The default behavior (for the True value) is to exclude them for compatibility with ENCORE.
+        In either case, the post-processed covariances only include each pair of different radial bins in one ordering, ``bin1 < bin2``; the raw covariances also include ``bin1 > bin2`` pairs.
+    
+    exclude_odd_l : boolean
+        (Optional) If True, the covariance will exclude the odd multipoles; note that then they will also not count in ``skip_l``. By default (False value), odd multipoles are kept and counted in ``skip_l``.
+    
+    print_function : Callable
+        (Optional) custom function to use for printing. Default is ``print``.
+    
+    dry_run: boolean
+        (Optional) If True, this will not run actual post-processing, only determine the filename and path (see below).
+
+    Returns
+    -------
+    post_processing_results : dict[str]
+        Post-processing results as a dictionary with string keys and Numpy array values (mostly). All this information is also saved in a ``Rescaled_Covariance_Matrices*.npz`` file in the ``out_dir`` (in ``file_root`` if the former is not provided).
+        Selected common keys are: ``"full_theory_covariance"`` for the final covariance matrix and ``"shot_noise_rescaling"`` for the shot-noise rescaling value(s).
+        For convenience, in the output dictionary only, ``"filename"`` contains the name of the file where the results were saved (which can be inconvenient to predict), and ``"path"`` contains its path (also obtainable by :func:`os.path.join`-ing ``out_dir`` with the filename)
+    """
+    # Set default output directory if not set
+    if outdir is None: outdir = file_root
+
     output_name = os.path.join(outdir, 'Rescaled_Covariance_Matrices_3PCF_n%d_l%d.npz' % (n, max_l))
     name_dict = dict(path=output_name, filename=os.path.basename(output_name))
     if dry_run: return name_dict
 
-    m = max_l+1
+    cov_filter = cov_filter_3pcf_legendre(n, max_l, skip_r_bins, skip_l, exclude_samebins, exclude_odd_l)
+    
+    input_file = load_raw_covariances_3pcf_legendre(file_root, n, max_l, n_samples, check_finished=check_finished, print_function=print_function)
+
     # Create output directory
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    def symmetrize(mat):
-        """ Add in symmetries to matrices """
-        out_mat = np.zeros_like(mat)
-        for i in range(len(mat)//m):
-            a = i//n
-            b = i%n
-            for j in range(len(mat)//m):
-                c = j//n
-                d = j%n
-                # Add to all relevant bins
-                these_mat = mat[i*m:(i+1)*m,j*m:(j+1)*m]*0.25
-                out_mat[(a*n+b)*m:(a*n+b)*m+m,(c*n+d)*m:(c*n+d)*m+m]+=these_mat
-                out_mat[(b*n+a)*m:(b*n+a)*m+m,(c*n+d)*m:(c*n+d)*m+m]+=these_mat
-                out_mat[(b*n+a)*m:(b*n+a)*m+m,(d*n+c)*m:(d*n+c)*m+m]+=these_mat
-                out_mat[(a*n+b)*m:(a*n+b)*m+m,(d*n+c)*m:(d*n+c)*m+m]+=these_mat
-        return 0.5*(out_mat+out_mat.T)
-
-    def load_matrices(index):
-        """Load intermediate or full covariance matrices"""
-        cov_root = os.path.join(file_root, '3PCFCovMatricesAll/')
-        c3_0 = np.loadtxt(cov_root+'c3_n%d_l%d_0_%s.txt'%(n,max_l,index))
-        c4_0 = np.loadtxt(cov_root+'c4_n%d_l%d_0_%s.txt'%(n,max_l,index))
-        c5_0 = np.loadtxt(cov_root+'c5_n%d_l%d_0_%s.txt'%(n,max_l,index))
-        c6_0 = np.loadtxt(cov_root+'c6_n%d_l%d_0_%s.txt'%(n,max_l,index))
-        c3_1 = np.loadtxt(cov_root+'c3_n%d_l%d_1_%s.txt'%(n,max_l,index))
-        c4_1 = np.loadtxt(cov_root+'c4_n%d_l%d_1_%s.txt'%(n,max_l,index))
-        c5_1 = np.loadtxt(cov_root+'c5_n%d_l%d_1_%s.txt'%(n,max_l,index))
-        c6_1 = np.loadtxt(cov_root+'c6_n%d_l%d_1_%s.txt'%(n,max_l,index))
-        
-        c3 = c3_0+c3_1
-        c4 = c4_0+c4_1
-        c5 = c5_0+c5_1
-        c6 = c6_1 # do not include c6_0 term here
-        
-        # Now symmetrize and return matrices
-        return symmetrize(c3),symmetrize(c4),symmetrize(c5),symmetrize(c6)
-
     # Load in full theoretical matrices
     print_function("Loading best estimate of covariance matrix")
-    c3,c4,c5,c6=load_matrices('full')
+    c3, c4, c5, c6 = load_matrices(input_file, n, max_l, cov_filter, full=True)
 
-    # Compute full covariance matrices and precision
-    full_cov = c6+c5*alpha+c4*alpha**2.+c3*alpha**3.
-    n_bins = len(c6)
+    # Check matrix convergence by analogy with 2PCF, may be less helpful
+    check_eigval_convergence(c3, c6, alpha, Npcf=3, print_function=print_function)
+
+    # Compute full covariance matrix
+    full_cov = add_cov_terms(c3, c4, c5, c6, alpha)
+
+    # Check positive definiteness
+    check_positive_definiteness(full_cov)
 
     # Compute full precision matrix
     print_function("Computing the full precision matrix estimate:")
     # Load in partial theoretical matrices
-    c3s, c4s, c5s, c6s = [], [], [], []
-    for i in trange(n_samples, desc="Loading full subsamples"):
-        c3t, c4t, c5t, c6t = load_matrices(i)
-        c3s.append(c3t)
-        c4s.append(c4t)
-        c5s.append(c5t)
-        c6s.append(c6t)
-    c3s, c4s, c5s, c6s = [np.array(a) for a in (c3s, c4s, c5s, c6s)]
-        
-    partial_cov = alpha**3 * c3s + alpha**2 * c4s + alpha * c5s + c6s
-    sum_partial_cov = np.sum(partial_cov, axis=0)
+    c3s, c4s, c5s, c6s = load_matrices(input_file, n, max_l, cov_filter, full=False)
+    partial_cov = add_cov_terms(c3s, c4s, c5s, c6s, alpha)
+    full_D_est, full_prec = compute_D_precision_matrix(partial_cov, full_cov)
+    print_function("Full precision matrix estimate computed")
 
-    tmp=0.
-
-    for _ in range(1):
-        for i in range(n_samples):
-            c_excl_i = (sum_partial_cov - partial_cov[i]) / (n_samples - 1)
-            try:
-                tmp+=np.matmul(np.linalg.inv(c_excl_i), partial_cov[i])
-            except np.linalg.linalg.LinAlgError:
-                print_function("Could not invert submatrix, so setting overall precision to zero. Matrix is not fully converged")
-                tmp = np.inf
-        if tmp==np.inf:
-            # Couldn't estimate precision so break loop
-            full_prec = np.zeros_like(full_cov)
-            full_D_est = np.zeros_like(full_cov)
-            N_eff_D = 0.
-            continue
-                
-        full_D_est=(n_samples-1.)/n_samples * (-1.*np.eye(n_bins) + tmp/n_samples)
-        full_prec = np.matmul(np.eye(n_bins)-full_D_est,np.linalg.inv(full_cov))
-        print_function("Full precision matrix estimate computed")    
-
-        # Now compute effective N:
-        slogdetD=np.linalg.slogdet(full_D_est)
-        D_value = slogdetD[0]*np.exp(slogdetD[1]/n_bins)
-        if slogdetD[0]<0:
-            print_function("N_eff is negative! Setting to zero")
-            N_eff_D = 0.
-        else:
-            N_eff_D = (n_bins+1.)/D_value+1.
-            print_function("Total N_eff Estimate: %.4e"%N_eff_D)        
+    # Now compute effective N:
+    N_eff_D = compute_N_eff_D(full_D_est, print_function)  
 
     output_dict = dict(full_theory_covariance=full_cov, shot_noise_rescaling=alpha,
                        full_theory_precision=full_prec, N_eff=N_eff_D,

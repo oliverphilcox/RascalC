@@ -2,18 +2,15 @@
 ## More specifically, divide integral subsamples into halves and check similarity of their average results
 ## Should work in any case - default, jackknife, Legendre, multi-tracer - as it utilizes universal data from RascalC file
 
-import sys
+import argparse
 
-# PARAMETERS
-if len(sys.argv) not in (2, 3):
-    print("Usage: python convergence_check_extra.py {RASCALC_RESULTS_FILE} [{N_SUBSAMPLES_TO_USE}]")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description="Script to perform an extra convergence check on full integrals; more specifically, divide integral subsamples into halves and check similarity of their average results. Should work in any case - default, jackknife, Legendre, multi-tracer - as it utilizes universal data from a RascalC .npy file.")
+parser.add_argument("rascalc_results", type=str, help="RascalC .npy filename")
+parser.add_argument("n_subsamples", type=int, default=None, nargs='?', help="number of covariance subsamples to use (optional; by default all are used)")
+args = parser.parse_args()
 
-from utils import adjust_path, get_arg_safe
+from utils import adjust_path
 adjust_path()
 from RascalC.convergence_check_extra import convergence_check_extra_file
 
-rascalc_results = str(sys.argv[1])
-n_samples = get_arg_safe(2, int)
-
-convergence_check_extra_file(rascalc_results, n_samples, print_function = print)
+convergence_check_extra_file(args.rascalc_results, args.n_subsamples, print_function = print)

@@ -15,30 +15,24 @@ Output file format has (x,y,z,w) coordinates in Mpc/h units
 
 """
 
-import sys
+import argparse
 
-if len(sys.argv) not in (3, 4, 5, 6, 7, 8, 9):
-    print("Usage: python convert_to_xyz.py {INFILE} {OUTFILE} [{OMEGA_M} {OMEGA_K} {W_DARK_ENERGY} [{USE_FKP_WEIGHTS or P0,NZ_name} [{MASK} [{USE_WEIGHTS}]]]]")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description="Convenience script to convert an input (Ra,Dec,w) FITS or txt file to comoving (x,y,z) coordinates saved as a text file for use with the main C++ code. Output file format has (x,y,z,w) coordinates in Mpc/h units")
+parser.add_argument("input_file", type=str, help="input text or FITS file name (text must be rdzw, i.e. RA, DEC, redshift and weight columns)")
+parser.add_argument("output_file", type=str, help="output text file name (xyzw, i.e. 3D Cartesian coordinates and weight columns)")
+parser.add_argument("Omega_m", type=float, default=0.31, nargs="?", help="relative matter density (default 0.31)")
+parser.add_argument("Omega_K", type=float, default=0, nargs="?", help="relative curvature density (default 0)")
+parser.add_argument("w_DE", type=float, default=-1, nargs="?", help="dark energy equation of state parameter (default -1)")
+parser.add_argument("FKP_weights", type=str, default="0", nargs="?", help="whether to use FKP weights column (default False/0). also accepts format P0,NZ_name. only applies to (DESI) FITS files")
+parser.add_argument("mask", type=int, default=0, nargs="?", help="sets bins that all must be set in STATUS for the particle to be selected (default 0). only applies to (DESI) FITS files")
+parser.add_argument("use_weights", type=bool, default=True, nargs="?", help="whether to use WEIGHTS column. if not, set unit weights. default True/1")
+args = parser.parse_args()
 
-from utils import adjust_path, get_arg_safe
+from utils import adjust_path
 adjust_path()
 from RascalC.pre_process.convert_to_xyz import convert_to_xyz_files
-from RascalC.pre_process.utils import parse_FKP_arg, my_str_to_bool
-        
-# Load file names
-input_file = str(sys.argv[1])
-output_file = str(sys.argv[2])
+from RascalC.pre_process.utils import parse_FKP_arg
 
-# Read in optional cosmology parameters
-Omega_m = get_arg_safe(3, float, 0.31)
-Omega_k = get_arg_safe(4, float, 0)
-w_dark_energy = get_arg_safe(5, float, -1)
-# defaults from the BOSS DR12 2016 clustering paper assuming LCDM
+FKP_weights = parse_FKP_arg(args.FKP_weights) # FKP weights needs to be parsed additionally for backward compatibility (could be redesigned better)
 
-# The next only applies to (DESI) FITS files
-FKP_weights = parse_FKP_arg(get_arg_safe(6, str, "False")) # determine whether to use FKP weights
-mask = get_arg_safe(7, int, 0) # default is 0 - no mask filtering
-use_weights = my_str_to_bool(get_arg_safe(8, str, "True")) # use weights by default
-
-convert_to_xyz_files(input_file, output_file, Omega_m, Omega_k, w_dark_energy, FKP_weights, mask, use_weights)
+convert_to_xyz_files(args.input_file, args.output_file, args.Omega_m, args.Omega_K, args.w_DE, FKP_weights, args.mask, args.use_weights)
