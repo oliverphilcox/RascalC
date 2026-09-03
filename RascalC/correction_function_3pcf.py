@@ -19,23 +19,27 @@ def compute_inv_phi_periodic_3pcf(n: int, n_multipoles: int) -> npt.NDArray[np.f
 
 def check_triple_counts_positive(leg_triple: npt.NDArray[np.float64], lenient_samebins: bool = False, print_function: Callable[[str], None] = print) -> None:
     "Check for negative counts, which should be problematic"
-    n_mu = 2001
-    triple_counts = np.zeros(list(leg_triple.shape[:-1]) + [n_mu])
-    mu_values = np.linspace(-1, 1, n_mu)
+    n_chi = 2001
+    triple_counts = np.zeros(list(leg_triple.shape[:-1]) + [n_chi])
+    chi_values = np.linspace(-1, 1, n_chi)
     for ell in range(leg_triple.shape[-1]):
-        triple_counts += leg_triple[:, :, ell][:, :, None] * legendre(ell)(mu_values)[None, None, :]
+        triple_counts += leg_triple[:, :, ell][:, :, None] * legendre(ell)(chi_values)[None, None, :]
     problem_indices = np.argwhere(triple_counts <= 0)
     if len(problem_indices) > 0:
-        rbins, mu_counts = np.unique(problem_indices[:, :2], axis=0, return_counts=True)
-        for ((rbin1, rbin2), mu_count) in zip(rbins, mu_counts):
+        rbins, chi_counts = np.unique(problem_indices[:, :2], axis=0, return_counts=True)
+        for ((rbin1, rbin2), chi_count) in zip(rbins, chi_counts):
             if rbin1 > rbin2: continue # this case can be skipped by symmetry
             title = "WARNING"
             if lenient_samebins and rbin1 == rbin2: title = "INFO" # the problem for same-bin pairs is less critical (and seems more likely), for different-bin pairs it is more critical
-            print_function(f"{title}: counts are not positive for radial bin pair {rbin1}, {rbin2} for {mu_count} mu values of {n_mu} checked")
+            print_function(f"{title}: counts are not positive for radial bin pair {rbin1}, {rbin2} for {chi_count} chi values of {n_chi} checked")
 
 
 def check_inv_phi_values(phi_inv_mult: npt.NDArray[np.float64], print_function: Callable[[str], None] = print) -> None:
-    "Check that the mean of the monopole is neither too small nor too large"
+    """
+    Check that the mean of the monopole is neither too small nor too large.
+    Its values should be close to 1, which is the value for the ideal survey. But it is not clear how far they can deviate for a realistic survey with complicated geometry, varying density and weights. Moreover, the values also depend on the volume estimate, which may be off by a factor of a few.
+    So, this check is given a wide margin, but it may still be useful to catch some obvious problems with the RRR counts normalization.
+    """
     print_function(f"INFO: mean±std of the monopole of the inverse survey correction function is {np.mean(phi_inv_mult[:, :, 0])}±{np.std(phi_inv_mult[:, :, 0], ddof=1)}, expected to be not very far from 1. NB: this diagnostic depends on an empirical volume estimate with ConvexHull, which may be off (overestimated) by a factor of a few for realistic survey geometries.")
     if np.mean(phi_inv_mult[:, :, 0]) < 1e-3:
         raise ValueError("Survey correction function seems too small - are the RRR counts normalized correctly?")
@@ -43,31 +47,35 @@ def check_inv_phi_values(phi_inv_mult: npt.NDArray[np.float64], print_function: 
         raise ValueError("Survey correction function seems too large - are the RRR counts normalized correctly?")
 
 
-def compute_inv_phi_aperiodic_3pcf(n: int, m: int, n_multipoles: int, r_bins: npt.NDArray[np.float64], triple_counts: npt.NDArray[np.float64], print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
+def compute_inv_phi_aperiodic_3pcf(n: int, m: int, n_multipoles: int, r_bins: npt.NDArray[np.float64], RRRbin_over_3Vn3v3_raw: npt.NDArray[np.float64], print_function: Callable[[str], None] = print) -> npt.NDArray[np.float64]:
     "Compute the inverse 3PCF survey correction function multipoles for the realistic survey geometry."
 
-    mu_all = np.linspace(-1,1,m+1)
-    mu_cen = 0.5*(mu_all[1:]+mu_all[:-1])
+    chi_all = np.linspace(-1,1,m+1)
+    chi_cen = 0.5*(chi_all[1:]+chi_all[:-1])
     
     ## reshape RRR counts and add symmetries
-    RRR_true = triple_counts.reshape(n, n, m)
-    RRR_true = (RRR_true + RRR_true.transpose(1, 0, 2)) / 2 # triple_counts code accumulates each triple to the three possible pairs of radial bins, but only to one of the two possible orderings of the pair, with twice the weight. so this symmetrization should give the counts where each triple contributes to the 6 bin triplets it can according to the RascalC convention (see Section 4.1 of https://arxiv.org/pdf/1910.04764, Equations 4.2-4.4). However, there may be a factor of 2 here that could explain its lack in the Legendre projection below.
+    # 3Vn3v3 is just part of the normalization for the (inverse) survey correction function, see Equation 4.10 of https://arxiv.org/pdf/1910.04764
+    RRRbin_over_3Vn3v3 = RRRbin_over_3Vn3v3_raw.reshape(n, n, m)
+    RRRbin_over_3Vn3v3 = (RRRbin_over_3Vn3v3 + RRRbin_over_3Vn3v3.transpose(1, 0, 2)) / 2 # triple_counts code accumulates each triple to the three possible pairs of radial bins, but only to one of the two possible orderings of the pair, with twice the weight. so this symmetrization should give the counts where each triple contributes to the 6 bin triplets it can according to the RascalC convention (see Section 4.1 of https://arxiv.org/pdf/1910.04764, Equations 4.2-4.4). in the end, this is exactly symmetric under the interchange of the two radial bins, as it should be but wasn't before this step
         
     ## Now construct Legendre moments
-    leg_triple = np.zeros([n, n, n_multipoles])
+    RRRleg_over_3Vn3v3 = np.zeros([n, n, n_multipoles])
     for ell in range(n_multipoles):
-        # (NB: we've absorbed a factor of delta_mu into RRR_true here)
-        leg_triple[:, :, ell] += (2.*ell+1.) * np.sum(legendre(ell)(mu_cen)[None, None, :] * RRR_true, axis=-1) # shouldn't this be divided by 2 due to the Legendre polynomial normalization?
+        # we've absorbed a factor of delta_chi into RRRbin... here, because RRRbin is RRR^{ab}_c ≈ RRR^{ab}(chi_central) delta_chi in terms of Section 4.2 of https://arxiv.org/pdf/1910.04764
+        # we want the Legendre polynomial decomposition of the inverse survey correction function 1/Phi(r_a, r_b, chi), which is proportional to RRR^ab(chi) according to Equation 4.10 of https://arxiv.org/pdf/1910.04764
+        # so what we want is proportinal to RRR^{ab}_ell = (2 ell + 1)/2 int_{-1}^{1} L_ell(chi) RRR^{ab}(chi) dchi ≈ (2 ell + 1)/2 sum_c L_ell(chi_central_c) RRR^{ab}(chi_central_c) delta_chi ≈ (2 ell + 1)/2 sum_c L_ell(chi_central_c) RRR^{ab}_c
+        # absorption of delta_chi makes sense, but the lack of division by 2 is not completely understood (whereas it is empirically validated on the ENCORE side, see below)
+        RRRleg_over_3Vn3v3[:, :, ell] += (2.*ell+1.) * np.sum(legendre(ell)(chi_cen)[None, None, :] * RRRbin_over_3Vn3v3, axis=-1)
     
     # as a precaution, check for negative counts
-    check_triple_counts_positive(leg_triple, n_multipoles, print_function=print_function)
+    check_triple_counts_positive(RRRleg_over_3Vn3v3, n_multipoles, print_function=print_function)
 
     vol_r = 4 * np.pi / 3 * (r_bins[:, 1] **3 - r_bins[:, 0] ** 3)
 
     ## Construct multipoles of inverse Phi
-    phi_inv_mult = leg_triple / (vol_r[:, None, None] * vol_r[None, :, None]) # here we restore the bin volume factors from the numerator in Equation 4.10 of https://arxiv.org/pdf/1910.04764
+    phi_inv_mult = RRRleg_over_3Vn3v3 / (vol_r[:, None, None] * vol_r[None, :, None]) # here we restore the bin volume factors from the numerator in Equation 4.10 of https://arxiv.org/pdf/1910.04764. so we finally get to the Legendre polynomial decomposition coefficients of 1/Phi(r_a, r_b, chi)
 
-    ## Check all seems reasonable
+    # Check that values seem reasonable
     check_inv_phi_values(phi_inv_mult, print_function=print_function)
 
     return phi_inv_mult
@@ -79,13 +87,13 @@ def compute_3pcf_correction_function(randoms_pos: npt.NDArray[np.float64], rando
     The 3PCF survey correction function is defined as the ratio between idealistic and true RRR pair counts for a single survey.
 
     NB: Input RRR counts should be normalized by the cube of the sum of random weights here.
-    NB: Assume mu is in [-1,1] limit here
+    NB: Assume chi is in [-1,1] limit here - it is the cosine of the angle in the triangle, and its sign is important (unlike for mu in the 2PCF context)
     """
 
     n_multipoles = 7 # matches the value hard-coded in the C++ code
 
     if periodic:
-        print_function("Assuming periodic boundary conditions - so Phi(r,mu) = 1 everywhere")
+        print_function("Assuming periodic boundary conditions - so Phi(r_a, r_b, chi) = 1 everywhere")
     elif RRR_file is None:
         raise TypeError("RRR counts file is required if aperiodic")
 
@@ -158,7 +166,7 @@ def compute_3pcf_correction_function_from_encore(randoms_pos: npt.NDArray[np.flo
 
     # conversion from ENCORE to RascalC (triple_counts) convention
     triple_counts = 6 * triple_counts # the factor of 6 comes from the fact that ENCORE counts each triplet only once, whereas RascalC counts each triplet 6 times (once for each permutation of the three points, see the end of Section 4.2 below Equation 4.16 in https://arxiv.org/pdf/1910.04764). both should encounter every triplet in every relevant permutations on top of this. (don't use *= at first to avoid overriding the variable passed to the function)
-    triple_counts *= 8 * np.pi**2 # the factor of 8 pi^2 comes from the fact that ENCORE seems to weigh each triplet by its basis functions (given by Equation 17 in https://arxiv.org/pdf/2105.08722). it is not the same as projecting onto the basis function, because the square norm of the basis function, its integral over mu=cos(theta) from -1 to 1, is not 1 but rather 1/(8 pi^2). so, to get the coefficient in the basis decomposition, we need to multiply by 8 pi^2. (this issue probably only applies to counts from ENCORE. its 3PCF are obtained by division by the RRR monopole, which should cancel the constant normalization factor. so in the other two places in the code, where we convert the 3PCF between conventions, the basis conversion factor below is sufficient)
+    triple_counts *= 8 * np.pi**2 # the factor of 8 pi^2 comes from the fact that ENCORE seems to weigh each triplet by its basis functions (given by Equation 17 in https://arxiv.org/pdf/2105.08722). it is not the same as projecting onto the basis function, because the square norm of the basis function, its integral over chi (cosine of the angle in the triangle) from -1 to 1, is not 1 but rather 1/(8 pi^2). so, to get the coefficient in the basis decomposition, we need to multiply by 8 pi^2. (this issue probably only applies to counts from ENCORE. its 3PCF are obtained by division by the RRR monopole, which should cancel the constant normalization factor. so in the other two places in the code, where we convert the 3PCF between conventions, the basis conversion factor below is sufficient)
     # convert ell coefficients from ENCORE basis to simple Legendre polynomials used in RascalC (according to Equation 4.11 in https://arxiv.org/pdf/1910.04764)
     triple_counts *= ((-1)**ells * np.sqrt(2 * ells + 1) / (4 * np.pi))[:, None] # add the second dimension, corresponding to the radial bins, to avoid indexing errors. should be fine to use *= now because triple_counts is a new local variable
     # the ell-dependent factor between the ENCORE 3-point basis functions and Legendre polynomials given by Equation (17) in https://arxiv.org/pdf/2105.08722
@@ -208,7 +216,7 @@ def compute_3pcf_correction_function_from_encore(randoms_pos: npt.NDArray[np.flo
     # check for negative triple counts (or rather the correction function as it is passed to RascalC), which should be problematic
     check_triple_counts_positive(phi_inv_mult * norm, lenient_samebins=True, print_function=print_function)
             
-    ## Check all seems reasonable
+    # Check that the values seem reasonable
     check_inv_phi_values(phi_inv_mult, print_function=print_function)
         
     outfile = os.path.join(outdir, 'BinCorrectionFactor3PCF_n%d.txt' % n)
