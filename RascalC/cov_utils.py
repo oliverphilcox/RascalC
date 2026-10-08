@@ -1,7 +1,12 @@
 """
 This module contains convenience functions that
 
-- read RascalC results (checking eigenvalues of the inversion bias matrix. If they are much smaller than 1, it is safe to simply invert the covariance matrix. Otherwise, a correction factor is necessary.)
+- read RascalC results
+
+    - These and other functions check and report eigenvalues of the inversion bias matrix. If they are much smaller than 1, it should be safe to simply invert the covariance matrix. Otherwise, a correction factor is necessary.
+    - **NB**: the Hartlap (Wishart) factor does **NOT** apply for the inversion of RascalC covariance matrices, because it is specific to the Wishart distribution one obtains for the sample covariance estimator from Gaussian-distributed realizations. Similar corrections for the parameter errorbars (e.g., Percival factor) should not apply either.
+
+        - The inverse covariance (precision) matrix with the proper quadratic bias correction (see `O'Connell & Eisenstein 2019 <https://arxiv.org/abs/1808.05978>`_) should always be saved in the ``Rescaled_Covariance_Matrices*.npz`` file under the :attr:`full_theory_precision` key/name. You may need to change the ordering of rows and columns for the Legendre moments. So far, using the bias-corrected inverse has not seemed necessary; running the covariance long enough for high stability in the extra convergence checks should imply a very small inverse bias correction, unless the covariance (data vector) dimension changes drastically. As a result, the convenience functions for reading/converting/exporting the bias-corrected inverse covariance (precision) have not been implemented yet; please let the developer(s) know if you need them.
 - convert (reorder) covariance matrices (as is often needed for Legendre moments)
 - and/or export (save) the full covariance matrix to a text file.
 """
