@@ -20,9 +20,9 @@ We recommend calibrating this shot-noise rescaling parameter using a reference c
 The model is similar to the Gauss-Poisson approximation in Fourier space (see e.g. `Grieb et al 2016 <https://arxiv.org/abs/1509.04293>`_) allowing the shot noise to be a free parameter.
 Working in configuration space allows to naturally account for survey geometry and selection, including the variation of the expected density :math:`\bar n` across the survey volume, by sampling points from the random catalog.
 
-**This Python library currently only implements the covariance estimators for 2PCF**.
-Covariances for 3PCF (from later parts of `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_) and configuration-space power spectrum estimators (`Philcox & Eisenstein 2020 <https://arxiv.org/abs/1912.01010>`_) are not supported (yet).
-To use them, one would probably need to dig in the historic C++ code.
+**This Python library currently only implements the covariance estimators for 2-point correlation functions (2PCF)**.
+Covariances for 3PCF (from Section 5 of `Philcox & Eisenstein 2019 <https://arxiv.org/abs/1910.04764>`_) are being tested and reevaluated.
+Covariances for modified, configuration-space power spectrum estimators (`Philcox & Eisenstein 2020 <https://arxiv.org/abs/1912.01010>`_) and cross-covariances between them and 2PCF are not supported (yet; using them would probably require digging into the more raw C++ code).
 
 .. _pipeline_basic:
 
