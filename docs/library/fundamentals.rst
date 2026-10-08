@@ -29,11 +29,12 @@ Covariances for modified, configuration-space power spectrum estimators (`Philco
 Basic/minimal pipeline
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Use with caution!
-This pipeline does not include a reference to determine the shot-noise rescaling parameter.
+Generally, we recommend referring to :ref:`pipeline_jack` or :ref:`pipeline_mock` **after looking at the** :ref:`pipeline_basic_fig` **and reading the** :ref:`general_usage` **after it**.
+
+The basic pipeline does not include a reference to determine the shot-noise rescaling parameter.
+Use it with caution!
 The default value for the shot-noise rescaling is 1, but we can not recommend using it in real applications.
-Refer to :ref:`pipeline_jack` or :ref:`pipeline_mock` **after looking at the** :ref:`pipeline_basic_fig` **and reading the** :ref:`general_usage` **after it**.
-However, we can suggest at least two situations in which this variant is advisable:
+However, we can suggest at least two situations in which running the basic pipeline is advisable:
 
     - Two-tracer covariance when the shot-noise rescaling values for each tracer are known (or will be known soon) from single-tracer jackknife computations. Currently, building a two-tracer jackknife model seems excessive.
     - You can also use the basic pipeline to re-run the post-processing with a mock 2PCF sample later (see :ref:`pipeline_mock`). However, substituting jackknife can not be deferred like this because the jackknife model crucially depends on the jackknife RR counts.
