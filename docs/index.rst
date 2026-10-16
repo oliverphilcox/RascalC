@@ -21,12 +21,13 @@ For general usage, we provide :doc:`library/fundamentals` and :doc:`library/tuto
 
 .. toctree::
    :maxdepth: 2
-   :caption: Python library (2PCF)
+   :caption: Python library
 
    library/installation
    library/fundamentals
    library/tutorials-examples
    library/advanced-functions
+   library/3pcf
 
 .. toctree::
    :maxdepth: 2

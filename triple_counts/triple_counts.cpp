@@ -309,10 +309,14 @@ class compute_triples{
             if (par->random_seed) {
                 std::random_device urandom("/dev/urandom");
                 std::uniform_int_distribution<unsigned long> dist(0, seed_step-1); // distribution of integers with these limits, inclusive
-                seed_shift = dist(urandom); // for each thread, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+                seed_shift = dist(urandom); // for each iteration, it will be seed = seed_step * n_loops + seed_shift, where n_loops goes from 0 to max_loops-1 => no overflow and guaranteed unique for each thread
+                par->seed = seed_shift; // save the random seed
+                par->random_seed = false; // avoid random seed resetting in the future — different seeds for xi rescaling and the main computation are much harder to reproduce
             }
+            printf("# INFO: the base RNG seed is %lu, incremented by %lu in each integration loop (matching these should guarantee the same results in a completed computation with the same input catalogs and correlation functions).\n", seed_shift, seed_step);
             
             gsl_rng_env_setup(); // initialize gsl rng
+            int completed_loops = 0; // counter of completed loops, since may not finish in index order
 
             uint64 tot_pairs=0, tot_triples=0; // global number of particle pairs/triples/quads used (including those rejected for being in the wrong bins)
             uint64 cell_attempt2=0,cell_attempt3=0; // number of j,k,l cells attempted
@@ -351,7 +355,9 @@ class compute_triples{
             int* prim_ids; // list of particle IDs in primary cell
             double p2,p3; // probabilities
             int mnp = grid->maxnp; // max number of particles in a grid cell
+#ifdef PRINTPERCENTS
             Float percent_counter;
+#endif
             int x, prim_id_1D;
             integer3 delta2, delta3, prim_id, sec_id, thi_id;
             Float3 cell_sep2,cell_sep3;
@@ -373,7 +379,9 @@ class compute_triples{
     #pragma omp for schedule(dynamic)
     #endif
            for (int n_loops = 0; n_loops<par->max_loops; n_loops++){
+#ifdef PRINTPERCENTS
                 percent_counter=0.;
+#endif
                 loc_used_pairs=0; loc_used_triples=0;
 
                 // Set/reset the RNG seed based on loop number instead of thread number to reproduce results with different number of threads but other parameters kept the same. Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.
@@ -383,11 +391,13 @@ class compute_triples{
                 // LOOP OVER ALL FILLED I CELLS
                 for (int n1=0; n1<grid->nf;n1++){
                     
+#ifdef PRINTPERCENTS
                     // Print time left
                     if((float(n1)/float(grid->nf)*100)>=percent_counter){
-                        printf("Run %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n",1+n_loops/par->nthread, int(ceil(float(par->max_loops)/(float)par->nthread)),thread, n1+1,grid->nf,percent_counter);
+                        printf("Iteration %d of %d on thread %d: Using cell %d of %d - %.0f percent complete\n", n_loops, par->max_loops, thread, n1+1, grid->nf, percent_counter);
                         percent_counter+=5.;
                     }
+#endif
                     
                     // Pick first particle
                     prim_id_1D = grid-> filled[n1]; // 1d ID for cell i 
@@ -445,11 +455,13 @@ class compute_triples{
     #pragma omp critical // only one processor can access at once
     #endif
             {
-                if ((n_loops+1)%par->nthread==0){ // Print every nthread loops
+                completed_loops++; // increment completed loops counter, since they may be done not according to n_loops order
+                printf("Iteration %d of %d on thread %d completed (%d/%d)\n", n_loops, par->max_loops, thread, completed_loops, par->max_loops);
+                if (completed_loops % par->nthread == 0) { // Print every nthread completed loops
                     TotalTime.Stop(); // interrupt timing to access .Elapsed()
                     int current_runtime = TotalTime.Elapsed();
-                    int remaining_time = current_runtime/((n_loops+1)/par->nthread)*(par->max_loops/par->nthread-(n_loops+1)/par->nthread);  // estimated remaining time
-                    fprintf(stderr,"\nFinished integral loop %d of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n",n_loops+1,par->max_loops, current_runtime,remaining_time/3600,remaining_time/60%60, remaining_time%60,remaining_time);
+                    int remaining_time = current_runtime*(par->max_loops - completed_loops)/completed_loops;  // estimated remaining time
+                    fprintf(stderr, "\nFinished %d integral loops of %d after %d s. Estimated time left:  %2.2d:%2.2d:%2.2d hms, i.e. %d s.\n", completed_loops, par->max_loops, current_runtime, remaining_time/3600, remaining_time/60%60, remaining_time%60, remaining_time);
                     
                     TotalTime.Start(); // Restart the timer
                 }

@@ -33,7 +33,8 @@ public:
         n_l = max_l/2+1; // number of multipoles, even only
         
         // READ IN FILE
-        char line[1000000];
+        const size_t line_size = 1000000;
+        char line[line_size];
         int line_no = 0;
         FILE *fp;
         
@@ -46,7 +47,7 @@ public:
         fprintf(stderr, "\nMu bin Legendre factors file '%s'\n", filename);
         
         // Count lines to construct the correct size
-        while (fgets(line, 1000000, fp) != NULL) {
+        while (fgets(line, line_size, fp) != NULL) {
             if (line[0] == '#') continue; // comment line
             if (line[0] == '\n') continue;
             line_no++;
@@ -62,7 +63,7 @@ public:
         int index = 0; // indexes array
             
         // Read in values from file
-        while (fgets(line, 1000000, fp) != NULL) {
+        while (fgets(line, line_size, fp) != NULL) {
             // Select required lines in file
         
             if (line[0] == '#') continue;

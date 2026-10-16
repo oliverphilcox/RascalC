@@ -6,19 +6,15 @@
 
 """
 
-import sys
+import argparse
 
-# Check number of parameters
-if len(sys.argv) != 3:
-    print("Usage: python normalize_weights.py {INFILE} {OUTFILE}")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description="Convenience script to normalize weights in an input (x,y,z,w) or (x,y,z,w,j) text file and save the result in another text file for use with further scripts.")
+parser.add_argument("input_file", type=str)
+parser.add_argument("output_file", type=str)
+args = parser.parse_args()
 
 from utils import adjust_path
 adjust_path()
 from RascalC.pre_process.normalize_weights import normalize_weights_files
 
-# Load file names
-input_file = str(sys.argv[1])
-output_file = str(sys.argv[2])
-
-normalize_weights_files(input_file, output_file)
+normalize_weights_files(args.input_file, args.output_file)

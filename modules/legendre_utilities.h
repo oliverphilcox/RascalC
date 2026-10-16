@@ -92,7 +92,7 @@ class SurveyCorrection{
 public:
 #ifdef THREE_PCF
     Float* inv_phi_multipoles = nullptr; // houses multipole moments of the inverse correction function
-    int n_param = 7;
+    int n_param = 7; // number of multipole coefficients in the Legendre polynomial decomposition of the inverse correction function
 #else
     Float* phi_coeffs = nullptr; // houses polynomial coefficients for the correction function
     int n_param = 7; // number of polynomial coefficients in fitting model (only 5 are independent)
@@ -140,8 +140,8 @@ public:
     
 #ifdef THREE_PCF
     SurveyCorrection(Parameters *par){
-        // This initializes the function and reads in the relevant polynomial coefficients for each radial bin. 
-        // NB: coefficients are indexed as INDEX = RADIAL_BIN_1*N_COEFF^2. + RADIAL_BIN_2*N_COEFF + COEFF_ID where N_COEFF is the total number of coefficients for each model; here 7.
+        // This initializes the function and reads in the relevant polynomial coefficients for each radial bin.
+        // NB: coefficients are indexed as INDEX = RADIAL_BIN_1*N_COEFF*NBIN + RADIAL_BIN_2*N_COEFF + COEFF_ID where N_COEFF is the total number of coefficients for each model; here 7.
 #else
     SurveyCorrection(Parameters *par, int index1, int index2){
         // This initializes the function and reads in the relevant polynomial coefficients for each radial bin
@@ -151,7 +151,8 @@ public:
         nbin = par->nbin; // number of radial bins 
         
         // READ IN FILE
-        char line[1000000], *phi_file;
+        const size_t line_size = 1000000;
+        char line[line_size], *phi_file;
         int line_no = 0;
         FILE *fp;
         
@@ -171,7 +172,7 @@ public:
         fprintf(stderr,"\nReading survey correction function coefficient file '%s'\n",phi_file);
         
         // Count lines to construct the correct size
-        while (fgets(line,1000000,fp)!=NULL){
+        while (fgets(line, line_size, fp)!=NULL){
             if (line[0]=='#') continue; // comment line
             if (line[0]=='\n') continue;
             line_no++;
@@ -191,8 +192,8 @@ public:
         int line_count=0; // line counter
         int index=0; // indexes array
             
-        // Read in values to file
-        while (fgets(line,1000000,fp)!=NULL) {
+        // Read in values from file
+        while (fgets(line, line_size, fp)!=NULL) {
             // Select required lines in file
         
             if (line[0]=='#') continue;

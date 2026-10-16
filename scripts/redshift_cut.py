@@ -13,30 +13,23 @@ Output file format has (Ra,Dec,z,w) coordinates
 
 """
 
-import sys
+import argparse
 
-# Check number of parameters
-if len(sys.argv) not in (5, 6, 7, 8):
-    print("Usage: python redshift_cut.py {INFILE} {OUTFILE} {Z_MIN} {Z_MAX} [{USE_FKP_WEIGHTS or P0,NZ_name} [{MASK} [{USE_WEIGHTS}]]]")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description="Convenience script to perform redshift cut on an input (Ra,Dec,z,w) FITS or txt file and save the result in a text file for use with further scripts. Output file format has (Ra,Dec,z,w) coordinates")
+parser.add_argument("input_file", type=str, help="input text or FITS file name (text must be rdzw, i.e. RA, DEC, redshift and weight columns)")
+parser.add_argument("output_file", type=str, help="output text file name (rdzw, i.e. RA, DEC, redshift and weight columns)")
+parser.add_argument("z_min", type=float)
+parser.add_argument("z_max", type=float)
+parser.add_argument("FKP_weights", type=str, default=0, nargs="?", help="whether to use FKP weights column (default False/0). also accepts format P0,NZ_name. only applies to (DESI) FITS files")
+parser.add_argument("mask", type=int, default="0", nargs="?", help="sets bins that all must be set in STATUS for the particle to be selected (default 0). only applies to (DESI) FITS files")
+parser.add_argument("use_weights", type=bool, default=True, nargs="?", help="whether to use WEIGHTS column. if not, set unit weights. default True/1")
+args = parser.parse_args()
 
-from utils import adjust_path, get_arg_safe
+from utils import adjust_path
 adjust_path()
 from RascalC.pre_process.redshift_cut import redshift_cut_files
-from RascalC.pre_process.utils import parse_FKP_arg, my_str_to_bool
-        
-# Load file names
-input_file = str(sys.argv[1])
-output_file = str(sys.argv[2])
-print("\nUsing input file %s in Ra,Dec,z coordinates\n"%input_file)
+from RascalC.pre_process.utils import parse_FKP_arg
 
-# Load min and max redshifts
-z_min = float(sys.argv[3])
-z_max = float(sys.argv[4])
+FKP_weights = parse_FKP_arg(args.FKP_weights) # FKP weights needs to be parsed additionally for backward compatibility (could be redesigned better)
 
-# The next only applies to (DESI) FITS files
-FKP_weights = parse_FKP_arg(get_arg_safe(5, str, "False")) # determine whether to use FKP weights
-mask = get_arg_safe(6, int, 0) # default is 0 - no mask filtering
-use_weights = my_str_to_bool(get_arg_safe(7, str, "True")) # use weights by default
-
-redshift_cut_files(input_file, output_file, z_min, z_max, FKP_weights, mask, use_weights)
+redshift_cut_files(args.input_file, args.output_file, args.z_min, args.z_max, FKP_weights, args.mask, args.use_weights)

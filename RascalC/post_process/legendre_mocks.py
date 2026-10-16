@@ -43,7 +43,7 @@ def post_process_legendre_mocks(mock_cov_file: str, file_root: str, n: int, max_
     # Check matrix convergence for the optimal alpha: if it is <1, the eigenvalue criterion should be strengthened
     if eigval_ok and alpha_best < 1: check_eigval_convergence(c2f, c4f, alpha_best, print_function=print_function)
 
-    # Compute full covariance matrices and precision
+    # Compute full covariance matrix
     full_cov = add_cov_terms_single(c2f, c3f, c4f, alpha_best)
 
     # Check positive definiteness

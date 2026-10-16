@@ -104,10 +104,12 @@ public:
 
     // Maximum number of iterations to compute the C_ab integrals over
     int max_loops = 40;
+#ifndef TRIPLE
     // Number of loops to output into each subsample/file
     int loops_per_sample = 1;
     // Number of output subsamples/files
     int no_subsamples = 120;
+#endif
 
     // Number of random cells to draw at each stage
     int N2 = 20; // number of j cells per i cell
@@ -135,10 +137,16 @@ public:
     // Number of galaxies in second dataset
     Float nofznorm2=3398430; //
 
-    // parameters allowing to run only some of the 7 integrals
+#ifndef TRIPLE
+    // parameters allowing to run only some of the 7 integrals for multi-tracer 2PCF or 2 for single-tracer 3PCF
     int start_integral_index = 1; // the first integral to be computed
+#ifdef THREE_PCF
+    int last_integral_index = 2; // the last integral to be computed
+#else
     int last_integral_index = 7; // the last integral to be computed
+#endif
     // defaults compute all integrals
+#endif
 
     //---------- (r,mu) MULTI-FIELD PARAMETERS ------------------------------
 
@@ -191,7 +199,7 @@ public:
     //-------- OTHER PARAMETERS ----------------------------------------------
 
 	// The minimum mu of the smallest bin.
-#ifdef THREE_PCF
+#if (defined THREE_PCF || defined TRIPLE)
     Float mumin = -1.0;
 #else
 	Float mumin = 0.0;
@@ -267,7 +275,9 @@ public:
                 rect_boxsize = {boxsize, boxsize, boxsize};
                 }
         else if (!strcmp(argv[i],"-maxloops")) max_loops = atoi(argv[++i]);
+#ifndef TRIPLE
         else if (!strcmp(argv[i],"-loopspersample")) loops_per_sample = atoi(argv[++i]);
+#endif
         else if (!strcmp(argv[i],"-rescale")) rescale = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-mumax")) mumax = atof(argv[++i]);
 		else if (!strcmp(argv[i],"-mumin")) mumin = atof(argv[++i]);
@@ -296,8 +306,10 @@ public:
         else if (!strcmp(argv[i],"-binfile_cf")) radial_bin_file_cf=argv[++i];
         else if (!strcmp(argv[i],"-N2")) N2=atof(argv[++i]);
         else if (!strcmp(argv[i],"-N3")) N3=atof(argv[++i]);
+#ifndef TRIPLE
         else if (!strcmp(argv[i],"-N4")) N4=atof(argv[++i]);
-#if (defined LEGENDRE || defined LEGENDRE_MIX)
+#endif
+#if (defined LEGENDRE || defined LEGENDRE_MIX || defined THREE_PCF || defined POWER)
         else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
 #endif
 #ifdef JACKKNIFE
@@ -312,7 +324,6 @@ public:
         else if (!strcmp(argv[i],"-phi_file12")) phi_file12=argv[++i];
         else if (!strcmp(argv[i],"-phi_file2")) phi_file2=argv[++i];
 #elif defined POWER
-        else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-inv_phi_file")) inv_phi_file=argv[++i];
         else if (!strcmp(argv[i],"-inv_phi_file12")) inv_phi_file12=argv[++i];
         else if (!strcmp(argv[i],"-inv_phi_file2")) inv_phi_file2=argv[++i];
@@ -321,16 +332,17 @@ public:
         else if (!strcmp(argv[i],"-power_norm12")) power_norm12 = atof(argv[++i]);
         else if (!strcmp(argv[i],"-power_norm2")) power_norm2 = atof(argv[++i]);
 #elif defined THREE_PCF
-        else if (!strcmp(argv[i],"-max_l")) max_l=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-phi_file")) phi_file=argv[++i];
         else if (!strcmp(argv[i],"-N5")) N5=atof(argv[++i]);
         else if (!strcmp(argv[i],"-N6")) N6=atof(argv[++i]);
 #endif
 #if (!defined LEGENDRE && !defined POWER && !defined THREE_PCF)
 		else if (!strcmp(argv[i],"-mbin")) mbin = atoi(argv[++i]);
+#ifndef TRIPLE
         else if (!strcmp(argv[i],"-RRbin")) RR_bin_file=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin12")) RR_bin_file12=argv[++i];
 		else if (!strcmp(argv[i],"-RRbin2")) RR_bin_file2=argv[++i];
+#endif
 #endif
         else if (!strcmp(argv[i],"-perbox")) perbox = 1;
         else if (!strcmp(argv[i],"-np")) {
@@ -344,8 +356,10 @@ public:
 			make_random=1;
 		    }
 		else if (!strcmp(argv[i],"-seed")) { random_seed = false; sscanf(argv[++i], "%lu", &seed); }
+#ifndef TRIPLE
         else if (!strcmp(argv[i],"-start_integral_index")) start_integral_index = atoi(argv[++i]);
         else if (!strcmp(argv[i],"-last_integral_index")) last_integral_index = atoi(argv[++i]);
+#endif
 		else if (!strcmp(argv[i],"-def")) { fname = NULL; }
 		else {
 		    fprintf(stderr, "Don't recognize %s\n", argv[i]);
@@ -375,10 +389,12 @@ public:
 	    assert(nside%2!=0); // The probability integrator needs an odd grid size
 
 	    assert(nofznorm>0); // need some galaxies!
+#ifndef TRIPLE
         assert(max_loops % loops_per_sample == 0); // group size need to divide the number of loops
         no_subsamples = max_loops / loops_per_sample;
+#endif
 #ifndef THREE_PCF
-	    //assert(mumin>=0); // We take the absolte value of mu
+	    //assert(mumin>=0); // We take the absolute value of mu
 #endif
 	    assert(mumax<=1); // mu > 1 makes no sense
 
@@ -535,13 +551,19 @@ public:
 #endif
 
         // check integral selection parameters
+#ifndef TRIPLE
         assert(start_integral_index >= 1);
         assert(last_integral_index >= 1);
-        if (!multi_tracers) last_integral_index = 1;
-        assert(start_integral_index <= last_integral_index);
+#ifdef THREE_PCF
+        int no_integrals = 2; // there are 2 integrals for single-tracer 3PCF
+#else
         int no_integrals = multi_tracers ? 7 : 1;
+        if (!multi_tracers) last_integral_index = 1; // only 1 integral for single-tracer 2PCF
+#endif
+        assert(start_integral_index <= last_integral_index);
         assert(start_integral_index <= no_integrals);
         assert(last_integral_index <= no_integrals);
+#endif
 
 	    create_directory();
 
@@ -573,7 +595,9 @@ public:
 #endif
 		printf("Number of galaxies = %6.5e\n",nofznorm);
         printf("Maximum number of integration loops = %d\n",max_loops);
+#ifndef TRIPLE
         printf("Number of output subsamples = %d\n", no_subsamples);
+#endif
         printf("Output directory: '%s'\n",out_file);
 
 	}
@@ -595,7 +619,11 @@ public:
 
 private:
 	void usage() {
-	    fprintf(stderr, "\nUsage for grid_covariance:\n\n");
+#ifdef TRIPLE
+	    fprintf(stderr, "\nUsage for triple (triple_counts):\n\n");
+#else
+	    fprintf(stderr, "\nUsage for cov (grid_covariance):\n\n");
+#endif
         fprintf(stderr, "   -def: This allows one to accept the defaults without giving other entries.\n");
 	    fprintf(stderr, "   -in <file>: The input random particle file for particle-set 1 (space-separated x,y,z,w).\n");
         fprintf(stderr, "   -binfile <filename>: File containing the desired radial bins\n");
@@ -604,10 +632,12 @@ private:
         fprintf(stderr, "   -norm <nofznorm>: Number of galaxies in the first tracer set.\n");
         fprintf(stderr, "   -effective_norm: Flag indicating to use the effective number of random particles (sum(w)^2/sum(w^2), taking into account weights but invariant to overall weight rescaling) instead of simple counting (default). Should match the way the -norm value was computed for the data galaxies externally.\n");
 #ifdef JACKKNIFE
-        fprintf(stderr, "   -jackknife <filename>: File containing the {1,1} jackknife weights (normally computed from Corrfunc)\n");
+        fprintf(stderr, "   -jackknife <filename>: File containing the {1,1} jackknife weights\n");
 #endif
 #if (!defined LEGENDRE && !defined POWER && !defined THREE_PCF)
-        fprintf(stderr, "   -RRbin <filename>: File containing the {1,1} jackknife RR bin counts (computed from Corrfunc)\n");
+#ifndef TRIPLE
+        fprintf(stderr, "   -RRbin <filename>: File containing the {1,1} RR bin counts\n");
+#endif
         fprintf(stderr, "   -mbin <mbin>:  The number of mu bins (spaced linearly).\n");
 #endif
 	    fprintf(stderr, "   -mbin_cf <mbin_cf>:  The number of mu bins in the correlation function (spaced linearly).\n");
@@ -624,7 +654,7 @@ private:
 	    fprintf(stderr, "   -cor2 <file>: (Optional) File location of input xi_2 correlation function file.\n");
 	    fprintf(stderr, "   -norm2 <nofznorm2>: (Optional) Number of galaxies in the survey for the second tracer set.\n");
 
-#if (defined LEGENDRE || defined LEGENDRE_MIX)
+#if (defined LEGENDRE || defined LEGENDRE_MIX || defined THREE_PCF || defined POWER)
         fprintf(stderr, "   -max_l <max_l>: Maximum legendre multipole (must be even)\n");
 #endif
 #ifdef LEGENDRE_MIX
@@ -646,9 +676,9 @@ private:
         fprintf(stderr, "   -power_norm12: Power spectrum normalization = V*<(nw)^2> = Sum(nw^2) for field 1 x 2\n");
         fprintf(stderr, "   -power_norm2: Power spectrum normalization = V*<(nw)^2> = Sum(nw^2) for field 2\n");
 #endif
-#if (!defined LEGENDRE && !defined POWER && !defined THREE_PCF)
-        fprintf(stderr, "   -RRbin12 <filename>: (Optional) File containing the {1,2} jackknife RR bin counts (computed from Corrfunc)\n");
-	    fprintf(stderr, "   -RRbin2 <filename>: (Optional) File containing the {2,2} jackknife RR bin counts (computed from Corrfunc)\n");
+#if (!defined LEGENDRE && !defined POWER && !defined THREE_PCF && !defined TRIPLE)
+        fprintf(stderr, "   -RRbin12 <filename>: (Optional) File containing the {1,2} RR bin counts\n");
+	    fprintf(stderr, "   -RRbin2 <filename>: (Optional) File containing the {2,2} RR bin counts\n");
         fprintf(stderr, "\n");
 #endif
 #ifdef JACKKNIFE
@@ -656,10 +686,14 @@ private:
         fprintf(stderr, "   -jackknife2 <filename>: (Optional) File containing the {2,2} jackknife weights (normally computed from Corrfunc)\n");
 #endif
         fprintf(stderr, "   -maxloops <max_loops>: Maximum number of integral loops\n");
+#ifndef TRIPLE
         fprintf(stderr, "   -loopspersample <loops_per_sample>: Number of loops to collapse into each subsample. Default 1.\n");
+#endif
         fprintf(stderr, "   -N2 <N2>: Number of secondary particles to choose per primary particle\n");
         fprintf(stderr, "   -N3 <N3>: Number of tertiary particles to choose per secondary particle\n");
+#ifndef TRIPLE
         fprintf(stderr, "   -N4 <N4>: Number of quaternary particles to choose per tertiary particle\n");
+#endif
         fprintf(stderr, "\n");
 #ifdef THREE_PCF
         fprintf(stderr, "   -N5 <N5>: Number of fifth particles to choose per quaternary particle\n");
@@ -687,10 +721,17 @@ private:
         fprintf(stderr, "   -seed <seed>:  If given, allows to reproduce the results with the same settings, except the number of threads.\n");
         fprintf(stderr, "      Individual subsamples may differ because they are accumulated/written in order of loop completion which may depend on external factors at runtime, but the final integrals should be the same.\n");
         fprintf(stderr, "      Needs to be a non-negative integer fitting into 32 bits (max 4294967295). If not given (default), the seed will be created randomly.\n");
+#ifdef THREE_PCF
+        fprintf(stderr, "   -start_integral_index <start_integral_index>: If given, chooses from which of 2 integrals (numbered 1 and 2) to stop for 3PCF. Default 1 (to cover all integrals).\n");
+        fprintf(stderr, "      Intended to help complete the timed-out multi-tracer runs by skipping the integrals computed in an unfinished run.\n");
+        fprintf(stderr, "   -last_integral_index <start_integral_index>: If given, chooses at which of 2 integrals (numbered 1 and 2) to stop for 3PCF. Default 2 (to cover all integrals).\n");
+        fprintf(stderr, "      Can be used to fit into the time limit if the full 2 integrals are expected to take longer.\n");
+#elif (!defined TRIPLE)
         fprintf(stderr, "   -start_integral_index <start_integral_index>: If given, chooses from which of 7 integrals (numbered 1 through 7) to start in the multi-tracer regime. Default 1 (to cover all integrals).\n");
         fprintf(stderr, "      Intended to help complete the timed-out multi-tracer runs by skipping the integrals computed in an unfinished run.\n");
         fprintf(stderr, "   -last_integral_index <start_integral_index>: If given, chooses at which of 7 integrals (numbered 1 through 7) to stop in the multi-tracer regime. Default 7 (to cover all integrals).\n");
         fprintf(stderr, "      Can be used to fit into the time limit if the full 7 integrals are expected to take longer.\n");
+#endif
 	    fprintf(stderr, "\n");
 	    fprintf(stderr, "\n");
 
@@ -711,6 +752,7 @@ private:
 	    if (mkdir(out_file,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)==0){
             printf("\nCreating output directory\n");
         }
+#ifndef TRIPLE
 #ifdef THREE_PCF
         std::string cname = string_format("%s3PCFCovMatricesAll/", out_file);
 #elif defined POWER
@@ -734,6 +776,7 @@ private:
             printf("\nCreation of directory %s failed\n", cjname.c_str());
             exit(1);
         }
+#endif
 #endif
     }
 

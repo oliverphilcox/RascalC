@@ -82,7 +82,8 @@ public:
         // If Jackknife directive is not set, we only read in RR pair counts here
         
         nbins = par->nbin*par->mbin; // define number of bins in total
-        char line[1000000];
+        const size_t line_size = 1000000;
+        char line[line_size];
         int index;
         
         int ec2=0;
@@ -113,7 +114,7 @@ public:
             fprintf(stderr,"\nReading RR bin count file '%s'\n",RR_file);
             
             index = 0;
-            while (fgets(line,5000,fp2)!=NULL){
+            while (fgets(line, line_size, fp2)!=NULL){
                 // Select required lines in file
                 if (line[0]=='#') continue;
                 if (line[0]=='\n') continue;
@@ -141,7 +142,7 @@ public:
         fprintf(stderr,"\nReading jackknife file '%s'\n",jk_file);
         
         // Count lines to construct the correct size
-        while (fgets(line,1000000,fp)!=NULL){
+        while (fgets(line, line_size, fp)!=NULL){
             if (line[0]=='#') continue; // comment line
             if (line[0]=='\n') continue;
             n_JK_filled++;
@@ -159,8 +160,8 @@ public:
         int line_count=0; // line counter
         int counter; // counts which element in line
         
-        // Read in values to file
-        while (fgets(line,1000000,fp)!=NULL) {
+        // Read in values from file
+        while (fgets(line, line_size, fp)!=NULL) {
             // Select required lines in file
             if (line[0]=='#') continue;
             if (line[0]=='\n') continue;

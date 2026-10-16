@@ -30,7 +30,7 @@ def post_process_default(file_root: str, n: int, m: int, outdir: str, alpha: flo
     # Check matrix convergence
     check_eigval_convergence(c2, c4, alpha, print_function=print_function)
 
-    # Compute full covariance matrices and precision
+    # Compute full covariance matrix
     full_cov = add_cov_terms_single(c2, c3, c4, alpha)
 
     # Check positive definiteness

@@ -1,18 +1,15 @@
 "Slightly more complicated (than convert_cov.py) convenience script that reads RascalC Legendre mode results and saves full cov to text file, changing the indexing from [r, l] to [l, r], in addition checking eigenvalues of bias matrix"
 
-import sys
+import argparse
 
-## PARAMETERS
-if len(sys.argv) != 4:
-    print("Usage: python convert_cov_legendre.py {RASCALC_RESULTS_FILE} {MAX_L} {OUTPUT_COV_FILE}.")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description="Simple convenience script that reads RascalC results and saves full cov to text file, changing the single-tracer Legendre-mode indexing from [r, l] to [l, r], in addition checking eigenvalues of bias matrix")
+parser.add_argument("rascalc_file", type=str, help="RascalC post-processed .npy filename")
+parser.add_argument("max_l", type=int, help="maximum multipole index")
+parser.add_argument("output_cov_file", type=str, help="output text file for the covariance")
+args = parser.parse_args()
 
 from utils import adjust_path
 adjust_path()
 from RascalC.cov_utils import export_cov_legendre
 
-rascalc_results = str(sys.argv[1])
-max_l = int(sys.argv[2])
-output_cov_file = str(sys.argv[3])
-
-export_cov_legendre(rascalc_results, max_l, output_cov_file)
+export_cov_legendre(args.rascalc_file, args.max_l, args.output_cov_file)

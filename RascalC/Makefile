@@ -34,15 +34,16 @@ endif
 
 LD = $(CXX)
 
-# The code below compiles all the valid variants for the 2PCF covariance
+# The code below compiles all the valid variants for the 2PCF covariance, and one for 3PCF
 
-BASE_VARIANTS	= s_mu s_mu_jackknife legendre_accumulated legendre_projected legendre_projected_jackknife
+BASE_VARIANTS	= s_mu s_mu_jackknife legendre_accumulated legendre_projected legendre_projected_jackknife 3pcf_legendre_accumulated
 
 DEFINES_FOR_s_mu=
 DEFINES_FOR_s_mu_jackknife=-DJACKKNIFE
 DEFINES_FOR_legendre_accumulated=-DLEGENDRE
 DEFINES_FOR_legendre_projected=-DLEGENDRE_MIX
 DEFINES_FOR_legendre_projected_jackknife=-DLEGENDRE_MIX -DJACKKNIFE
+DEFINES_FOR_3pcf_legendre_accumulated=-DTHREE_PCF
 
 define add_periodic_variant
 DEFINES_FOR_$(1)_periodic	= $$(DEFINES_FOR_$(1)) -DPERIODIC
@@ -89,6 +90,37 @@ endef
 # if directories are listed as normal prerequisites, they are modified when objects/executables are made/remade and this alone triggers another remake of objects/executables unnecessarily
 
 $(foreach variant,$(VARIANTS),$(eval $(call make_targets,$(variant))))
+
+# end of variants for the covariance
+
+# The code below compiles all the valid variants for the triple_counts
+
+VARIANTS2 = s_mu s_mu_verbose s_mu_periodic s_mu_periodic_verbose
+
+DEFINES2 = -DTRIPLE # triple_counts needs this to have mumin=-1 and not 0 to be consistent with the 3PCF covariance
+
+VAR_SRC2_BASE	= triple_counts
+VAR_SRC2	= ../$(VAR_SRC2_BASE)/$(VAR_SRC2_BASE).cpp
+VAR_OBJ2_BASE	= $(OBJDIR)/$(VAR_SRC2_BASE)
+
+EXEC2_BASE	= $(EXECDIR)/triple
+
+define make_targets2
+OBJ2_$(1)	= $$(VAR_OBJ2_BASE).$(1).o
+ALL_OBJS	+= $$(OBJ2_$(1))
+EXEC2_$(1)	= $$(EXEC2_BASE).$(1)
+ALL_EXECS	+= $$(EXEC2_$(1))
+
+$$(OBJ2_$(1)): $$(VAR_SRC2) | $$(OBJDIR)
+	$$(CXX) $$(CXXFLAGS) $$(DEFINES2) $$(DEFINES_FOR_$(1)) -c $$(VAR_SRC2) -o $$@
+
+$$(EXEC2_$(1)): $$(OBJ2_$(1)) $$(COMMON_OBJS) | $$(EXECDIR)
+	$$(LD) $$(OBJ2_$(1)) $$(COMMON_OBJS) $$(LFLAGS) -o $$@
+endef
+
+$(foreach variant,$(VARIANTS2),$(eval $(call make_targets2,$(variant))))
+
+# end of variants for the triple_counts
 
 .PHONY: all clean
 

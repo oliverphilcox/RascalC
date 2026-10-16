@@ -1,24 +1,20 @@
 "This reads a .npy file of RascalC Legendre results (or txt covariance converted previously) and a triplet of cosmodesi/pycorr .npy files to produce a covariance for a catalog of these two tracers concatenated."
 
-import sys
+import argparse
 
-## PARAMETERS
-if len(sys.argv) not in (9, 11):
-    print("Usage: python combine_cov_multi_to_cat.py {RASCALC_RESULTS} {PYCORR_FILE_11} {PYCORR_FILE_12} {PYCORR_FILE_22} {R_STEP} {MAX_L} {SKIP_R_BINS} {OUTPUT_COV_FILE} [{BIAS1} {BIAS2}].")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description="This reads a .npy file of RascalC Legendre results (or txt covariance converted previously) and a triplet of cosmodesi/pycorr .npy files to produce a covariance for a catalog of these two tracers concatenated (each tracer upweighted by its linear bias).")
+parser.add_argument("rascalc_file", type=str, help="RascalC post-processed .npy filename")
+parser.add_argument("pycorr_files", type=str, nargs=3, help="3 pycorr .npy filenames for the distinct correlation functions in the following order: first tracer auto-counts, then cross-counts between the two tracers, and finally the second tracer auto-counts")
+parser.add_argument("r_step", type=float, help="desired width of radial bins")
+parser.add_argument("max_l", type=int, help="maximum multipole index")
+parser.add_argument("skip_r_bins", type=int, help="number of last radial/separation bins to discard")
+parser.add_argument("output_cov_file", type=str, help="output text file for the combined tracer covariance")
+parser.add_argument("bias1", type=float, default=1, nargs='?', help="linear bias for the first tracer (default 1)")
+parser.add_argument("bias2", type=float, default=1, nargs='?', help="linear bias for the second tracer (default 1)")
+args = parser.parse_args()
 
-from utils import adjust_path, get_arg_safe
+from utils import adjust_path
 adjust_path()
 from RascalC.comb.convert_cov_legendre_multi_to_cat import convert_cov_legendre_multi_to_cat
 
-rascalc_results = str(sys.argv[1])
-pycorr_files = [str(sys.argv[i]) for i in range(2, 5)]
-r_step = float(sys.argv[5])
-max_l = int(sys.argv[6])
-skip_r_bins = int(sys.argv[7])
-output_cov_file = str(sys.argv[8])
-from .utils import get_arg_safe
-bias1 = get_arg_safe(9, float, 1)
-bias2 = get_arg_safe(10, float, 1)
-
-convert_cov_legendre_multi_to_cat(rascalc_results, pycorr_files, output_cov_file, max_l, r_step, skip_r_bins, bias1, bias2)
+convert_cov_legendre_multi_to_cat(args.rascalc_file, args.pycorr_files, args.output_cov_file, args.max_l, args.r_step, args.skip_r_bins, args.bias1, args.bias2)
