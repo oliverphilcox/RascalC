@@ -282,8 +282,8 @@ int main(int argc, char *argv[]) {
 
 #ifdef THREE_PCF
     // Compute threePCF integrals
-    compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],1); // final digit is iteration number
-    compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],2);
+    compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],0); // final digit is iteration number
+    compute_integral(&all_grid[0],&par,&all_cf[0],&all_rd[0],&all_survey[0],1);
 #elif (defined LEGENDRE || defined POWER)
     // Compute integrals
     compute_integral(all_grid,&par,all_cf,all_rd,all_survey,1,1,1,1,1); // final digit is iteration number
