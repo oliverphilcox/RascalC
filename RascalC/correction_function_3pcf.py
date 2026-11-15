@@ -84,7 +84,7 @@ def compute_3pcf_correction_function(random_filename: str, binfile: str, outdir:
         phi_inv_mult = np.zeros([n,n,7])
         for b1 in range(n):
             for b2 in range(n):
-                phi_inv_mult[b1,b2,:] = leg_triple[b1,b2,:] / (.5 * norm * vol_r(b1) * vol_r(b2))
+                phi_inv_mult[b1,b2,:] = leg_triple[b1,b2,:] / (norm * vol_r(b1) * vol_r(b2))
                 
         ## Check all seems reasonable
         if np.mean(phi_inv_mult[:,:,0])<1e-3:
