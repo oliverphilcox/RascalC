@@ -92,7 +92,7 @@ class CorrelationFunction{
             fprintf(fp, "\n");
             // write the correlation function values
             for (int i = 1; i < xsize; i++) { // exclude the first radial bin with r=0 because it is trivial and also to avoid division next
-                for (int j = 0; j < ysize; j++) fprintf(fp, "%le\t", z[i * xsize + j] / pow(x[i], 2)); // remember that z = xi * r^2 for smoother interpolation
+                for (int j = 0; j < ysize; j++) fprintf(fp, "%le\t", z[i * ysize + j] / pow(x[i], 2)); // remember that z = xi * r^2 for smoother interpolation
                 fprintf(fp, "\n");
             }
             fclose(fp);
