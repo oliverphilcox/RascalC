@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(description="Script to fit a model (piecewise p
 parser.add_argument("random_particle_file", type=str, help="file containing the random points' coordinates and weights")
 parser.add_argument("r_bin_file", type=str, help="file containing the radial/separation bin boundaries in its rows")
 parser.add_argument("output_dir", type=str, help="directory to write the resulting correction function coefficients")
-parser.add_argument("periodic", type=bool, help="periodic boundary conditions flag")
+parser.add_argument("periodic", type=int, help="periodic boundary conditions flag")
 parser.add_argument("RRR_counts_file", type=str, default=None, nargs='?', help="file containing the RRR counts in radial/separation and angular bins. necessary with aperiodic (realistic survey) geometry. not used with periodic geometry.")
 args = parser.parse_args()
 

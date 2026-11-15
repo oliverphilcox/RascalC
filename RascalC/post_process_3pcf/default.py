@@ -86,7 +86,7 @@ def post_process_3pcf(file_root: str, n: int, max_l: int, n_samples: int, outdir
             c_excl_i = (sum_partial_cov - partial_cov[i]) / (n_samples - 1)
             try:
                 tmp+=np.matmul(np.linalg.inv(c_excl_i), partial_cov[i])
-            except np.linalg.linalg.LinAlgError:
+            except np.linalg.LinAlgError:
                 print_function("Could not invert submatrix, so setting overall precision to zero. Matrix is not fully converged")
                 tmp = np.inf
         if tmp==np.inf:
